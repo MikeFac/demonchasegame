@@ -987,8 +987,13 @@ function updateGameState(newGameState) {
     if (gameState.players && playerCode) {
         Object.keys(gameState.players).forEach(code => {
             if (code === playerCode) {
-                // Update our player
+                // Update our player, but preserve local dimensions which come from the loaded image
+                const { width, height } = player;
                 player = { ...player, ...gameState.players[code] };
+                if (width && height) {
+                    player.width = width;
+                    player.height = height;
+                }
             } else {
                 // Update other players
                 gameState.players[code] = { ...gameState.players[code], ...newGameState.players[code] };

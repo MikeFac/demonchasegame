@@ -15,7 +15,9 @@ const Constants = {
     BUTTON_WIDTH: 84,
     BUTTON_HEIGHT: 21,
     BUTTON_PADDING: 4,
-    ANSWER_SECTION_HEIGHT: 17
+    ANSWER_SECTION_HEIGHT: 17,
+    PLAYER_WIDTH: 47,
+    PLAYER_HEIGHT: 52
 };
 
 if (typeof module !== 'undefined' && module.exports) {

@@ -140,13 +140,10 @@ class Renderer {
     }
 
     drawPlayers(players, currentPlayer, playerCode, camera) {
-        console.log('drawPlayers - playerCode:', playerCode, 'players keys:', Object.keys(players), 'currentPlayer:', currentPlayer ? { x: currentPlayer.x, y: currentPlayer.y, width: currentPlayer.width } : 'null');
-
         // If we have a playerCode but it's not in players yet, draw our local player anyway
         if (playerCode && currentPlayer && currentPlayer.x !== undefined) {
             const isInServerState = Object.keys(players).includes(playerCode);
             if (!isInServerState) {
-                console.log('Drawing local player only (not in server state yet)');
                 this.drawPlayer(currentPlayer, true, camera);
             }
         }
@@ -155,7 +152,6 @@ class Renderer {
             const isMyPlayer = (code === playerCode);
             // Use local player object if it's me (for predicted movement), otherwise server state
             const playerData = isMyPlayer ? currentPlayer : players[code];
-            console.log('Drawing player:', code, 'isMe:', isMyPlayer, 'hasData:', !!playerData);
 
             if (playerData) {
                 this.drawPlayer(playerData, isMyPlayer, camera);
@@ -166,13 +162,9 @@ class Renderer {
     drawPlayer(playerData, isCurrentPlayer, camera) {
         const playerImage = isCurrentPlayer ? this.assets.playerImg : this.assets.otherPlayerImg;
 
-        console.log('drawPlayer - isCurrentPlayer:', isCurrentPlayer, 'hasImage:', !!playerImage, 'complete:', playerImage?.complete, 'playerData:', playerData ? { x: playerData.x, y: playerData.y, width: playerData.width, height: playerData.height } : null);
-
         if (playerImage && playerImage.complete) {
             const screenX = playerData.x - camera.x;
             const screenY = playerData.y - camera.y;
-
-            console.log('Drawing at screen pos:', screenX, screenY);
 
             this.ctx.drawImage(playerImage, screenX - playerData.width / 2, screenY - playerData.height / 2);
 
@@ -188,8 +180,6 @@ class Renderer {
             this.ctx.font = '12px Arial';
             const displayName = isCurrentPlayer ? 'You' : 'Player';
             this.ctx.fillText(displayName, screenX - 20, screenY - playerData.height / 2 - 15);
-        } else {
-            console.warn('Player image not loaded or incomplete!');
         }
     }
 

@@ -27,7 +27,7 @@ class PlayerManager {
             x = Math.random() * (Constants.WORLD_WIDTH - 200) + 100;
             y = Math.random() * (Constants.WORLD_HEIGHT - 200) + 100;
 
-            if (!Physics.isOverlapping(x, y, 32, 32, gameState)) {
+            if (!Physics.isOverlapping(x, y, Constants.PLAYER_WIDTH, Constants.PLAYER_HEIGHT, gameState)) {
                 validPosition = true;
             }
             attempts++;
@@ -37,12 +37,14 @@ class PlayerManager {
         gameState.players[playerCode] = {
             x: x,
             y: y,
-            width: 32, // approx size
-            height: 32,
+            width: Constants.PLAYER_WIDTH,
+            height: Constants.PLAYER_HEIGHT,
             health: 100, // Initial health
             maxHealth: 100,
             code: playerCode,
-            color: 'blue' // Default, client overrides with sprite
+            color: 'blue', // Default, client overrides with sprite
+            xp: 0,
+            level: 1
         };
         gameState.connectedPlayers++;
 
@@ -110,7 +112,17 @@ class PlayerManager {
                 if (!gameState.monstersKilled) gameState.monstersKilled = 0;
                 gameState.monstersKilled++;
 
-                io.emit('monsterKilled', { monsterId: targetMonster.id });
+                // Award XP
+                player.xp += 10; // 10 XP per kill
+
+                // Simple Level Up Logic (every 100 XP)
+                if (player.xp >= player.level * 100) {
+                    player.level++;
+                    player.maxHealth += 20;
+                    player.health = player.maxHealth; // Full heal on level up
+                }
+
+                io.emit('monsterKilled', { monsterId: targetMonster.id, killer: playerCode });
 
                 if (targetMonster.chaser) {
                     gameState.chaseTrigger = true;
