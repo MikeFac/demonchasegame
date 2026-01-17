@@ -240,7 +240,7 @@ function setLevelData(gameState) {
         gameState.spawnsLeft = levelConfig.maxMonsters;
 
         // Emit updated game state to server
-        socket.emit('updateGameState', gameState);
+        network.sendGameStateUpdate(gameState);
     } else {
         console.log("All levels completed");
         gameOverFlag = true;
@@ -272,74 +272,58 @@ document.addEventListener('DOMContentLoaded', function () {
 async function init() {
     return new Promise(async (resolve) => {
         isGameLoaded = false;
-        //multiplayer - connect to local server
-        socket = io();  // Automatically connects to the server that served the page
-        console.log(socket);
 
-        // Listen for game state updates from the server
-
-        socket.on('gameStateUpdate', (newGameState) => {
-            updateGameState(newGameState);
-        });
-
-        socket.on('gameState', (initialGameState) => {
-            updateGameState(initialGameState);
-        });
-
-        socket.on('playerCode', (code) => {
-            if (playerCode === null) {  // Only set the playerCode if it hasn't been set before
-                playerCode = code.toString();
-                console.log('Received my player code:', playerCode, 'Type', typeof playerCode);
-                // debugger ;
-                // Initialize the player in the game state
-                player = {
-                    x: Math.random() * canvas.width,
-                    y: Math.random() * canvas.height,
-                    health: 60,
-                    maxHealth: 100,
-                    width: 47,
-                    height: 52,
-                    xp: 0,
-                    level: 1
+        // Define callbacks first
+        const networkCallbacks = {
+            onGameStateUpdate: (newGameState) => {
+                updateGameState(newGameState);
+            },
+            onPlayerCode: (code) => {
+                if (playerCode === null) {
+                    playerCode = code.toString();
+                    console.log('Received my player code:', playerCode);
+                    player = {
+                        x: Math.random() * canvas.width,
+                        y: Math.random() * canvas.height,
+                        health: 60,
+                        maxHealth: 100,
+                        width: 47,
+                        height: 52,
+                        xp: 0,
+                        level: 1
+                    };
+                    gameState.players[playerCode] = player;
+                } else {
+                    console.log('New player joined with code:', code);
+                }
+            },
+            onPlayerNumber: (playerNumber) => {
+                console.log(`Received player number: ${playerNumber}`);
+                const playerImage = `player${playerNumber}.png`;
+                playerImg = new Image();
+                playerImg.src = `${scriptDirectory}/${playerImage}`;
+                playerImg.onload = function () {
+                    console.log(`Player ${playerNumber} image loaded successfully`);
+                    player.width = playerImg.width;
+                    player.height = playerImg.height;
                 };
-                gameState.players[playerCode] = player;
-            } else {
-                console.log('New player joined with code:', code);
-                // Here you could add logic to initialize other players if needed
+                playerImg.onerror = function () {
+                    console.error(`Failed to load player ${playerNumber} image`);
+                };
+            },
+            onMonsterKilled: ({ monsterId }) => {
+                demonDies.play();
+                console.log(`Monster ${monsterId} was killed`);
             }
-        });
+        };
 
-
-        // Listen for the initial game state from the server
-        socket.on('gameState', (initialGameState) => {
-            updateGameState(initialGameState);
-        });
-
-
-        // In the init function or where you set up socket listeners
-        socket.on('monsterKilled', ({ monsterId }) => {
-            // Play the monster death sound
-            demonDies.play();
-
-            // You can add any client-side effects here, like particle effects or screen shake
-            console.log(`Monster ${monsterId} was killed`);
-        });
-
-        // Listen for player number from the server
-        socket.on('playerNumber', (playerNumber) => {
-            console.log(`Received player number: ${playerNumber}`);
-            const playerImage = `player${playerNumber}.png`;
-            playerImg = new Image();
-            playerImg.src = `${scriptDirectory}/${playerImage}`;
-            playerImg.onload = function () {
-                console.log(`Player ${playerNumber} image loaded successfully`);
-                player.width = playerImg.width;
-                player.height = playerImg.height;
-            };
-            playerImg.onerror = function () {
-                console.error(`Failed to load player ${playerNumber} image`);
-            };
-        });
+        // Connect to server with callbacks already set
+        try {
+            await network.connect(networkCallbacks);
+            console.log('Connected to game server');
+        } catch (error) {
+            console.error('Failed to connect:', error);
+        }
 
         // Load other images
         try {
@@ -786,7 +770,7 @@ function gameLoop() {
             player.y = Math.max(0, Math.min(player.y, WORLD_HEIGHT));
 
             // Send the player's position to the server
-            socket.emit('playerPosition', { x: player.x, y: player.y });
+            network.sendPosition(player.x, player.y);
         }
 
         // Update camera to follow player
@@ -826,7 +810,7 @@ function gameLoop() {
                     // Calculate random damage between 0 and the monster's maximum damage
                     const damage = Math.floor(Math.random() * (monster.maxDamage + 1) * gameState.gameLevel);
                     player.health -= damage; // Monster attacks the player locally for immediate feedback
-                    socket.emit('playerHit', damage); // Tell valid server
+                    network.sendPlayerHit(damage);
 
                     playerHit.play(); // Play the attack sound effect
                     if (player.health <= 0) {
@@ -885,7 +869,7 @@ function gameLoop() {
                 levelCompleted = true;
 
                 // Emit the levelCompleted event to the server
-                socket.emit('levelCompleted');
+                network.sendLevelCompleted();
 
                 setTimeout(() => {
                     levelCompleted = false; // Reset the flag for the next level
@@ -907,7 +891,7 @@ function gameLoop() {
             let distance = Math.sqrt(dx * dx + dy * dy);
             if (distance < player.width / 2 + healingPoint.width / 2) {
                 // Heal the player
-                socket.emit('collectHealingPoint', healingPoint.id);
+                network.sendCollectHealingPoint(healingPoint.id);
                 healingRecharge.play(); // Play the attack sound effect
             }
         });
@@ -970,7 +954,7 @@ function gameLoop() {
             // Add other player properties as needed
         };
 
-        socket.emit('updatePlayerData', { playerCode, playerData });
+        network.sendPlayerData(playerCode, playerData);
         lastUpdateTime = currentTime;
     }
 
@@ -1087,7 +1071,7 @@ function handlePlayerAttack(monster) {
         monsterId: monster.id,
         damage: 2 // Or whatever damage calculation you're using
     };
-    socket.emit('playerAttack', attackData);
+    network.sendAttack(attackData);
 }
 
 
