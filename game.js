@@ -7,8 +7,9 @@ let playerCode = null;  // code to access player information for the current pla
 let canvas;
 
 // World and camera
-const WORLD_WIDTH = 2000;
-const WORLD_HEIGHT = 2000;
+// World and camera
+const { WORLD_WIDTH, WORLD_HEIGHT } = Constants;
+// let camera = { x: 0, y: 0 }; // Already there, but let's be precise about replacement
 let camera = { x: 0, y: 0 };
 
 let gameState = {
@@ -603,6 +604,41 @@ function gameLoop() {
     const elapsedTime = currentTime - lastUpdateTime;
 
     if (gameMode === 'game') {
+        const uiState = {
+            vQuality,
+            qualityButtons,
+            gameOverFlag,
+            isAnswerCorrect,
+            levelCompleted,
+            lastAttackedMonster,
+            explosionTimer,
+            currentVerse: {
+                text: gappedVerse,
+                reference: organizedVerses[vQuality][currentVerseIndex].Reference
+            },
+            quiz: {
+                firstLetters,
+                mcOptions
+            }
+        };
+
+        const assets = {
+            playerImg,
+            otherPlayerImg,
+            demonImages,
+            explosionImg,
+            healingPointImg
+        };
+
+        // Instantiate renderer if not already (hack for now, should be in init)
+        if (!window.renderer) {
+            window.renderer = new Renderer(canvas, ctx, assets);
+        }
+        window.renderer.assets = assets; // Update assets in case they loaded late
+
+        window.renderer.drawGame(gameState, player, playerCode, monsters, healingPoints, camera, uiState);
+
+        /*
         // Clear the canvas
         ctx.clearRect(0, 0, canvas.width, canvas.height);
 
@@ -662,6 +698,7 @@ function gameLoop() {
             ctx.font = '17px Arial'; // Set the font size
             ctx.fillText('Incorrect!', canvas.width / 2 - 35, canvas.height / 2);
         }
+        */
 
         // Move the player
         // Convert mouse position from screen to world coordinates
@@ -780,12 +817,14 @@ function gameLoop() {
 
 
         });
-        //Display level completed message if true
+        /*
+        // Display level completed message if true
         if (levelCompleted) {
             ctx.fillStyle = 'green';
             ctx.font = '29px Arial'; // Set the font size
             ctx.fillText('Level completed.', canvas.width / 2 - 140, canvas.height / 2);
         }
+        */
 
 
         // Check if the level is completed
@@ -797,9 +836,11 @@ function gameLoop() {
             console.log("Checking level completion. Killed:", killed, "Total:", total);
             if (gameState.gameLevel < Object.keys(levelData).length) {
                 console.log("Level completed");
+                /*
                 ctx.fillStyle = 'green';
                 ctx.font = '29px Arial';
                 ctx.fillText('Level completed!', canvas.width / 2 - 140, canvas.height / 2);
+                */
                 levelCompleted = true;
 
                 // Emit the levelCompleted event to the server
@@ -811,9 +852,11 @@ function gameLoop() {
                 }, 5000);
             } else {
                 console.log("Game completed");
+                /*
                 ctx.fillStyle = 'green';
                 ctx.font = '29px Arial';
                 ctx.fillText('Game completed!', canvas.width / 2 - 140, canvas.height / 2);
+                */
                 gameOverFlag = true;
             }
         }
@@ -828,6 +871,7 @@ function gameLoop() {
             }
         });
 
+        /*
         // Draw the game objects
 
         // Draw walls first (background layer)
@@ -864,6 +908,7 @@ function gameLoop() {
 
         // Display the Bible verse and request the next animation frame
         displayBibleVerse(gappedVerse, organizedVerses[vQuality][currentVerseIndex].Reference);
+        */
     } //end gameMode = 'game'
 
     //start gameMode = 'review'
@@ -893,106 +938,7 @@ function gameLoop() {
 
 
 // Function to display the Bible verse
-function displayBibleVerse(verseText, verseReference) {
-    if (currentVerseIndex !== null && answerResultTimeout === null) {
-        const maxCharsPerLine = 60;
-        const maxLines = 5;
-        const lineHeight = 21;
 
-        let lines = [];
-        let currentLine = '';
-
-        // Split the verse text into multiple lines
-        for (let i = 0; i < verseText.length; i++) {
-            const char = verseText[i];
-
-            if (char === ' ' && currentLine.length >= maxCharsPerLine) {
-                lines.push(currentLine.trim());
-                currentLine = '';
-            } else {
-                currentLine += char;
-            }
-
-            if (i === verseText.length - 1 && currentLine.trim().length > 0) {
-                lines.push(currentLine.trim());
-            }
-        }
-
-        // Limit the number of lines to the maximum allowed
-        lines = lines.slice(0, maxLines);
-
-        // Draw the verse text line by line
-        for (let i = 0; i < lines.length; i++) {
-            const line = lines[i];
-            const y = canvas.height - 112 + i * lineHeight; // Adjust the y-coordinate to make space for the reference and options
-            ctx.fillStyle = 'black'; // Set text color to black
-            ctx.font = '14px Arial'; // Set the font size
-            ctx.fillText(line, 7, y);
-        }
-
-        // Draw the verse reference
-        ctx.fillStyle = 'black'; // Set text color to black
-        ctx.font = '14px Arial'; // Set the font size
-        ctx.fillText(verseReference, 7, canvas.height - 112 + lines.length * lineHeight); // Adjust the y-coordinate to position the reference under the verse
-
-        // Display the multiple-choice options
-        displayMultipleChoiceOptions(firstLetters, mcOptions);
-    }
-}
-/*
-// Function to display the multiple-choice options
-function displayMultipleChoiceOptions(firstLetters, options) {
-  const buttonWidth = 35;
-  const buttonHeight = 21;
-  const buttonSpacing = 7;
-  const optionStartX = 7;
-  const optionStartY = canvas.height - 7; // Adjust the y-coordinate to position the options under the reference
-
-  // Draw the "First letter of missing word is:" text
-  ctx.fillStyle = 'black';
-  ctx.font = '11px Arial'; // Set the font size
-  ctx.fillText('First letter of missing word is:', optionStartX, optionStartY);
-
-  // Draw the multiple-choice buttons
-  for (let i = 0; i < options.length; i++) {
-    const buttonX = optionStartX + 154 + i * (buttonWidth + buttonSpacing);
-    const buttonY = optionStartY - 16;
-
-    ctx.fillStyle = 'lightgray';
-    ctx.fillRect(buttonX, buttonY, buttonWidth, buttonHeight);
-
-    ctx.fillStyle = 'black';
-    ctx.font = '11px Arial'; // Set the font size
-    ctx.fillText(options[i].toUpperCase(), buttonX + 10, buttonY + 15); // Adjust the text position within the button
-  }
-}
-*/
-function displayMultipleChoiceOptions(firstLetters, options) {
-    const buttonWidth = 49; // Adjust the button width to accommodate 2 letters
-    const buttonHeight = 21;
-    const buttonSpacing = 7;
-    const optionStartX = 7;
-    const optionStartY = canvas.height - 7; // Adjust the y-coordinate to position the options under the reference
-
-    // Draw the "First letters of missing words are:" text
-    ctx.fillStyle = 'black';
-    ctx.font = '11px Arial'; // Set the font size
-    ctx.fillText('First letters of missing words are:', optionStartX, optionStartY);
-
-    // Draw the multiple-choice buttons
-    const textWidth = ctx.measureText('First letters of missing words are:').width;
-    for (let i = 0; i < options.length; i++) {
-        const buttonX = optionStartX + textWidth + 14 + i * (buttonWidth + buttonSpacing); // Adjust the x-coordinate to position the buttons
-        const buttonY = optionStartY - 16;
-
-        ctx.fillStyle = 'lightgray';
-        ctx.fillRect(buttonX, buttonY, buttonWidth, buttonHeight);
-
-        ctx.fillStyle = 'black';
-        ctx.font = '11px Arial'; // Set the font size
-        ctx.fillText(options[i], buttonX + 14, buttonY + 15); // Adjust the text position within the button
-    }
-}
 // Pick a random verse and display it
 function pickRandomVerse() {
     currentVerseIndex = Math.floor(Math.random() * organizedVerses[vQuality].length);
@@ -1232,125 +1178,6 @@ function clearAnswerResultTimeout() {
     }
 }
 
-function drawPlayer(playerData, isCurrentPlayer) {
-    //console.log('Is current player: ' + isCurrentPlayer);
-    //if (isCurrentPlayer) debugger;
-    const playerImage = isCurrentPlayer ? playerImg : otherPlayerImg; // You'll need to load an image for other players
-
-    if (playerImage && playerImage.complete) {
-        // Convert world coordinates to screen coordinates
-        const screenX = playerData.x - camera.x;
-        const screenY = playerData.y - camera.y;
-
-        ctx.drawImage(playerImage, screenX - playerData.width / 2, screenY - playerData.height / 2);
-
-        // Draw health bar
-        const healthBarWidth = (playerData.health / playerData.maxHealth) * 40;
-        const healthBarColor = isCurrentPlayer ? 'green' : 'blue'; // Different color for other players
-
-        ctx.fillStyle = healthBarColor;
-        ctx.fillRect(screenX - 20, screenY - playerData.height / 2 - 10, healthBarWidth, 5);
-
-        // Draw player name or code
-        ctx.fillStyle = 'white';
-        ctx.font = '12px Arial';
-        const displayName = isCurrentPlayer ? 'You' : (code ? code.substring(0, 6) : 'Player');
-        ctx.fillText(displayName, screenX - 20, screenY - playerData.height / 2 - 15);
-    }
-}
-
-function drawMonster(monster, explosionTimer) {
-    const demonType = monster.demonType;
-    const demonImage = demonImages[demonType];
-
-    // Convert world coordinates to screen coordinates
-    const screenX = monster.x - camera.x;
-    const screenY = monster.y - camera.y;
-
-    // Only draw if monster is visible on screen and in playable area
-    const playableTop = QUALITY_LINE_HEIGHT + BUTTON_HEIGHT;
-    const playableBottom = canvas.height - ANSWER_SECTION_HEIGHT;
-
-    // Skip if monster is outside the playable area on screen
-    if (screenY - monster.height / 2 < playableTop || screenY + monster.height / 2 > playableBottom) {
-        return; // Skip drawing this monster
-    }
-
-    // Skip if monster is completely off-screen horizontally
-    if (screenX + monster.width / 2 < 0 || screenX - monster.width / 2 > canvas.width) {
-        return;
-    }
-
-    if (demonImage && demonImage.complete) {
-        ctx.drawImage(demonImage, screenX - monster.width / 2, screenY - monster.height / 2);
-        //console.log(`Drew monster at (${monster.x}, ${monster.y})`);
-    } else {
-        console.warn(`Demon image for type '${demonType}' not loaded or not found.`);
-    }
-
-    if (monster.isAttacked && Math.floor(explosionTimer / EXPLOSION_INTERVAL) % 2 === 0) {
-        // Draw the explosion asset over the top of the demon when isAttacked is true and the timer is in the "on" state
-        ctx.drawImage(explosionImg, screenX - explosionImg.width / 2, screenY - explosionImg.height / 2);
-    }
-
-    // Draw the health bar
-    const healthBarWidth = (monster.health / 10) * monster.width; // Adjust the health bar width based on the monster's health
-    monster.healthBar.x = screenX - monster.width / 2; // Position the health bar above the monster sprite
-    monster.healthBar.y = screenY - monster.height / 2 - 10; // Adjust the vertical position of the health bar
-    monster.healthBar.width = healthBarWidth;
-
-    ctx.fillStyle = monster.healthBar.color;
-    ctx.fillRect(monster.healthBar.x, monster.healthBar.y, monster.healthBar.width, monster.healthBar.height);
-
-    if (monster.showHealth) {
-        ctx.font = '11px Arial'; // Set the font size
-        ctx.fillStyle = 'black';
-        ctx.fillText(`${monster.health}`, monster.x, monster.y - 14);
-    }
-
-
-}
-
-function drawHealingPoint(healingPoint) {
-    if (healingPoint && healingPointImg) {
-        const screenX = healingPoint.x - camera.x;
-        const screenY = healingPoint.y - camera.y;
-        ctx.drawImage(healingPointImg, screenX - healingPoint.width / 2, screenY - healingPoint.height / 2);
-    }
-}
-
-function drawWalls() {
-    if (!gameState.walls) return;
-
-    // Save context state
-    ctx.save();
-
-    // Clip to playable area only (between top bar and bottom scripture)
-    const playableTop = QUALITY_LINE_HEIGHT + BUTTON_HEIGHT;
-    const playableBottom = canvas.height - ANSWER_SECTION_HEIGHT - 120; // 120 for scripture area
-    ctx.beginPath();
-    ctx.rect(0, playableTop, canvas.width, playableBottom - playableTop);
-    ctx.clip();
-
-    ctx.fillStyle = '#333333'; // Dark gray for walls
-    gameState.walls.forEach(wall => {
-        const screenX = wall.x - camera.x;
-        const screenY = wall.y - camera.y;
-
-        // Only draw if wall is visible on screen
-        if (screenX + wall.width > 0 && screenX < canvas.width &&
-            screenY + wall.height > 0 && screenY < canvas.height) {
-            ctx.fillRect(screenX, screenY, wall.width, wall.height);
-            // Draw border
-            ctx.strokeStyle = '#555555';
-            ctx.lineWidth = 2;
-            ctx.strokeRect(screenX, screenY, wall.width, wall.height);
-        }
-    });
-
-    // Restore context state
-    ctx.restore();
-}
 
 // Check if a position collides with any wall
 function checkWallCollision(x, y, width, height) {
