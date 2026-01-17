@@ -32,7 +32,11 @@ class PlayerManager {
             }
             attempts++;
         }
-        if (!validPosition) { x = 100; y = 100; } // Fallback
+        if (!validPosition) {
+            x = 100;
+            y = 100;
+            console.warn('Spawn position fallback used for player ' + playerCode);
+        } // Fallback
 
         gameState.players[playerCode] = {
             x: x,
@@ -129,6 +133,20 @@ class PlayerManager {
                 }
             }
             io.emit('gameStateUpdate', gameState);
+        }
+    }
+
+    handlePlayerHit(socket, damage) {
+        const { gameState } = this;
+        const playerCode = socket.playerCode;
+        const player = gameState.players[playerCode];
+
+        if (player) {
+            player.health -= damage;
+            if (player.health < 0) player.health = 0;
+            // console.log(`Player ${playerCode} took ${damage} damage. Health: ${player.health}`);
+            // Broadcast the health update
+            this.io.emit('gameStateUpdate', gameState);
         }
     }
 }

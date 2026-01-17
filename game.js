@@ -785,7 +785,8 @@ function gameLoop() {
 
                     // Calculate random damage between 0 and the monster's maximum damage
                     const damage = Math.floor(Math.random() * (monster.maxDamage + 1) * gameState.gameLevel);
-                    player.health -= damage; // Monster attacks the player
+                    player.health -= damage; // Monster attacks the player locally for immediate feedback
+                    socket.emit('playerHit', damage); // Tell valid server
 
                     playerHit.play(); // Play the attack sound effect
                     if (player.health <= 0) {

@@ -116,6 +116,11 @@ class Game {
             this.playerManager.handleAttack(socket, data);
         });
 
+        // Handle player being hit
+        socket.on('playerHit', (damage) => {
+            this.playerManager.handlePlayerHit(socket, damage);
+        });
+
         // Handle healing point collection
         socket.on('collectHealingPoint', (healingPointId) => {
             const index = this.gameState.healingPoints.findIndex(hp => hp.id === healingPointId);
