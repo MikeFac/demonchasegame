@@ -314,6 +314,10 @@ async function init() {
             onMonsterKilled: ({ monsterId }) => {
                 demonDies.play();
                 console.log(`Monster ${monsterId} was killed`);
+                // Clear enemy HUD if this was the monster we were tracking
+                if (lastAttackedMonster && lastAttackedMonster.id === monsterId) {
+                    lastAttackedMonster = null;
+                }
             }
         };
 
