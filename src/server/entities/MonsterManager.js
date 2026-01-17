@@ -20,7 +20,8 @@ class MonsterManager {
 
         // Check if there are any connected players
         if (gameState.connectedPlayers > 0) {
-            if (gameState.monsters.length < levelData[gameState.gameLevel].maxMonsters && gameState.spawnsLeft > 0) {
+            // Only check concurrent monster limit, not spawnsLeft (allows continuous respawning)
+            if (gameState.monsters.length < levelData[gameState.gameLevel].maxMonsters) {
 
                 // Find a valid position near a random player
                 const playerCodes = Object.keys(gameState.players);

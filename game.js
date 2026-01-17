@@ -766,11 +766,11 @@ function gameLoop() {
 
 
         // Check if the level is completed
-        // Require 80% of monsters to be killed
+        // Require 60% of monsters to be killed (allows some to be stuck/missed)
         const killed = gameState.monstersKilled || 0;
         const total = gameState.maxSpawns;
 
-        if (killed >= total * 0.8 && !levelCompleted) {
+        if (killed >= total * 0.6 && !levelCompleted) {
             console.log("Checking level completion. Killed:", killed, "Total:", total);
             if (gameState.gameLevel < Object.keys(levelData).length) {
                 console.log("Level completed");
