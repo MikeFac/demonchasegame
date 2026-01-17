@@ -79,7 +79,8 @@ const BUTTON_HEIGHT = 21; // Height of the quality buttons
 const BUTTON_PADDING = 4; // Padding around the button text
 const ANSWER_SECTION_HEIGHT = 17; // Distance from bottom where nothing should move or spawn
 const VERSECHANGETIME = 20000;
-let mouseX, mouseY; // Variables to store the last known mouse position
+let mouseX, mouseY; // Variables to store the last known mouse position (legacy, being replaced by InputHandler)
+let inputHandler; // InputHandler instance
 let lastAttackTime = 0; // Keep track of the last attack time
 
 //Multiplayer - rate of sending stuff to server
@@ -463,16 +464,56 @@ async function init() {
             console.error('Error loading explosion image');
         };
 
-        // Remove existing event listeners
-        canvas.removeEventListener('click', handleMouseClick);
+        // Initialize InputHandler
+        inputHandler = new InputHandler(canvas, {
+            QUALITY_LINE_HEIGHT,
+            BUTTON_HEIGHT,
+            BUTTON_WIDTH,
+            ANSWER_SECTION_HEIGHT
+        });
 
-        // Add new event listeners
-        canvas.addEventListener('click', handleMouseClick);
+        // Set up InputHandler callbacks
+        inputHandler.setCallbacks({
+            onQualityButtonClick: (qualityText) => {
+                vQuality = qualityText;
+                pickQualityVerse();
+            },
+            onQuizOptionClick: (selectedOption, index) => {
+                handleQuizAnswer(selectedOption);
+            },
+            onReviewButtonClick: () => {
+                saveGameState();
+                startReviewMode();
+            },
+            onReviewModeClick: (event) => {
+                handleReviewClick(event);
+            }
+        });
 
         console.log('Game initialized');
 
         resolve();
     });
+}
+
+// Handle quiz answer selection (called by InputHandler)
+function handleQuizAnswer(selectedOption) {
+    if (selectedOption === firstLetters) {
+        isAnswerCorrect = true;
+        qualityIndex[vQuality] = (qualityIndex[vQuality] + 1) % organizedVerses[vQuality].length;
+        qualityTotal[vQuality] = qualityTotal[vQuality] + 1;
+        console.log(vQuality + " total correct is: " + qualityTotal[vQuality]);
+        setAnswerResultTimeout(5000);
+    } else {
+        isAnswerCorrect = false;
+        qualityIndex[vQuality] = (qualityIndex[vQuality] + 1) % organizedVerses[vQuality].length;
+        setAnswerResultTimeout(10000);
+
+        const currentReference = organizedVerses[vQuality][currentVerseIndex].Reference;
+        if (!incorrectAnswerReferences.includes(currentReference)) {
+            incorrectAnswerReferences.push(currentReference);
+        }
+    }
 }
 
 function updatePlayerLevel(xp) {
@@ -701,11 +742,10 @@ function gameLoop() {
         */
 
         // Move the player
-        // Convert mouse position from screen to world coordinates
-        let targetX = mouseX + camera.x;
-        let targetY = mouseY + camera.y;
-        let dx = targetX - player.x;
-        let dy = targetY - player.y;
+        // Get movement target from InputHandler
+        const worldTarget = inputHandler ? inputHandler.getWorldTarget(camera) : { x: player.x, y: player.y };
+        let dx = worldTarget.x - player.x;
+        let dy = worldTarget.y - player.y;
         let distance = Math.sqrt(dx * dx + dy * dy);
 
         const THRESHOLD_DISTANCE = 5; // Adjust this value as needed
