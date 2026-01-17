@@ -615,14 +615,16 @@ function gameLoop() {
 
         drawReviewButton();
 
-        // Draw quality buttons on same row, right-aligned
-        const buttonStartX = canvas.width - (qualityButtons.length * (BUTTON_WIDTH + 7)) - 7;
+        // Draw quality buttons on same row, right-aligned (moved 8px right)
+        const buttonStartX = canvas.width - (qualityButtons.length * (BUTTON_WIDTH + 7)) - 7 + 8;
         qualityButtons.forEach((button, index) => {
             const buttonX = buttonStartX + index * (BUTTON_WIDTH + 7);
             ctx.fillStyle = button.color;
-            ctx.fillRect(buttonX, 5, BUTTON_WIDTH, BUTTON_HEIGHT);  // Back to Y=5
-            ctx.fillStyle = 'black';
-            ctx.font = '11px Arial'; // Set the font size
+            ctx.fillRect(buttonX, 5, BUTTON_WIDTH, BUTTON_HEIGHT);
+
+            // Use white text for better visibility on colored backgrounds
+            ctx.fillStyle = 'white';
+            ctx.font = 'bold 11px Arial'; // Made text bold
             ctx.fillText(button.text, buttonX + BUTTON_PADDING, 5 + BUTTON_HEIGHT - BUTTON_PADDING);
         });
 
@@ -787,8 +789,12 @@ function gameLoop() {
 
 
         // Check if the level is completed
-        if (monsters.length === 0 && gameState.spawnsLeft === 0 && !levelCompleted) {
-            console.log("Checking level completion. Monsters:", monsters.length, "SpawnsLeft:", gameState.spawnsLeft);
+        // Require 80% of monsters to be killed
+        const killed = gameState.monstersKilled || 0;
+        const total = gameState.maxSpawns;
+
+        if (killed >= total * 0.8 && !levelCompleted) {
+            console.log("Checking level completion. Killed:", killed, "Total:", total);
             if (gameState.gameLevel < Object.keys(levelData).length) {
                 console.log("Level completed");
                 ctx.fillStyle = 'green';
@@ -1248,7 +1254,8 @@ function drawPlayer(playerData, isCurrentPlayer) {
         // Draw player name or code
         ctx.fillStyle = 'white';
         ctx.font = '12px Arial';
-        ctx.fillText(isCurrentPlayer ? 'You' : `Player ${playerData.playerNumber}`, screenX - 20, screenY - playerData.height / 2 - 15);
+        const displayName = isCurrentPlayer ? 'You' : (code ? code.substring(0, 6) : 'Player');
+        ctx.fillText(displayName, screenX - 20, screenY - playerData.height / 2 - 15);
     }
 }
 

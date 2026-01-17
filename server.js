@@ -41,9 +41,9 @@ const levelData = {
     monsters: ['Fear', 'Ignorance'],
     monsterDamageFactor: 1,
     playerSpeed: 5,
-    monsterSpeed: 2,
+    monsterSpeed: 5, // Increased from 2
     spawnRate: 10000,
-    maxMonsters: 8  // Increased for larger world
+    maxMonsters: 8
   },
   2: {
     qualities: ['Love', 'Wisdom', 'Healing'],
@@ -51,13 +51,15 @@ const levelData = {
     monsterDamageFactor: 1.5,
     playerSpeed: 6,
     spawnRate: 8000,
-    monsterSpeed: 2.5,
+    monsterSpeed: 7, // Increased from 2.5
     maxMonsters: 10
   },
   3: {
     qualities: ['Forgiveness', 'Good News', 'Focus'],
     monsters: ['Condemnation', 'Unbelief', 'Depression', 'Doubt'],
     monsterDamageFactor: 1.5,
+    monsterSpeed: 9, // Increased
+    maxMonsters: 12,
     playerSpeed: 6,
     spawnRate: 5000,
     monsterSpeed: 3,
@@ -126,6 +128,7 @@ let gameState = {
   gameLevel: 1, // Initialize gameLevel to 1
   maxSpawns: levelData[1].maxMonsters, // Initialize maxSpawns based on level 1
   spawnsLeft: levelData[1].maxMonsters, // Initialize spawnsLeft based on level 1
+  monstersKilled: 0,
   walls: generateMaze(WORLD_WIDTH, WORLD_HEIGHT, 100) // Generate maze
 };
 
@@ -145,7 +148,7 @@ function generatePlayerCode() {
   return crypto.randomBytes(3).toString('hex');
 }
 
-function isOverlapping(x, y, width, height) {
+function isOverlapping(x, y, width, height, excludeId = null) {
   // Check overlap with players
   for (const playerCode in gameState.players) {
     const player = gameState.players[playerCode];
@@ -161,6 +164,7 @@ function isOverlapping(x, y, width, height) {
 
   // Check overlap with monsters
   for (const monster of gameState.monsters) {
+    if (monster.id === excludeId) continue;
     if (
       x + width / 2 > monster.x - monster.width / 2 &&
       x - width / 2 < monster.x + monster.width / 2 &&
@@ -322,7 +326,15 @@ io.on('connection', (socket) => {
       if (targetMonster.health <= 0) {
         // Remove the monster from the game
         const monsterIndex = gameState.monsters.indexOf(targetMonster);
+
         gameState.monsters.splice(monsterIndex, 1);
+
+        // Track kills
+        if (!gameState.monstersKilled) gameState.monstersKilled = 0;
+        gameState.monstersKilled++;
+
+        console.log(`Monster killed! Total killed: ${gameState.monstersKilled}`);
+
         console.log('We should be removing a monster from the game');
         // Emit a 'monsterKilled' event to all clients
         io.emit('monsterKilled', { monsterId: targetMonster.id });
@@ -386,6 +398,7 @@ io.on('connection', (socket) => {
 function resetLevelData(level) {
   gameState.maxSpawns = levelData[level].maxMonsters;
   gameState.spawnsLeft = levelData[level].maxMonsters;
+  gameState.monstersKilled = 0;
   console.log(`Level ${level} data reset. MaxSpawns: ${gameState.maxSpawns}, SpawnsLeft: ${gameState.spawnsLeft}`);
 }
 
@@ -437,35 +450,66 @@ function spawnMonster() {
         const randomPlayerCode = playerCodes[Math.floor(Math.random() * playerCodes.length)];
         const randomPlayer = gameState.players[randomPlayerCode];
 
-        // Spawn within 300-600 pixels of the player
-        const spawnDistance = 300 + Math.random() * 300;
-        const angle = Math.random() * 2 * Math.PI;
+        // INTELLIGENT GRID-BASED SPAWNING
+        const validPositions = [];
+        const gridSize = 100;
+        const searchRadius = 400;
+        const minDistance = 150;
 
-        let attempts = 0;
-        do {
-          x = randomPlayer.x + Math.cos(angle) * spawnDistance;
-          y = randomPlayer.y + Math.sin(angle) * spawnDistance;
+        for (let ox = -searchRadius; ox <= searchRadius; ox += gridSize) {
+          for (let oy = -searchRadius; oy <= searchRadius; oy += gridSize) {
+            const testX = randomPlayer.x + ox + 50; // Center of cell
+            const testY = randomPlayer.y + oy + 50;
 
-          // Keep within world bounds
-          x = Math.max(MONSTER_WIDTH, Math.min(x, WORLD_WIDTH - MONSTER_WIDTH));
-          y = Math.max(MONSTER_HEIGHT, Math.min(y, WORLD_HEIGHT - MONSTER_HEIGHT));
-          attempts++;
-        } while (isOverlapping(x, y, MONSTER_WIDTH, MONSTER_HEIGHT) && attempts < 50);
+            // Bounds check
+            if (testX < MONSTER_WIDTH || testX > WORLD_WIDTH - MONSTER_WIDTH) continue;
+            if (testY < MONSTER_HEIGHT || testY > WORLD_HEIGHT - MONSTER_HEIGHT) continue;
+
+            // Distance check
+            const dist = Math.sqrt(ox * ox + oy * oy);
+            if (dist < minDistance) continue;
+
+            // Wall/entity check
+            if (!isOverlapping(testX, testY, MONSTER_WIDTH, MONSTER_HEIGHT)) {
+              validPositions.push({ x: testX, y: testY });
+            }
+          }
+        }
+
+        if (validPositions.length === 0) {
+          console.log('No valid spawn positions near player');
+          return;
+        }
+
+        const chosen = validPositions[Math.floor(Math.random() * validPositions.length)];
+        x = chosen.x;
+        y = chosen.y;
+        console.log(`Found ${validPositions.length} valid positions, spawning at (${x}, ${y})`);
+
       } else {
-        // No players, spawn randomly
-        do {
-          x = Math.random() * (WORLD_WIDTH - MONSTER_WIDTH);
-          y = Math.random() * (WORLD_HEIGHT - MONSTER_HEIGHT);
-        } while (isOverlapping(x, y, MONSTER_WIDTH, MONSTER_HEIGHT));
+        // No players - use world grid
+        const validPositions = [];
+        for (let testX = 100; testX < WORLD_WIDTH - 100; testX += 150) {
+          for (let testY = 100; testY < WORLD_HEIGHT - 100; testY += 150) {
+            if (!isOverlapping(testX, testY, MONSTER_WIDTH, MONSTER_HEIGHT)) {
+              validPositions.push({ x: testX, y: testY });
+            }
+          }
+        }
+        if (validPositions.length === 0) return;
+        const chosen = validPositions[Math.floor(Math.random() * validPositions.length)];
+        x = chosen.x;
+        y = chosen.y;
       }
 
       let chaser = false;
-      // Make some monsters chasers (30% chance)
-      if (Math.random() < 0.3) {
+      // 50% chasers, 50% random walkers
+      if (Math.random() < 0.5) {
         chaser = true;
+        console.log('Spawning CHASER monster');
+      } else {
+        console.log('Spawning RANDOM WALKER monster');
       }
-      // Reset chaseTrigger if it was set by a killed monster, as a new chaser is being spawned
-      gameState.chaseTrigger = false;
 
       // Randomly assign a demon type
       const demonType = levelData[gameState.gameLevel].monsters[Math.floor(Math.random() * levelData[gameState.gameLevel].monsters.length)];
@@ -505,6 +549,7 @@ function spawnMonster() {
       }
 
       const newMonster = {
+        id: crypto.randomBytes(4).toString('hex'),
         x: x,
         y: y,
         health: 10,
@@ -526,6 +571,12 @@ function spawnMonster() {
           color: 'green'
         }
       };
+
+      // CRITICAL: Final validation - only spawn if position is valid
+      if (isOverlapping(x, y, MONSTER_WIDTH, MONSTER_HEIGHT)) {
+        console.log('Skipping monster spawn - final check failed, position overlaps');
+        return;
+      }
 
       gameState.monsters.push(newMonster);
       gameState.spawnsLeft--;
@@ -563,6 +614,9 @@ app.get('/load-game-state', (req, res) => {
 
 
 function updateMonsters() {
+  const currentLevelData = levelData[gameState.gameLevel];
+  const speed = currentLevelData.monsterSpeed;
+
   gameState.monsters.forEach(monster => {
     if (monster.chaser) {
       // Chase the nearest player
@@ -573,14 +627,18 @@ function updateMonsters() {
         let distance = Math.sqrt(dx * dx + dy * dy);
 
         // Calculate new position
-        const newX = monster.x + (dx / distance) * MONSTER_SPEED;
-        const newY = monster.y + (dy / distance) * MONSTER_SPEED;
+        const newX = monster.x + (dx / distance) * speed;
+        const newY = monster.y + (dy / distance) * speed;
 
         // Check wall collision before moving
-        if (!isOverlapping(newX, newY, MONSTER_WIDTH, MONSTER_HEIGHT)) {
+        if (!isOverlapping(newX, newY, MONSTER_WIDTH, MONSTER_HEIGHT, monster.id)) {
           monster.x = newX;
           monster.y = newY;
+        } else {
+          // console.log(`Monster ${monster.id} hit a wall (chasing)`);
         }
+      } else {
+        // console.log(`Monster ${monster.id} lost player`);
       }
     } else {
       // Random walk
@@ -589,20 +647,21 @@ function updateMonsters() {
         monster.angle = Math.random() * 2 * Math.PI;
       }
 
-      let dx = Math.cos(monster.angle) * MONSTER_SPEED;
-      let dy = Math.sin(monster.angle) * MONSTER_SPEED;
+      let dx = Math.cos(monster.angle) * speed;
+      let dy = Math.sin(monster.angle) * speed;
 
       // Calculate new position
       const newX = monster.x + dx;
       const newY = monster.y + dy;
 
       // Check wall collision before moving
-      if (!isOverlapping(newX, newY, MONSTER_WIDTH, MONSTER_HEIGHT)) {
+      if (!isOverlapping(newX, newY, MONSTER_WIDTH, MONSTER_HEIGHT, monster.id)) {
         monster.x = newX;
         monster.y = newY;
-        monster.walkingDistance -= MONSTER_SPEED;
+        monster.walkingDistance -= speed;
       } else {
         // Hit a wall, pick a new direction
+        // console.log(`Monster ${monster.id} hit a wall (random walk)`);
         monster.walkingDistance = undefined;
         monster.angle = undefined;
       }
@@ -681,7 +740,7 @@ setInterval(() => {
 setInterval(() => {
   updateMonsters();
   io.emit('gameStateUpdate', gameState);
-}, 100);
+}, 50);
 
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
