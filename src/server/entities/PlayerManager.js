@@ -119,11 +119,17 @@ class PlayerManager {
                 // Award XP
                 player.xp += 10; // 10 XP per kill
 
-                // Simple Level Up Logic (every 100 XP)
-                if (player.xp >= player.level * 100) {
-                    player.level++;
-                    player.maxHealth += 20;
-                    player.health = player.maxHealth; // Full heal on level up
+                // Level Up Logic - matches client thresholds
+                const levelXPRequirements = [0, 30, 100, 200, 350, 500];
+                for (let i = player.level; i < levelXPRequirements.length; i++) {
+                    if (player.xp >= levelXPRequirements[i]) {
+                        player.level = i + 1;
+                        player.maxHealth = 50 + player.level * 50;
+                        player.health = player.maxHealth; // Full heal on level up
+                        console.log(`Player ${playerCode} reached level ${player.level}!`);
+                    } else {
+                        break;
+                    }
                 }
 
                 io.emit('monsterKilled', { monsterId: targetMonster.id, killer: playerCode });
