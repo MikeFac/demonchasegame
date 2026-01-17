@@ -607,9 +607,17 @@ function gameLoop() {
         ctx.font = '14px Arial'; // Set the font size
         ctx.fillText(`Health: ${player.health}  XP: ${player.xp}  Level: ${player.level}`, 7, QUALITY_LINE_HEIGHT - 7);
 
+        // Show enemy info only if monster is alive AND still exists in game state
         if (lastAttackedMonster && lastAttackedMonster.health > 0) {
-            const enemyText = `Enemy: ${lastAttackedMonster.demonType} ${lastAttackedMonster.health}`;
-            ctx.fillText(enemyText, ctx.measureText(`Health: ${player.health}  XP: ${player.xp}  Level: ${player.level}`).width + 14, QUALITY_LINE_HEIGHT - 7);
+            // Verify monster still exists in current monsters array
+            const stillExists = monsters.some(m => m.id === lastAttackedMonster.id);
+            if (stillExists) {
+                const enemyText = `Enemy: ${lastAttackedMonster.demonType} ${lastAttackedMonster.health}`;
+                ctx.fillText(enemyText, ctx.measureText(`Health: ${player.health}  XP: ${player.xp}  Level: ${player.level}`).width + 14, QUALITY_LINE_HEIGHT - 7);
+            } else {
+                // Monster was killed, clear the reference
+                lastAttackedMonster = null;
+            }
         }
 
         // Display the game level in bold yellow
