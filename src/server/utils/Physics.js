@@ -61,6 +61,31 @@ class Physics {
 
         return nearestPlayer;
     }
+
+    /**
+     * Check collision between a circle and a rectangle
+     * @param {Object} circle - {x, y, radius}
+     * @param {Object} rect - {x, y, width, height} (x,y are center)
+     * @returns {boolean}
+     */
+    static checkCollisionCircleRect(circle, rect) {
+        // Calculate distance between circle center and rect center
+        const distX = Math.abs(circle.x - rect.x);
+        const distY = Math.abs(circle.y - rect.y);
+
+        // If distance is greater than half_width + radius, they are too far apart
+        if (distX > (rect.width / 2 + circle.radius)) { return false; }
+        if (distY > (rect.height / 2 + circle.radius)) { return false; }
+
+        // If distance is less than half_width, they definitely intersect
+        if (distX <= (rect.width / 2)) { return true; }
+        if (distY <= (rect.height / 2)) { return true; }
+
+        // Corner case (circle center is outside the rect, but circle intersects corner)
+        const dx = distX - rect.width / 2;
+        const dy = distY - rect.height / 2;
+        return (dx * dx + dy * dy <= (circle.radius * circle.radius));
+    }
 }
 
 module.exports = Physics;
