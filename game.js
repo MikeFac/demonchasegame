@@ -491,10 +491,10 @@ async function init() {
                 for (let i = monsters.length - 1; i >= 0; i--) {
                     const m = monsters[i];
                     if (
-                        worldX >= m.x &&
-                        worldX <= m.x + m.width &&
-                        worldY >= m.y &&
-                        worldY <= m.y + m.height
+                        worldX >= m.x - m.width / 2 &&
+                        worldX <= m.x + m.width / 2 &&
+                        worldY >= m.y - m.height / 2 &&
+                        worldY <= m.y + m.height / 2
                     ) {
                         // Clicked on a monster!
                         if (player.ammo >= Constants.AMMO_COST) {
