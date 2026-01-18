@@ -146,8 +146,19 @@ class Game {
 
         // Handle player shooting
         socket.on('playerShoot', (data) => {
-            // data = { targetX, targetY }
-            this.bulletManager.addBullet(socket.playerCode, this.gameState.players[socket.playerCode], data);
+            const player = this.gameState.players[socket.playerCode];
+            if (player && player.ammo >= 1) { // 1 = AMMO_COST
+                player.ammo -= 1;
+                this.bulletManager.addBullet(socket.playerCode, player, data);
+            }
+        });
+
+        // Handle quiz answer (Award Ammo)
+        socket.on('quizCorrect', () => {
+            const player = this.gameState.players[socket.playerCode];
+            if (player) {
+                player.ammo = (player.ammo || 0) + 5; // 5 = AMMO_REWARD
+            }
         });
     }
 

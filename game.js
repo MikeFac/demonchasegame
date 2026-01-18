@@ -529,6 +529,7 @@ function handleQuizAnswer(selectedOption) {
 
         // Award Ammo
         player.ammo = (player.ammo || 0) + Constants.AMMO_REWARD;
+        network.sendQuizCorrect();
 
         setAnswerResultTimeout(5000);
     } else {
@@ -1018,6 +1019,21 @@ function updateGameState(newGameState) {
                 }
             };
         });
+        if (!player) {
+            // Player not created yet, wait for initialization
+        } else {
+            const serverPlayer = newGameState.players[playerCode];
+            if (serverPlayer) {
+                player.health = serverPlayer.health;
+                player.xp = serverPlayer.xp;
+                player.level = serverPlayer.level;
+                // Sync Ammo
+                if (serverPlayer.ammo !== undefined) {
+                    player.ammo = serverPlayer.ammo;
+                }
+            }
+        }
+
         //console.log('Mapped monsters:', monsters.length);
     } else {
         console.log('No monsters in game state or invalid monsters data');

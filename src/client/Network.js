@@ -163,6 +163,15 @@ class Network {
     }
 
     /**
+     * Send quiz correct event (to award ammo)
+     */
+    sendQuizCorrect() {
+        if (this.socket) {
+            this.socket.emit('quizCorrect');
+        }
+    }
+
+    /**
      * Notify server that level is completed
      */
     sendLevelCompleted() {

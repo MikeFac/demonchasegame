@@ -48,7 +48,8 @@ class PlayerManager {
             code: playerCode,
             color: 'blue', // Default, client overrides with sprite
             xp: 0,
-            level: 1
+            level: 1,
+            ammo: 20 // Initial Spirit Ammo
         };
         gameState.connectedPlayers++;
 
