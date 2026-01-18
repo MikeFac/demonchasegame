@@ -1046,6 +1046,13 @@ function updateGameState(newGameState) {
     } else {
         healingPoints = [];
     }
+
+    // Update bullets
+    if (newGameState.bullets && Array.isArray(newGameState.bullets)) {
+        gameState.bullets = newGameState.bullets;
+    } else {
+        gameState.bullets = [];
+    }
 }
 
 function lerp(a, b, t) {
