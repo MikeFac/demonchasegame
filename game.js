@@ -289,8 +289,11 @@ async function init() {
                         maxHealth: 100,
                         width: 47,
                         height: 52,
+                        width: 47,
+                        height: 52,
                         xp: 0,
-                        level: 1
+                        level: 1,
+                        ammo: 20 // Initial Spirit Ammo
                     };
                     gameState.players[playerCode] = player;
                 } else {
@@ -475,6 +478,38 @@ async function init() {
             },
             onReviewModeClick: (event) => {
                 handleReviewClick(event);
+            },
+            onGameClick: (x, y) => {
+                // Check if clicked on a monster (Shooting)
+                // Need to account for camera position since x,y are screen coords
+                // But monsters are in world coords.
+                const worldX = x + camera.x;
+                const worldY = y + camera.y;
+
+                // Simple point-in-rect check for monsters
+                // Reverse iterate to hit top-most drawn monster first (if any)
+                for (let i = monsters.length - 1; i >= 0; i--) {
+                    const m = monsters[i];
+                    if (
+                        worldX >= m.x &&
+                        worldX <= m.x + m.width &&
+                        worldY >= m.y &&
+                        worldY <= m.y + m.height
+                    ) {
+                        // Clicked on a monster!
+                        if (player.ammo >= Constants.AMMO_COST) {
+                            player.ammo -= Constants.AMMO_COST;
+                            network.sendShoot({ x: worldX, y: worldY });
+                            // Optional: Play shoot sound immediately
+                        } else {
+                            // Out of ammo feedback?
+                            console.log("Out of Spirit Ammo!");
+                        }
+                        return true; // Handled (prevent movement)
+                    }
+                }
+
+                return false; // Not handled (allow movement)
             }
         });
 
@@ -491,6 +526,10 @@ function handleQuizAnswer(selectedOption) {
         qualityIndex[vQuality] = (qualityIndex[vQuality] + 1) % organizedVerses[vQuality].length;
         qualityTotal[vQuality] = qualityTotal[vQuality] + 1;
         console.log(vQuality + " total correct is: " + qualityTotal[vQuality]);
+
+        // Award Ammo
+        player.ammo = (player.ammo || 0) + Constants.AMMO_REWARD;
+
         setAnswerResultTimeout(5000);
     } else {
         isAnswerCorrect = false;

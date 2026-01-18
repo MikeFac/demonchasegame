@@ -17,7 +17,14 @@ const Constants = {
     BUTTON_PADDING: 4,
     ANSWER_SECTION_HEIGHT: 17,
     PLAYER_WIDTH: 47,
-    PLAYER_HEIGHT: 52
+    PLAYER_HEIGHT: 52,
+
+    // Bullet Constants
+    BULLET_SPEED: 15, // projectile speed
+    BULLET_RADIUS: 4,
+    BULLET_DAMAGE: 10,
+    AMMO_COST: 1,
+    AMMO_REWARD: 5
 };
 
 if (typeof module !== 'undefined' && module.exports) {

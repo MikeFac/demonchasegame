@@ -2,6 +2,7 @@ const Constants = require('../shared/Constants');
 const generateMaze = require('./utils/Maze');
 const MonsterManager = require('./entities/MonsterManager');
 const PlayerManager = require('./entities/PlayerManager');
+const BulletManager = require('./entities/BulletManager');
 
 class Game {
     constructor(io) {
@@ -57,6 +58,7 @@ class Game {
         // Managers
         this.monsterManager = new MonsterManager(this.gameState, this.io, this.levelData);
         this.playerManager = new PlayerManager(this.gameState, this.io);
+        this.bulletManager = new BulletManager(this.io, this.monsterManager);
 
         // Healing Points
         // Initialize initial healing points
@@ -141,11 +143,20 @@ class Game {
             this.resetLevelData(this.gameState.gameLevel);
             this.io.emit('gameStateUpdate', this.gameState);
         });
+
+        // Handle player shooting
+        socket.on('playerShoot', (data) => {
+            // data = { targetX, targetY }
+            this.bulletManager.addBullet(socket.playerCode, this.gameState.players[socket.playerCode], data);
+        });
     }
 
     update() {
         // Update Monsters
         this.monsterManager.updateMonsters();
+
+        // Update Bullets
+        this.bulletManager.update(this.gameState);
 
         // Broadcast State
         this.io.emit('gameStateUpdate', this.gameState);

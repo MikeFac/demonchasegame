@@ -16,7 +16,8 @@ class InputHandler {
             onQualityButtonClick: null,
             onQuizOptionClick: null,
             onReviewButtonClick: null,
-            onReviewModeClick: null
+            onReviewModeClick: null,
+            onGameClick: null // (x, y) => boolean (handled?)
         };
 
         // Bind event handlers
@@ -107,8 +108,17 @@ class InputHandler {
                 const playableBottom = this.canvas.height - ANSWER_SECTION_HEIGHT - 14;
 
                 if (clickedY > playableTop && clickedY < playableBottom) {
-                    this.targetX = clickedX;
-                    this.targetY = clickedY;
+                    // Check if external handler wants to process this click first (e.g., shooting)
+                    let handled = false;
+                    if (this.callbacks.onGameClick) {
+                        handled = this.callbacks.onGameClick(clickedX, clickedY);
+                    }
+
+                    // Only update movement target if not handled
+                    if (!handled) {
+                        this.targetX = clickedX;
+                        this.targetY = clickedY;
+                    }
                 }
             }
         }

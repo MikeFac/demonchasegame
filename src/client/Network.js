@@ -153,6 +153,16 @@ class Network {
     }
 
     /**
+     * Send shoot event
+     * @param {Object} target - {x, y}
+     */
+    sendShoot(target) {
+        if (this.socket) {
+            this.socket.emit('playerShoot', target);
+        }
+    }
+
+    /**
      * Notify server that level is completed
      */
     sendLevelCompleted() {

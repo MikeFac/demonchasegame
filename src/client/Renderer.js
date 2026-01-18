@@ -42,6 +42,9 @@ class Renderer {
         // Draw Healing Points
         this.drawHealingPoints(healingPoints, camera);
 
+        // Draw Bullets
+        this.drawBullets(gameState.bullets, camera);
+
         // Draw HUD (Health, Level, etc.)
         this.drawHUD(player, gameState, uiState.lastAttackedMonster);
 
@@ -97,7 +100,9 @@ class Renderer {
     drawHUD(player, gameState, lastAttackedMonster) {
         this.ctx.fillStyle = 'white';
         this.ctx.font = '14px Arial';
-        this.ctx.fillText(`Health: ${player.health}  XP: ${player.xp}  Level: ${player.level}`, 7, this.QUALITY_LINE_HEIGHT - 7);
+        this.ctx.fillStyle = 'white';
+        this.ctx.font = '14px Arial';
+        this.ctx.fillText(`Health: ${player.health}  XP: ${player.xp}  Level: ${player.level}  Spirit: ${player.ammo || 0}`, 7, this.QUALITY_LINE_HEIGHT - 7);
 
         if (lastAttackedMonster && lastAttackedMonster.health > 0) {
             const enemyText = `Enemy: ${lastAttackedMonster.demonType} ${lastAttackedMonster.health}`;
@@ -257,6 +262,31 @@ class Renderer {
                 this.ctx.drawImage(this.assets.healingPointImg, screenX - hp.width / 2, screenY - hp.height / 2);
             }
         });
+    }
+
+    drawBullets(bullets, camera) {
+        if (!bullets) return;
+
+        this.ctx.fillStyle = '#FFFF00'; // Bright yellow
+        this.ctx.shadowBlur = 5;
+        this.ctx.shadowColor = 'orange';
+
+        bullets.forEach(bullet => {
+            const screenX = bullet.x - camera.x;
+            const screenY = bullet.y - camera.y;
+
+            // Visibility check
+            if (screenX + 5 > 0 && screenX - 5 < this.canvas.width &&
+                screenY + 5 > 0 && screenY - 5 < this.canvas.height) {
+
+                this.ctx.beginPath();
+                this.ctx.arc(screenX, screenY, 4, 0, Math.PI * 2);
+                this.ctx.fill();
+            }
+        });
+
+        // Reset shadow
+        this.ctx.shadowBlur = 0;
     }
 
     displayBibleVerse(verseText, verseReference, quizData) {
