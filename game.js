@@ -614,6 +614,12 @@ function gameLoop() {
 
         window.renderer.drawGame(gameState, player, playerCode, monsters, healingPoints, camera, uiState);
 
+        // If game over, stop processing movement/combat but keep rendering
+        if (gameOverFlag) {
+            requestAnimationFrame(gameLoop);
+            return;
+        }
+
         /*
         // Clear the canvas
         ctx.clearRect(0, 0, canvas.width, canvas.height);
