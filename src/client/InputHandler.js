@@ -7,9 +7,12 @@ class InputHandler {
         this.canvas = canvas;
         this.constants = constants;
 
-        // Movement target (where player should move towards)
-        this.targetX = canvas.width / 2;
-        this.targetY = canvas.height / 2;
+        // Movement target in WORLD coordinates (where player should move towards)
+        this.worldTargetX = null;
+        this.worldTargetY = null;
+
+        // Camera reference (set externally)
+        this.camera = { x: 0, y: 0 };
 
         // Click processing callbacks
         this.callbacks = {
@@ -36,23 +39,30 @@ class InputHandler {
     }
 
     /**
-     * Get the current movement target in screen coordinates
-     * @returns {{x: number, y: number}}
+     * Set the camera reference for coordinate conversion
+     * @param {Object} camera - Camera object with x, y
      */
-    getTarget() {
-        return { x: this.targetX, y: this.targetY };
+    setCamera(camera) {
+        this.camera = camera;
     }
 
     /**
-     * Convert screen coordinates to world coordinates
-     * @param {Object} camera - Camera object with x, y
-     * @returns {{x: number, y: number}}
+     * Get the current movement target in world coordinates
+     * @returns {{x: number, y: number} | null}
      */
-    getWorldTarget(camera) {
-        return {
-            x: this.targetX + camera.x,
-            y: this.targetY + camera.y
-        };
+    getWorldTarget() {
+        if (this.worldTargetX === null || this.worldTargetY === null) {
+            return null;
+        }
+        return { x: this.worldTargetX, y: this.worldTargetY };
+    }
+
+    /**
+     * Clear the movement target (player has arrived)
+     */
+    clearTarget() {
+        this.worldTargetX = null;
+        this.worldTargetY = null;
     }
 
     /**
@@ -116,8 +126,9 @@ class InputHandler {
 
                     // Only update movement target if not handled
                     if (!handled) {
-                        this.targetX = clickedX;
-                        this.targetY = clickedY;
+                        // Convert screen coords to world coords at click time
+                        this.worldTargetX = clickedX + this.camera.x;
+                        this.worldTargetY = clickedY + this.camera.y;
                     }
                 }
             }

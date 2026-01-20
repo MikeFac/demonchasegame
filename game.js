@@ -701,50 +701,56 @@ function gameLoop() {
 
         // Move the player
         // Get movement target from InputHandler
-        const worldTarget = inputHandler ? inputHandler.getWorldTarget(camera) : { x: player.x, y: player.y };
-        let dx = worldTarget.x - player.x;
-        let dy = worldTarget.y - player.y;
-        let distance = Math.sqrt(dx * dx + dy * dy);
+        const worldTarget = inputHandler ? inputHandler.getWorldTarget() : null;
 
-        const THRESHOLD_DISTANCE = 5; // Adjust this value as needed
+        if (worldTarget) {
+            let dx = worldTarget.x - player.x;
+            let dy = worldTarget.y - player.y;
+            let distance = Math.sqrt(dx * dx + dy * dy);
 
-        if (distance > THRESHOLD_DISTANCE) {
-            // Calculate new position
-            const newX = player.x + (dx / distance) * PLAYER_SPEED;
-            const newY = player.y + (dy / distance) * PLAYER_SPEED;
+            const THRESHOLD_DISTANCE = 5; // Adjust this value as needed
 
-            // Check monster collision
-            let monsterCollision = false;
-            for (const monster of monsters) {
-                const monsterDx = newX - monster.x;
-                const monsterDy = newY - monster.y;
-                const monsterDist = Math.sqrt(monsterDx * monsterDx + monsterDy * monsterDy);
-                if (monsterDist < (player.width / 2 + monster.width / 2)) {
-                    monsterCollision = true;
-                    break;
+            if (distance > THRESHOLD_DISTANCE) {
+                // Calculate new position
+                const newX = player.x + (dx / distance) * PLAYER_SPEED;
+                const newY = player.y + (dy / distance) * PLAYER_SPEED;
+
+                // Check monster collision
+                let monsterCollision = false;
+                for (const monster of monsters) {
+                    const monsterDx = newX - monster.x;
+                    const monsterDy = newY - monster.y;
+                    const monsterDist = Math.sqrt(monsterDx * monsterDx + monsterDy * monsterDy);
+                    if (monsterDist < (player.width / 2 + monster.width / 2)) {
+                        monsterCollision = true;
+                        break;
+                    }
                 }
-            }
 
-            // Try moving in both dimensions
-            if (!monsterCollision && !checkWallCollision(newX, newY, player.width, player.height)) {
-                player.x = newX;
-                player.y = newY;
-            }
-            // If blocked, try sliding along X axis only
-            else if (!monsterCollision && !checkWallCollision(newX, player.y, player.width, player.height)) {
-                player.x = newX;
-            }
-            // If blocked, try sliding along Y axis only
-            else if (!monsterCollision && !checkWallCollision(player.x, newY, player.width, player.height)) {
-                player.y = newY;
-            }
+                // Try moving in both dimensions
+                if (!monsterCollision && !checkWallCollision(newX, newY, player.width, player.height)) {
+                    player.x = newX;
+                    player.y = newY;
+                }
+                // If blocked, try sliding along X axis only
+                else if (!monsterCollision && !checkWallCollision(newX, player.y, player.width, player.height)) {
+                    player.x = newX;
+                }
+                // If blocked, try sliding along Y axis only
+                else if (!monsterCollision && !checkWallCollision(player.x, newY, player.width, player.height)) {
+                    player.y = newY;
+                }
 
-            // Keep player within world bounds
-            player.x = Math.max(0, Math.min(player.x, WORLD_WIDTH));
-            player.y = Math.max(0, Math.min(player.y, WORLD_HEIGHT));
+                // Keep player within world bounds
+                player.x = Math.max(0, Math.min(player.x, WORLD_WIDTH));
+                player.y = Math.max(0, Math.min(player.y, WORLD_HEIGHT));
 
-            // Send the player's position to the server
-            network.sendPosition(player.x, player.y);
+                // Send the player's position to the server
+                network.sendPosition(player.x, player.y);
+            } else {
+                // Player has arrived at target, clear it
+                inputHandler.clearTarget();
+            }
         }
 
         // Update camera to follow player
@@ -754,6 +760,11 @@ function gameLoop() {
         // Clamp camera to world bounds
         camera.x = Math.max(0, Math.min(camera.x, WORLD_WIDTH - canvas.width));
         camera.y = Math.max(0, Math.min(camera.y, WORLD_HEIGHT - canvas.height));
+
+        // Update InputHandler with current camera for click-to-world coord conversion
+        if (inputHandler) {
+            inputHandler.setCamera(camera);
+        }
 
 
 
@@ -872,15 +883,15 @@ function gameLoop() {
 
         /*
         // Draw the game objects
-
+ 
         // Draw walls first (background layer)
         drawWalls();
-
+ 
         // Draw all players
         Object.keys(gameState.players).forEach(code => {
             const playerData = gameState.players[code];
             //console.log("Code", code,"playerCode",playerCode);
-
+ 
             if (playerData && playerImg && otherPlayerImg && playerImg.complete && playerData.width && playerData.height) {
                 drawPlayer(playerData, code === playerCode);  // 2nd parameter true if it is the current player
             } else {
@@ -890,21 +901,21 @@ function gameLoop() {
                     "Player height:", player ? player.height : undefined);
             }
         });
-
-
+ 
+ 
         explosionTimer += EXPLOSION_INTERVAL;
-
+ 
         //console.log(`Attempting to draw ${monsters.length} monsters`);
         //debugger;
         monsters.forEach(monster => {
             drawMonster(monster, explosionTimer);
         });
-
-
+ 
+ 
         healingPoints.forEach(healingPoint => {
             drawHealingPoint(healingPoint);
         });
-
+ 
         // Display the Bible verse and request the next animation frame
         displayBibleVerse(gappedVerse, organizedVerses[vQuality][currentVerseIndex].Reference);
         */
