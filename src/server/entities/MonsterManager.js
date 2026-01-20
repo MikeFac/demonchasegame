@@ -212,6 +212,54 @@ class MonsterManager {
             }
         });
     }
+    /**
+     * Damage a monster by ID. Returns true if killed.
+     * @param {string} monsterId 
+     * @param {number} damage 
+     * @param {string} attackerPlayerCode 
+     * @returns {boolean} - true if monster was killed
+     */
+    damageMonster(monsterId, damage, attackerPlayerCode) {
+        const { gameState, io } = this;
+        const monsterIndex = gameState.monsters.findIndex(m => m.id === monsterId);
+
+        if (monsterIndex === -1) return false;
+
+        const monster = gameState.monsters[monsterIndex];
+        monster.health -= damage;
+        monster.isAttacked = true;
+        monster.showHealth = true;
+        monster.showHealthTimeout = Date.now() + 3000; // Show health for 3s
+
+        if (monster.health <= 0) {
+            // Monster killed
+            gameState.monsters.splice(monsterIndex, 1);
+            gameState.monstersKilled = (gameState.monstersKilled || 0) + 1;
+
+            // Award XP to attacker
+            const player = gameState.players[attackerPlayerCode];
+            if (player) {
+                player.xp = (player.xp || 0) + 10;
+
+                // Level up check (matches client thresholds)
+                const levelXPRequirements = [0, 30, 100, 200, 350, 500];
+                for (let i = player.level; i < levelXPRequirements.length; i++) {
+                    if (player.xp >= levelXPRequirements[i]) {
+                        player.level = i + 1;
+                        player.maxHealth = 50 + player.level * 50;
+                        player.health = player.maxHealth;
+                    } else {
+                        break;
+                    }
+                }
+            }
+
+            io.emit('monsterKilled', { monsterId: monsterId, killer: attackerPlayerCode });
+            return true;
+        }
+
+        return false;
+    }
 }
 
 module.exports = MonsterManager;

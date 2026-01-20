@@ -497,14 +497,8 @@ async function init() {
                         worldY <= m.y + m.height / 2
                     ) {
                         // Clicked on a monster!
-                        if (player.ammo >= Constants.AMMO_COST) {
-                            player.ammo -= Constants.AMMO_COST;
-                            network.sendShoot({ x: worldX, y: worldY });
-                            // Optional: Play shoot sound immediately
-                        } else {
-                            // Out of ammo feedback?
-                            console.log("Out of Spirit Ammo!");
-                        }
+                        // Server handles ammo validation and deduction
+                        network.sendShoot({ x: worldX, y: worldY });
                         return true; // Handled (prevent movement)
                     }
                 }
