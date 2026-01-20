@@ -50,34 +50,32 @@ class BulletManager {
             }
         });
 
-        // 2. Check collisions with monsters
-        // Optimization: Checking every bullet against every monster is O(N*M). 
-        // With low counts (bullets < 10, monsters < 20), it's fine.
-
-        // We iterate backwards to safely remove bullets if needed, though we mark them inactive instead
+        // 2. Check collisions (walls then monsters)
         for (let i = this.bullets.length - 1; i >= 0; i--) {
             const bullet = this.bullets[i];
             if (!bullet.active) continue;
 
-            // Check collision with walls (if we implement wall collision for bullets)
-            // For now, let's just do monsters
+            // Check collision with walls - bullets are absorbed by walls
+            for (const wall of gameState.walls) {
+                if (Physics.checkCollisionCircleRect(
+                    { x: bullet.x, y: bullet.y, radius: bullet.radius },
+                    wall
+                )) {
+                    bullet.active = false;
+                    break;
+                }
+            }
+            if (!bullet.active) continue;
 
+            // Check collision with monsters
             for (const monster of gameState.monsters) {
                 if (Physics.checkCollisionCircleRect(
                     { x: bullet.x, y: bullet.y, radius: bullet.radius },
-                    monster // Monster is {x, y, width, height}
+                    monster
                 )) {
-                    // Hit!
                     bullet.active = false;
-
-                    // Damage monster
-                    const killed = this.monsterManager.damageMonster(monster.id, Constants.BULLET_DAMAGE, bullet.playerCode);
-
-                    if (!killed) {
-                        // Optional: emit hit effect
-                    }
-
-                    break; // Bullet hits only one monster
+                    this.monsterManager.damageMonster(monster.id, Constants.BULLET_DAMAGE, bullet.playerCode);
+                    break;
                 }
             }
         }
@@ -86,7 +84,6 @@ class BulletManager {
         this.bullets = this.bullets.filter(b => b.active);
 
         // 4. Update GameState for client rendering
-        // We only send basic data to save bandwidth
         gameState.bullets = this.bullets.map(b => ({
             id: b.id,
             x: Math.round(b.x),

@@ -22,7 +22,7 @@ const Constants = {
     // Bullet Constants
     BULLET_SPEED: 15, // projectile speed
     BULLET_RADIUS: 4,
-    BULLET_DAMAGE: 10,
+    BULLET_DAMAGE: 2,  // Damage per hit (not lethal)
     AMMO_COST: 1,
     AMMO_REWARD: 5
 };
