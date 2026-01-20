@@ -302,7 +302,9 @@ async function init() {
             },
             onPlayerNumber: (playerNumber) => {
                 console.log(`Received player number: ${playerNumber}`);
-                const playerImage = `player${playerNumber}.png`;
+                // Only 4 player sprites exist, so wrap around
+                const spriteNumber = ((playerNumber - 1) % 4) + 1;
+                const playerImage = `player${spriteNumber}.png`;
                 playerImg = new Image();
                 playerImg.src = `${scriptDirectory}/${playerImage}`;
                 playerImg.onload = function () {
