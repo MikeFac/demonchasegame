@@ -231,6 +231,13 @@ class MonsterManager {
         monster.showHealth = true;
         monster.showHealthTimeout = Date.now() + 3000; // Show health for 3s
 
+        // Clear isAttacked after 500ms (explosion visual duration)
+        setTimeout(() => {
+            if (monster && gameState.monsters.includes(monster)) {
+                monster.isAttacked = false;
+            }
+        }, 500);
+
         if (monster.health <= 0) {
             // Monster killed
             gameState.monsters.splice(monsterIndex, 1);
