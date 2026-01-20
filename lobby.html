@@ -1,0 +1,551 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Demon Chase - Lobby</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            min-height: 100vh;
+            color: #fff;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 500px;
+            padding: 20px;
+        }
+
+        .panel {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 30px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 2.5em;
+            text-shadow: 0 0 20px rgba(100, 200, 255, 0.5);
+        }
+
+        .logo {
+            font-size: 3em;
+            text-align: center;
+            margin-bottom: 10px;
+        }
+
+        input[type="text"] {
+            width: 100%;
+            padding: 15px;
+            border: none;
+            border-radius: 10px;
+            font-size: 1.1em;
+            background: rgba(255, 255, 255, 0.9);
+            color: #333;
+            margin-bottom: 15px;
+        }
+
+        input[type="text"]::placeholder {
+            color: #888;
+        }
+
+        button {
+            width: 100%;
+            padding: 15px;
+            border: none;
+            border-radius: 10px;
+            font-size: 1.1em;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-bottom: 10px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.5);
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+            color: white;
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, #eb3349 0%, #f45c43 100%);
+            color: white;
+        }
+
+        .room-list {
+            max-height: 300px;
+            overflow-y: auto;
+            margin: 20px 0;
+        }
+
+        .room-item {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .room-item:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .room-info h3 {
+            font-size: 1.1em;
+        }
+
+        .room-info span {
+            font-size: 0.9em;
+            opacity: 0.7;
+        }
+
+        .player-count {
+            font-size: 1.2em;
+            font-weight: bold;
+        }
+
+        .player-list {
+            margin: 20px 0;
+        }
+
+        .player-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 15px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            margin-bottom: 8px;
+        }
+
+        .player-name {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .ready-badge {
+            padding: 3px 10px;
+            border-radius: 20px;
+            font-size: 0.8em;
+        }
+
+        .ready-yes {
+            background: #38ef7d;
+            color: #000;
+        }
+
+        .ready-no {
+            background: #f45c43;
+        }
+
+        .host-badge {
+            background: #ffd700;
+            color: #000;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 0.75em;
+        }
+
+        .error {
+            background: rgba(255, 0, 0, 0.2);
+            padding: 10px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .divider {
+            text-align: center;
+            margin: 20px 0;
+            opacity: 0.5;
+        }
+
+        .welcome-msg {
+            text-align: center;
+            margin-bottom: 20px;
+            opacity: 0.8;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <!-- Login Screen -->
+        <div id="loginScreen" class="panel">
+            <div class="logo">⚔️</div>
+            <h1>Demon Chase</h1>
+            <div id="loginError" class="error hidden"></div>
+            <input type="text" id="usernameInput" placeholder="Enter your username" maxlength="20">
+            <button class="btn-primary" onclick="register()">Play Online</button>
+            <button class="btn-secondary" onclick="playSolo()">Practice (Solo)</button>
+        </div>
+
+        <!-- Lobby Screen -->
+        <div id="lobbyScreen" class="panel hidden">
+            <h2 style="margin-bottom: 20px;">🎮 Game Rooms</h2>
+            <p id="welcomeMsg" class="welcome-msg"></p>
+
+            <div class="room-list" id="roomList">
+                <!-- Rooms will be populated here -->
+            </div>
+
+            <button class="btn-primary" onclick="quickPlay()">⚡ Quick Play</button>
+            <button class="btn-secondary" onclick="showCreateRoom()">+ Create Room</button>
+            <div class="divider">or</div>
+            <button class="btn-secondary" onclick="logout()">Logout</button>
+        </div>
+
+        <!-- Create Room Screen -->
+        <div id="createRoomScreen" class="panel hidden">
+            <h2 style="margin-bottom: 20px;">Create Room</h2>
+            <input type="text" id="roomNameInput" placeholder="Room name (optional)">
+            <button class="btn-success" onclick="createRoom()">Create & Join</button>
+            <button class="btn-secondary" onclick="showLobby()">← Back</button>
+        </div>
+
+        <!-- Room Screen -->
+        <div id="roomScreen" class="panel hidden">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <h2 id="roomTitle">Room</h2>
+                <button class="btn-danger" style="width: auto; padding: 8px 15px;" onclick="leaveRoom()">Leave</button>
+            </div>
+
+            <div class="player-list" id="playerList">
+                <!-- Players will be populated here -->
+            </div>
+
+            <button id="readyBtn" class="btn-secondary" onclick="toggleReady()">Ready Up</button>
+            <button id="startBtn" class="btn-success hidden" onclick="startGame()">Start Game</button>
+        </div>
+    </div>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        // State
+        let socket = null;
+        let sessionToken = localStorage.getItem('sessionToken');
+        let currentUser = null;
+        let currentRoom = null;
+        let isReady = false;
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            if (sessionToken) {
+                tryLogin();
+            }
+        });
+
+        // ==================== Auth ====================
+
+        async function register() {
+            const username = document.getElementById('usernameInput').value.trim();
+            if (!username) {
+                showError('loginError', 'Please enter a username');
+                return;
+            }
+
+            try {
+                const res = await fetch('/api/register', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username })
+                });
+                const data = await res.json();
+
+                if (data.success) {
+                    sessionToken = data.user.sessionToken;
+                    localStorage.setItem('sessionToken', sessionToken);
+                    currentUser = data.user;
+                    connectSocket();
+                } else {
+                    showError('loginError', data.error);
+                }
+            } catch (err) {
+                showError('loginError', 'Connection error');
+            }
+        }
+
+        async function tryLogin() {
+            try {
+                const res = await fetch('/api/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ sessionToken })
+                });
+                const data = await res.json();
+
+                if (data.success) {
+                    currentUser = data.user;
+                    connectSocket();
+                } else {
+                    localStorage.removeItem('sessionToken');
+                    sessionToken = null;
+                }
+            } catch (err) {
+                console.error('Login error:', err);
+            }
+        }
+
+        function logout() {
+            localStorage.removeItem('sessionToken');
+            sessionToken = null;
+            currentUser = null;
+            if (socket) socket.disconnect();
+            showScreen('loginScreen');
+        }
+
+        function playSolo() {
+            window.location.href = '/';
+        }
+
+        // ==================== Socket ====================
+
+        function connectSocket() {
+            socket = io();
+
+            socket.on('connect', () => {
+                socket.emit('authenticate', sessionToken, (result) => {
+                    if (result.success) {
+                        showLobby();
+                        refreshRooms();
+                    } else {
+                        logout();
+                    }
+                });
+            });
+
+            socket.on('roomListUpdated', ({ rooms }) => {
+                renderRoomList(rooms);
+            });
+
+            socket.on('roomUpdated', ({ room }) => {
+                if (currentRoom && room.id === currentRoom.id) {
+                    currentRoom = room;
+                    renderRoom();
+                }
+            });
+
+            socket.on('playerLeft', ({ playerId, room }) => {
+                if (currentRoom && room) {
+                    currentRoom = room;
+                    renderRoom();
+                }
+            });
+
+            socket.on('gameStarted', ({ roomId }) => {
+                // Redirect to game
+                window.location.href = `/?room=${roomId}`;
+            });
+        }
+
+        // ==================== Rooms ====================
+
+        function refreshRooms() {
+            socket.emit('getRooms', (result) => {
+                renderRoomList(result.rooms);
+            });
+        }
+
+        function renderRoomList(rooms) {
+            const container = document.getElementById('roomList');
+            if (rooms.length === 0) {
+                container.innerHTML = '<p style="text-align: center; opacity: 0.6;">No rooms available. Create one!</p>';
+                return;
+            }
+
+            container.innerHTML = rooms.map(room => `
+                <div class="room-item" onclick="joinRoom('${room.id}')">
+                    <div class="room-info">
+                        <h3>📦 ${room.name}</h3>
+                        <span>${room.settings.category || 'All Categories'}</span>
+                    </div>
+                    <div class="player-count">${room.playerCount}/${room.maxPlayers}</div>
+                </div>
+            `).join('');
+        }
+
+        function showCreateRoom() {
+            showScreen('createRoomScreen');
+        }
+
+        function createRoom() {
+            const name = document.getElementById('roomNameInput').value.trim();
+            socket.emit('createRoom', { name }, (result) => {
+                if (result.success) {
+                    currentRoom = result.room;
+                    isReady = false;
+                    showScreen('roomScreen');
+                    renderRoom();
+                } else {
+                    alert(result.error);
+                }
+            });
+        }
+
+        function joinRoom(roomId) {
+            socket.emit('joinRoom', roomId, (result) => {
+                if (result.success) {
+                    currentRoom = result.room;
+                    isReady = false;
+                    showScreen('roomScreen');
+                    renderRoom();
+                } else {
+                    alert(result.error);
+                }
+            });
+        }
+
+        function leaveRoom() {
+            socket.emit('leaveRoom', currentRoom.id, () => {
+                currentRoom = null;
+                showLobby();
+                refreshRooms();
+            });
+        }
+
+        function quickPlay() {
+            socket.emit('quickPlay', (result) => {
+                if (result.success) {
+                    currentRoom = result.room;
+                    isReady = false;
+                    showScreen('roomScreen');
+                    renderRoom();
+                } else {
+                    alert(result.error);
+                }
+            });
+        }
+
+        // ==================== Room UI ====================
+
+        function renderRoom() {
+            document.getElementById('roomTitle').textContent = currentRoom.name;
+
+            const isHost = currentRoom.hostId === currentUser.id;
+            const me = currentRoom.players.find(p => p.id === currentUser.id);
+            isReady = me ? me.ready : false;
+
+            const playerList = document.getElementById('playerList');
+            playerList.innerHTML = currentRoom.players.map(p => `
+                <div class="player-item">
+                    <div class="player-name">
+                        <span>👤 ${p.username}</span>
+                        ${p.isHost ? '<span class="host-badge">HOST</span>' : ''}
+                    </div>
+                    <span class="ready-badge ${p.ready || p.isHost ? 'ready-yes' : 'ready-no'}">
+                        ${p.isHost ? '✓' : (p.ready ? '✓ Ready' : 'Not Ready')}
+                    </span>
+                </div>
+            `).join('');
+
+            // Waiting slots
+            for (let i = currentRoom.players.length; i < currentRoom.maxPlayers; i++) {
+                playerList.innerHTML += `
+                    <div class="player-item" style="opacity: 0.4;">
+                        <span>⏳ Waiting...</span>
+                    </div>
+                `;
+            }
+
+            // Ready/Start buttons
+            const readyBtn = document.getElementById('readyBtn');
+            const startBtn = document.getElementById('startBtn');
+
+            if (isHost) {
+                readyBtn.classList.add('hidden');
+                startBtn.classList.remove('hidden');
+                // Enable start only if all non-hosts are ready and 2+ players
+                const allReady = currentRoom.players.filter(p => !p.isHost).every(p => p.ready);
+                startBtn.disabled = currentRoom.players.length < 2 || !allReady;
+                startBtn.style.opacity = startBtn.disabled ? '0.5' : '1';
+            } else {
+                readyBtn.classList.remove('hidden');
+                startBtn.classList.add('hidden');
+                readyBtn.textContent = isReady ? '✓ Ready!' : 'Ready Up';
+                readyBtn.className = isReady ? 'btn-success' : 'btn-secondary';
+            }
+        }
+
+        function toggleReady() {
+            isReady = !isReady;
+            socket.emit('setReady', { roomId: currentRoom.id, ready: isReady }, (result) => {
+                if (result.success) {
+                    currentRoom = result.room;
+                    renderRoom();
+                }
+            });
+        }
+
+        function startGame() {
+            socket.emit('startGame', currentRoom.id, (result) => {
+                if (!result.success) {
+                    alert(result.error);
+                }
+            });
+        }
+
+        // ==================== UI Helpers ====================
+
+        function showScreen(screenId) {
+            ['loginScreen', 'lobbyScreen', 'createRoomScreen', 'roomScreen'].forEach(id => {
+                document.getElementById(id).classList.add('hidden');
+            });
+            document.getElementById(screenId).classList.remove('hidden');
+        }
+
+        function showLobby() {
+            document.getElementById('welcomeMsg').textContent = `Welcome, ${currentUser.username}!`;
+            showScreen('lobbyScreen');
+        }
+
+        function showError(elementId, message) {
+            const el = document.getElementById(elementId);
+            el.textContent = message;
+            el.classList.remove('hidden');
+            setTimeout(() => el.classList.add('hidden'), 3000);
+        }
+    </script>
+</body>
+
+</html>

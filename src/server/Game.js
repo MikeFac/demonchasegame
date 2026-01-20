@@ -5,8 +5,9 @@ const PlayerManager = require('./entities/PlayerManager');
 const BulletManager = require('./entities/BulletManager');
 
 class Game {
-    constructor(io) {
+    constructor(io, roomId = null) {
         this.io = io;
+        this.roomId = roomId; // If null, broadcasts to all; otherwise scoped to room
         this.lastUpdateTime = Date.now();
         this.shouldRun = false;
 
