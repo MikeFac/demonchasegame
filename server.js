@@ -25,6 +25,11 @@ app.get('/lobby', (req, res) => {
 const roomManager = new RoomManager(io);
 const gameInstances = new Map(); // roomId -> Game instance
 
+// Create default solo game for direct connections (backward compatibility)
+const soloGame = new Game(io, 'solo');
+soloGame.start();
+gameInstances.set('solo', soloGame);
+
 // ==================== REST API ====================
 
 // Register a new user
@@ -50,6 +55,16 @@ app.get('/api/rooms', (req, res) => {
 
 io.on('connection', (socket) => {
   console.log(`Socket connected: ${socket.id}`);
+
+  // For direct connections (not from lobby), add to solo game immediately
+  // Wait a short moment to see if they authenticate via lobby
+  let addedToSolo = false;
+  setTimeout(() => {
+    if (!socket.sessionToken && !addedToSolo) {
+      addedToSolo = true;
+      soloGame.addPlayer(socket);
+    }
+  }, 500);
 
   // Authenticate socket with session token
   socket.on('authenticate', (sessionToken, callback) => {
