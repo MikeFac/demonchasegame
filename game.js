@@ -207,24 +207,50 @@ function setLevelData(gameState) {
     }
 }
 
+function startGame(mode, roomId) {
+    const menuScreen = document.getElementById('menuScreen');
+    if (menuScreen) menuScreen.style.display = 'none';
+    canvas.style.display = 'block';
+
+    init().then(() => {
+        if (mode === 'solo') {
+            network.sendStartSoloGame();
+        } else if (mode === 'join' && roomId) {
+            network.sendJoinGame(roomId);
+        }
+        gameLoop();
+    }).catch((error) => {
+        console.error('Error initializing game:', error);
+    });
+}
+
 // Wait for the DOM content to load
 document.addEventListener('DOMContentLoaded', function () {
-    // Get the canvas element by its ID
     canvas = document.getElementById('gameCanvas');
-
-    // Check if the canvas element exists
-    if (canvas) {
-        // Get the 2D rendering context
-        ctx = canvas.getContext('2d');
-
-        // Start the game initialization
-        init().then(() => {
-            gameLoop();
-        }).catch((error) => {
-            console.error('Error initializing game:', error);
-        });
-    } else {
+    if (!canvas) {
         console.error('Canvas element not found');
+        return;
+    }
+    ctx = canvas.getContext('2d');
+
+    // Parse URL params
+    const roomId = urlParams.get('room');
+    const mode = urlParams.get('mode');
+
+    if (roomId) {
+        // Coming from lobby redirect — skip menu, join game
+        startGame('join', roomId);
+    } else if (mode === 'solo') {
+        // Lobby "Practice (Solo)" shortcut — skip menu
+        startGame('solo');
+    } else {
+        // Show menu, wait for button click
+        document.getElementById('btnSolo').addEventListener('click', () => {
+            startGame('solo');
+        });
+        document.getElementById('btnMultiplayer').addEventListener('click', () => {
+            window.location.href = '/lobby';
+        });
     }
 });
 

@@ -25,10 +25,7 @@ app.get('/lobby', (req, res) => {
 const roomManager = new RoomManager(io);
 const gameInstances = new Map(); // roomId -> Game instance
 
-// Create default solo game for direct connections (backward compatibility)
-const soloGame = new Game(io, 'solo');
-soloGame.start();
-gameInstances.set('solo', soloGame);
+// No shared solo game — each player gets their own instance via startSoloGame
 
 // ==================== REST API ====================
 
@@ -56,16 +53,30 @@ app.get('/api/rooms', (req, res) => {
 io.on('connection', (socket) => {
   console.log(`Socket connected: ${socket.id}`);
 
-  // For direct connections (not from lobby), add to solo game immediately
-  // Wait a short moment to see if they authenticate via lobby
-  let addedToSolo = false;
-  setTimeout(() => {
-    if (!socket.sessionToken && !addedToSolo) {
-      addedToSolo = true;
-      socket.join('room:solo');
-      soloGame.addPlayer(socket);
+  // Solo game: each player gets their own isolated game instance
+  socket.on('startSoloGame', () => {
+    const soloRoomId = `solo-${socket.id}`;
+    const game = new Game(io, soloRoomId);
+    gameInstances.set(soloRoomId, game);
+    game.onEmpty = () => {
+      gameInstances.delete(soloRoomId);
+      console.log(`Solo game ${soloRoomId} cleaned up`);
+    };
+    socket.join(`room:${soloRoomId}`);
+    game.addPlayer(socket);
+    game.start();
+  });
+
+  // Join an existing multiplayer game (from lobby redirect)
+  socket.on('joinGame', (roomId) => {
+    const game = gameInstances.get(roomId);
+    if (game) {
+      socket.join(`room:${roomId}`);
+      game.addPlayer(socket);
+    } else {
+      console.warn(`joinGame: no game found for room ${roomId}`);
     }
-  }, 500);
+  });
 
   // Authenticate socket with session token
   socket.on('authenticate', (sessionToken, callback) => {
@@ -151,16 +162,10 @@ io.on('connection', (socket) => {
         gameInstances.delete(roomId);
         console.log(`Game for room ${roomId} cleaned up (all players left)`);
       };
+      game.start();
 
-      // Add all players in the room to the game
-      const room = result.room;
-      io.in(`room:${roomId}`).fetchSockets().then(sockets => {
-        sockets.forEach(s => {
-          game.addPlayer(s);
-        });
-        game.start();
-        io.to(`room:${roomId}`).emit('gameStarted', { roomId });
-      });
+      // Notify lobby clients — they'll redirect to /?room=ROOMID and joinGame
+      io.to(`room:${roomId}`).emit('gameStarted', { roomId });
 
       io.emit('roomListUpdated', { rooms: roomManager.getRoomList() });
     }

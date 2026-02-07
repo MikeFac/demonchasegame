@@ -212,6 +212,25 @@ class Network {
     }
 
     /**
+     * Request a solo game instance from the server
+     */
+    sendStartSoloGame() {
+        if (this.socket) {
+            this.socket.emit('startSoloGame');
+        }
+    }
+
+    /**
+     * Join an existing multiplayer game
+     * @param {string} roomId
+     */
+    sendJoinGame(roomId) {
+        if (this.socket) {
+            this.socket.emit('joinGame', roomId);
+        }
+    }
+
+    /**
      * Disconnect from server
      */
     disconnect() {
