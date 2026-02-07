@@ -970,8 +970,22 @@ function updateGameState(newGameState) {
         Object.keys(gameState.players).forEach(code => {
             if (code === playerCode) {
                 // Update our player, but preserve local dimensions which come from the loaded image
-                const { width, height } = player;
-                player = { ...player, ...gameState.players[code] };
+                const { width, height, x, y } = player;
+                const serverPlayer = gameState.players[code];
+
+                // Update stats (health, xp, etc) but handle position carefully
+                player = { ...player, ...serverPlayer };
+
+                // Reconciliation: Only snap to server position if discrepancy is too large (20px)
+                // Otherwise, trust local prediction to avoid jitter
+                const dist = Math.sqrt(Math.pow(serverPlayer.x - x, 2) + Math.pow(serverPlayer.y - y, 2));
+                if (dist < 20) {
+                    player.x = x;
+                    player.y = y;
+                } else {
+                    // console.log("Reconciling position - too far from server");
+                }
+
                 if (width && height) {
                     player.width = width;
                     player.height = height;

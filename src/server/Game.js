@@ -52,7 +52,7 @@ class Game {
         setInterval(() => {
             if (!this.shouldRun) return;
             this.update();
-        }, 50);
+        }, 1000 / 60); // 60 updates per second
 
         // Monster Spawning Loop 
         // MonsterManager handles specific spawn logic, but we need to trigger it.

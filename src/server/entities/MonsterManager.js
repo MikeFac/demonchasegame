@@ -149,7 +149,8 @@ class MonsterManager {
     updateMonsters() {
         const { gameState, levelData } = this;
         const currentLevelData = levelData[gameState.gameLevel];
-        const speed = currentLevelData.monsterSpeed;
+        // Speed is based on 20fps, so we scale it for 60fps (approx 0.33)
+        const speed = currentLevelData.monsterSpeed * (20 / 60);
 
         gameState.monsters.forEach(monster => {
             if (monster.chaser) {

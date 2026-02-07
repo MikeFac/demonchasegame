@@ -8,7 +8,7 @@
         const categorizedVerses = {};
 
         verses.forEach((verse) => {
-            const category = verse.category;
+            const category = verse.Category;
             if (!categorizedVerses[category]) {
                 categorizedVerses[category] = [];
             }
