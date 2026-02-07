@@ -62,6 +62,7 @@ io.on('connection', (socket) => {
   setTimeout(() => {
     if (!socket.sessionToken && !addedToSolo) {
       addedToSolo = true;
+      socket.join('room:solo');
       soloGame.addPlayer(socket);
     }
   }, 500);

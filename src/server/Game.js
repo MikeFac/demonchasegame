@@ -7,9 +7,20 @@ const BulletManager = require('./entities/BulletManager');
 
 class Game {
     constructor(io, roomId = null) {
-        this.io = io;
-        this.roomId = roomId; // If null, broadcasts to all; otherwise scoped to room
+        this.roomId = roomId;
         this.lastUpdateTime = Date.now();
+
+        // Create room-scoped emitter so all broadcasts target only this game's room
+        const roomName = roomId ? `room:${roomId}` : null;
+        this.io = {
+            emit: (event, data) => {
+                if (roomName) {
+                    io.to(roomName).emit(event, data);
+                } else {
+                    io.emit(event, data);
+                }
+            }
+        };
         this.shouldRun = false;
 
         // Level Data (shared between client and server)
