@@ -57,35 +57,35 @@ class Game {
 
     start() {
         this.shouldRun = true;
-        console.log('Game Loop Started');
+        console.log(`Game Loop Started (room: ${this.roomId || 'global'})`);
 
-        // Main Game Loop
-        setInterval(() => {
-            if (!this.shouldRun) return;
-            this.update();
-        }, 1000 / 60); // 60 updates per second
+        this.intervals = [
+            // Main Game Loop (60fps)
+            setInterval(() => {
+                if (!this.shouldRun) return;
+                this.update();
+            }, 1000 / 60),
 
-        // Monster Spawning Loop 
-        // MonsterManager handles specific spawn logic, but we need to trigger it.
-        // Original server.js used setInterval(spawnMonster, 10000).
-        // Let's delegate to MonsterManager.spawnMonster()
-        setInterval(() => {
-            if (!this.shouldRun) return;
-            this.monsterManager.spawnMonster();
-        }, 2000); // 2 seconds check? Original was 10000? 
-        // Wait, original was 10000 (10s).
-        // But MonsterManager spawnMonster logic checks checks spawn conditions.
-        // I'll stick to 2000 to be responsive if count is low?
-        // Original `spawnMonster` had a check: `if (gameState.monsters.length < max ...)`
-        // So calling it frequently is fine, it just won't spawn if full.
-        // I'll set it to 2000.
+            // Monster Spawning Loop (every 2s, spawns only if under limit)
+            setInterval(() => {
+                if (!this.shouldRun) return;
+                this.monsterManager.spawnMonster();
+            }, 2000),
 
-        // Healing Point Spawning Loop
-        setInterval(() => {
-            if (this.gameState.healingPoints.length < Constants.MAX_HEALING_POINTS) {
-                this.spawnHealingPoint();
-            }
-        }, 30000);
+            // Healing Point Spawning Loop
+            setInterval(() => {
+                if (this.gameState.healingPoints.length < Constants.MAX_HEALING_POINTS) {
+                    this.spawnHealingPoint();
+                }
+            }, 30000)
+        ];
+    }
+
+    stop() {
+        this.shouldRun = false;
+        this.intervals.forEach(id => clearInterval(id));
+        this.intervals = [];
+        console.log(`Game stopped (room: ${this.roomId || 'global'})`);
     }
 
     addPlayer(socket) {
@@ -94,6 +94,10 @@ class Game {
         // Handle player disconnect
         socket.on('disconnect', () => {
             this.playerManager.removePlayer(socket);
+            if (this.gameState.connectedPlayers <= 0) {
+                this.stop();
+                if (this.onEmpty) this.onEmpty();
+            }
         });
 
         // Handle player movement

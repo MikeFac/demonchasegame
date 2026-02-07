@@ -147,6 +147,10 @@ io.on('connection', (socket) => {
       // Create new Game instance for this room
       const game = new Game(io, roomId);
       gameInstances.set(roomId, game);
+      game.onEmpty = () => {
+        gameInstances.delete(roomId);
+        console.log(`Game for room ${roomId} cleaned up (all players left)`);
+      };
 
       // Add all players in the room to the game
       const room = result.room;
