@@ -852,27 +852,6 @@ function gameLoop() {
                 }
             }
 
-            // Prevent monster from getting too close to the player - old code which let monsters be pushed off screen
-            if (distance < MINIMUM_DISTANCE) {
-                let angle = Math.atan2(dy, dx);
-                monster.x = player.x + Math.cos(angle) * MINIMUM_DISTANCE;
-                monster.y = player.y + Math.sin(angle) * MINIMUM_DISTANCE;
-
-                // Check if the monster is off the screen
-                if (
-                    monster.x < 0 ||
-                    monster.x > canvas.width - monster.width ||
-                    monster.y < QUALITY_LINE_HEIGHT + BUTTON_HEIGHT ||
-                    monster.y > canvas.height - monster.height - ANSWER_SECTION_HEIGHT
-                ) {
-                    // Teleport the monster to a random location on the screen
-                    monster.x = Math.random() * (canvas.width - monster.width);
-                    monster.y = Math.random() * (canvas.height - monster.height - ANSWER_SECTION_HEIGHT - QUALITY_LINE_HEIGHT - BUTTON_HEIGHT) + QUALITY_LINE_HEIGHT + BUTTON_HEIGHT;
-                }
-            }
-
-
-
         });
         /*
         // Display level completed message if true
