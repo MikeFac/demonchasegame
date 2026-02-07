@@ -4,10 +4,11 @@ const Physics = require('../utils/Physics');
 const crypto = require('crypto');
 
 class MonsterManager {
-    constructor(gameState, io, levelData) {
+    constructor(gameState, io, levelData, wallGrid) {
         this.gameState = gameState;
         this.io = io;
         this.levelData = levelData;
+        this.wallGrid = wallGrid || null;
     }
 
     spawnMonster() {
@@ -50,7 +51,7 @@ class MonsterManager {
                             const dy = testY - player.y;
                             const dist = Math.sqrt(dx * dx + dy * dy);
 
-                            if (dist >= minDistance && !Physics.isOverlapping(testX, testY, Constants.MONSTER_WIDTH, Constants.MONSTER_HEIGHT, gameState)) {
+                            if (dist >= minDistance && !Physics.isOverlapping(testX, testY, Constants.MONSTER_WIDTH, Constants.MONSTER_HEIGHT, gameState, null, this.wallGrid)) {
                                 validPositions.push({ x: testX, y: testY });
                             }
                         }
@@ -74,7 +75,7 @@ class MonsterManager {
                     const validPositions = [];
                     for (let testX = 100; testX < Constants.WORLD_WIDTH - 100; testX += 150) {
                         for (let testY = 100; testY < Constants.WORLD_HEIGHT - 100; testY += 150) {
-                            if (!Physics.isOverlapping(testX, testY, Constants.MONSTER_WIDTH, Constants.MONSTER_HEIGHT, gameState)) {
+                            if (!Physics.isOverlapping(testX, testY, Constants.MONSTER_WIDTH, Constants.MONSTER_HEIGHT, gameState, null, this.wallGrid)) {
                                 validPositions.push({ x: testX, y: testY });
                             }
                         }
@@ -131,7 +132,7 @@ class MonsterManager {
                 };
 
                 // Final validation
-                if (Physics.isOverlapping(x, y, Constants.MONSTER_WIDTH, Constants.MONSTER_HEIGHT, gameState)) {
+                if (Physics.isOverlapping(x, y, Constants.MONSTER_WIDTH, Constants.MONSTER_HEIGHT, gameState, null, this.wallGrid)) {
                     console.log('Skipping monster spawn - final check failed, position overlaps');
                     return;
                 }
@@ -166,7 +167,7 @@ class MonsterManager {
                     const newY = monster.y + (dy / distance) * speed;
 
                     // Check wall collision before moving
-                    if (!Physics.isOverlapping(newX, newY, Constants.MONSTER_WIDTH, Constants.MONSTER_HEIGHT, gameState, monster.id)) {
+                    if (!Physics.isOverlapping(newX, newY, Constants.MONSTER_WIDTH, Constants.MONSTER_HEIGHT, gameState, monster.id, this.wallGrid)) {
                         monster.x = newX;
                         monster.y = newY;
                     }
@@ -186,7 +187,7 @@ class MonsterManager {
                 const newY = monster.y + dy;
 
                 // Check wall collision before moving
-                if (!Physics.isOverlapping(newX, newY, Constants.MONSTER_WIDTH, Constants.MONSTER_HEIGHT, gameState, monster.id)) {
+                if (!Physics.isOverlapping(newX, newY, Constants.MONSTER_WIDTH, Constants.MONSTER_HEIGHT, gameState, monster.id, this.wallGrid)) {
                     monster.x = newX;
                     monster.y = newY;
                     monster.walkingDistance -= speed;

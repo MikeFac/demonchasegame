@@ -2,9 +2,10 @@ const Constants = require('../../shared/Constants');
 const Physics = require('../utils/Physics');
 
 class BulletManager {
-    constructor(io, monsterManager) {
+    constructor(io, monsterManager, wallGrid) {
         this.io = io;
         this.monsterManager = monsterManager;
+        this.wallGrid = wallGrid || null;
         this.bullets = [];
         this.bulletIdCounter = 0;
     }
@@ -55,14 +56,20 @@ class BulletManager {
             const bullet = this.bullets[i];
             if (!bullet.active) continue;
 
-            // Check collision with walls - bullets are absorbed by walls
-            for (const wall of gameState.walls) {
-                if (Physics.checkCollisionCircleRect(
-                    { x: bullet.x, y: bullet.y, radius: bullet.radius },
-                    wall
-                )) {
+            // Check collision with walls using spatial grid or fallback
+            if (this.wallGrid) {
+                if (this.wallGrid.collidesCircle(bullet.x, bullet.y, bullet.radius)) {
                     bullet.active = false;
-                    break;
+                }
+            } else if (gameState.walls) {
+                for (const wall of gameState.walls) {
+                    if (Physics.checkCollisionCircleRect(
+                        { x: bullet.x, y: bullet.y, radius: bullet.radius },
+                        wall
+                    )) {
+                        bullet.active = false;
+                        break;
+                    }
                 }
             }
             if (!bullet.active) continue;

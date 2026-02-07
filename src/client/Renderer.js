@@ -25,14 +25,14 @@ class Renderer {
         this.ctx.fillText('Loading...', this.canvas.width / 2 - 50, this.canvas.height / 2);
     }
 
-    drawGame(gameState, player, playerCode, monsters, healingPoints, camera, uiState, shieldState) {
+    drawGame(gameState, player, playerCode, monsters, healingPoints, camera, uiState, shieldState, walls) {
         this.clear();
 
         // Draw UI Top Bar
         this.drawTopBar(uiState);
 
         // Draw Walls
-        this.drawWalls(gameState.walls, camera);
+        this.drawWalls(walls, camera, gameState.terrainTheme);
 
         // Draw Players
         this.drawPlayers(gameState.players, player, playerCode, camera, shieldState);
@@ -248,8 +248,15 @@ class Renderer {
         });
     }
 
-    drawWalls(walls, camera) {
-        if (!walls) return;
+    drawWalls(walls, camera, terrainTheme) {
+        if (!walls || walls.length === 0) return;
+
+        const themes = {
+            stone:   ['#4a4a4a', '#3d3d3d', '#555555', '#424242'],
+            earth:   ['#5c4033', '#4a3328', '#6b4c3b', '#503a2d'],
+            crystal: ['#5b3a6b', '#4d2d5e', '#6b4a7b', '#553465']
+        };
+        const palette = themes[terrainTheme] || themes.stone;
 
         this.ctx.save();
         const playableTop = this.QUALITY_LINE_HEIGHT + this.BUTTON_HEIGHT;
@@ -259,16 +266,18 @@ class Renderer {
         this.ctx.rect(0, playableTop, this.canvas.width, playableBottom - playableTop);
         this.ctx.clip();
 
-        this.ctx.fillStyle = '#333333';
+        this.ctx.lineWidth = 1;
+
         walls.forEach(wall => {
             const screenX = wall.x - camera.x;
             const screenY = wall.y - camera.y;
 
             if (screenX + wall.width > 0 && screenX < this.canvas.width &&
                 screenY + wall.height > 0 && screenY < this.canvas.height) {
+                const color = palette[wall.type || 0];
+                this.ctx.fillStyle = color;
                 this.ctx.fillRect(screenX, screenY, wall.width, wall.height);
-                this.ctx.strokeStyle = '#555555';
-                this.ctx.lineWidth = 2;
+                this.ctx.strokeStyle = '#222222';
                 this.ctx.strokeRect(screenX, screenY, wall.width, wall.height);
             }
         });

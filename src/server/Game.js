@@ -1,5 +1,6 @@
 const Constants = require('../shared/Constants');
 const LevelConfig = require('../shared/LevelConfig');
+const WallGrid = require('../shared/WallGrid');
 const generateMaze = require('./utils/Maze');
 const MonsterManager = require('./entities/MonsterManager');
 const PlayerManager = require('./entities/PlayerManager');
@@ -9,6 +10,7 @@ class Game {
     constructor(io, roomId = null) {
         this.roomId = roomId;
         this.lastUpdateTime = Date.now();
+        this._io = io; // Keep raw io reference for direct socket emits
 
         // Create room-scoped emitter so all broadcasts target only this game's room
         const roomName = roomId ? `room:${roomId}` : null;
@@ -26,7 +28,19 @@ class Game {
         // Level Data (shared between client and server)
         this.levelData = LevelConfig.levelData;
 
-        // Initial Game State
+        // Generate dungeon maze
+        const mazeResult = generateMaze(Constants.WORLD_WIDTH, Constants.WORLD_HEIGHT);
+        this.walls = mazeResult.walls;
+        this.wallGrid = new WallGrid(mazeResult.grid, mazeResult.rows, mazeResult.cols, Constants.CELL_SIZE);
+        this.mazeGridData = {
+            rows: mazeResult.rows,
+            cols: mazeResult.cols,
+            cellSize: Constants.CELL_SIZE
+        };
+        this.spawnX = mazeResult.spawnX;
+        this.spawnY = mazeResult.spawnY;
+
+        // Initial Game State (walls NOT included — sent separately)
         this.gameState = {
             players: {},
             monsters: [],
@@ -34,19 +48,21 @@ class Game {
             shieldPoints: [],
             connectedPlayers: 0,
             gameLevel: 1,
+            terrainTheme: this.levelData[1].terrainTheme || 'stone',
             maxSpawns: this.levelData[1].maxMonsters,
             spawnsLeft: this.levelData[1].maxMonsters,
-            monstersKilled: 0,
-            walls: generateMaze(Constants.WORLD_WIDTH, Constants.WORLD_HEIGHT, 100)
+            monstersKilled: 0
         };
 
-        // Managers
-        this.monsterManager = new MonsterManager(this.gameState, this.io, this.levelData);
-        this.playerManager = new PlayerManager(this.gameState, this.io);
-        this.bulletManager = new BulletManager(this.io, this.monsterManager);
+        // Managers (pass wallGrid for spatial collision)
+        this.monsterManager = new MonsterManager(this.gameState, this.io, this.levelData, this.wallGrid);
+        this.playerManager = new PlayerManager(this.gameState, this.io, this.wallGrid);
+        this.bulletManager = new BulletManager(this.io, this.monsterManager, this.wallGrid);
+
+        // Track connected sockets for re-emitting walls on level change
+        this.sockets = [];
 
         // Healing Points
-        // Initialize initial healing points
         for (let i = 0; i < Constants.MAX_HEALING_POINTS; i++) {
             this.spawnHealingPoint();
         }
@@ -90,10 +106,23 @@ class Game {
 
     addPlayer(socket) {
         this.playerManager.addPlayer(socket);
+        this.sockets.push(socket);
+
+        // Send walls once on connect (not in periodic broadcast)
+        socket.emit('walls', {
+            walls: this.walls,
+            gridFlat: this._flattenGrid(),
+            rows: this.mazeGridData.rows,
+            cols: this.mazeGridData.cols,
+            cellSize: this.mazeGridData.cellSize,
+            spawnX: this.spawnX,
+            spawnY: this.spawnY
+        });
 
         // Handle player disconnect
         socket.on('disconnect', () => {
             this.playerManager.removePlayer(socket);
+            this.sockets = this.sockets.filter(s => s !== socket);
             if (this.gameState.connectedPlayers <= 0) {
                 this.stop();
                 if (this.onEmpty) this.onEmpty();
@@ -170,7 +199,7 @@ class Game {
         // Update Bullets
         this.bulletManager.update(this.gameState);
 
-        // Broadcast State
+        // Broadcast State (walls are NOT included)
         this.io.emit('gameStateUpdate', this.gameState);
     }
 
@@ -179,25 +208,53 @@ class Game {
             this.gameState.maxSpawns = this.levelData[level].maxMonsters;
             this.gameState.spawnsLeft = this.levelData[level].maxMonsters;
             this.gameState.monstersKilled = 0;
+            this.gameState.terrainTheme = this.levelData[level].terrainTheme || 'stone';
+
+            // Regenerate maze for new level
+            const mazeResult = generateMaze(Constants.WORLD_WIDTH, Constants.WORLD_HEIGHT);
+            this.walls = mazeResult.walls;
+            this.wallGrid = new WallGrid(mazeResult.grid, mazeResult.rows, mazeResult.cols, Constants.CELL_SIZE);
+            this.spawnX = mazeResult.spawnX;
+            this.spawnY = mazeResult.spawnY;
+
+            // Update managers with new wallGrid
+            this.monsterManager.wallGrid = this.wallGrid;
+            this.playerManager.wallGrid = this.wallGrid;
+            this.bulletManager.wallGrid = this.wallGrid;
+
+            // Re-emit walls to all connected sockets
+            const wallData = {
+                walls: this.walls,
+                gridFlat: this._flattenGrid(),
+                rows: this.mazeGridData.rows,
+                cols: this.mazeGridData.cols,
+                cellSize: this.mazeGridData.cellSize,
+                spawnX: this.spawnX,
+                spawnY: this.spawnY
+            };
+            for (const sock of this.sockets) {
+                sock.emit('walls', wallData);
+            }
+
             // Spawn a new shield for the new level
             this.spawnShieldPoint();
             console.log(`Level ${level} data reset.`);
         }
     }
 
-    spawnHealingPoint() {
-        // Simple logic embedded for now or extract to a Manager
-        const { WORLD_WIDTH, WORLD_HEIGHT } = Constants;
-        const walls = this.gameState.walls;
-        // Helper to check walls
-        const isOverlapping = (x, y, w, h) => {
-            // simplified check against walls
-            for (const wall of walls) {
-                if (x + w / 2 > wall.x && x - w / 2 < wall.x + wall.width &&
-                    y + h / 2 > wall.y && y - h / 2 < wall.y + wall.height) return true;
+    _flattenGrid() {
+        const grid = this.wallGrid.grid;
+        const flat = [];
+        for (let r = 0; r < this.mazeGridData.rows; r++) {
+            for (let c = 0; c < this.mazeGridData.cols; c++) {
+                flat.push(grid[r][c] ? 1 : 0);
             }
-            return false;
-        };
+        }
+        return flat;
+    }
+
+    spawnHealingPoint() {
+        const { WORLD_WIDTH, WORLD_HEIGHT } = Constants;
 
         if (this.gameState.healingPoints.length < Constants.MAX_HEALING_POINTS) {
             let x, y;
@@ -206,7 +263,7 @@ class Game {
                 x = Math.random() * WORLD_WIDTH;
                 y = Math.random() * WORLD_HEIGHT;
                 attempts++;
-            } while (isOverlapping(x, y, 30, 30) && attempts < 50);
+            } while (this.wallGrid.collides(x, y, 30, 30) && attempts < 50);
 
             if (attempts < 50) {
                 const healingPoint = {
@@ -217,22 +274,12 @@ class Game {
                     height: 30
                 };
                 this.gameState.healingPoints.push(healingPoint);
-                // console.log(`Healing point spawned at (${x}, ${y})`);
             }
         }
     }
 
     spawnShieldPoint() {
         const { WORLD_WIDTH, WORLD_HEIGHT } = Constants;
-        const walls = this.gameState.walls;
-
-        const isOverlapping = (x, y, w, h) => {
-            for (const wall of walls) {
-                if (x + w / 2 > wall.x && x - w / 2 < wall.x + wall.width &&
-                    y + h / 2 > wall.y && y - h / 2 < wall.y + wall.height) return true;
-            }
-            return false;
-        };
 
         if (this.gameState.shieldPoints.length < Constants.MAX_SHIELD_POINTS) {
             let x, y;
@@ -241,7 +288,7 @@ class Game {
                 x = Math.random() * WORLD_WIDTH;
                 y = Math.random() * WORLD_HEIGHT;
                 attempts++;
-            } while (isOverlapping(x, y, Constants.SHIELD_POINT_WIDTH, Constants.SHIELD_POINT_HEIGHT) && attempts < 50);
+            } while (this.wallGrid.collides(x, y, Constants.SHIELD_POINT_WIDTH, Constants.SHIELD_POINT_HEIGHT) && attempts < 50);
 
             if (attempts < 50) {
                 const shieldPoint = {

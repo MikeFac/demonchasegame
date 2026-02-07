@@ -3,7 +3,7 @@
 (function () {
     // Private state
     let answerResultTimeout = null;
-    let answerFullVerse = null;
+    // answerFullVerse is declared in game.js (global scope) so game loop can read it
 
     function organizeByCategory2(verses) {
         const categorizedVerses = {};

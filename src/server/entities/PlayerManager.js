@@ -4,9 +4,10 @@ const Physics = require('../utils/Physics');
 const crypto = require('crypto');
 
 class PlayerManager {
-    constructor(gameState, io) {
+    constructor(gameState, io, wallGrid) {
         this.gameState = gameState;
         this.io = io;
+        this.wallGrid = wallGrid || null;
     }
 
     generatePlayerCode() {
@@ -28,7 +29,7 @@ class PlayerManager {
             x = Math.random() * (Constants.WORLD_WIDTH - 200) + 100;
             y = Math.random() * (Constants.WORLD_HEIGHT - 200) + 100;
 
-            if (!Physics.isOverlapping(x, y, Constants.PLAYER_WIDTH, Constants.PLAYER_HEIGHT, gameState)) {
+            if (!Physics.isOverlapping(x, y, Constants.PLAYER_WIDTH, Constants.PLAYER_HEIGHT, gameState, null, this.wallGrid)) {
                 validPosition = true;
             }
             attempts++;

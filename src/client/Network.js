@@ -12,7 +12,8 @@ class Network {
             onGameStateUpdate: null,
             onPlayerCode: null,
             onPlayerNumber: null,
-            onMonsterKilled: null
+            onMonsterKilled: null,
+            onWalls: null
         };
     }
 
@@ -105,6 +106,13 @@ class Network {
         this.socket.on('monsterKilled', (data) => {
             if (this.callbacks.onMonsterKilled) {
                 this.callbacks.onMonsterKilled(data);
+            }
+        });
+
+        // Walls data (sent once on connect, and on level change)
+        this.socket.on('walls', (data) => {
+            if (this.callbacks.onWalls) {
+                this.callbacks.onWalls(data);
             }
         });
     }

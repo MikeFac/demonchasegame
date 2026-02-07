@@ -16,12 +16,16 @@ let gameState = {
     players: {},
     monsters: [],
     healingPoints: [],
-    walls: [],
     connectedPlayers: 0,
     gameLevel: 1,
     maxSpawns: 0,
-    spawnsLeft: 0
+    spawnsLeft: 0,
+    terrainTheme: 'stone'
 };
+
+// Walls received once via 'walls' event (not in periodic gameState broadcast)
+let clientWalls = [];
+let clientWallGrid = null;
 
 let isGameLoaded = false;
 
@@ -103,6 +107,7 @@ let ALL_QUALITIES;
 let gappedVerse = '';
 let firstLetters = '';
 let mcOptions = [];
+let answerFullVerse = null;
 let isAnswerCorrect = null; // Global variable to store the answer status
 let gameOverFlag = false;
 let maxSpawns = 0;  //should be updated by server
@@ -273,10 +278,8 @@ async function init() {
                         y: Math.random() * canvas.height,
                         health: 60,
                         maxHealth: 100,
-                        width: 47,
-                        height: 52,
-                        width: 47,
-                        height: 52,
+                        width: 48,
+                        height: 48,
                         xp: 0,
                         level: 1,
                         ammo: 20 // Initial Spirit Ammo
@@ -309,6 +312,25 @@ async function init() {
                 if (lastAttackedMonster && lastAttackedMonster.id === monsterId) {
                     lastAttackedMonster = null;
                 }
+            },
+            onWalls: (data) => {
+                clientWalls = data.walls;
+                // Build client-side WallGrid from flat array
+                const grid = [];
+                for (let r = 0; r < data.rows; r++) {
+                    grid[r] = [];
+                    for (let c = 0; c < data.cols; c++) {
+                        grid[r][c] = data.gridFlat[r * data.cols + c] === 1;
+                    }
+                }
+                clientWallGrid = new WallGrid(grid, data.rows, data.cols, data.cellSize);
+
+                // Move player to spawn point if available
+                if (data.spawnX !== undefined && data.spawnY !== undefined) {
+                    player.x = data.spawnX;
+                    player.y = data.spawnY;
+                }
+                console.log('Received walls:', clientWalls.length, 'tiles');
             }
         };
 
@@ -630,7 +652,7 @@ function gameLoop() {
             inventoryOpen: inventoryOpen
         };
 
-        window.renderer.drawGame(gameState, player, playerCode, monsters, healingPoints, camera, uiState, shieldState);
+        window.renderer.drawGame(gameState, player, playerCode, monsters, healingPoints, camera, uiState, shieldState, clientWalls);
 
         // If game over, stop processing movement/combat but keep rendering
         if (gameOverFlag) {
@@ -1118,17 +1140,10 @@ function updatePlayerLevel(xp) {
 
 
 
-// Check if a position collides with any wall
+// Check if a position collides with any wall (uses spatial grid for O(1) lookup)
 function checkWallCollision(x, y, width, height) {
-    if (!gameState.walls) return false;
-
-    for (const wall of gameState.walls) {
-        if (x + width / 2 > wall.x &&
-            x - width / 2 < wall.x + wall.width &&
-            y + height / 2 > wall.y &&
-            y - height / 2 < wall.y + wall.height) {
-            return true;
-        }
+    if (clientWallGrid) {
+        return clientWallGrid.collides(x, y, width, height);
     }
     return false;
 }

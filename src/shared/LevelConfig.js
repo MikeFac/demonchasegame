@@ -7,7 +7,8 @@ const LevelConfig = {
             playerSpeed: 5,
             monsterSpeed: 5,
             spawnRate: 10000,
-            maxMonsters: 8
+            maxMonsters: 8,
+            terrainTheme: 'stone'
         },
         2: {
             qualities: ['Love', 'Wisdom', 'Healing'],
@@ -16,7 +17,8 @@ const LevelConfig = {
             playerSpeed: 6,
             monsterSpeed: 7,
             spawnRate: 8000,
-            maxMonsters: 10
+            maxMonsters: 10,
+            terrainTheme: 'earth'
         },
         3: {
             qualities: ['Forgiveness', 'Good News', 'Focus'],
@@ -25,7 +27,8 @@ const LevelConfig = {
             playerSpeed: 6,
             monsterSpeed: 9,
             spawnRate: 5000,
-            maxMonsters: 12
+            maxMonsters: 12,
+            terrainTheme: 'crystal'
         }
     },
 

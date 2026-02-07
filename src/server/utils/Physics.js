@@ -1,7 +1,7 @@
 const Constants = require('../../shared/Constants');
 
 class Physics {
-    static isOverlapping(x, y, width, height, gameState, excludeId = null) {
+    static isOverlapping(x, y, width, height, gameState, excludeId = null, wallGrid = null) {
         // Check overlap with players
         for (const playerCode in gameState.players) {
             const player = gameState.players[playerCode];
@@ -28,15 +28,19 @@ class Physics {
             }
         }
 
-        // Check overlap with walls
-        for (const wall of gameState.walls) {
-            if (
-                x + width / 2 > wall.x &&
-                x - width / 2 < wall.x + wall.width &&
-                y + height / 2 > wall.y &&
-                y - height / 2 < wall.y + wall.height
-            ) {
-                return true;
+        // Check overlap with walls via spatial grid (O(1)) or fallback to array
+        if (wallGrid) {
+            if (wallGrid.collides(x, y, width, height)) return true;
+        } else if (gameState.walls) {
+            for (const wall of gameState.walls) {
+                if (
+                    x + width / 2 > wall.x &&
+                    x - width / 2 < wall.x + wall.width &&
+                    y + height / 2 > wall.y &&
+                    y - height / 2 < wall.y + wall.height
+                ) {
+                    return true;
+                }
             }
         }
 
