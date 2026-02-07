@@ -24,7 +24,13 @@ const Constants = {
     BULLET_RADIUS: 4,
     BULLET_DAMAGE: 2,  // Damage per hit (not lethal)
     AMMO_COST: 1,
-    AMMO_REWARD: 5
+    AMMO_REWARD: 5,
+
+    // Shield Constants
+    MAX_SHIELD_POINTS: 1,       // One shield per level
+    SHIELD_POINT_WIDTH: 32,
+    SHIELD_POINT_HEIGHT: 32,
+    SHIELD_DURATION: 10000      // 10 seconds of invincibility
 };
 
 if (typeof module !== 'undefined' && module.exports) {

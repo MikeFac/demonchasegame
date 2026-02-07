@@ -24,7 +24,7 @@ class Renderer {
         this.ctx.fillText('Loading...', this.canvas.width / 2 - 50, this.canvas.height / 2);
     }
 
-    drawGame(gameState, player, playerCode, monsters, healingPoints, camera, uiState) {
+    drawGame(gameState, player, playerCode, monsters, healingPoints, camera, uiState, shieldState) {
         this.clear();
 
         // Draw UI Top Bar
@@ -34,7 +34,7 @@ class Renderer {
         this.drawWalls(gameState.walls, camera);
 
         // Draw Players
-        this.drawPlayers(gameState.players, player, playerCode, camera);
+        this.drawPlayers(gameState.players, player, playerCode, camera, shieldState);
 
         // Draw Monsters
         this.drawMonsters(monsters, camera, uiState.explosionTimer);
@@ -42,11 +42,17 @@ class Renderer {
         // Draw Healing Points
         this.drawHealingPoints(healingPoints, camera);
 
+        // Draw Shield Points
+        this.drawShieldPoints(gameState.shieldPoints, camera);
+
         // Draw Bullets
         this.drawBullets(gameState.bullets, camera);
 
         // Draw HUD (Health, Level, etc.)
         this.drawHUD(player, gameState, uiState.lastAttackedMonster);
+
+        // Draw Shield HUD (inventory button, panel, active timer)
+        this.drawShieldHUD(shieldState, shieldState ? shieldState.inventoryOpen : false);
 
         // Draw Level/Game Messages
         this.drawMessages(uiState);
@@ -144,12 +150,12 @@ class Renderer {
         }
     }
 
-    drawPlayers(players, currentPlayer, playerCode, camera) {
+    drawPlayers(players, currentPlayer, playerCode, camera, shieldState) {
         // If we have a playerCode but it's not in players yet, draw our local player anyway
         if (playerCode && currentPlayer && currentPlayer.x !== undefined) {
             const isInServerState = Object.keys(players).includes(playerCode);
             if (!isInServerState) {
-                this.drawPlayer(currentPlayer, true, camera);
+                this.drawPlayer(currentPlayer, true, camera, shieldState);
             }
         }
 
@@ -159,17 +165,30 @@ class Renderer {
             const playerData = isMyPlayer ? currentPlayer : players[code];
 
             if (playerData) {
-                this.drawPlayer(playerData, isMyPlayer, camera);
+                this.drawPlayer(playerData, isMyPlayer, camera, isMyPlayer ? shieldState : null);
             }
         });
     }
 
-    drawPlayer(playerData, isCurrentPlayer, camera) {
+    drawPlayer(playerData, isCurrentPlayer, camera, shieldState) {
         const playerImage = isCurrentPlayer ? this.assets.playerImg : this.assets.otherPlayerImg;
 
         if (playerImage && playerImage.complete) {
             const screenX = playerData.x - camera.x;
             const screenY = playerData.y - camera.y;
+
+            // Golden glow when shield is active
+            if (shieldState && shieldState.active) {
+                this.ctx.save();
+                this.ctx.shadowBlur = 20;
+                this.ctx.shadowColor = 'gold';
+                this.ctx.globalAlpha = 0.4;
+                this.ctx.fillStyle = 'gold';
+                this.ctx.beginPath();
+                this.ctx.arc(screenX, screenY, playerData.width / 2 + 10, 0, Math.PI * 2);
+                this.ctx.fill();
+                this.ctx.restore();
+            }
 
             this.ctx.drawImage(playerImage, screenX - playerData.width / 2, screenY - playerData.height / 2);
 
@@ -262,6 +281,133 @@ class Renderer {
                 this.ctx.drawImage(this.assets.healingPointImg, screenX - hp.width / 2, screenY - hp.height / 2);
             }
         });
+    }
+
+    drawShieldPoints(shieldPoints, camera) {
+        if (!shieldPoints) return;
+
+        shieldPoints.forEach(sp => {
+            const screenX = sp.x - camera.x;
+            const screenY = sp.y - camera.y;
+
+            // Visibility check
+            if (screenX + sp.width / 2 < 0 || screenX - sp.width / 2 > this.canvas.width ||
+                screenY + sp.height / 2 < 0 || screenY - sp.height / 2 > this.canvas.height) return;
+
+            if (this.assets.shieldImg && this.assets.shieldImg.complete) {
+                this.ctx.drawImage(this.assets.shieldImg, screenX - sp.width / 2, screenY - sp.height / 2, sp.width, sp.height);
+            } else {
+                // Fallback: draw a golden diamond shape
+                this.ctx.save();
+                this.ctx.fillStyle = 'gold';
+                this.ctx.shadowBlur = 10;
+                this.ctx.shadowColor = 'gold';
+                this.ctx.beginPath();
+                this.ctx.moveTo(screenX, screenY - sp.height / 2);
+                this.ctx.lineTo(screenX + sp.width / 2, screenY);
+                this.ctx.lineTo(screenX, screenY + sp.height / 2);
+                this.ctx.lineTo(screenX - sp.width / 2, screenY);
+                this.ctx.closePath();
+                this.ctx.fill();
+                this.ctx.strokeStyle = '#DAA520';
+                this.ctx.lineWidth = 2;
+                this.ctx.stroke();
+                this.ctx.restore();
+            }
+        });
+    }
+
+    drawShieldHUD(shieldState, inventoryOpen) {
+        if (!shieldState) return;
+
+        // Active timer display
+        if (shieldState.active) {
+            const remaining = Math.ceil(shieldState.remaining / 1000);
+            this.ctx.fillStyle = 'gold';
+            this.ctx.font = 'bold 14px Arial';
+            this.ctx.fillText(`SHIELD: ${remaining}s`, 7, this.QUALITY_LINE_HEIGHT + 12);
+        }
+
+        // Floating "i" inventory button (top-right, within playable area)
+        const btnX = this.canvas.width - 35;
+        const btnY = this.QUALITY_LINE_HEIGHT + this.BUTTON_HEIGHT + 5;
+        const btnSize = 28;
+
+        this.ctx.fillStyle = inventoryOpen ? '#DAA520' : 'rgba(50, 50, 50, 0.7)';
+        this.ctx.fillRect(btnX, btnY, btnSize, btnSize);
+        this.ctx.strokeStyle = shieldState.count > 0 ? 'gold' : '#666';
+        this.ctx.lineWidth = 2;
+        this.ctx.strokeRect(btnX, btnY, btnSize, btnSize);
+        this.ctx.fillStyle = shieldState.count > 0 ? 'gold' : 'white';
+        this.ctx.font = 'bold 16px Arial';
+        this.ctx.fillText('i', btnX + 10, btnY + 20);
+
+        // Badge for count
+        if (shieldState.count > 0) {
+            this.ctx.fillStyle = 'red';
+            this.ctx.beginPath();
+            this.ctx.arc(btnX + btnSize - 2, btnY + 4, 8, 0, Math.PI * 2);
+            this.ctx.fill();
+            this.ctx.fillStyle = 'white';
+            this.ctx.font = 'bold 10px Arial';
+            this.ctx.fillText(`${shieldState.count}`, btnX + btnSize - 5, btnY + 8);
+        }
+
+        // Inventory panel when open
+        if (inventoryOpen) {
+            const panelX = this.canvas.width - 160;
+            const panelY = this.QUALITY_LINE_HEIGHT + this.BUTTON_HEIGHT + 38;
+            const panelW = 150;
+            const panelH = 70;
+
+            // Panel background
+            this.ctx.fillStyle = 'rgba(0, 0, 0, 0.85)';
+            this.ctx.fillRect(panelX, panelY, panelW, panelH);
+            this.ctx.strokeStyle = 'gold';
+            this.ctx.lineWidth = 1;
+            this.ctx.strokeRect(panelX, panelY, panelW, panelH);
+
+            // Title
+            this.ctx.fillStyle = 'gold';
+            this.ctx.font = 'bold 12px Arial';
+            this.ctx.fillText('Inventory', panelX + 8, panelY + 16);
+
+            if (shieldState.count > 0) {
+                // Shield icon (small diamond)
+                this.ctx.fillStyle = 'gold';
+                this.ctx.beginPath();
+                this.ctx.moveTo(panelX + 18, panelY + 30);
+                this.ctx.lineTo(panelX + 26, panelY + 38);
+                this.ctx.lineTo(panelX + 18, panelY + 46);
+                this.ctx.lineTo(panelX + 10, panelY + 38);
+                this.ctx.closePath();
+                this.ctx.fill();
+
+                // Item name and count
+                this.ctx.fillStyle = 'white';
+                this.ctx.font = '11px Arial';
+                this.ctx.fillText(`Shield x${shieldState.count}`, panelX + 32, panelY + 42);
+
+                // "Use" button
+                if (!shieldState.active) {
+                    const useBtnX = panelX + panelW - 50;
+                    const useBtnY = panelY + 30;
+                    this.ctx.fillStyle = '#228B22';
+                    this.ctx.fillRect(useBtnX, useBtnY, 40, 22);
+                    this.ctx.fillStyle = 'white';
+                    this.ctx.font = 'bold 11px Arial';
+                    this.ctx.fillText('Use', useBtnX + 8, useBtnY + 15);
+                } else {
+                    this.ctx.fillStyle = '#888';
+                    this.ctx.font = '10px Arial';
+                    this.ctx.fillText('(active)', panelX + panelW - 55, panelY + 45);
+                }
+            } else {
+                this.ctx.fillStyle = '#888';
+                this.ctx.font = '11px Arial';
+                this.ctx.fillText('Empty', panelX + 8, panelY + 42);
+            }
+        }
     }
 
     drawBullets(bullets, camera) {

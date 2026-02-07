@@ -48,6 +48,7 @@ class Game {
             players: {},
             monsters: [],
             healingPoints: [],
+            shieldPoints: [],
             connectedPlayers: 0,
             gameLevel: 1,
             maxSpawns: this.levelData[1].maxMonsters,
@@ -66,6 +67,9 @@ class Game {
         for (let i = 0; i < Constants.MAX_HEALING_POINTS; i++) {
             this.spawnHealingPoint();
         }
+
+        // Shield Points - one per level
+        this.spawnShieldPoint();
     }
 
     start() {
@@ -137,6 +141,15 @@ class Game {
             }
         });
 
+        // Handle shield collection
+        socket.on('collectShield', (shieldId) => {
+            const index = this.gameState.shieldPoints.findIndex(sp => sp.id === shieldId);
+            if (index !== -1) {
+                this.gameState.shieldPoints.splice(index, 1);
+                this.io.emit('gameStateUpdate', this.gameState);
+            }
+        });
+
         // Handle level completion event (global game event)
         socket.on('levelCompleted', () => {
             if (this.gameState.gameLevel < Object.keys(this.levelData).length)
@@ -179,6 +192,8 @@ class Game {
             this.gameState.maxSpawns = this.levelData[level].maxMonsters;
             this.gameState.spawnsLeft = this.levelData[level].maxMonsters;
             this.gameState.monstersKilled = 0;
+            // Spawn a new shield for the new level
+            this.spawnShieldPoint();
             console.log(`Level ${level} data reset.`);
         }
     }
@@ -216,6 +231,41 @@ class Game {
                 };
                 this.gameState.healingPoints.push(healingPoint);
                 // console.log(`Healing point spawned at (${x}, ${y})`);
+            }
+        }
+    }
+
+    spawnShieldPoint() {
+        const { WORLD_WIDTH, WORLD_HEIGHT } = Constants;
+        const walls = this.gameState.walls;
+
+        const isOverlapping = (x, y, w, h) => {
+            for (const wall of walls) {
+                if (x + w / 2 > wall.x && x - w / 2 < wall.x + wall.width &&
+                    y + h / 2 > wall.y && y - h / 2 < wall.y + wall.height) return true;
+            }
+            return false;
+        };
+
+        if (this.gameState.shieldPoints.length < Constants.MAX_SHIELD_POINTS) {
+            let x, y;
+            let attempts = 0;
+            do {
+                x = Math.random() * WORLD_WIDTH;
+                y = Math.random() * WORLD_HEIGHT;
+                attempts++;
+            } while (isOverlapping(x, y, Constants.SHIELD_POINT_WIDTH, Constants.SHIELD_POINT_HEIGHT) && attempts < 50);
+
+            if (attempts < 50) {
+                const shieldPoint = {
+                    id: Date.now() + Math.random(),
+                    x: x,
+                    y: y,
+                    width: Constants.SHIELD_POINT_WIDTH,
+                    height: Constants.SHIELD_POINT_HEIGHT
+                };
+                this.gameState.shieldPoints.push(shieldPoint);
+                console.log(`Shield point spawned at (${x}, ${y})`);
             }
         }
     }

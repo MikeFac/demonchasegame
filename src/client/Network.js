@@ -172,6 +172,16 @@ class Network {
     }
 
     /**
+     * Notify server of shield collection
+     * @param {string} shieldId
+     */
+    sendCollectShield(shieldId) {
+        if (this.socket) {
+            this.socket.emit('collectShield', shieldId);
+        }
+    }
+
+    /**
      * Notify server that level is completed
      */
     sendLevelCompleted() {

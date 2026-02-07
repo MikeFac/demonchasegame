@@ -144,6 +144,14 @@ let repeatEnabled = false;
 let repeatTimeout = null;
 let hasPlayed = false;
 
+// Shield of Faith state
+let shieldInventory = 0;
+let shieldActive = false;
+let shieldEndTime = 0;
+let shieldImg = null;
+let shieldPoints = [];
+let inventoryOpen = false;
+
 // for monster explosion
 let explosionTimer = 0;
 const EXPLOSION_INTERVAL = 100; // Adjust the interval as needed
@@ -425,6 +433,17 @@ async function init() {
             console.error('Error loading healing point image');
         };
 
+        // Load shield image
+        shieldImg = new Image();
+        shieldImg.src = `${scriptDirectory}/shield_of_faith.png`;
+        shieldImg.onload = function () {
+            console.log('Shield of Faith image loaded');
+        };
+        shieldImg.onerror = function () {
+            console.log('Shield image not found, using fallback rendering');
+            shieldImg = null;
+        };
+
         // Load demon images
         demonImages = {};
         const demonImagePromises = Object.keys(DEMON_TYPES).map((demonType) => {
@@ -482,6 +501,53 @@ async function init() {
                 handleReviewClick(event);
             },
             onGameClick: (x, y) => {
+                // Check inventory button click (floating "i" icon in top-right area)
+                // Button is positioned at top-right, within playable area
+                const invBtnX = canvas.width - 35;
+                const invBtnY = QUALITY_LINE_HEIGHT + BUTTON_HEIGHT + 5;
+                const invBtnSize = 28;
+
+                if (x >= invBtnX && x <= invBtnX + invBtnSize &&
+                    y >= invBtnY && y <= invBtnY + invBtnSize) {
+                    inventoryOpen = !inventoryOpen;
+                    return true;
+                }
+
+                // Check inventory panel clicks when open
+                if (inventoryOpen) {
+                    const panelX = canvas.width - 160;
+                    const panelY = QUALITY_LINE_HEIGHT + BUTTON_HEIGHT + 38;
+                    const panelW = 150;
+                    const panelH = 70;
+
+                    // "Use" button for shield
+                    const useBtnX = panelX + panelW - 50;
+                    const useBtnY = panelY + 30;
+                    const useBtnW = 40;
+                    const useBtnH = 22;
+
+                    if (x >= useBtnX && x <= useBtnX + useBtnW &&
+                        y >= useBtnY && y <= useBtnY + useBtnH &&
+                        shieldInventory > 0 && !shieldActive) {
+                        shieldInventory--;
+                        shieldActive = true;
+                        shieldEndTime = Date.now() + Constants.SHIELD_DURATION;
+                        inventoryOpen = false;
+                        console.log('Shield of Faith activated!');
+                        return true;
+                    }
+
+                    // Click anywhere in panel area consumes the click
+                    if (x >= panelX && x <= panelX + panelW &&
+                        y >= panelY && y <= panelY + panelH) {
+                        return true;
+                    }
+
+                    // Click outside panel closes it
+                    inventoryOpen = false;
+                    return true;
+                }
+
                 // Check if clicked on a monster (Shooting)
                 // Need to account for camera position since x,y are screen coords
                 // But monsters are in world coords.
@@ -605,7 +671,8 @@ function gameLoop() {
             otherPlayerImg,
             demonImages,
             explosionImg,
-            healingPointImg
+            healingPointImg,
+            shieldImg
         };
 
         // Instantiate renderer if not already (hack for now, should be in init)
@@ -614,7 +681,15 @@ function gameLoop() {
         }
         window.renderer.assets = assets; // Update assets in case they loaded late
 
-        window.renderer.drawGame(gameState, player, playerCode, monsters, healingPoints, camera, uiState);
+        // Build shield state for renderer
+        const shieldState = {
+            count: shieldInventory,
+            active: shieldActive,
+            remaining: shieldActive ? Math.max(0, shieldEndTime - Date.now()) : 0,
+            inventoryOpen: inventoryOpen
+        };
+
+        window.renderer.drawGame(gameState, player, playerCode, monsters, healingPoints, camera, uiState, shieldState);
 
         // If game over, stop processing movement/combat but keep rendering
         if (gameOverFlag) {
@@ -792,15 +867,18 @@ function gameLoop() {
                     // Store the last attacked monster
                     lastAttackedMonster = monster;
 
-                    // Calculate random damage between 0 and the monster's maximum damage
-                    const damage = Math.floor(Math.random() * (monster.maxDamage + 1) * gameState.gameLevel);
-                    player.health -= damage; // Monster attacks the player locally for immediate feedback
-                    network.sendPlayerHit(damage);
+                    // Shield blocks monster damage
+                    if (!shieldActive) {
+                        // Calculate random damage between 0 and the monster's maximum damage
+                        const damage = Math.floor(Math.random() * (monster.maxDamage + 1) * gameState.gameLevel);
+                        player.health -= damage; // Monster attacks the player locally for immediate feedback
+                        network.sendPlayerHit(damage);
 
-                    playerHit.play(); // Play the attack sound effect
-                    if (player.health <= 0) {
-                        gameOver.play();
-                        gameOverFlag = true;
+                        playerHit.play(); // Play the attack sound effect
+                        if (player.health <= 0) {
+                            gameOver.play();
+                            gameOverFlag = true;
+                        }
                     }
                 }
             }
@@ -880,6 +958,25 @@ function gameLoop() {
                 healingRecharge.play(); // Play the attack sound effect
             }
         });
+
+        // Check shield point collection
+        shieldPoints.forEach((shieldPoint) => {
+            let dx = shieldPoint.x - player.x;
+            let dy = shieldPoint.y - player.y;
+            let distance = Math.sqrt(dx * dx + dy * dy);
+            if (distance < player.width / 2 + shieldPoint.width / 2) {
+                shieldInventory++;
+                network.sendCollectShield(shieldPoint.id);
+                healingRecharge.play();
+                console.log('Shield of Faith collected! Inventory:', shieldInventory);
+            }
+        });
+
+        // Update shield timer
+        if (shieldActive && Date.now() >= shieldEndTime) {
+            shieldActive = false;
+            console.log('Shield of Faith expired');
+        }
 
         /*
         // Draw the game objects
@@ -1058,6 +1155,13 @@ function updateGameState(newGameState) {
         healingPoints = newGameState.healingPoints;
     } else {
         healingPoints = [];
+    }
+
+    // Update shield points
+    if (newGameState.shieldPoints && Array.isArray(newGameState.shieldPoints)) {
+        shieldPoints = newGameState.shieldPoints;
+    } else {
+        shieldPoints = [];
     }
 
     // Update bullets
