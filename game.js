@@ -104,7 +104,6 @@ let gappedVerse = '';
 let firstLetters = '';
 let mcOptions = [];
 let isAnswerCorrect = null; // Global variable to store the answer status
-let answerResultTimeout = null; // Timeout reference for displaying the answer result
 let gameOverFlag = false;
 let maxSpawns = 0;  //should be updated by server
 let spawnsLeft = 10; //should be updated by server
@@ -155,20 +154,6 @@ let verseTimer = null; // Timer for displaying the next verse
 let incorrectAnswerReferences = [];
 let currentReviewMode = 'quality'; // Possible values: 'incorrect', 'quality'
 
-function organizeByCategory2(verses) {
-    const categorizedVerses = {};
-
-    verses.forEach((verse) => {
-        const category = verse.category;  // Use the correct property name
-        if (!categorizedVerses[category]) {
-            categorizedVerses[category] = [];
-        }
-        categorizedVerses[category].push(verse);
-    });
-
-    return categorizedVerses;
-}
-
 // Helper function to load an image (if you don't already have this)
 function loadImage(src) {
     return new Promise((resolve, reject) => {
@@ -189,7 +174,7 @@ async function loadVerses() {
         }
         const data = await response.json();
         console.log('Verses loaded:', data);
-        organizedVerses = organizeByCategory2(data); // Assign the retrieved verses to organizedVerses
+        organizedVerses = QuizManager.organizeByCategory2(data); // Assign the retrieved verses to organizedVerses
     } catch (error) {
         console.error('Error loading verses:', error);
         throw new Error('Failed to load verses'); // This will propagate the error
@@ -379,17 +364,17 @@ async function init() {
         explosionTimer = 0;
 
         // Pick the initial quality verse
-        pickQualityVerse();
+        QuizManager.pickQualityVerse();
         console.log('Initialised currentVerseIndex: ' + currentVerseIndex);
 
         // Set up the timer to display a new verse every 10 seconds
-        verseTimer = setInterval(pickQualityVerse, VERSECHANGETIME);
+        verseTimer = setInterval(QuizManager.pickQualityVerse, VERSECHANGETIME);
 
         // Create quality buttons
-        createQualityButtons();
+        QuizManager.createQualityButtons();
 
         // Set up the timer to update quality buttons every 22 seconds
-        updateButtonsTimer = setInterval(createQualityButtons, 22000);
+        updateButtonsTimer = setInterval(QuizManager.createQualityButtons, 22000);
 
         healingPointImg = new Image();
         healingPointImg.src = `${scriptDirectory}/healing_point.png`;
@@ -455,17 +440,17 @@ async function init() {
         inputHandler.setCallbacks({
             onQualityButtonClick: (qualityText) => {
                 vQuality = qualityText;
-                pickQualityVerse();
+                QuizManager.pickQualityVerse();
             },
             onQuizOptionClick: (selectedOption, index) => {
-                handleQuizAnswer(selectedOption);
+                QuizManager.handleQuizAnswer(selectedOption);
             },
             onReviewButtonClick: () => {
-                saveGameState();
-                startReviewMode();
+                ReviewMode.saveGameState();
+                ReviewMode.startReviewMode();
             },
             onReviewModeClick: (event) => {
-                handleReviewClick(event);
+                ReviewMode.handleReviewClick(event);
             },
             onGameClick: (x, y) => {
                 // Check inventory button click (floating "i" icon in top-right area)
@@ -548,45 +533,6 @@ async function init() {
 
         resolve();
     });
-}
-
-// Handle quiz answer selection (called by InputHandler)
-function handleQuizAnswer(selectedOption) {
-    if (selectedOption === firstLetters) {
-        isAnswerCorrect = true;
-        qualityIndex[vQuality] = (qualityIndex[vQuality] + 1) % organizedVerses[vQuality].length;
-        qualityTotal[vQuality] = qualityTotal[vQuality] + 1;
-        console.log(vQuality + " total correct is: " + qualityTotal[vQuality]);
-
-        // Award Ammo
-        player.ammo = (player.ammo || 0) + Constants.AMMO_REWARD;
-        network.sendQuizCorrect();
-
-        setAnswerResultTimeout(5000);
-    } else {
-        isAnswerCorrect = false;
-        qualityIndex[vQuality] = (qualityIndex[vQuality] + 1) % organizedVerses[vQuality].length;
-        setAnswerResultTimeout(10000);
-
-        const currentReference = organizedVerses[vQuality][currentVerseIndex].Reference;
-        if (!incorrectAnswerReferences.includes(currentReference)) {
-            incorrectAnswerReferences.push(currentReference);
-        }
-    }
-}
-
-function updatePlayerLevel(xp) {
-    console.log('Checking if we should update level');
-    for (let i = player.level; i < levelXPRequirements.length; i++) {
-        if (xp >= levelXPRequirements[i]) {
-            player.level = i + 1;
-            player.maxHealth = 50 + player.level * 50;
-            player.health = player.maxHealth; // Set player's health to the new max health
-            console.log(`Player reached level ${player.level}!`);
-        } else {
-            break;
-        }
-    }
 }
 
 // Note: handleMouseClick has been replaced by InputHandler module
@@ -969,7 +915,7 @@ function gameLoop() {
     //start gameMode = 'review'
     else {
         //console.log("About to enter displayReviewVerseScreen");
-        displayReviewVerseScreen();
+        ReviewMode.displayReviewVerseScreen();
     }
 
     if (elapsedTime >= UPDATE_INTERVAL) {
@@ -990,25 +936,6 @@ function gameLoop() {
 
     requestAnimationFrame(gameLoop);
 } //end gameLoop
-
-
-// Function to display the Bible verse
-
-// Pick a random verse and display it
-function pickRandomVerse() {
-    currentVerseIndex = Math.floor(Math.random() * organizedVerses[vQuality].length);
-    const verseText = organizedVerses[vQuality][currentVerseIndex].Text;
-    [gappedVerse, firstLetters, mcOptions] = generateQuiz(verseText);
-    clearAnswerResultTimeout(); // Clear any previous answer result timeout
-}
-
-function pickQualityVerse() {
-    console.log("Quality:" + vQuality + ", Index: " + qualityIndex[vQuality] + "out of" + organizedVerses[vQuality].length);
-    currentVerseIndex = qualityIndex[vQuality];
-    const verseText = organizedVerses[vQuality][currentVerseIndex].Text;
-    [gappedVerse, firstLetters, mcOptions] = generateQuiz(verseText);
-    clearAnswerResultTimeout();
-}
 
 
 function updateGameState(newGameState) {
@@ -1151,28 +1078,6 @@ function updatePlayerLevel(xp) {
 
 
 
-// Note: Second handleMouseClick was also removed - replaced by InputHandler module
-
-
-function setAnswerResultTimeout(duration) {
-    clearAnswerResultTimeout();
-
-    answerResultTimeout = setTimeout(() => {
-        clearAnswerResultTimeout();
-        pickQualityVerse();
-    }, duration);
-}
-
-// Clear the answer result timeout and reset the variables
-function clearAnswerResultTimeout() {
-    if (answerResultTimeout) {
-        clearTimeout(answerResultTimeout);
-        answerResultTimeout = null;
-        isAnswerCorrect = null;
-    }
-}
-
-
 // Check if a position collides with any wall
 function checkWallCollision(x, y, width, height) {
     if (!gameState.walls) return false;
@@ -1187,570 +1092,5 @@ function checkWallCollision(x, y, width, height) {
     }
     return false;
 }
-
-// Create quality buttons
-function createQualityButtons() {
-    qualityButtons = [];
-    const buttonColors = ['green', 'blue', 'purple'];
-
-    // Get random qualities for buttons
-    const buttonQualities = Array.from(new Set(QUALITIES.sort(() => Math.random() - 0.5).slice(0, 3)));
-
-    const buttonStartX = UILayout.getQualityButtonStartX(canvas.width, buttonQualities.length);
-    for (let i = 0; i < buttonQualities.length; i++) {
-        const buttonX = buttonStartX + i * (BUTTON_WIDTH + 7);
-        const buttonY = 5;
-        qualityButtons.push({
-            x: buttonX,
-            y: buttonY,
-            width: BUTTON_WIDTH,
-            height: BUTTON_HEIGHT,
-            text: buttonQualities[i],
-            color: buttonColors[i]
-        });
-    }
-}
-
-function processVerse(originalVerse, iCount) {
-    const words = originalVerse.split(' ');
-    if (words.length < iCount) {
-        iCount = words.length; // Adjust COUNT if it exceeds the number of words in the verse
-    }
-    if (words.length >= iCount) {
-        // Create a copy of the indices and shuffle it
-        const shuffledIndices = Array.from(Array(words.length).keys());
-        for (let i = shuffledIndices.length - 1; i > 0; i--) {
-            const j = Math.floor(Math.random() * (i + 1));
-            [shuffledIndices[i], shuffledIndices[j]] = [shuffledIndices[j], shuffledIndices[i]];
-        }
-
-        let testVerse = '';
-        let firstLettersOfMissingWords = '';
-        let selectedCount = 0;
-
-        // Loop through the original indices
-        for (let i = 0; i < words.length; i++) {
-            const word = words[i];
-            if (word.length >= 5 && selectedCount < iCount && shuffledIndices.includes(i)) {
-                // Replace with dashes for words with length >= 5
-                testVerse += '-'.repeat(word.length) + ' ';
-                firstLettersOfMissingWords += word[0].toUpperCase(); //change to toLowerCase() for debugging
-                selectedCount++;
-            } else {
-                // Add the original word for others
-                testVerse += word + ' ';
-            }
-        }
-
-        return [testVerse.trim(), firstLettersOfMissingWords];
-    }
-    return ['', ''];
-}
-/*
-function generateQuiz(verse) {
- const [testVerse, firstLetter] = processVerse(verse, 1);
- const distractors = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'r', 's', 't', 'u', 'v', 'w', 'y'];
- const index = distractors.indexOf(firstLetter.toLowerCase());
- if (index > -1) {
-   distractors.splice(index, 1);
- }
- const options = [firstLetter, ...Array(3).fill().map(() => distractors.splice(Math.floor(Math.random() * distractors.length), 1)[0])];
- const shuffledOptions = [...options].sort(() => Math.random() - 0.5);
- return [testVerse, firstLetter, shuffledOptions];
-}
-*/
-
-function generateQuiz(verse) {
-    const [testVerse, firstLetters] = processVerse(verse, 2);
-    const distractors = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'r', 's', 't', 'u', 'v', 'w', 'y'];
-    const options = [firstLetters];
-
-    // Generate two totally random distractors
-    for (let i = 0; i < 2; i++) {
-        const letter1 = distractors[Math.floor(Math.random() * distractors.length)];
-        const letter2 = distractors[Math.floor(Math.random() * distractors.length)];
-        options.push(letter1.toUpperCase() + letter2.toUpperCase());
-    }
-
-    // Generate the last distractor
-    if (Math.random() < 0.5) {
-        // 50% chance of generating a totally random distractor
-        const letter1 = distractors[Math.floor(Math.random() * distractors.length)];
-        const letter2 = distractors[Math.floor(Math.random() * distractors.length)];
-        options.push(letter1.toUpperCase() + letter2.toUpperCase());
-    } else {
-        // 50% chance of using the correct first letter and a random letter
-        const correctLetter = firstLetters[0];
-        let randomLetter;
-        do {
-            randomLetter = distractors[Math.floor(Math.random() * distractors.length)];
-        } while (randomLetter === firstLetters[1].toLowerCase());
-        options.push(correctLetter.toUpperCase() + randomLetter.toUpperCase());
-    }
-
-    const shuffledOptions = [...options].sort(() => Math.random() - 0.5);
-    return [testVerse, firstLetters, shuffledOptions];
-}
-
-//hopefully all these Review related parts of the code could be moved to another file
-function drawReviewButton() {
-    const buttonWidth = 60;
-    const buttonHeight = 13;
-    const buttonX = canvas.width - buttonWidth - 20;
-    const buttonY = 29;
-
-    ctx.fillStyle = 'orange';
-    ctx.fillRect(buttonX, buttonY, buttonWidth, buttonHeight);
-
-    ctx.fillStyle = 'black';
-    ctx.font = '11px Arial';
-    ctx.fillText('Review', buttonX + 12, buttonY + 10);
-}
-
-
-function saveGameState() {
-    // Save the current game state (player position, monsters, health, etc.)
-    // You can use variables or objects to store the state
-    // Example:
-
-    console.log("Got to save game state - button clicked");
-    let savedGameState = {
-        player: {
-            ...player
-        },
-        monsters: [...monsters],
-        // Save other relevant game state variables
-    };
-}
-
-function startReviewMode() {
-    // Clear the canvas
-    gameMode = 'review';
-    //console.log("Got to startReviewMode");
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-    // Initialize the review mode variables
-    currentReviewVerseIndex = 0;
-    repeatEnabled = false; // Ensure repeat mode is off when entering review mode
-
-}
-
-function restoreGameState() {
-    gameMode = 'game';
-    // ... (existing game state restoration code)
-}
-
-function getVerseDetails(reference) {
-    for (let category in organizedVerses) {
-        for (let i = 0; i < organizedVerses[category].length; i++) {
-            const verse = organizedVerses[category][i];
-            if (verse.Reference === reference) {
-                return {
-                    text: verse.Text,
-                    category: category
-                };
-            }
-        }
-    }
-    return null;
-}
-
-
-function displayReviewVerseScreen() {
-    if (gameMode === 'review') {
-        // Clear the canvas
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-        // Draw the black bar at the top
-        ctx.fillStyle = 'black';
-        ctx.fillRect(0, 0, canvas.width, 60);
-
-        // Draw the review mode buttons
-        drawReviewModeButtons();
-
-        // Draw the navigation buttons
-        drawNavigationButtons();
-
-
-
-        let verseReference;
-        let verseDetails;
-
-        if (incorrectAnswerReferences.length == 0) {
-            currentReviewMode = 'quality';
-        }
-        if (currentReviewMode === 'incorrect') {
-            verseReference = incorrectAnswerReferences[currentReviewVerseIndex];
-            verseDetails = getVerseDetails(verseReference);
-        } else if (currentReviewMode === 'quality') {
-            const qualityVerses = organizedVerses[vQuality];
-            verseReference = qualityVerses[currentReviewVerseIndex].Reference;
-            verseDetails = {
-                text: qualityVerses[currentReviewVerseIndex].Text,
-                category: vQuality
-            };
-        }
-
-        if (verseDetails) {
-            displayReviewVerse(verseDetails.text);
-
-            // Display the verse reference and category/quality
-            ctx.font = '20px Arial';
-            ctx.fillStyle = 'black';
-            ctx.fillText(`Quality: ${verseDetails.category}`, 10, canvas.height - 90);
-
-            // Display the verse reference under the verse
-            ctx.font = '20px Arial';
-            ctx.fillStyle = 'black';
-            ctx.fillText(`Reference: ${verseReference}`, 10, canvas.height - 120);
-
-            // Start the audio playback if not already playing and repeat is not enabled
-            if (!isAudioPlaying && !repeatEnabled) {
-                startVerseAudio(verseReference);
-            }
-        }
-    }
-}
-
-
-
-
-function displayReviewVerse(text) {
-    const fontSize = 22;
-    const lineHeight = fontSize * 1.2;
-    const maxWidth = canvas.width - 20;
-
-    ctx.font = `${fontSize}px Arial`;
-    ctx.fillStyle = 'black';
-
-    const words = text.split(' ');
-    let line = '';
-    let y = 100;
-
-    for (let i = 0; i < words.length; i++) {
-        const testLine = line + words[i] + ' ';
-        const metrics = ctx.measureText(testLine);
-        const testWidth = metrics.width;
-
-        if (testWidth > maxWidth && i > 0) {
-            ctx.fillText(line, 10, y);
-            line = words[i] + ' ';
-            y += lineHeight;
-        } else {
-            line = testLine;
-        }
-    }
-
-    ctx.fillText(line, 10, y);
-}
-
-
-function drawReturnButton() {
-    const buttonWidth = 100;
-    const buttonHeight = 30;
-    const buttonX = 20;
-    const buttonY = 60;
-
-    ctx.fillStyle = 'lightgray';
-    ctx.fillRect(buttonX, buttonY, buttonWidth, buttonHeight);
-
-    ctx.font = '16px Arial';
-    ctx.fillStyle = 'black';
-    ctx.fillText('Play Game', buttonX + 15, buttonY + 20);
-}
-
-function drawNavigationButtons() {
-    const buttonWidth = 100;
-    const buttonHeight = 40;
-    const buttonY = canvas.height - 60;
-    const prevButtonX = 20;
-    const repeatButtonX = prevButtonX + buttonWidth + 20;
-    const nextButtonX = repeatButtonX + buttonWidth + 20;
-
-    ctx.fillStyle = 'lightgray';
-    ctx.fillRect(prevButtonX, buttonY, buttonWidth, buttonHeight);
-    ctx.fillStyle = repeatEnabled ? 'lightblue' : 'lightgray';
-    ctx.fillRect(repeatButtonX, buttonY, buttonWidth, buttonHeight);
-    ctx.fillStyle = 'lightgray';
-    ctx.fillRect(nextButtonX, buttonY, buttonWidth, buttonHeight);
-
-
-
-    ctx.font = '20px Arial';
-    ctx.fillStyle = 'black';
-    ctx.fillText('Previous', prevButtonX + 10, buttonY + 25);
-    ctx.fillText('Repeat', repeatButtonX + 20, buttonY + 25);
-    ctx.fillText('Next', nextButtonX + 25, buttonY + 25);
-}
-
-function handleReviewClick(event) {
-    const rect = canvas.getBoundingClientRect();
-    const clickedX = event.clientX - rect.left;
-    const clickedY = event.clientY - rect.top;
-
-    // Check if the click was on the "Game" button
-    if (clickedX >= canvas.width - 100 && clickedX <= canvas.width - 20 && clickedY >= 15 && clickedY <= 45) {
-        stopAudio();
-        repeatEnabled = false;
-        hasPlayed = false;
-        restoreGameState();
-    }
-
-    // Check if the click was on the "Incorrect" button
-    if (clickedX >= 20 && clickedX <= 100 && clickedY >= 15 && clickedY <= 45) {
-        currentReviewMode = 'incorrect';
-        currentReviewVerseIndex = 0;
-        stopAudio();
-        repeatEnabled = false;
-        hasPlayed = false;
-        displayReviewVerseScreen();
-    }
-
-    // Check if the click was on the quality button
-    if (clickedX >= 110 && clickedX <= 190 && clickedY >= 15 && clickedY <= 45) {
-        currentReviewMode = 'quality';
-        currentReviewVerseIndex = 0;
-        stopAudio();
-        repeatEnabled = false;
-        hasPlayed = false;
-        displayReviewVerseScreen();
-    }
-
-    // Check if the click was on the "Previous" button
-    if (clickedX >= 20 && clickedX <= 120 && clickedY >= canvas.height - 60 && clickedY <= canvas.height - 20) {
-        if (currentReviewMode === 'incorrect') {
-            currentReviewVerseIndex = Math.max(currentReviewVerseIndex - 1, 0);
-        } else if (currentReviewMode === 'quality') {
-            currentReviewVerseIndex = Math.max(currentReviewVerseIndex - 1, 0);
-        }
-        stopAudio();
-        repeatEnabled = false;
-        hasPlayed = false; // Reset hasPlayed when moving to the previous verse
-        displayReviewVerseScreen();
-    }
-
-    // Check if the click was on the "Next" button
-    if (clickedX >= canvas.width - 120 && clickedX <= canvas.width - 20 && clickedY >= canvas.height - 60 && clickedY <= canvas.height - 20) {
-        if (currentReviewMode === 'incorrect') {
-            currentReviewVerseIndex = Math.min(currentReviewVerseIndex + 1, incorrectAnswerReferences.length - 1);
-        } else if (currentReviewMode === 'quality') {
-            const qualityVerses = organizedVerses[vQuality];
-            currentReviewVerseIndex = Math.min(currentReviewVerseIndex + 1, qualityVerses.length - 1);
-        }
-        stopAudio();
-        repeatEnabled = false;
-        hasPlayed = false; // Reset hasPlayed when moving to the next verse
-        displayReviewVerseScreen();
-    }
-
-    // Check if the click was on the "Repeat" button
-    if (clickedX >= 140 && clickedX <= 240 && clickedY >= canvas.height - 60 && clickedY <= canvas.height - 20) {
-        repeatEnabled = !repeatEnabled; // Toggle the repeat state
-        if (!repeatEnabled) {
-            stopAudio();
-        } else {
-            hasPlayed = false;
-            startVerseAudio(getCurrentVerseReference());
-        }
-        displayReviewVerseScreen();
-    }
-}
-
-let isAudioPlaying = false;
-let currentAudio = null;
-
-async function playAudio(verseRef) {
-    var base = 'https://spiritualwar.games/otd/mv/www/audio/se/';
-    var audio = new Audio(base + verseRef);
-    audio.type = 'audio/ogg';
-    audio.volume = 1;
-    currentAudio = audio;
-
-    return new Promise((resolve, reject) => {
-        audio.onended = resolve;
-        audio.onerror = reject;
-        audio.play();
-    });
-}
-
-var convertRef = function (Reference) {
-    //Convert things like "1 Corinthians 4:12" to "1CO/4/12"
-    //console.log("Entering convertRef function");
-    console.log("Reference to convert: " + Reference);
-    // special case for John - letters JN, book JHN, watch out for Psalms/Psalm
-    $lookup = {
-        Chronicles: 'CH',
-        Corinthians: 'CO',
-        John: 'JHN',
-        Peter: 'PE',
-        Thessalonians: 'TH',
-        Kings: 'KI',
-        Samuel: 'SA',
-        Timothy: 'TI',
-        Genesis: 'GEN',
-        Exodus: 'EXO',
-        Leviticus: 'LEV',
-        Numbers: 'NUM',
-        Deuteronomy: 'DEU',
-        Joshua: 'JOS',
-        Judges: 'JDG',
-        Ruth: 'RUT',
-        Ezra: 'EZR',
-        Nehemiah: 'NEH',
-        Esther: 'EST',
-        Job: 'JOB',
-        Psalm: 'PSA',
-        Psalms: 'PSA',
-        Proverbs: 'PRO',
-        Ecclesiastes: 'ECC',
-        'Song of Solomon': 'SNG',
-        'Song of Songs': 'SNG',
-        Isaiah: 'ISA',
-        Jeremiah: 'JER',
-        Ezekiel: 'EZK',
-        Daniel: 'DAN',
-        Hosea: 'HOS',
-        Joel: 'JOL',
-        Amos: 'AMO',
-        Obadiah: 'OBA',
-        Jonah: 'JON',
-        Micah: 'MIC',
-        Nahum: 'NAM',
-        Habbakuk: 'HAB',
-        Zephaniah: 'ZEP',
-        Haggai: 'HAG',
-        Zechariah: 'ZEC',
-        Malachi: 'MAL',
-        Matthew: 'MAT',
-        Mark: 'MRK',
-        Luke: 'LUK',
-        Acts: 'ACT',
-        Romans: 'ROM',
-        Galatians: 'GAL',
-        Ephesians: 'EPH',
-        Philippians: 'PHP',
-        Colossians: 'COL',
-        Titus: 'TIT',
-        Philemon: 'PHM',
-        Hebrews: 'HEB',
-        James: 'JAS',
-        Jude: 'JUD',
-        Revelation: 'REV'
-    };
-
-    let arr = Reference.split(' ');
-    if (arr[0] in ['1', '2', '3']) {
-        bookPrefix = arr[0];
-        bookNameMain = arr[1];
-        chapterVerse = arr[2];
-        if (bookNameMain === 'John') {
-            bookCode = bookPrefix + 'JN';
-        } else {
-            bookCode = bookPrefix + $lookup[bookNameMain];
-        }
-        console.log("Arr[0] = " + arr[0]);
-        console.log(bookCode);
-    } else // no number before the book
-    {
-        bookPrefix = '';
-        bookNameMain = arr[0];
-
-        chapterVerse = arr[1];
-        bookCode = $lookup[arr[0]];
-        if (typeof bookCode === undefined) {
-            console.error(arr[0] + "is not a valid book");
-            return "";
-        }
-    }
-    // Now construct the code
-    let $arr2 = chapterVerse.split(':');
-    let $arr3 = $arr2[1].split('-');
-    // for now this only returns one verse - not a list if it is a range of verses
-    return (bookCode + '-' + $arr2[0] + '-' + $arr3[0]);
-}
-/*     
-function playVerse(reference) 
-     {
-       console.log("Running playVerse - Reference to convert: " + reference);
-       $vdir = convertRef(reference);
-       console.log("Verse directory and file:" + $vdir);
-         console.log("Playing from the web");
-         playAudio($vdir +".ogg");
-     }      
-*/
-
-
-function startVerseAudio(verseReference) {
-    if (isAudioPlaying || (hasPlayed && !repeatEnabled)) {
-        return;
-    }
-
-    $vdir = convertRef(verseReference);
-    console.log("Verse directory and file:" + $vdir);
-    isAudioPlaying = true;
-    playAudio($vdir + ".ogg")
-        .then(() => {
-            isAudioPlaying = false;
-            hasPlayed = true; // Set hasPlayed to true after the audio finishes playing
-            if (repeatEnabled && gameMode === 'review' && verseReference === getCurrentVerseReference()) {
-                setTimeout(() => {
-                    if (repeatEnabled && gameMode === 'review' && verseReference === getCurrentVerseReference()) {
-                        startVerseAudio(verseReference);
-                    }
-                }, 5000); // Repeat after 5 seconds if still on the same verse and repeat is enabled
-            }
-        })
-        .catch((error) => {
-            isAudioPlaying = false;
-            console.error('Error playing audio:', error);
-        });
-}
-
-function stopAudio() {
-    if (currentAudio) {
-        currentAudio.pause();
-        currentAudio.currentTime = 0;
-        isAudioPlaying = false;
-        currentAudio = null;
-    }
-    isAudioPlaying = false;
-}
-
-
-function drawReviewModeButtons() {
-    const buttonWidth = 80;
-    const buttonHeight = 30;
-    const buttonY = 15;
-    const incorrectButtonX = 20;
-    const qualityButtonX = incorrectButtonX + buttonWidth + 10;
-    const gameButtonX = canvas.width - buttonWidth - 20;
-
-    ctx.fillStyle = currentReviewMode === 'incorrect' ? 'lightblue' : 'lightgray';
-    ctx.fillRect(incorrectButtonX, buttonY, buttonWidth, buttonHeight);
-
-    ctx.fillStyle = currentReviewMode === 'quality' ? 'lightblue' : 'lightgray';
-    ctx.fillRect(qualityButtonX, buttonY, buttonWidth, buttonHeight);
-
-    ctx.fillStyle = 'lightgray';
-    ctx.fillRect(gameButtonX, buttonY, buttonWidth, buttonHeight);
-
-    ctx.font = '14px Arial';
-    ctx.fillStyle = 'black';
-    ctx.fillText('Incorrect', incorrectButtonX + 10, buttonY + 20);
-    ctx.fillText(vQuality, qualityButtonX + 10, buttonY + 20);
-    ctx.fillText('Game', gameButtonX + 20, buttonY + 20);
-}
-
-
-function getCurrentVerseReference() {
-    if (currentReviewMode === 'incorrect') {
-        return incorrectAnswerReferences[currentReviewVerseIndex];
-    } else if (currentReviewMode === 'quality') {
-        const qualityVerses = organizedVerses[vQuality];
-        return qualityVerses[currentReviewVerseIndex].Reference;
-    }
-}
-
-
 
 
