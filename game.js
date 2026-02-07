@@ -598,10 +598,10 @@ function gameLoop() {
             lastAttackedMonster,
             explosionTimer,
             currentVerse: {
-                text: gappedVerse,
+                text: answerFullVerse || gappedVerse,
                 reference: organizedVerses[vQuality][currentVerseIndex].Reference
             },
-            quiz: {
+            quiz: answerFullVerse ? null : {
                 firstLetters,
                 mcOptions
             }

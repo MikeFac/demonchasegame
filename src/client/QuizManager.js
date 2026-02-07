@@ -3,6 +3,7 @@
 (function () {
     // Private state
     let answerResultTimeout = null;
+    let answerFullVerse = null;
 
     function organizeByCategory2(verses) {
         const categorizedVerses = {};
@@ -28,11 +29,13 @@
             player.ammo = (player.ammo || 0) + Constants.AMMO_REWARD;
             network.sendQuizCorrect();
 
-            setAnswerResultTimeout(5000);
+            answerFullVerse = organizedVerses[vQuality][currentVerseIndex].Text;
+            setAnswerResultTimeout(3000);
         } else {
             isAnswerCorrect = false;
             qualityIndex[vQuality] = (qualityIndex[vQuality] + 1) % organizedVerses[vQuality].length;
-            setAnswerResultTimeout(10000);
+            answerFullVerse = organizedVerses[vQuality][currentVerseIndex].Text;
+            setAnswerResultTimeout(3000);
 
             const currentReference = organizedVerses[vQuality][currentVerseIndex].Reference;
             if (!incorrectAnswerReferences.includes(currentReference)) {
@@ -70,6 +73,7 @@
             clearTimeout(answerResultTimeout);
             answerResultTimeout = null;
             isAnswerCorrect = null;
+            answerFullVerse = null;
         }
     }
 
