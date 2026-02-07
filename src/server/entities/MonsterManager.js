@@ -1,4 +1,5 @@
 const Constants = require('../../shared/Constants');
+const LevelConfig = require('../../shared/LevelConfig');
 const Physics = require('../utils/Physics');
 const crypto = require('crypto');
 
@@ -249,9 +250,9 @@ class MonsterManager {
                 player.xp = (player.xp || 0) + 10;
 
                 // Level up check (matches client thresholds)
-                const levelXPRequirements = [0, 30, 100, 200, 350, 500];
-                for (let i = player.level; i < levelXPRequirements.length; i++) {
-                    if (player.xp >= levelXPRequirements[i]) {
+                const xpReqs = LevelConfig.levelXPRequirements;
+                for (let i = player.level; i < xpReqs.length; i++) {
+                    if (player.xp >= xpReqs[i]) {
                         player.level = i + 1;
                         player.maxHealth = 50 + player.level * 50;
                         player.health = player.maxHealth;

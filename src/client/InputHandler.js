@@ -136,16 +136,16 @@ class InputHandler {
 
         // Check quiz option buttons
         if (typeof mcOptions !== 'undefined' && typeof ctx !== 'undefined') {
-            const optionStartX = 7;
-            const optionStartY = this.canvas.height - ANSWER_SECTION_HEIGHT - 10;
-            const buttonWidth = 49;
-            const buttonHeight = 21;
-            const buttonSpacing = 7;
+            const qo = UILayout.quizOptions;
+            const optionStartX = qo.startX;
+            const buttonWidth = qo.width;
+            const buttonHeight = qo.height;
+            const buttonSpacing = qo.spacing;
+            const buttonY = UILayout.getQuizButtonY(this.canvas.height);
 
             const textWidth = ctx.measureText('First letters of missing words are:').width;
             for (let i = 0; i < mcOptions.length; i++) {
                 const buttonX = optionStartX + textWidth + 14 + i * (buttonWidth + buttonSpacing);
-                const buttonY = optionStartY;
 
                 if (
                     clickedX >= buttonX &&
@@ -162,16 +162,15 @@ class InputHandler {
         }
 
         // Check review button
-        const reviewButtonWidth = 60;
-        const reviewButtonHeight = 13;
-        const reviewButtonX = this.canvas.width - reviewButtonWidth - 20;
-        const reviewButtonY = 29;
+        const rb = UILayout.reviewButton;
+        const reviewButtonX = UILayout.getReviewButtonX(this.canvas.width);
+        const reviewButtonY = rb.y;
 
         if (
             clickedX >= reviewButtonX &&
-            clickedX <= reviewButtonX + reviewButtonWidth &&
+            clickedX <= reviewButtonX + rb.width &&
             clickedY >= reviewButtonY &&
-            clickedY <= reviewButtonY + reviewButtonHeight
+            clickedY <= reviewButtonY + rb.height
         ) {
             if (this.callbacks.onReviewButtonClick) {
                 this.callbacks.onReviewButtonClick();

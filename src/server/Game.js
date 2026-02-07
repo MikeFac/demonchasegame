@@ -1,4 +1,5 @@
 const Constants = require('../shared/Constants');
+const LevelConfig = require('../shared/LevelConfig');
 const generateMaze = require('./utils/Maze');
 const MonsterManager = require('./entities/MonsterManager');
 const PlayerManager = require('./entities/PlayerManager');
@@ -11,37 +12,8 @@ class Game {
         this.lastUpdateTime = Date.now();
         this.shouldRun = false;
 
-        // Level Data
-        this.levelData = {
-            1: {
-                qualities: ['Faith', 'Courage', 'Knowledge'],
-                monsters: ['Fear', 'Ignorance'],
-                monsterDamageFactor: 1,
-                playerSpeed: 5,
-                monsterSpeed: 5,
-                spawnRate: 10000,
-                maxMonsters: 8
-            },
-            2: {
-                qualities: ['Love', 'Wisdom', 'Healing'],
-                monsters: ['Strife', 'Confusion', 'Infirmity'],
-                monsterDamageFactor: 1.5,
-                playerSpeed: 6,
-                spawnRate: 8000,
-                monsterSpeed: 7,
-                maxMonsters: 10
-            },
-            3: {
-                qualities: ['Forgiveness', 'Good News', 'Focus'],
-                monsters: ['Condemnation', 'Unbelief', 'Depression', 'Doubt'],
-                monsterDamageFactor: 1.5,
-                monsterSpeed: 9,
-                maxMonsters: 12,
-                playerSpeed: 6,
-                spawnRate: 5000,
-                maxMonsters: 5
-            }
-        };
+        // Level Data (shared between client and server)
+        this.levelData = LevelConfig.levelData;
 
         // Initial Game State
         this.gameState = {

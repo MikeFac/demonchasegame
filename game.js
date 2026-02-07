@@ -73,11 +73,12 @@ const MAX_HEALING_POINTS = 2; // Maximum number of healing points on the screen
 const MIN_HEALING_POINT_DISTANCE = 50; // Minimum distance between healing points and other objects
 const COMBAT_DISTANCE = 60; // Distance for combat to happen
 const MINIMUM_DISTANCE = 30; // Minimum distance between player and monster
-const QUALITY_LINE_HEIGHT = 45; // Height of the quality line (2.5x higher)
-const BUTTON_WIDTH = 84; // Width of the quality buttons
-const BUTTON_HEIGHT = 21; // Height of the quality buttons
-const BUTTON_PADDING = 4; // Padding around the button text
-const ANSWER_SECTION_HEIGHT = 17; // Distance from bottom where nothing should move or spawn
+// UI constants from centralized UILayout (loaded via script tag)
+const QUALITY_LINE_HEIGHT = UILayout.QUALITY_LINE_HEIGHT;
+const BUTTON_WIDTH = UILayout.BUTTON_WIDTH;
+const BUTTON_HEIGHT = UILayout.BUTTON_HEIGHT;
+const BUTTON_PADDING = UILayout.BUTTON_PADDING;
+const ANSWER_SECTION_HEIGHT = UILayout.ANSWER_SECTION_HEIGHT;
 const VERSECHANGETIME = 20000;
 let mouseX, mouseY; // Variables to store the last known mouse position (legacy, being replaced by InputHandler)
 let inputHandler; // InputHandler instance
@@ -92,36 +93,8 @@ let updateButtonsTimer = null;
 let levelCompleted = false;
 
 // If qualities is set to [] then all qualities will be used
-const levelData = {
-    1: {
-        qualities: ['Faith', 'Courage', 'Knowledge'],
-        monsters: ['Fear', 'Ignorance'],
-        monsterDamageFactor: 1,
-        playerSpeed: 5,
-        monsterSpeed: 1,
-        spawnRate: 10000,
-        maxMonsters: 3
-    },
-    2: {
-        qualities: ['Love', 'Wisdom', 'Healing'],
-        monsters: ['Strife', 'Confusion', 'Infirmity'],
-        monsterDamageFactor: 1.5,
-        playerSpeed: 6,
-        spawnRate: 8000,
-        monsterSpeed: 1.5,
-        maxMonsters: 5
-    },
-    3: {
-        qualities: ['Forgiveness', 'Good News', 'Focus'],
-        monsters: ['Condemnation', 'Unbelief', 'Depression', 'Doubt'],
-        monsterDamageFactor: 1.5,
-        playerSpeed: 6,
-        spawnRate: 5000,
-        monsterSpeed: 1.5,
-        maxMonsters: 5
-    }
-    // Add more level configurations as needed
-};
+// Level config shared between client and server (loaded via script tag)
+const levelData = LevelConfig.levelData;
 
 let QUALITIES;
 let ALL_QUALITIES;
@@ -168,13 +141,7 @@ const DEMON_TYPES = {
     Doubt: `${scriptDirectory}/doubt_spirit.png`
 };
 
-const levelXPRequirements = [
-    0, // Level 1 requirement (0 XP)
-    30, // Level 2 requirement
-    100, // Level 3 requirement
-    200, // Level 4 requirement
-    // Add more XP requirements for higher levels if needed
-];
+const levelXPRequirements = LevelConfig.levelXPRequirements;
 
 // Audio assets
 const attackSound = new Audio(`${scriptDirectory}/attack_sound.mp3`);
@@ -502,10 +469,10 @@ async function init() {
             },
             onGameClick: (x, y) => {
                 // Check inventory button click (floating "i" icon in top-right area)
-                // Button is positioned at top-right, within playable area
-                const invBtnX = canvas.width - 35;
-                const invBtnY = QUALITY_LINE_HEIGHT + BUTTON_HEIGHT + 5;
-                const invBtnSize = 28;
+                const ib = UILayout.inventoryButton;
+                const invBtnX = UILayout.getInventoryButtonX(canvas.width);
+                const invBtnY = ib.topOffset;
+                const invBtnSize = ib.size;
 
                 if (x >= invBtnX && x <= invBtnX + invBtnSize &&
                     y >= invBtnY && y <= invBtnY + invBtnSize) {
@@ -515,16 +482,18 @@ async function init() {
 
                 // Check inventory panel clicks when open
                 if (inventoryOpen) {
-                    const panelX = canvas.width - 160;
-                    const panelY = QUALITY_LINE_HEIGHT + BUTTON_HEIGHT + 38;
-                    const panelW = 150;
-                    const panelH = 70;
+                    const ip = UILayout.inventoryPanel;
+                    const panelX = UILayout.getInventoryPanelX(canvas.width);
+                    const panelY = ip.topOffset;
+                    const panelW = ip.width;
+                    const panelH = ip.height;
 
                     // "Use" button for shield
-                    const useBtnX = panelX + panelW - 50;
-                    const useBtnY = panelY + 30;
-                    const useBtnW = 40;
-                    const useBtnH = 22;
+                    const ub = UILayout.inventoryUseButton;
+                    const useBtnX = panelX + ub.xOffsetInPanel;
+                    const useBtnY = panelY + ub.yOffsetInPanel;
+                    const useBtnW = ub.width;
+                    const useBtnH = ub.height;
 
                     if (x >= useBtnX && x <= useBtnX + useBtnW &&
                         y >= useBtnY && y <= useBtnY + useBtnH &&
@@ -1248,7 +1217,7 @@ function createQualityButtons() {
     // Get random qualities for buttons
     const buttonQualities = Array.from(new Set(QUALITIES.sort(() => Math.random() - 0.5).slice(0, 3)));
 
-    const buttonStartX = canvas.width - (buttonQualities.length * (BUTTON_WIDTH + 7)) - 7;
+    const buttonStartX = UILayout.getQualityButtonStartX(canvas.width, buttonQualities.length);
     for (let i = 0; i < buttonQualities.length; i++) {
         const buttonX = buttonStartX + i * (BUTTON_WIDTH + 7);
         const buttonY = 5;

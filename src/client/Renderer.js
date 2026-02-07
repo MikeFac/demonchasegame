@@ -4,12 +4,13 @@ class Renderer {
         this.ctx = ctx;
         this.assets = assets;
 
-        // Constants (should ideally come from shared Constants, but redundant here for now or passed in)
-        this.QUALITY_LINE_HEIGHT = 45;
-        this.BUTTON_HEIGHT = 21;
-        this.ANSWER_SECTION_HEIGHT = 17;
-        this.BUTTON_WIDTH = 84;
-        this.BUTTON_PADDING = 4;
+        // UI constants from centralized UILayout
+        const UI = window.UILayout;
+        this.QUALITY_LINE_HEIGHT = UI.QUALITY_LINE_HEIGHT;
+        this.BUTTON_HEIGHT = UI.BUTTON_HEIGHT;
+        this.ANSWER_SECTION_HEIGHT = UI.ANSWER_SECTION_HEIGHT;
+        this.BUTTON_WIDTH = UI.BUTTON_WIDTH;
+        this.BUTTON_PADDING = UI.BUTTON_PADDING;
     }
 
     clear() {
@@ -77,7 +78,7 @@ class Renderer {
         this.drawReviewButton();
 
         // Quality Buttons
-        const buttonStartX = this.canvas.width - (qualityButtons.length * (this.BUTTON_WIDTH + 7)) - 7 + 8;
+        const buttonStartX = UILayout.getQualityButtonStartX(this.canvas.width, qualityButtons.length);
         qualityButtons.forEach((button, index) => {
             const buttonX = buttonStartX + index * (this.BUTTON_WIDTH + 7);
             this.ctx.fillStyle = button.color;
@@ -90,10 +91,11 @@ class Renderer {
     }
 
     drawReviewButton() {
-        const reviewButtonWidth = 60;
-        const reviewButtonHeight = 13;
-        const reviewButtonX = this.canvas.width - reviewButtonWidth - 20;
-        const reviewButtonY = 29;
+        const rb = UILayout.reviewButton;
+        const reviewButtonWidth = rb.width;
+        const reviewButtonHeight = rb.height;
+        const reviewButtonX = UILayout.getReviewButtonX(this.canvas.width);
+        const reviewButtonY = rb.y;
 
         this.ctx.fillStyle = 'gray'; // Button color
         this.ctx.fillRect(reviewButtonX, reviewButtonY, reviewButtonWidth, reviewButtonHeight);
@@ -329,9 +331,10 @@ class Renderer {
         }
 
         // Floating "i" inventory button (top-right, within playable area)
-        const btnX = this.canvas.width - 35;
-        const btnY = this.QUALITY_LINE_HEIGHT + this.BUTTON_HEIGHT + 5;
-        const btnSize = 28;
+        const ib = UILayout.inventoryButton;
+        const btnX = UILayout.getInventoryButtonX(this.canvas.width);
+        const btnY = ib.topOffset;
+        const btnSize = ib.size;
 
         this.ctx.fillStyle = inventoryOpen ? '#DAA520' : 'rgba(50, 50, 50, 0.7)';
         this.ctx.fillRect(btnX, btnY, btnSize, btnSize);
@@ -355,10 +358,11 @@ class Renderer {
 
         // Inventory panel when open
         if (inventoryOpen) {
-            const panelX = this.canvas.width - 160;
-            const panelY = this.QUALITY_LINE_HEIGHT + this.BUTTON_HEIGHT + 38;
-            const panelW = 150;
-            const panelH = 70;
+            const ip = UILayout.inventoryPanel;
+            const panelX = UILayout.getInventoryPanelX(this.canvas.width);
+            const panelY = ip.topOffset;
+            const panelW = ip.width;
+            const panelH = ip.height;
 
             // Panel background
             this.ctx.fillStyle = 'rgba(0, 0, 0, 0.85)';
@@ -390,10 +394,11 @@ class Renderer {
 
                 // "Use" button
                 if (!shieldState.active) {
-                    const useBtnX = panelX + panelW - 50;
-                    const useBtnY = panelY + 30;
+                    const ub = UILayout.inventoryUseButton;
+                    const useBtnX = panelX + ub.xOffsetInPanel;
+                    const useBtnY = panelY + ub.yOffsetInPanel;
                     this.ctx.fillStyle = '#228B22';
-                    this.ctx.fillRect(useBtnX, useBtnY, 40, 22);
+                    this.ctx.fillRect(useBtnX, useBtnY, ub.width, ub.height);
                     this.ctx.fillStyle = 'white';
                     this.ctx.font = 'bold 11px Arial';
                     this.ctx.fillText('Use', useBtnX + 8, useBtnY + 15);
@@ -473,20 +478,21 @@ class Renderer {
     }
 
     displayMultipleChoiceOptions(firstLetters, options) {
-        const buttonWidth = 49;
-        const buttonHeight = 21;
-        const buttonSpacing = 7;
-        const optionStartX = 7;
-        const optionStartY = this.canvas.height - 7;
+        const qo = UILayout.quizOptions;
+        const buttonWidth = qo.width;
+        const buttonHeight = qo.height;
+        const buttonSpacing = qo.spacing;
+        const optionStartX = qo.startX;
+        const buttonY = UILayout.getQuizButtonY(this.canvas.height);
+        const labelY = buttonY + 16;
 
         this.ctx.fillStyle = 'black';
         this.ctx.font = '11px Arial';
-        this.ctx.fillText('First letters of missing words are:', optionStartX, optionStartY);
+        this.ctx.fillText('First letters of missing words are:', optionStartX, labelY);
 
         const textWidth = this.ctx.measureText('First letters of missing words are:').width;
         for (let i = 0; i < options.length; i++) {
             const buttonX = optionStartX + textWidth + 14 + i * (buttonWidth + buttonSpacing);
-            const buttonY = optionStartY - 16;
 
             this.ctx.fillStyle = 'lightgray';
             this.ctx.fillRect(buttonX, buttonY, buttonWidth, buttonHeight);
