@@ -71,6 +71,131 @@
       border: 1px solid rgba(255, 255, 255, 0.2);
       box-shadow: 0 4px 15px rgba(15, 52, 96, 0.4);
     }
+
+    #btnInstructions {
+      background: linear-gradient(135deg, #2d6a4f, #1b4332);
+      color: #fff;
+      box-shadow: 0 4px 15px rgba(45, 106, 79, 0.4);
+    }
+
+    /* Instructions overlay */
+    #instructionsOverlay {
+      display: none;
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: rgba(0, 0, 0, 0.85);
+      z-index: 100;
+      justify-content: center;
+      align-items: center;
+    }
+
+    #instructionsOverlay.visible {
+      display: flex;
+    }
+
+    #instructionsPanel {
+      font-family: 'Segoe UI', sans-serif;
+      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+      border-radius: 15px;
+      padding: 30px 25px;
+      color: #fff;
+      max-width: 400px;
+      width: 90%;
+      max-height: 90vh;
+      overflow-y: auto;
+      position: relative;
+    }
+
+    #instructionsPanel h2 {
+      font-size: 1.6em;
+      margin-bottom: 15px;
+      text-shadow: 0 0 10px rgba(100, 200, 255, 0.4);
+      text-align: center;
+    }
+
+    #instructionsPanel .page-content {
+      font-size: 0.95em;
+      line-height: 1.6;
+      margin-bottom: 20px;
+    }
+
+    #instructionsPanel .page-content h3 {
+      color: #e94560;
+      font-size: 1.1em;
+      margin: 14px 0 6px 0;
+    }
+
+    #instructionsPanel .page-content p {
+      margin-bottom: 8px;
+    }
+
+    #instructionsPanel .page-content ul {
+      margin: 6px 0 10px 20px;
+    }
+
+    #instructionsPanel .page-content li {
+      margin-bottom: 4px;
+    }
+
+    #instructionsPanel .page-content .highlight {
+      color: #ffd700;
+      font-weight: bold;
+    }
+
+    #instructionsPanel .page-content .key {
+      background: rgba(255,255,255,0.15);
+      padding: 1px 6px;
+      border-radius: 4px;
+      font-family: monospace;
+    }
+
+    .instructions-nav {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 10px;
+    }
+
+    .instructions-nav button {
+      padding: 10px 24px;
+      border: none;
+      border-radius: 8px;
+      font-size: 1em;
+      font-weight: bold;
+      cursor: pointer;
+      transition: transform 0.1s;
+    }
+
+    .instructions-nav button:hover {
+      transform: scale(1.05);
+    }
+
+    #btnPrev {
+      background: #0f3460;
+      color: #fff;
+    }
+
+    #btnNext {
+      background: #e94560;
+      color: #fff;
+    }
+
+    #btnCloseInstructions {
+      background: #333;
+      color: #fff;
+    }
+
+    .instructions-nav button:disabled {
+      opacity: 0.3;
+      cursor: default;
+      transform: none;
+    }
+
+    .page-indicator {
+      color: rgba(255,255,255,0.5);
+      font-size: 0.9em;
+    }
   </style>
 </head>
 
@@ -79,7 +204,21 @@
     <h1>Demon Chase</h1>
     <button id="btnSolo">Solo Game</button>
     <button id="btnMultiplayer">Join Multiplayer</button>
+    <button id="btnInstructions">How to Play</button>
   </div>
+
+  <div id="instructionsOverlay">
+    <div id="instructionsPanel">
+      <h2 id="instructionsTitle"></h2>
+      <div id="instructionsContent" class="page-content"></div>
+      <div class="instructions-nav">
+        <button id="btnPrev">Back</button>
+        <span class="page-indicator" id="pageIndicator"></span>
+        <button id="btnNext">Next</button>
+      </div>
+    </div>
+  </div>
+
   <canvas id="gameCanvas" width="800" height="600"></canvas>
 
   <script src="bible-verses.js"></script>
@@ -98,7 +237,165 @@
     const urlParams = new URLSearchParams(window.location.search);
     var gameCategory = urlParams.get('category') || '';
   </script>
-  <script src="game.js?v=2.03"></script>
+  <script src="game.js?v=2.04"></script>
+
+  <script>
+    // Instructions pages
+    (function () {
+      const pages = [
+        {
+          title: 'Welcome',
+          content: `
+            <h3>What is Demon Chase?</h3>
+            <p>Demon Chase is an action game where you fight spiritual enemies by learning Bible verses. Demons representing fears, doubts, and lies chase you through dungeon rooms.</p>
+            <p>Your weapon? <span class="highlight">The Word of God.</span> Answer verse quizzes correctly to power up your attacks and defeat the demons.</p>
+            <h3>Goal</h3>
+            <p>Defeat enough monsters in each level to advance. There are 3 levels, each harder than the last with faster and stronger enemies.</p>
+          `
+        },
+        {
+          title: 'Movement & Combat',
+          content: `
+            <h3>Moving</h3>
+            <p><span class="highlight">Tap or click</span> anywhere in the game area to move your character there. Your character walks toward the target automatically.</p>
+            <p>You move through dungeon rooms connected by corridors. Walls block your path — find the openings!</p>
+            <h3>Melee Combat</h3>
+            <p>When you get close to a demon, combat starts automatically. You and the demon exchange blows every 0.7 seconds.</p>
+            <ul>
+              <li>You only deal damage if your <span class="highlight">last quiz answer was correct</span></li>
+              <li>The demon always hits back (unless you have a shield)</li>
+              <li>Each demon type has different max damage</li>
+            </ul>
+            <h3>Shooting</h3>
+            <p><span class="highlight">Tap on a demon</span> to fire a Spirit projectile at it. Each shot costs 1 Spirit ammo. Earn more ammo by answering quizzes correctly (+5 per correct answer).</p>
+          `
+        },
+        {
+          title: 'Bible Verse Quizzes',
+          content: `
+            <h3>How Quizzes Work</h3>
+            <p>A Bible verse is always shown at the bottom of the screen with some words blanked out. Tap the button showing the <span class="highlight">correct first letters</span> of the missing words.</p>
+            <h3>Why It Matters</h3>
+            <ul>
+              <li><span class="highlight">Correct answer:</span> Your melee attacks deal damage, and you earn +5 Spirit ammo</li>
+              <li><span class="highlight">Wrong answer:</span> Your attacks do nothing until you get the next one right</li>
+            </ul>
+            <h3>Quality Categories</h3>
+            <p>Verses are grouped by qualities like Faith, Courage, and Love. The coloured buttons at the top let you switch which quality you're studying. New quality buttons rotate every 22 seconds.</p>
+          `
+        },
+        {
+          title: 'Items & Shields',
+          content: `
+            <h3>Healing Points</h3>
+            <p>Green crosses appear in the dungeon. Walk over them to <span class="highlight">restore 25 health</span>. Up to 2 exist at a time.</p>
+            <h3>Shield of Faith</h3>
+            <p>A golden diamond appears once per level. Walk over it to collect it into your inventory.</p>
+            <ul>
+              <li>Tap the <span class="key">i</span> button (top-right) to open your inventory</li>
+              <li>Tap <span class="highlight">Use</span> to activate the shield</li>
+              <li>While active (10 seconds), you take <span class="highlight">zero damage</span> from demons</li>
+              <li>A golden glow surrounds your character and a timer shows remaining time</li>
+            </ul>
+          `
+        },
+        {
+          title: 'Levels & Progression',
+          content: `
+            <h3>Levelling Up</h3>
+            <p>Killing demons earns <span class="highlight">10 XP</span> each. As you gain XP, your player level increases:</p>
+            <ul>
+              <li>Higher level = more max health</li>
+              <li>Full health restore on level up</li>
+            </ul>
+            <h3>Game Levels</h3>
+            <p>There are <span class="highlight">3 game levels</span>. Beat 60% of the monsters to advance:</p>
+            <ul>
+              <li><span class="highlight">Level 1 (Stone Dungeon):</span> Fear & Ignorance — slow, weak</li>
+              <li><span class="highlight">Level 2 (Earth Dungeon):</span> Strife, Confusion & Infirmity — faster, hit harder</li>
+              <li><span class="highlight">Level 3 (Crystal Dungeon):</span> Condemnation, Unbelief, Depression & Doubt — fast, dangerous</li>
+            </ul>
+            <p>Each level generates a new dungeon layout with a different colour theme.</p>
+          `
+        },
+        {
+          title: 'Tips',
+          content: `
+            <h3>Top Tips</h3>
+            <ul>
+              <li><span class="highlight">Answer the quiz first</span> before engaging a demon — otherwise your attacks do nothing</li>
+              <li>Use corridors to your advantage — demons can get stuck on walls</li>
+              <li>Save your Shield of Faith for tough fights with multiple chasers</li>
+              <li>Shoot from range to soften up enemies before going into melee</li>
+              <li>Watch your Spirit ammo counter — keep answering quizzes to stay stocked</li>
+              <li>Use the <span class="highlight">Review</span> button to study verses you got wrong</li>
+            </ul>
+            <h3>Demon Types</h3>
+            <ul>
+              <li><span class="highlight">Chasers</span> — follow you relentlessly</li>
+              <li><span class="highlight">Wanderers</span> — walk randomly, but still hurt if you get close</li>
+            </ul>
+            <p>Good luck, and may the Word be your sword!</p>
+          `
+        }
+      ];
+
+      let currentPage = 0;
+
+      const overlay = document.getElementById('instructionsOverlay');
+      const titleEl = document.getElementById('instructionsTitle');
+      const contentEl = document.getElementById('instructionsContent');
+      const indicatorEl = document.getElementById('pageIndicator');
+      const btnPrev = document.getElementById('btnPrev');
+      const btnNext = document.getElementById('btnNext');
+
+      function showPage(index) {
+        currentPage = index;
+        titleEl.textContent = pages[index].title;
+        contentEl.innerHTML = pages[index].content;
+        indicatorEl.textContent = (index + 1) + ' / ' + pages.length;
+
+        btnPrev.disabled = (index === 0);
+        // Last page: change Next to "Close"
+        if (index === pages.length - 1) {
+          btnNext.textContent = 'Close';
+          btnNext.style.background = '#333';
+        } else {
+          btnNext.textContent = 'Next';
+          btnNext.style.background = '#e94560';
+        }
+      }
+
+      function open() {
+        currentPage = 0;
+        showPage(0);
+        overlay.classList.add('visible');
+      }
+
+      function close() {
+        overlay.classList.remove('visible');
+      }
+
+      document.getElementById('btnInstructions').addEventListener('click', open);
+
+      btnPrev.addEventListener('click', function () {
+        if (currentPage > 0) showPage(currentPage - 1);
+      });
+
+      btnNext.addEventListener('click', function () {
+        if (currentPage < pages.length - 1) {
+          showPage(currentPage + 1);
+        } else {
+          close();
+        }
+      });
+
+      // Close on overlay background click
+      overlay.addEventListener('click', function (e) {
+        if (e.target === overlay) close();
+      });
+    })();
+  </script>
 </body>
 
 </html>
