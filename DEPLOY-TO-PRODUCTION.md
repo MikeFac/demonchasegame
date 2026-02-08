@@ -37,10 +37,8 @@ su - dcgame
 # Navigate to app directory
 cd /var/www/dcgame.4you.tel
 
-# Clone Repository (or pull if already exists)
-# git clone <your-repo-url> .
-# OR if no repo yet, copy files from local machine to /var/www/dcgame.4you.tel via SCP as root, then chown.
-# Assuming files are present:
+# Clone Repository
+git clone git@github.com:MikeFac/demonchasegame.git .
 npm install
 ```
 

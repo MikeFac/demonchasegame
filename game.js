@@ -129,6 +129,9 @@ let shieldImg = null;
 let shieldPoints = [];
 let inventoryOpen = false;
 
+// Menu state
+let menuOpen = false;
+
 // for monster explosion
 let explosionTimer = 0;
 const EXPLOSION_INTERVAL = 100; // Adjust the interval as needed
@@ -347,6 +350,8 @@ async function init() {
                         levelAdvanceTimer = null;
                         levelCompleted = false;
                         levelAdvanceCountdown = 0;
+                        // Reset monstersKilled so we don't immediately trigger next level
+                        gameState.monstersKilled = 0;
                         setLevelData(gameState);
                     }
                 }, 1000);
@@ -514,17 +519,34 @@ async function init() {
             onQuizOptionClick: (selectedOption) => {
                 QuizManager.handleQuizAnswer(selectedOption);
             },
-            onReviewButtonClick: () => {
-                ReviewMode.saveGameState();
-                ReviewMode.startReviewMode();
-            },
             onReviewModeClick: (event) => {
                 ReviewMode.handleReviewClick(event);
             },
+            onHamburgerClick: () => {
+                menuOpen = !menuOpen;
+            },
+            onMenuItemClick: (itemId) => {
+                // Always close menu after selection
+                menuOpen = false;
+                
+                if (itemId === 'review') {
+                    ReviewMode.saveGameState();
+                    ReviewMode.startReviewMode();
+                } else if (itemId === 'playPause') {
+                    MusicManager.togglePlay();
+                    console.log('Music playing:', MusicManager.getIsPlaying());
+                } else if (itemId === 'nextSong') {
+                    // Cycle to next track (wrap around)
+                    const state = MusicManager.getState();
+                    const nextIndex = (state.currentTrackIndex + 1) % state.tracks.length;
+                    MusicManager.playTrack(nextIndex);
+                    console.log('Next song:', state.tracks[nextIndex].name);
+                }
+            },
             onGameClick: (x, y) => {
-                // Check inventory button click (floating "i" icon in top-right area)
+                // Check inventory button click (floating "i" icon in top-left area)
                 const ib = UILayout.inventoryButton;
-                const invBtnX = UILayout.getInventoryButtonX(canvas.width);
+                const invBtnX = UILayout.getInventoryButtonX();
                 const invBtnY = ib.topOffset;
                 const invBtnSize = ib.size;
 
@@ -537,7 +559,7 @@ async function init() {
                 // Check inventory panel clicks when open
                 if (inventoryOpen) {
                     const ip = UILayout.inventoryPanel;
-                    const panelX = UILayout.getInventoryPanelX(canvas.width);
+                    const panelX = UILayout.getInventoryPanelX();
                     const panelY = ip.topOffset;
                     const panelW = ip.width;
                     const panelH = ip.height;
@@ -645,7 +667,12 @@ function gameLoop() {
                 text: answerFullVerse || (currentQuiz ? currentQuiz.promptText : ''),
                 reference: organizedVerses[vQuality][currentVerseIndex].Reference
             },
-            quiz: answerFullVerse ? null : currentQuiz
+            quiz: answerFullVerse ? null : currentQuiz,
+            menuState: {
+                menuOpen,
+                musicState: MusicManager.getState(),
+                reviewActive: gameMode === 'review'
+            }
         };
 
         const assets = {

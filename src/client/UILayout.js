@@ -24,12 +24,21 @@ const UILayout = (function() {
         // Playable area boundaries
         playableTop: QUALITY_LINE_HEIGHT + BUTTON_HEIGHT,
 
-        // Review button
-        reviewButton: {
-            width: 60,
-            height: 13,
-            rightOffset: 80,
-            y: 29
+        // Hamburger menu button - moved below quality buttons
+        hamburgerButton: {
+            width: 28,
+            height: 24,
+            rightOffset: 35,
+            y: 30  // Below quality buttons (y=5 + height=21 = 26, so y=30)
+        },
+
+        // Menu panel (when hamburger is open) - starts under the hamburger button, extends left
+        menuPanel: {
+            width: 160,
+            rightOffset: 35,
+            topOffset: 58,  // hamburger y (30) + height (24) + 4px gap = 58
+            itemHeight: 32,
+            padding: 8
         },
 
         // Quality buttons
@@ -49,16 +58,16 @@ const UILayout = (function() {
             bottomOffset: 23
         },
 
-        // Inventory button (floating "i" icon)
+        // Inventory button (floating "i" icon) - moved to LEFT side under top bars
         inventoryButton: {
-            rightOffset: 35,
+            leftOffset: 7,
             topOffset: QUALITY_LINE_HEIGHT + BUTTON_HEIGHT + 5,
             size: 28
         },
 
         // Inventory panel
         inventoryPanel: {
-            rightOffset: 160,
+            leftOffset: 7,
             topOffset: QUALITY_LINE_HEIGHT + BUTTON_HEIGHT + 38,
             width: 150,
             height: 70
@@ -73,20 +82,27 @@ const UILayout = (function() {
         },
 
         // Helper methods for computed positions
-        getReviewButtonX(canvasWidth) {
-            return canvasWidth - this.reviewButton.rightOffset;
+        getHamburgerButtonX(canvasWidth) {
+            return canvasWidth - this.hamburgerButton.rightOffset;
         },
+
+        getMenuPanelX(canvasWidth) {
+            // Right-align panel with hamburger button's right edge
+            const hamburgerRight = canvasWidth - this.hamburgerButton.rightOffset + this.hamburgerButton.width;
+            return hamburgerRight - this.menuPanel.width;
+        },
+
 
         getQualityButtonStartX(canvasWidth, buttonCount) {
             return canvasWidth - (buttonCount * (BUTTON_WIDTH + this.qualityButtons.spacing)) - this.qualityButtons.rightMargin + this.qualityButtons.horizontalOffset;
         },
 
-        getInventoryButtonX(canvasWidth) {
-            return canvasWidth - this.inventoryButton.rightOffset;
+        getInventoryButtonX() {
+            return this.inventoryButton.leftOffset;
         },
 
-        getInventoryPanelX(canvasWidth) {
-            return canvasWidth - this.inventoryPanel.rightOffset;
+        getInventoryPanelX() {
+            return this.inventoryPanel.leftOffset;
         },
 
         getQuizButtonY(canvasHeight) {

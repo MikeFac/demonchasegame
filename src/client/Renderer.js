@@ -53,7 +53,8 @@ class Renderer {
         this.drawHUD(player, gameState, uiState.lastAttackedMonster);
 
         // Draw Shield HUD (inventory button, panel, active timer)
-        this.drawShieldHUD(shieldState, shieldState ? shieldState.inventoryOpen : false);
+        // Always draw the inventory button even if shieldState is missing
+        this.drawShieldHUD(shieldState || { count: 0, active: false, remaining: 0, inventoryOpen: false }, shieldState ? shieldState.inventoryOpen : false);
 
         // Draw Level/Game Messages
         this.drawMessages(uiState);
@@ -62,10 +63,15 @@ class Renderer {
         if (uiState.currentVerse) {
             this.displayBibleVerse(uiState.currentVerse.text, uiState.currentVerse.reference, uiState.quiz);
         }
+
+        // Draw menu panel LAST so it appears on top of everything
+        if (uiState.menuState && uiState.menuState.menuOpen) {
+            this.drawMenuPanel(uiState.menuState);
+        }
     }
 
     drawTopBar(uiState) {
-        const { vQuality, qualityButtons } = uiState;
+        const { vQuality, qualityButtons, menuState } = uiState;
 
         // Quality Line
         this.ctx.fillStyle = 'black';
@@ -74,10 +80,7 @@ class Renderer {
         this.ctx.font = '14px Arial';
         this.ctx.fillText(`Quality: ${vQuality}`, 7, 22);
 
-        // Review Button
-        this.drawReviewButton();
-
-        // Quality Buttons
+        // Quality Buttons (drawn first so hamburger appears on top if overlapping)
         const buttonStartX = UILayout.getQualityButtonStartX(this.canvas.width, qualityButtons.length);
         qualityButtons.forEach((button, index) => {
             const buttonX = buttonStartX + index * (this.BUTTON_WIDTH + 7);
@@ -88,21 +91,79 @@ class Renderer {
             this.ctx.font = 'bold 11px Arial';
             this.ctx.fillText(button.text, buttonX + this.BUTTON_PADDING, 5 + this.BUTTON_HEIGHT - this.BUTTON_PADDING);
         });
+
+        // Hamburger Menu Button (drawn last in top bar so it's on top)
+        this.drawHamburgerButton(menuState);
     }
 
-    drawReviewButton() {
-        const rb = UILayout.reviewButton;
-        const reviewButtonWidth = rb.width;
-        const reviewButtonHeight = rb.height;
-        const reviewButtonX = UILayout.getReviewButtonX(this.canvas.width);
-        const reviewButtonY = rb.y;
+    drawHamburgerButton(menuState) {
+        const hb = UILayout.hamburgerButton;
+        const btnX = UILayout.getHamburgerButtonX(this.canvas.width);
+        const btnY = hb.y;
+        const btnW = hb.width;
+        const btnH = hb.height;
 
-        this.ctx.fillStyle = 'gray'; // Button color
-        this.ctx.fillRect(reviewButtonX, reviewButtonY, reviewButtonWidth, reviewButtonHeight);
+        const isOpen = menuState && menuState.menuOpen;
 
-        this.ctx.fillStyle = 'white'; // Text color
-        this.ctx.font = '10px Arial';
-        this.ctx.fillText('Review', reviewButtonX + 5, reviewButtonY + 10);
+        // Button background - more visible
+        this.ctx.fillStyle = isOpen ? '#444' : '#2a2a2a';
+        this.ctx.fillRect(btnX, btnY, btnW, btnH);
+        
+        // Thicker border
+        this.ctx.strokeStyle = isOpen ? '#fff' : '#aaa';
+        this.ctx.lineWidth = 2;
+        this.ctx.strokeRect(btnX, btnY, btnW, btnH);
+
+        // Hamburger icon (three lines) - thicker and more visible
+        this.ctx.fillStyle = '#fff';
+        const lineWidth = 16;
+        const lineHeight = 3;  // Thicker lines
+        const lineX = btnX + (btnW - lineWidth) / 2;
+        const lineSpacing = 5;
+        const startY = btnY + 5;
+
+        for (let i = 0; i < 3; i++) {
+            this.ctx.fillRect(lineX, startY + i * lineSpacing, lineWidth, lineHeight);
+        }
+    }
+
+    drawMenuPanel(menuState) {
+        const mp = UILayout.menuPanel;
+        const panelX = UILayout.getMenuPanelX(this.canvas.width);
+        const panelY = mp.topOffset;
+        const panelW = mp.width;
+        const itemH = mp.itemHeight;
+        const padding = mp.padding;
+
+        const musicState = menuState.musicState || {};
+        const isPlaying = musicState.isPlaying;
+
+        // Panel background - 3 items now
+        this.ctx.fillStyle = 'rgba(0, 0, 0, 0.9)';
+        this.ctx.fillRect(panelX, panelY, panelW, itemH * 3 + padding * 4);
+        this.ctx.strokeStyle = '#fff';
+        this.ctx.lineWidth = 1;
+        this.ctx.strokeRect(panelX, panelY, panelW, itemH * 3 + padding * 4);
+
+        // Menu items
+        const items = [
+            { id: 'review', label: '📖 Review' },
+            { id: 'playPause', label: isPlaying ? '⏸ Stop' : '▶ Start' },
+            { id: 'nextSong', label: '⏭ Next Song' }
+        ];
+
+        items.forEach((item, index) => {
+            const itemY = panelY + padding + index * (itemH + padding / 2);
+            
+            // Item background
+            this.ctx.fillStyle = 'rgba(255, 255, 255, 0.1)';
+            this.ctx.fillRect(panelX + padding, itemY, panelW - padding * 2, itemH);
+            
+            // Item text
+            this.ctx.fillStyle = '#fff';
+            this.ctx.font = '12px Arial';
+            this.ctx.fillText(item.label, panelX + padding * 2, itemY + itemH / 2 + 4);
+        });
     }
 
     drawHUD(player, gameState, lastAttackedMonster) {
@@ -339,33 +400,39 @@ class Renderer {
     }
 
     drawShieldHUD(shieldState, inventoryOpen) {
-        if (!shieldState) return;
+        // Floating "i" inventory button (top-left, within playable area) - ALWAYS draw this
+        const ib = UILayout.inventoryButton;
+        const btnX = UILayout.getInventoryButtonX();
+        const btnY = ib.topOffset;
+        const btnSize = ib.size;
+        const hasShields = shieldState && shieldState.count > 0;
+
+        // Draw button background
+        this.ctx.fillStyle = inventoryOpen ? '#DAA520' : (hasShields ? '#2a2a2a' : '#1a1a1a');
+        this.ctx.fillRect(btnX, btnY, btnSize, btnSize);
+        
+        // Draw border
+        this.ctx.strokeStyle = hasShields ? 'gold' : '#888';
+        this.ctx.lineWidth = 2;
+        this.ctx.strokeRect(btnX, btnY, btnSize, btnSize);
+        
+        // Draw "i" text
+        this.ctx.fillStyle = hasShields ? 'gold' : '#ccc';
+        this.ctx.font = 'bold 16px Arial';
+        this.ctx.textAlign = 'center';
+        this.ctx.fillText('i', btnX + btnSize / 2, btnY + 20);
+        this.ctx.textAlign = 'left';
 
         // Active timer display
-        if (shieldState.active) {
+        if (shieldState && shieldState.active) {
             const remaining = Math.ceil(shieldState.remaining / 1000);
             this.ctx.fillStyle = 'gold';
             this.ctx.font = 'bold 14px Arial';
             this.ctx.fillText(`SHIELD: ${remaining}s`, 7, this.QUALITY_LINE_HEIGHT + 12);
         }
 
-        // Floating "i" inventory button (top-right, within playable area)
-        const ib = UILayout.inventoryButton;
-        const btnX = UILayout.getInventoryButtonX(this.canvas.width);
-        const btnY = ib.topOffset;
-        const btnSize = ib.size;
-
-        this.ctx.fillStyle = inventoryOpen ? '#DAA520' : 'rgba(50, 50, 50, 0.7)';
-        this.ctx.fillRect(btnX, btnY, btnSize, btnSize);
-        this.ctx.strokeStyle = shieldState.count > 0 ? 'gold' : '#666';
-        this.ctx.lineWidth = 2;
-        this.ctx.strokeRect(btnX, btnY, btnSize, btnSize);
-        this.ctx.fillStyle = shieldState.count > 0 ? 'gold' : 'white';
-        this.ctx.font = 'bold 16px Arial';
-        this.ctx.fillText('i', btnX + 10, btnY + 20);
-
         // Badge for count
-        if (shieldState.count > 0) {
+        if (hasShields) {
             this.ctx.fillStyle = 'red';
             this.ctx.beginPath();
             this.ctx.arc(btnX + btnSize - 2, btnY + 4, 8, 0, Math.PI * 2);
@@ -378,16 +445,16 @@ class Renderer {
         // Inventory panel when open
         if (inventoryOpen) {
             const ip = UILayout.inventoryPanel;
-            const panelX = UILayout.getInventoryPanelX(this.canvas.width);
+            const panelX = UILayout.getInventoryPanelX();
             const panelY = ip.topOffset;
             const panelW = ip.width;
             const panelH = ip.height;
 
             // Panel background
-            this.ctx.fillStyle = 'rgba(0, 0, 0, 0.85)';
+            this.ctx.fillStyle = 'rgba(0, 0, 0, 0.9)';
             this.ctx.fillRect(panelX, panelY, panelW, panelH);
             this.ctx.strokeStyle = 'gold';
-            this.ctx.lineWidth = 1;
+            this.ctx.lineWidth = 2;
             this.ctx.strokeRect(panelX, panelY, panelW, panelH);
 
             // Title
@@ -395,7 +462,7 @@ class Renderer {
             this.ctx.font = 'bold 12px Arial';
             this.ctx.fillText('Inventory', panelX + 8, panelY + 16);
 
-            if (shieldState.count > 0) {
+            if (hasShields) {
                 // Shield icon (small diamond)
                 this.ctx.fillStyle = 'gold';
                 this.ctx.beginPath();

@@ -20,7 +20,9 @@ class InputHandler {
             onQuizOptionClick: null,
             onReviewButtonClick: null,
             onReviewModeClick: null,
-            onGameClick: null // (x, y) => boolean (handled?)
+            onGameClick: null, // (x, y) => boolean (handled?)
+            onHamburgerClick: null,
+            onMenuItemClick: null // (itemId) => void
         };
 
         // Bind event handlers
@@ -95,6 +97,84 @@ class InputHandler {
     _handleGameModeClick(clickedX, clickedY) {
         const { QUALITY_LINE_HEIGHT, BUTTON_HEIGHT, BUTTON_WIDTH, ANSWER_SECTION_HEIGHT } = this.constants;
 
+        // Check hamburger menu button (top-right)
+        const hb = UILayout.hamburgerButton;
+        const hamburgerBtnX = UILayout.getHamburgerButtonX(this.canvas.width);
+        if (
+            clickedX >= hamburgerBtnX &&
+            clickedX <= hamburgerBtnX + hb.width &&
+            clickedY >= hb.y &&
+            clickedY <= hb.y + hb.height
+        ) {
+            if (this.callbacks.onHamburgerClick) {
+                this.callbacks.onHamburgerClick();
+            }
+            return;
+        }
+
+        // Check menu panel items (if menu is open)
+        if (typeof menuOpen !== 'undefined' && menuOpen) {
+            const mp = UILayout.menuPanel;
+            const panelX = UILayout.getMenuPanelX(this.canvas.width);
+            const panelY = mp.topOffset;
+            const itemH = mp.itemHeight;
+            const padding = mp.padding;
+
+            // Review button area (first item)
+            const reviewY = panelY + padding;
+            if (
+                clickedX >= panelX + padding &&
+                clickedX <= panelX + mp.width - padding &&
+                clickedY >= reviewY &&
+                clickedY <= reviewY + itemH
+            ) {
+                if (this.callbacks.onMenuItemClick) {
+                    this.callbacks.onMenuItemClick('review');
+                }
+                return;
+            }
+
+            // Play/Pause button area (second item)
+            const playPauseY = panelY + padding + itemH + padding / 2;
+            if (
+                clickedX >= panelX + padding &&
+                clickedX <= panelX + mp.width - padding &&
+                clickedY >= playPauseY &&
+                clickedY <= playPauseY + itemH
+            ) {
+                if (this.callbacks.onMenuItemClick) {
+                    this.callbacks.onMenuItemClick('playPause');
+                }
+                return;
+            }
+
+            // Next Song button area (third item)
+            const nextSongY = panelY + padding + (itemH + padding / 2) * 2;
+            if (
+                clickedX >= panelX + padding &&
+                clickedX <= panelX + mp.width - padding &&
+                clickedY >= nextSongY &&
+                clickedY <= nextSongY + itemH
+            ) {
+                if (this.callbacks.onMenuItemClick) {
+                    this.callbacks.onMenuItemClick('nextSong');
+                }
+                return;
+            }
+
+            // Click outside menu items but inside panel - just close menu
+            if (
+                clickedX >= panelX &&
+                clickedX <= panelX + mp.width &&
+                clickedY >= panelY &&
+                clickedY <= panelY + itemH * 3 + padding * 4
+            ) {
+                if (this.callbacks.onHamburgerClick) {
+                    this.callbacks.onHamburgerClick(); // Toggle off
+                }
+                return;
+            }
+        }
         // Check quality buttons (passed from game.js)
         if (typeof qualityButtons !== 'undefined') {
             let clickedOnButton = false;
@@ -163,21 +243,6 @@ class InputHandler {
             }
         }
 
-        // Check review button
-        const rb = UILayout.reviewButton;
-        const reviewButtonX = UILayout.getReviewButtonX(this.canvas.width);
-        const reviewButtonY = rb.y;
-
-        if (
-            clickedX >= reviewButtonX &&
-            clickedX <= reviewButtonX + rb.width &&
-            clickedY >= reviewButtonY &&
-            clickedY <= reviewButtonY + rb.height
-        ) {
-            if (this.callbacks.onReviewButtonClick) {
-                this.callbacks.onReviewButtonClick();
-            }
-        }
     }
 
     /**
