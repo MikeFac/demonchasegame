@@ -2,8 +2,12 @@ const express = require('express');
 const http = require('http');
 const path = require('path');
 const socketIO = require('socket.io');
+const mongoose = require('mongoose');
+require('dotenv').config();
 const Game = require('./src/server/Game');
 const RoomManager = require('./src/server/RoomManager');
+const verseSongRouter = require('./src/server/routes/verseSong');
+const { retryFailedGenerations } = require('./src/server/jobs/retryFailedGenerations');
 
 const app = express();
 const server = http.createServer(app);
@@ -47,6 +51,9 @@ app.post('/api/login', (req, res) => {
 app.get('/api/rooms', (req, res) => {
   res.json({ rooms: roomManager.getRoomList() });
 });
+
+// Verse Song Routes
+app.use('/api/verse-song', verseSongRouter);
 
 // ==================== Socket.IO ====================
 
@@ -193,6 +200,27 @@ io.on('connection', (socket) => {
     io.emit('roomListUpdated', { rooms: roomManager.getRoomList() });
   });
 });
+
+// Initialize MongoDB connection
+async function initializeDB() {
+  if (!process.env.MONGODB_URI) {
+    console.warn('⚠️  MONGODB_URI not set—VerseSong features disabled');
+    return;
+  }
+
+  try {
+    await mongoose.connect(process.env.MONGODB_URI);
+    console.log('✅ Connected to MongoDB for VerseSong');
+
+    // Start retry job for failed generations (every 30 minutes)
+    setInterval(retryFailedGenerations, 30 * 60 * 1000);
+    console.log('🔄 Retry job scheduled (30 minute interval)');
+  } catch (err) {
+    console.error('❌ MongoDB connection error:', err);
+  }
+}
+
+initializeDB();
 
 const PORT = process.env.PORT || 3500;
 server.listen(PORT, () => {
