@@ -168,10 +168,25 @@ class Game {
 
         // Handle level completion event (global game event)
         socket.on('levelCompleted', () => {
-            if (this.gameState.gameLevel < Object.keys(this.levelData).length)
-                this.gameState.gameLevel++;
-            this.resetLevelData(this.gameState.gameLevel);
-            this.io.emit('gameStateUpdate', this.gameState);
+            // Prevent duplicate triggers during countdown
+            if (this._levelAdvancing) return;
+            if (this.gameState.gameLevel >= Object.keys(this.levelData).length) return;
+
+            this._levelAdvancing = true;
+            const nextLevel = this.gameState.gameLevel + 1;
+
+            // Broadcast countdown to all clients
+            for (const sock of this.sockets) {
+                sock.emit('levelAdvancing', { countdown: 5, nextLevel });
+            }
+
+            // After 5 seconds, actually advance
+            setTimeout(() => {
+                this.gameState.gameLevel = nextLevel;
+                this.resetLevelData(this.gameState.gameLevel);
+                this._levelAdvancing = false;
+                this.io.emit('gameStateUpdate', this.gameState);
+            }, 5000);
         });
 
         // Handle player shooting
@@ -208,6 +223,9 @@ class Game {
             this.gameState.maxSpawns = this.levelData[level].maxMonsters;
             this.gameState.spawnsLeft = this.levelData[level].maxMonsters;
             this.gameState.monstersKilled = 0;
+            this.gameState.monsters = [];
+            this.gameState.healingPoints = [];
+            this.gameState.shieldPoints = [];
             this.gameState.terrainTheme = this.levelData[level].terrainTheme || 'stone';
 
             // Regenerate maze for new level

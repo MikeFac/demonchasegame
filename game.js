@@ -95,6 +95,8 @@ const UPDATE_INTERVAL = 100; // Update player data every 100 milliseconds (adjus
 let qualityButtons = [];
 let updateButtonsTimer = null;
 let levelCompleted = false;
+let levelAdvanceCountdown = 0;
+let levelAdvanceTimer = null;
 
 // If qualities is set to [] then all qualities will be used
 // Level config shared between client and server (loaded via script tag)
@@ -329,6 +331,25 @@ async function init() {
                     player.y = data.spawnY;
                 }
                 console.log('Received walls:', clientWalls.length, 'tiles');
+            },
+            onLevelAdvancing: (data) => {
+                console.log('Level advancing! Countdown:', data.countdown);
+                levelCompleted = true;
+                levelAdvanceCountdown = data.countdown;
+
+                // Clear any existing timer
+                if (levelAdvanceTimer) clearInterval(levelAdvanceTimer);
+
+                levelAdvanceTimer = setInterval(() => {
+                    levelAdvanceCountdown--;
+                    if (levelAdvanceCountdown <= 0) {
+                        clearInterval(levelAdvanceTimer);
+                        levelAdvanceTimer = null;
+                        levelCompleted = false;
+                        levelAdvanceCountdown = 0;
+                        setLevelData(gameState);
+                    }
+                }, 1000);
             }
         };
 
@@ -399,6 +420,8 @@ async function init() {
         currentReviewMode = 'quality'; // Possible values: 'incorrect', 'quality'
         gameMode = 'game';
         levelCompleted = false;
+        levelAdvanceCountdown = 0;
+        levelAdvanceTimer = null;
         canvas.width = 400; // Set the canvas width to 412 pixels (for Samsung Galaxy A53 in portrait mode)
         canvas.height = Math.min(600, window.innerHeight - 80); // Reduced max height and increased margin to prevent scrollbars on mobile
         ctx = canvas.getContext('2d');
@@ -615,6 +638,7 @@ function gameLoop() {
             gameOverFlag,
             isAnswerCorrect,
             levelCompleted,
+            levelAdvanceCountdown,
             lastAttackedMonster,
             explosionTimer,
             currentVerse: {
@@ -842,15 +866,6 @@ function gameLoop() {
             }
 
         });
-        /*
-        // Display level completed message if true
-        if (levelCompleted) {
-            ctx.fillStyle = 'green';
-            ctx.font = '29px Arial'; // Set the font size
-            ctx.fillText('Level completed.', canvas.width / 2 - 140, canvas.height / 2);
-        }
-        */
-
 
         // Check if the level is completed
         // Require 60% of monsters to be killed (allows some to be stuck/missed)
@@ -860,21 +875,11 @@ function gameLoop() {
         if (killed >= total * 0.6 && !levelCompleted) {
             console.log("Checking level completion. Killed:", killed, "Total:", total);
             if (gameState.gameLevel < Object.keys(levelData).length) {
-                console.log("Level completed");
-                /*
-                ctx.fillStyle = 'green';
-                ctx.font = '29px Arial';
-                ctx.fillText('Level completed!', canvas.width / 2 - 140, canvas.height / 2);
-                */
-                levelCompleted = true;
-
-                // Emit the levelCompleted event to the server
+                console.log("Level completed — notifying server");
+                // Notify server; it will broadcast levelAdvancing to all clients
                 network.sendLevelCompleted();
-
-                setTimeout(() => {
-                    levelCompleted = false; // Reset the flag for the next level
-                    setLevelData(gameState);
-                }, 5000);
+                // Set flag to prevent duplicate sends (server countdown will set levelCompleted via callback)
+                levelCompleted = true;
             } else {
                 console.log("Game completed");
                 /*

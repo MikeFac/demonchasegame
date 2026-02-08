@@ -126,7 +126,7 @@ class Renderer {
     }
 
     drawMessages(uiState) {
-        const { gameOverFlag, isAnswerCorrect, levelCompleted } = uiState;
+        const { gameOverFlag, isAnswerCorrect, levelCompleted, levelAdvanceCountdown } = uiState;
 
         if (gameOverFlag) {
             this.ctx.fillStyle = 'green';
@@ -145,10 +145,20 @@ class Renderer {
             this.ctx.fillText('Incorrect!', this.canvas.width / 2 - 35, this.canvas.height / 2);
         }
 
-        if (levelCompleted) {
-            this.ctx.fillStyle = 'green';
-            this.ctx.font = '29px Arial';
-            this.ctx.fillText('Level completed!', this.canvas.width / 2 - 140, this.canvas.height / 2);
+        if (levelCompleted && levelAdvanceCountdown > 0) {
+            // Semi-transparent overlay
+            this.ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+            this.ctx.fillRect(0, this.canvas.height / 2 - 50, this.canvas.width, 80);
+
+            this.ctx.fillStyle = '#00ff00';
+            this.ctx.font = 'bold 26px Arial';
+            this.ctx.textAlign = 'center';
+            this.ctx.fillText('Level Complete!', this.canvas.width / 2, this.canvas.height / 2 - 15);
+
+            this.ctx.fillStyle = '#ffffff';
+            this.ctx.font = '20px Arial';
+            this.ctx.fillText('Next level in ' + levelAdvanceCountdown + 's...', this.canvas.width / 2, this.canvas.height / 2 + 15);
+            this.ctx.textAlign = 'left';
         }
     }
 

@@ -13,7 +13,8 @@ class Network {
             onPlayerCode: null,
             onPlayerNumber: null,
             onMonsterKilled: null,
-            onWalls: null
+            onWalls: null,
+            onLevelAdvancing: null
         };
     }
 
@@ -113,6 +114,13 @@ class Network {
         this.socket.on('walls', (data) => {
             if (this.callbacks.onWalls) {
                 this.callbacks.onWalls(data);
+            }
+        });
+
+        // Level advancing countdown (server-driven)
+        this.socket.on('levelAdvancing', (data) => {
+            if (this.callbacks.onLevelAdvancing) {
+                this.callbacks.onLevelAdvancing(data);
             }
         });
     }
