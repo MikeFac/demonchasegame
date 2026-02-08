@@ -216,6 +216,7 @@
         if (!currentQuiz) return;
 
         const isCorrect = selectedOption.isCorrect;
+        const currentReference = organizedVerses[vQuality][currentVerseIndex].Reference;
 
         if (isCorrect) {
             isAnswerCorrect = true;
@@ -228,13 +229,17 @@
 
             answerFullVerse = organizedVerses[vQuality][currentVerseIndex].Text;
             setAnswerResultTimeout(3000);
+
+            // Track verse learning via music (if available)
+            if (typeof window.MusicManager !== 'undefined' && window.MusicManager.recordVerseLearned) {
+                window.MusicManager.recordVerseLearned(currentReference, true);
+            }
         } else {
             isAnswerCorrect = false;
             qualityIndex[vQuality] = (qualityIndex[vQuality] + 1) % organizedVerses[vQuality].length;
             answerFullVerse = organizedVerses[vQuality][currentVerseIndex].Text;
             setAnswerResultTimeout(3000);
 
-            const currentReference = organizedVerses[vQuality][currentVerseIndex].Reference;
             if (!incorrectAnswerReferences.includes(currentReference)) {
                 incorrectAnswerReferences.push(currentReference);
             }
@@ -254,6 +259,17 @@
         const verse = organizedVerses[vQuality][currentVerseIndex];
         currentQuiz = generateQuizForVerse(verse);
         clearAnswerResultTimeout();
+
+        // Try to play verse-specific learning music (non-blocking)
+        if (typeof window.MusicManager !== 'undefined' && window.MusicManager.playVerseTrack) {
+            window.MusicManager.playVerseTrack(verse.Reference).then(wasPlayed => {
+                if (wasPlayed) {
+                    console.log('🎵 Playing educational music for: ' + verse.Reference);
+                }
+            }).catch(err => {
+                console.warn('Could not play verse music:', err);
+            });
+        }
     }
 
     function setAnswerResultTimeout(duration) {
