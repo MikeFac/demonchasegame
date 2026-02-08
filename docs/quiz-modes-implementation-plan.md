@@ -27,58 +27,55 @@ A player can often eliminate 3 options immediately because they don't fit gramma
 
 ## Phase 1: AI Distractor Generation Script (`scripts/generate_ai_quizzes.js`)
 
-A **separate offline script** that uses Claude API to generate high-quality quiz data for all verses. Run once (or when verses change), outputs updated `bible-verses.js`.
+A **separate offline script** that uses any AI model via **OpenRouter** (model-agnostic) to generate high-quality quiz data for all verses. Run once (or when verses change), outputs updated `bible-verses.js`.
 
 ### What it does
 1. Reads all 1,632 verses from `bible-verses.js`
-2. For each verse, sends a prompt to Claude asking it to generate quiz data for **3 quiz types** that need pre-generation:
+2. For each verse, sends a prompt to the AI to generate quiz data for **2 quiz types** that need AI:
    - **Missing Word**: Pick 1 significant word, generate 3 plausible distractors that fit grammatically and contextually but are incorrect
-   - **Category Match**: Generate 3 plausible wrong categories from the full category list
    - **True/False**: Generate a false reference and a false category pairing
-3. Writes the enriched `quizData` back to `bible-verses.js`
+3. **Category Match** is generated locally (no AI needed) — uses hardcoded **fake ungodly categories** (Fear, Doubt, Greed, Pride, etc.) as distractors. This avoids the problem of real categories being ambiguously applicable to verses, and provides easy encouragement for beginners.
+4. Writes the enriched `quizData` back to `bible-verses.js`
+
+### Usage
+```
+OPENROUTER_API_KEY=sk-... node scripts/generate_ai_quizzes.js [options]
+
+Options:
+  --count N     Process only N verses (test quality first)
+  --batch N     Verses per API call (default: 20)
+  --model NAME  Any OpenRouter model (default: anthropic/claude-sonnet-4.5)
+  --delay MS    Between batches (default: 1000)
+  --resume      Resume from saved progress
+  --dry-run     Preview without API calls
+```
 
 ### Why a separate script, not runtime AI
-- 1,632 API calls is ~$2-5 one-time cost vs per-game-session cost
+- ~82 batched API calls is a one-time cost vs per-game-session cost
 - Zero latency during gameplay
 - Can be reviewed/edited by hand
 - No API key needed on the game server
 
-### Prompt design (one call per verse, batch-friendly)
-```
-Given this Bible verse:
-Text: "{verse text}"
-Reference: "{reference}"
-Category: "{category}"
-All categories: [Faith, Courage, Knowledge, ...]
-
-Generate quiz data in this JSON format:
-{
-  "missingWord": {
-    "word": "<a significant word to blank out>",
-    "wordIndex": <index in split text>,
-    "distractors": ["<plausible wrong word 1>", "<plausible wrong word 2>", "<plausible wrong word 3>"]
-  },
-  "categoryMatch": {
-    "distractors": ["<wrong category 1>", "<wrong category 2>", "<wrong category 3>"]
-  },
-  "trueFalse": {
-    "falseCategory": "<a plausible but wrong category>",
-    "falseReference": "<a plausible but wrong Bible reference>"
-  }
-}
+### Prompt design (batched, 20 verses per call)
+The AI is asked for 2 quiz types per verse (missingWord + trueFalse). categoryMatch uses hardcoded fake categories, no AI needed.
 
 Rules for missingWord distractors:
 - Must be the same part of speech as the correct word
 - Must fit grammatically in the sentence
 - Must be plausible in a biblical context but incorrect for THIS verse
 - Must be single words, similar length to the correct word
-```
+
+### Category Match — fake ungodly categories
+Instead of using real categories (which could ambiguously apply), we use 15 hardcoded ungodly traits as distractors:
+`Fear, Doubt, Greed, Pride, Jealousy, Hatred, Selfishness, Despair, Anger, Lust, Deception, Bitterness, Laziness, Vanity, Cowardice`
+
+3 are picked at random per verse. This makes an easy quiz that reinforces the game's spiritual theme.
 
 ### Rate limiting / batching
-- Process in batches of 20 verses per API call (include multiple verses per prompt to reduce calls from 1,632 to ~82)
+- Process in batches of 20 verses per API call (~82 total calls)
 - Add 1-second delay between batches
-- Save progress after each batch (resume on failure)
-- Total: ~82 API calls, ~10 minutes runtime
+- Save progress after each batch (resume with `--resume` on failure)
+- `--count N` allows testing quality on a subset before full run
 
 ### Output format
 `quizData` on each verse becomes:
@@ -91,7 +88,7 @@ Rules for missingWord distractors:
   },
   "categoryMatch": {
     "correctCategory": "Courage",
-    "distractors": ["Faith", "Endurance", "Identity"]
+    "distractors": ["Despair", "Selfishness", "Hatred"]
   },
   "trueFalse": {
     "falseCategory": "Healing",
