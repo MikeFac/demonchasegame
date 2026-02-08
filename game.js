@@ -400,7 +400,7 @@ async function init() {
         gameMode = 'game';
         levelCompleted = false;
         canvas.width = 400; // Set the canvas width to 412 pixels (for Samsung Galaxy A53 in portrait mode)
-        canvas.height = Math.min(700, window.innerHeight - 30); // Set the canvas height to 732 pixels (for Samsung Galaxy A53 in portrait mode)
+        canvas.height = Math.min(600, window.innerHeight - 80); // Reduced max height and increased margin to prevent scrollbars on mobile
         ctx = canvas.getContext('2d');
         console.log('Canvas width:', canvas.width);
         console.log('Canvas height:', canvas.height);

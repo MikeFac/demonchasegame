@@ -25,66 +25,65 @@ class MonsterManager {
             // Only check concurrent monster limit, not spawnsLeft (allows continuous respawning)
             if (gameState.monsters.length < levelData[gameState.gameLevel].maxMonsters) {
 
-                // Find a valid position near a random player
+                // Scan world grid for valid spawn positions, spread across the map
                 const playerCodes = Object.keys(gameState.players);
-                const randomPlayerCode = playerCodes[Math.floor(Math.random() * playerCodes.length)];
-                const player = gameState.players[randomPlayerCode];
+                const minPlayerDistance = 400; // Minimum distance from any player
 
                 let x, y;
-                let validPosition = false;
 
-                // Try to find a position near the player first
-                if (player) {
-                    const searchRadius = 400; // Search within this radius of the player
-                    const minDistance = 150; // Minimum distance from player
-                    const validPositions = [];
+                // Build list of valid positions across the entire world
+                const validPositions = [];
+                for (let testX = 100; testX < Constants.WORLD_WIDTH - 100; testX += 150) {
+                    for (let testY = 100; testY < Constants.WORLD_HEIGHT - 100; testY += 150) {
+                        if (Physics.isOverlapping(testX, testY, Constants.MONSTER_WIDTH, Constants.MONSTER_HEIGHT, gameState, null, this.wallGrid)) continue;
 
-                    // Create a grid of potential positions around the player
-                    for (let testX = player.x - searchRadius; testX <= player.x + searchRadius; testX += 100) {
-                        for (let testY = player.y - searchRadius; testY <= player.y + searchRadius; testY += 100) {
-
-                            // Ensure inside world bounds
-                            if (testX < 100 || testX > Constants.WORLD_WIDTH - 100 || testY < 100 || testY > Constants.WORLD_HEIGHT - 100) continue;
-
-                            // Calculate distance to player
-                            const dx = testX - player.x;
-                            const dy = testY - player.y;
-                            const dist = Math.sqrt(dx * dx + dy * dy);
-
-                            if (dist >= minDistance && !Physics.isOverlapping(testX, testY, Constants.MONSTER_WIDTH, Constants.MONSTER_HEIGHT, gameState, null, this.wallGrid)) {
-                                validPositions.push({ x: testX, y: testY });
+                        // Check distance from all players
+                        let tooClose = false;
+                        for (const code of playerCodes) {
+                            const p = gameState.players[code];
+                            if (!p) continue;
+                            const dx = testX - p.x;
+                            const dy = testY - p.y;
+                            if (dx * dx + dy * dy < minPlayerDistance * minPlayerDistance) {
+                                tooClose = true;
+                                break;
                             }
                         }
-                    }
-
-                    if (validPositions.length > 0) {
-                        const chosen = validPositions[Math.floor(Math.random() * validPositions.length)];
-                        x = chosen.x;
-                        y = chosen.y;
-                        console.log(`Found ${validPositions.length} valid positions, spawning at (${x}, ${y})`);
-                    } else {
-                        // Fallback to world grid
-                        return; // Or try world grid logic as fallback
+                        if (!tooClose) {
+                            validPositions.push({ x: testX, y: testY });
+                        }
                     }
                 }
 
-                // If no player or fail (simplified refactor: kept player logic mostly)
-                // If x,y undefined, return
-                if (x === undefined || y === undefined) {
-                    // Logic for global grid fallback if needed (copied from original server.js)
-                    const validPositions = [];
+                // Fallback: relax to 200px minimum distance if nothing found
+                if (validPositions.length === 0) {
+                    const relaxedDistance = 200;
                     for (let testX = 100; testX < Constants.WORLD_WIDTH - 100; testX += 150) {
                         for (let testY = 100; testY < Constants.WORLD_HEIGHT - 100; testY += 150) {
-                            if (!Physics.isOverlapping(testX, testY, Constants.MONSTER_WIDTH, Constants.MONSTER_HEIGHT, gameState, null, this.wallGrid)) {
+                            if (Physics.isOverlapping(testX, testY, Constants.MONSTER_WIDTH, Constants.MONSTER_HEIGHT, gameState, null, this.wallGrid)) continue;
+                            let tooClose = false;
+                            for (const code of playerCodes) {
+                                const p = gameState.players[code];
+                                if (!p) continue;
+                                const dx = testX - p.x;
+                                const dy = testY - p.y;
+                                if (dx * dx + dy * dy < relaxedDistance * relaxedDistance) {
+                                    tooClose = true;
+                                    break;
+                                }
+                            }
+                            if (!tooClose) {
                                 validPositions.push({ x: testX, y: testY });
                             }
                         }
                     }
-                    if (validPositions.length === 0) return;
-                    const chosen = validPositions[Math.floor(Math.random() * validPositions.length)];
-                    x = chosen.x;
-                    y = chosen.y;
                 }
+
+                if (validPositions.length === 0) return;
+
+                const chosen = validPositions[Math.floor(Math.random() * validPositions.length)];
+                x = chosen.x;
+                y = chosen.y;
 
                 let chaser = false;
                 // 50% chasers

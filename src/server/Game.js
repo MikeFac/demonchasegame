@@ -222,6 +222,12 @@ class Game {
             this.spawnX = mazeResult.spawnX;
             this.spawnY = mazeResult.spawnY;
 
+            // Teleport all players to new spawn point
+            for (const playerCode in this.gameState.players) {
+                this.gameState.players[playerCode].x = this.spawnX;
+                this.gameState.players[playerCode].y = this.spawnY;
+            }
+
             // Update managers with new wallGrid
             this.monsterManager.wallGrid = this.wallGrid;
             this.playerManager.wallGrid = this.wallGrid;
