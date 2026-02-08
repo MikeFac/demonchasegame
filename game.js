@@ -104,9 +104,7 @@ let QUALITIES;
 let ALL_QUALITIES;
 // gameCategory variable is taken from index.php?category=Whatever
 
-let gappedVerse = '';
-let firstLetters = '';
-let mcOptions = [];
+let currentQuiz = null; // Unified quiz object from QuizManager
 let answerFullVerse = null;
 let isAnswerCorrect = null; // Global variable to store the answer status
 let gameOverFlag = false;
@@ -490,7 +488,7 @@ async function init() {
                 vQuality = qualityText;
                 QuizManager.pickQualityVerse();
             },
-            onQuizOptionClick: (selectedOption, index) => {
+            onQuizOptionClick: (selectedOption) => {
                 QuizManager.handleQuizAnswer(selectedOption);
             },
             onReviewButtonClick: () => {
@@ -620,13 +618,10 @@ function gameLoop() {
             lastAttackedMonster,
             explosionTimer,
             currentVerse: {
-                text: answerFullVerse || gappedVerse,
+                text: answerFullVerse || (currentQuiz ? currentQuiz.promptText : ''),
                 reference: organizedVerses[vQuality][currentVerseIndex].Reference
             },
-            quiz: answerFullVerse ? null : {
-                firstLetters,
-                mcOptions
-            }
+            quiz: answerFullVerse ? null : currentQuiz
         };
 
         const assets = {

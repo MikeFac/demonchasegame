@@ -196,6 +196,62 @@
       color: rgba(255,255,255,0.5);
       font-size: 0.9em;
     }
+
+    /* Quiz Settings */
+    #quizSettings {
+      margin: 20px 0 5px 0;
+      text-align: left;
+    }
+
+    #quizSettings h3 {
+      font-size: 1em;
+      margin-bottom: 10px;
+      color: rgba(255,255,255,0.7);
+      text-align: center;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    #quizSettings h3::after {
+      content: ' ▸';
+      font-size: 0.8em;
+    }
+
+    #quizSettings h3.open::after {
+      content: ' ▾';
+    }
+
+    #quizSliders {
+      display: none;
+    }
+
+    #quizSliders.visible {
+      display: block;
+    }
+
+    .slider-row {
+      display: flex;
+      align-items: center;
+      margin-bottom: 8px;
+      font-size: 0.85em;
+    }
+
+    .slider-row label {
+      width: 120px;
+      flex-shrink: 0;
+    }
+
+    .slider-row input[type="range"] {
+      flex: 1;
+      margin: 0 8px;
+      accent-color: #e94560;
+    }
+
+    .slider-row .pct {
+      width: 32px;
+      text-align: right;
+      font-weight: bold;
+    }
   </style>
 </head>
 
@@ -205,6 +261,32 @@
     <button id="btnSolo">Solo Game</button>
     <button id="btnMultiplayer">Join Multiplayer</button>
     <button id="btnInstructions">How to Play</button>
+
+    <div id="quizSettings">
+      <h3 id="quizSettingsToggle">Quiz Settings</h3>
+      <div id="quizSliders">
+        <div class="slider-row">
+          <label>First Letter</label>
+          <input type="range" min="0" max="100" step="5" value="30" data-mode="firstLetter">
+          <span class="pct">30%</span>
+        </div>
+        <div class="slider-row">
+          <label>Missing Word</label>
+          <input type="range" min="0" max="100" step="5" value="30" data-mode="missingWord">
+          <span class="pct">30%</span>
+        </div>
+        <div class="slider-row">
+          <label>Category Match</label>
+          <input type="range" min="0" max="100" step="5" value="25" data-mode="categoryMatch">
+          <span class="pct">25%</span>
+        </div>
+        <div class="slider-row">
+          <label>True / False</label>
+          <input type="range" min="0" max="100" step="5" value="15" data-mode="trueFalse">
+          <span class="pct">15%</span>
+        </div>
+      </div>
+    </div>
   </div>
 
   <div id="instructionsOverlay">
@@ -236,8 +318,65 @@
     // Parse category from URL query parameters
     const urlParams = new URLSearchParams(window.location.search);
     var gameCategory = urlParams.get('category') || '';
+
+    // Quiz mode settings (read by QuizManager)
+    var quizSettings = { firstLetter: 30, missingWord: 30, categoryMatch: 25, trueFalse: 15 };
+
+    // Slider UI logic
+    (function() {
+      const toggle = document.getElementById('quizSettingsToggle');
+      const panel = document.getElementById('quizSliders');
+      toggle.addEventListener('click', function() {
+        toggle.classList.toggle('open');
+        panel.classList.toggle('visible');
+      });
+
+      const sliders = panel.querySelectorAll('input[type="range"]');
+      sliders.forEach(function(slider) {
+        slider.addEventListener('input', function() {
+          const changedMode = slider.dataset.mode;
+          const newVal = parseInt(slider.value, 10);
+          const remaining = 100 - newVal;
+
+          // Sum of other sliders
+          let otherSum = 0;
+          sliders.forEach(function(s) {
+            if (s.dataset.mode !== changedMode) otherSum += parseInt(s.value, 10);
+          });
+
+          // Redistribute proportionally
+          sliders.forEach(function(s) {
+            if (s.dataset.mode !== changedMode) {
+              if (otherSum === 0) {
+                s.value = Math.round(remaining / (sliders.length - 1) / 5) * 5;
+              } else {
+                s.value = Math.round((parseInt(s.value, 10) / otherSum) * remaining / 5) * 5;
+              }
+            }
+          });
+
+          // Fix rounding: adjust last non-changed slider
+          let total = 0;
+          sliders.forEach(function(s) { total += parseInt(s.value, 10); });
+          if (total !== 100) {
+            for (let i = sliders.length - 1; i >= 0; i--) {
+              if (sliders[i].dataset.mode !== changedMode) {
+                sliders[i].value = parseInt(sliders[i].value, 10) + (100 - total);
+                break;
+              }
+            }
+          }
+
+          // Update labels and quizSettings
+          sliders.forEach(function(s) {
+            s.parentElement.querySelector('.pct').textContent = s.value + '%';
+            quizSettings[s.dataset.mode] = parseInt(s.value, 10);
+          });
+        });
+      });
+    })();
   </script>
-  <script src="game.js?v=2.04"></script>
+  <script src="game.js?v=2.05"></script>
 
   <script>
     // Instructions pages

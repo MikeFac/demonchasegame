@@ -134,17 +134,19 @@ class InputHandler {
             }
         }
 
-        // Check quiz option buttons
-        if (typeof mcOptions !== 'undefined' && typeof ctx !== 'undefined') {
+        // Check quiz option buttons (reads from currentQuiz global)
+        if (typeof currentQuiz !== 'undefined' && currentQuiz && currentQuiz.options && typeof ctx !== 'undefined') {
             const qo = UILayout.quizOptions;
             const optionStartX = qo.startX;
-            const buttonWidth = qo.width;
             const buttonHeight = qo.height;
             const buttonSpacing = qo.spacing;
             const buttonY = UILayout.getQuizButtonY(this.canvas.height);
 
-            const textWidth = ctx.measureText('First letters of missing words are:').width;
-            for (let i = 0; i < mcOptions.length; i++) {
+            const optionCount = currentQuiz.options.length;
+            const buttonWidth = optionCount === 2 ? 70 : qo.width;
+
+            const textWidth = ctx.measureText(currentQuiz.questionLabel || '').width;
+            for (let i = 0; i < optionCount; i++) {
                 const buttonX = optionStartX + textWidth + 14 + i * (buttonWidth + buttonSpacing);
 
                 if (
@@ -154,7 +156,7 @@ class InputHandler {
                     clickedY <= buttonY + buttonHeight
                 ) {
                     if (this.callbacks.onQuizOptionClick) {
-                        this.callbacks.onQuizOptionClick(mcOptions[i], i);
+                        this.callbacks.onQuizOptionClick(currentQuiz.options[i], i);
                     }
                     break;
                 }

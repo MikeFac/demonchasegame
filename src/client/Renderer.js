@@ -449,7 +449,7 @@ class Renderer {
         this.ctx.shadowBlur = 0;
     }
 
-    displayBibleVerse(verseText, verseReference, quizData) {
+    displayBibleVerse(verseText, verseReference, quiz) {
         const maxCharsPerLine = 60;
         const maxLines = 5;
         const lineHeight = 21;
@@ -481,26 +481,31 @@ class Renderer {
         this.ctx.font = '14px Arial';
         this.ctx.fillText(verseReference, 7, this.canvas.height - 112 + lines.length * lineHeight);
 
-        if (quizData) {
-            this.displayMultipleChoiceOptions(quizData.firstLetters, quizData.mcOptions);
+        if (quiz) {
+            this.displayQuizOptions(quiz);
         }
     }
 
-    displayMultipleChoiceOptions(firstLetters, options) {
+    displayQuizOptions(quiz) {
         const qo = UILayout.quizOptions;
-        const buttonWidth = qo.width;
         const buttonHeight = qo.height;
         const buttonSpacing = qo.spacing;
         const optionStartX = qo.startX;
         const buttonY = UILayout.getQuizButtonY(this.canvas.height);
         const labelY = buttonY + 16;
 
+        // Draw question label
         this.ctx.fillStyle = 'black';
         this.ctx.font = '11px Arial';
-        this.ctx.fillText('First letters of missing words are:', optionStartX, labelY);
+        this.ctx.fillText(quiz.questionLabel, optionStartX, labelY);
 
-        const textWidth = this.ctx.measureText('First letters of missing words are:').width;
-        for (let i = 0; i < options.length; i++) {
+        const textWidth = this.ctx.measureText(quiz.questionLabel).width;
+        const optionCount = quiz.options.length;
+
+        // For true/false (2 buttons), use wider buttons. For 4 options, use standard width.
+        const buttonWidth = optionCount === 2 ? 70 : qo.width;
+
+        for (let i = 0; i < optionCount; i++) {
             const buttonX = optionStartX + textWidth + 14 + i * (buttonWidth + buttonSpacing);
 
             this.ctx.fillStyle = 'lightgray';
@@ -508,7 +513,10 @@ class Renderer {
 
             this.ctx.fillStyle = 'black';
             this.ctx.font = '11px Arial';
-            this.ctx.fillText(options[i], buttonX + 14, buttonY + 15);
+            // Center text in button
+            const optText = quiz.options[i].text;
+            const optTextWidth = this.ctx.measureText(optText).width;
+            this.ctx.fillText(optText, buttonX + (buttonWidth - optTextWidth) / 2, buttonY + 15);
         }
     }
 }
