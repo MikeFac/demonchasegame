@@ -214,6 +214,11 @@ class Game {
             const mazeResult = generateMaze(Constants.WORLD_WIDTH, Constants.WORLD_HEIGHT);
             this.walls = mazeResult.walls;
             this.wallGrid = new WallGrid(mazeResult.grid, mazeResult.rows, mazeResult.cols, Constants.CELL_SIZE);
+            this.mazeGridData = {
+                rows: mazeResult.rows,
+                cols: mazeResult.cols,
+                cellSize: Constants.CELL_SIZE
+            };
             this.spawnX = mazeResult.spawnX;
             this.spawnY = mazeResult.spawnY;
 

@@ -147,7 +147,7 @@
             return generateFirstLetterQuiz(verse);
         }
 
-        const allOptions = [...qd.distractors.slice(0, 3), qd.correctCategory]
+        const allOptions = [...qd.distractors.slice(0, 2), qd.correctCategory]
             .sort(() => Math.random() - 0.5);
 
         return {
