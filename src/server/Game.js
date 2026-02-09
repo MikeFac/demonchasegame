@@ -113,7 +113,7 @@ class Game {
     }
 
     addPlayer(socket) {
-        this.playerManager.addPlayer(socket);
+        this.playerManager.addPlayer(socket, this.spawnX, this.spawnY);
         this.sockets.push(socket);
 
         // Send walls once on connect (not in periodic broadcast)

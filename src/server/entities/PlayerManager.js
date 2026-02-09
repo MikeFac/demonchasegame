@@ -14,31 +14,47 @@ class PlayerManager {
         return crypto.randomBytes(3).toString('hex');
     }
 
-    addPlayer(socket) {
+    addPlayer(socket, spawnX = null, spawnY = null) {
         const { gameState, io } = this;
         const playerCode = this.generatePlayerCode();
         socket.playerCode = playerCode;
 
-        // Use a simpler approach for start position (centerish or safe)
-        // Original logic: spawnPlayer() used random position
-        // We will inline simplified random position logic here for now
+        // Try to use provided spawn position first (from maze generation)
         let x, y;
         let validPosition = false;
-        let attempts = 0;
-        while (!validPosition && attempts < 100) {
-            x = Math.random() * (Constants.WORLD_WIDTH - 200) + 100;
-            y = Math.random() * (Constants.WORLD_HEIGHT - 200) + 100;
 
+        if (spawnX !== null && spawnY !== null) {
+            // Use maze-generated spawn position
+            x = spawnX;
+            y = spawnY;
             if (!Physics.isOverlapping(x, y, Constants.PLAYER_WIDTH, Constants.PLAYER_HEIGHT, gameState, null, this.wallGrid)) {
                 validPosition = true;
+                console.log(`Player ${playerCode} spawned at maze position (${x.toFixed(1)}, ${y.toFixed(1)})`);
+            } else {
+                console.warn(`Spawn position (${x.toFixed(1)}, ${y.toFixed(1)}) has collision, searching for alternative...`);
             }
-            attempts++;
         }
+
+        // Fall back to random search if maze spawn is invalid or not provided
+        if (!validPosition) {
+            let attempts = 0;
+            while (!validPosition && attempts < 100) {
+                x = Math.random() * (Constants.WORLD_WIDTH - 200) + 100;
+                y = Math.random() * (Constants.WORLD_HEIGHT - 200) + 100;
+
+                if (!Physics.isOverlapping(x, y, Constants.PLAYER_WIDTH, Constants.PLAYER_HEIGHT, gameState, null, this.wallGrid)) {
+                    validPosition = true;
+                    console.log(`Player ${playerCode} spawned at random position (${x.toFixed(1)}, ${y.toFixed(1)}) after ${attempts} attempts`);
+                }
+                attempts++;
+            }
+        }
+
         if (!validPosition) {
             x = 100;
             y = 100;
-            console.warn('Spawn position fallback used for player ' + playerCode);
-        } // Fallback
+            console.warn('Spawn position fallback (100, 100) used for player ' + playerCode);
+        }
 
         gameState.players[playerCode] = {
             x: x,
