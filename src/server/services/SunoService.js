@@ -3,6 +3,7 @@ const VerseSong = require('../models/VerseSong');
 const CategoryStyle = require('../models/CategoryStyle');
 const fs = require('fs').promises;
 const path = require('path');
+const { normalizeReference } = require('../utils/ReferenceNormalizer');
 
 const KIE_API_KEY = process.env.KIE_API_KEY;
 const KIE_API_BASE = 'https://api.kie.ai/api/v1';
@@ -127,7 +128,7 @@ async function pollSunoStatus(verseSongId, pollCount = 0) {
 
       // Update verse song with completed info
       verseSong.sunoId = sunoData.id;
-      verseSong.audioUrl = `/content/audio/${path.basename(audioPath)}`;
+      verseSong.audioUrl = `/audio/${path.basename(audioPath)}`;
       verseSong.audioPath = audioPath;
       verseSong.duration = sunoData.duration || 120;
       verseSong.generationStatus = 'completed';
@@ -179,16 +180,12 @@ async function downloadAndStoreAudio(audioUrl, verseReference) {
   try {
     const response = await axios.get(audioUrl, { responseType: 'stream', timeout: 60000 });
 
-    // Create directory structure: /public/content/audio/
-    const baseDir = path.join(process.cwd(), 'public', 'content', 'audio');
+    // Create directory structure: /public/audio/
+    const baseDir = path.join(process.cwd(), 'public', 'audio');
     await fs.mkdir(baseDir, { recursive: true });
 
-    // Filename: john-3-16.mp3
-    const filename = verseReference
-      .toLowerCase()
-      .replace(/\s+/g, '-')
-      .replace(/:/g, '-')
-      .replace(/[^\w-]/g, '') + '.mp3';
+    // Filename: john-3-16.mp3 (use normalized reference)
+    const filename = normalizeReference(verseReference) + '.mp3';
 
     const filePath = path.join(baseDir, filename);
 
