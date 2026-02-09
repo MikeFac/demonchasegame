@@ -31,7 +31,7 @@ class Game {
         this.levelData = this.gameConfig.levelData;
 
         // Generate dungeon maze
-        const mazeResult = generateMaze(this.constants.WORLD_WIDTH, this.constants.WORLD_HEIGHT);
+        const mazeResult = generateMaze(this.constants.WORLD_WIDTH, this.constants.WORLD_HEIGHT, this.constants.CELL_SIZE);
         this.walls = mazeResult.walls;
         this.wallGrid = new WallGrid(mazeResult.grid, mazeResult.rows, mazeResult.cols, this.constants.CELL_SIZE);
         this.mazeGridData = {
@@ -246,7 +246,7 @@ class Game {
             this.gameState.terrainTheme = this.levelData[level].terrainTheme || 'stone';
 
             // Regenerate maze for new level
-            const mazeResult = generateMaze(this.constants.WORLD_WIDTH, this.constants.WORLD_HEIGHT);
+            const mazeResult = generateMaze(this.constants.WORLD_WIDTH, this.constants.WORLD_HEIGHT, this.constants.CELL_SIZE);
             this.walls = mazeResult.walls;
             this.wallGrid = new WallGrid(mazeResult.grid, mazeResult.rows, mazeResult.cols, this.constants.CELL_SIZE);
             this.mazeGridData = {
