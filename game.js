@@ -87,13 +87,48 @@ let player = {
     height: 0,
     xp: 0,
     level: 1,
-    healthBar: {}
-    // Add other necessary player properties
+    healthBar: {},
+    // Animation properties
+    isMoving: false,           // Movement state flag
+    currentFrame: 0,           // Current animation frame (0 or 1)
+    frameTimer: 0,             // Time accumulator for frame changes (ms)
+    facingDirection: 'right'   // 'left' or 'right' (based on movement dx)
 };
 
 // Game variables
 let ctx, monsters, healingPoints, chaseTrigger, lastAttackedMonster;
 let playerImg, otherPlayerImg, healingPointImg, demonImages, explosionImg;
+
+// Tint colors per player number (player 1 keeps original blue)
+const PLAYER_TINTS = {
+    1: null,              // Original (blue) — no tint
+    2: '#ff4444',         // Red
+    3: '#44ff44',         // Green
+    4: '#ffdd44'          // Gold
+};
+const OTHER_PLAYER_TINT = '#999999'; // Grey
+
+/**
+ * Create a tinted copy of a sprite sheet on an offscreen canvas.
+ * Uses source-atop to color only non-transparent pixels.
+ */
+function createTintedSprite(baseImage, tintColor) {
+    const offscreen = document.createElement('canvas');
+    offscreen.width = baseImage.width;
+    offscreen.height = baseImage.height;
+    const offCtx = offscreen.getContext('2d');
+
+    // Draw original sprite
+    offCtx.drawImage(baseImage, 0, 0);
+
+    // Overlay tint color onto existing pixels only
+    offCtx.globalCompositeOperation = 'source-atop';
+    offCtx.globalAlpha = 0.5;
+    offCtx.fillStyle = tintColor;
+    offCtx.fillRect(0, 0, offscreen.width, offscreen.height);
+
+    return offscreen;
+}
 let PLAYER_SPEED = 5;
 let MONSTER_SPEED = 1; // Slower monster speed
 
@@ -327,7 +362,7 @@ async function init() {
                         height: 48,
                         xp: 0,
                         level: 1,
-                        ammo: 20 // Initial Spirit Ammo
+                        ammo: 0 // Must earn ammo by answering quizzes correctly
                     };
                     gameState.players[playerCode] = player;
                 } else {
@@ -336,18 +371,19 @@ async function init() {
             },
             onPlayerNumber: (playerNumber) => {
                 console.log(`Received player number: ${playerNumber}`);
-                // Only 4 player sprites exist, so wrap around
-                const spriteNumber = ((playerNumber - 1) % 4) + 1;
-                const playerImage = `player${spriteNumber}.png`;
-                playerImg = new Image();
-                playerImg.src = `${scriptDirectory}/${playerImage}`;
-                playerImg.onload = function () {
-                    console.log(`Player ${playerNumber} image loaded successfully`);
-                    player.width = playerImg.width;
-                    player.height = playerImg.height;
+                // Always load player1 sprite sheet, then tint for other players
+                const baseImg = new Image();
+                baseImg.src = `${scriptDirectory}/player1-sprite96.png`;
+                baseImg.onload = function () {
+                    const spriteNumber = ((playerNumber - 1) % 4) + 1;
+                    const tint = PLAYER_TINTS[spriteNumber];
+                    playerImg = tint ? createTintedSprite(baseImg, tint) : baseImg;
+                    player.width = 48;
+                    player.height = 48;
+                    console.log(`Player ${playerNumber} sprite ready (tint: ${tint || 'none'})`);
                 };
-                playerImg.onerror = function () {
-                    console.error(`Failed to load player ${playerNumber} image`);
+                baseImg.onerror = function () {
+                    console.error('Failed to load player sprite sheet');
                 };
             },
             onMonsterKilled: ({ monsterId }) => {
@@ -430,9 +466,10 @@ async function init() {
 
         // Load other images
         try {
-            // Load other player image
-            otherPlayerImg = await loadImage(`${scriptDirectory}/otherPlayer.png`);
-            console.log('Other player image loaded successfully');
+            // Load other player sprite (tinted grey from player1 base)
+            const otherBase = await loadImage(`${scriptDirectory}/player1-sprite96.png`);
+            otherPlayerImg = createTintedSprite(otherBase, OTHER_PLAYER_TINT);
+            console.log('Other player sprite ready (grey tint)');
 
             // Load healing point image
             healingPointImg = await loadImage(`${scriptDirectory}/healing_point.png`);
@@ -672,8 +709,13 @@ async function init() {
                         worldY <= m.y + m.height / 2
                     ) {
                         // Clicked on a monster!
-                        // Server handles ammo validation and deduction
-                        network.sendShoot({ x: worldX, y: worldY });
+                        // Only shoot if outside melee range — melee handles close combat
+                        const distToMonster = Math.sqrt(
+                            Math.pow(m.x - player.x, 2) + Math.pow(m.y - player.y, 2)
+                        );
+                        if (distToMonster >= COMBAT_DISTANCE) {
+                            network.sendShoot({ x: worldX, y: worldY });
+                        }
                         return true; // Handled (prevent movement)
                     }
                 }
@@ -751,6 +793,20 @@ function gameLoop() {
             window.renderer = new Renderer(canvas, ctx, assets);
         }
         window.renderer.assets = assets; // Update assets in case they loaded late
+
+        // Update player animation frame
+        if (player.isMoving) {
+            player.frameTimer += 16;  // Assume ~60fps ≈ 16ms per frame
+
+            if (player.frameTimer >= 150) {  // Change frame every 150ms (6-7 frames)
+                player.currentFrame = (player.currentFrame === 0) ? 1 : 0;  // Toggle between 0 and 1
+                player.frameTimer = 0;
+            }
+        } else {
+            // Player idle - always show frame 0
+            player.currentFrame = 0;
+            player.frameTimer = 0;
+        }
 
         // Update screen shake
         if (screenShake.duration > 0) {
@@ -868,6 +924,21 @@ function gameLoop() {
             let distance = Math.sqrt(dx * dx + dy * dy);
 
             const THRESHOLD_DISTANCE = 5; // Adjust this value as needed
+
+            // Track animation state
+            const wasMoving = player.isMoving;
+            player.isMoving = (distance > THRESHOLD_DISTANCE);
+
+            // Determine facing direction based on horizontal movement
+            if (Math.abs(dx) > 2) {  // Only change direction if significant horizontal movement
+                player.facingDirection = dx > 0 ? 'right' : 'left';
+            }
+
+            // If player stopped moving, reset to idle frame
+            if (wasMoving && !player.isMoving) {
+                player.currentFrame = 0;
+                player.frameTimer = 0;
+            }
 
             if (distance > THRESHOLD_DISTANCE) {
                 // Calculate new position

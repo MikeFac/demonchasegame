@@ -67,7 +67,7 @@ class PlayerManager {
             color: 'blue', // Default, client overrides with sprite
             xp: 0,
             level: 1,
-            ammo: 20 // Initial Spirit Ammo
+            ammo: 0 // Must earn ammo by answering quizzes correctly
         };
         gameState.connectedPlayers++;
 

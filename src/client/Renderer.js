@@ -254,7 +254,7 @@ class Renderer {
     drawPlayer(playerData, isCurrentPlayer, camera, shieldState) {
         const playerImage = isCurrentPlayer ? this.assets.playerImg : this.assets.otherPlayerImg;
 
-        if (playerImage && playerImage.complete) {
+        if (playerImage && (playerImage.complete || playerImage.tagName === 'CANVAS')) {
             const screenX = playerData.x - camera.x;
             const screenY = playerData.y - camera.y;
 
@@ -271,7 +271,22 @@ class Renderer {
                 this.ctx.restore();
             }
 
-            this.ctx.drawImage(playerImage, screenX - playerData.width / 2, screenY - playerData.height / 2);
+            // Extract correct frame from sprite sheet
+            const frameIndex = playerData.currentFrame || 0;  // 0 or 1
+            const facingDirection = playerData.facingDirection || 'right';
+
+            // Sprite sheet layout: 2x2 grid (96x96 total, 48x48 per frame)
+            // Top row (y=0): right-facing frames
+            // Bottom row (y=48): left-facing frames (already drawn left-facing)
+            const sourceY = (facingDirection === 'right') ? 0 : 48;
+            const sourceX = frameIndex * 48;  // 0 or 48
+
+            this.ctx.drawImage(
+                playerImage,
+                sourceX, sourceY, 48, 48,
+                screenX - playerData.width / 2, screenY - playerData.height / 2,
+                playerData.width, playerData.height
+            );
 
             // Health bar with gradient (Green -> Yellow -> Red)
             const healthPercent = playerData.health / playerData.maxHealth;
@@ -607,9 +622,9 @@ class Renderer {
     drawBullets(bullets, camera) {
         if (!bullets) return;
 
-        this.ctx.fillStyle = '#FFFF00'; // Bright yellow
+        this.ctx.fillStyle = '#8B0000'; // Dark red
         this.ctx.shadowBlur = 5;
-        this.ctx.shadowColor = 'orange';
+        this.ctx.shadowColor = '#ff0000';
 
         bullets.forEach(bullet => {
             const screenX = bullet.x - camera.x;

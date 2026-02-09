@@ -219,7 +219,7 @@ class Game {
         socket.on('quizCorrect', () => {
             const player = this.gameState.players[socket.playerCode];
             if (player) {
-                player.ammo = (player.ammo || 0) + 5; // 5 = AMMO_REWARD
+                player.ammo = (player.ammo || 0) + Constants.AMMO_REWARD;
             }
         });
     }

@@ -25,7 +25,7 @@ const Constants = {
     BULLET_RADIUS: 4,
     BULLET_DAMAGE: 2,  // Damage per hit (not lethal)
     AMMO_COST: 1,
-    AMMO_REWARD: 5,
+    AMMO_REWARD: 2,
 
     // Shield Constants
     MAX_SHIELD_POINTS: 1,       // One shield per level
