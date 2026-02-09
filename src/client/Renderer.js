@@ -28,14 +28,14 @@ class Renderer {
     drawGame(gameState, player, playerCode, monsters, healingPoints, camera, uiState, shieldState, walls, screenShake = {x:0, y:0}, damageNumbers = []) {
         this.clear();
 
-        // Apply screen shake effect
+        // Draw UI Top Bar (no screen shake)
+        this.drawTopBar(uiState);
+
+        // Apply screen shake to game world ONLY
         this.ctx.save();
         if (screenShake && screenShake.duration > 0) {
             this.ctx.translate(screenShake.x, screenShake.y);
         }
-
-        // Draw UI Top Bar
-        this.drawTopBar(uiState);
 
         // Draw Walls
         this.drawWalls(walls, camera, gameState.terrainTheme);
@@ -58,6 +58,9 @@ class Renderer {
         // Draw Damage Numbers (floaty combat feedback)
         this.drawDamageNumbers(damageNumbers, camera);
 
+        // Restore context before drawing UI (undo screen shake)
+        this.ctx.restore();
+
         // Draw HUD (Health, Level, etc.)
         this.drawHUD(player, gameState, uiState.lastAttackedMonster);
 
@@ -68,7 +71,7 @@ class Renderer {
         // Draw Level/Game Messages
         this.drawMessages(uiState);
 
-        // Draw Bible Verse / Bottom UI
+        // Draw Bible Verse / Bottom UI (quiz answers)
         if (uiState.currentVerse) {
             this.displayBibleVerse(uiState.currentVerse.text, uiState.currentVerse.reference, uiState.quiz);
         }
@@ -77,8 +80,6 @@ class Renderer {
         if (uiState.menuState && uiState.menuState.menuOpen) {
             this.drawMenuPanel(uiState.menuState);
         }
-
-        this.ctx.restore();
     }
 
     drawTopBar(uiState) {
