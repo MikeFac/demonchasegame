@@ -5,7 +5,7 @@ const fs = require('fs').promises;
 const path = require('path');
 
 const KIE_API_KEY = process.env.KIE_API_KEY;
-const KIE_API_BASE = 'https://api.kie.ai/v1';
+const KIE_API_BASE = 'https://api.kie.ai/api/v1';
 
 /**
  * Generate a song for a verse via Suno/kie.ai
@@ -33,11 +33,13 @@ async function generateVerseSong(verseSongId) {
     const sunoResponse = await axios.post(
       `${KIE_API_BASE}/generate`,
       {
-        title: `${verseSong.verseReference} - Scripture Learning`,
-        tags: ['scripture', 'educational', 'memorization', verseSong.category.toLowerCase()],
         prompt: lyrics,
+        customMode: true,
+        instrumental: false,
+        model: 'V4_5',
+        title: `${verseSong.verseReference} - Scripture Learning`,
         style: style,
-        duration_seconds: 120
+        callBackUrl: `${process.env.SERVER_URL || 'http://localhost:3500'}/api/verse-song/callback`
       },
       {
         headers: {
@@ -48,7 +50,12 @@ async function generateVerseSong(verseSongId) {
       }
     );
 
-    const { id: generationRequestId, status } = sunoResponse.data;
+    // Handle response format: {code, msg, data: {taskId}}
+    if (sunoResponse.data.code !== 200) {
+      throw new Error(`KIE API Error: ${sunoResponse.data.code} - ${sunoResponse.data.msg}`);
+    }
+
+    const generationRequestId = sunoResponse.data.data.taskId;
 
     // Update verse song with request ID
     verseSong.generationRequestId = generationRequestId;
@@ -92,41 +99,51 @@ async function pollSunoStatus(verseSongId, pollCount = 0) {
 
     // Check status with Suno
     const statusResponse = await axios.get(
-      `${KIE_API_BASE}/generate/${verseSong.generationRequestId}`,
+      `${KIE_API_BASE}/generate/record-info?taskId=${verseSong.generationRequestId}`,
       {
         headers: { 'Authorization': `Bearer ${KIE_API_KEY}` },
         timeout: 30000
       }
     );
 
-    const { status, audio_url, image_url } = statusResponse.data;
+    // Handle response format: {code, msg, data: {taskId, status, response: {sunoData: [...]}}}
+    if (statusResponse.data.code !== 200) {
+      throw new Error(`KIE API Error: ${statusResponse.data.code} - ${statusResponse.data.msg}`);
+    }
 
-    if (status === 'complete') {
+    const { status } = statusResponse.data.data;
+    const sunoData = statusResponse.data.data.response?.sunoData?.[0];
+
+    if (status === 'SUCCESS') {
+      if (!sunoData?.audioUrl) {
+        throw new Error('No audio URL in response');
+      }
+
       // Download and store audio file locally
       const audioPath = await downloadAndStoreAudio(
-        audio_url,
+        sunoData.audioUrl,
         verseSong.verseReference
       );
 
       // Update verse song with completed info
-      verseSong.sunoId = verseSong.generationRequestId;
+      verseSong.sunoId = sunoData.id;
       verseSong.audioUrl = `/content/audio/${path.basename(audioPath)}`;
       verseSong.audioPath = audioPath;
-      verseSong.duration = 120; // Approximate
+      verseSong.duration = sunoData.duration || 120;
       verseSong.generationStatus = 'completed';
       verseSong.generatedAt = new Date();
       verseSong.status = 'active';
       await verseSong.save();
 
       console.log(`✅ Completed: ${verseSong.verseReference} → ${verseSong.audioUrl}`);
-    } else if (status === 'error' || status === 'failed') {
+    } else if (status === 'FAILED') {
       verseSong.generationStatus = 'failed';
-      verseSong.generationError = statusResponse.data.error || 'Unknown error';
+      verseSong.generationError = statusResponse.data.data.error || 'Generation failed';
       verseSong.generationAttempts = (verseSong.generationAttempts || 0) + 1;
       await verseSong.save();
 
       console.error(`❌ Failed: ${verseSong.verseReference} - ${verseSong.generationError}`);
-    } else if (status === 'processing' || status === 'pending') {
+    } else if (['PENDING', 'QUEUED', 'TEXT_SUCCESS', 'FIRST_SUCCESS'].includes(status)) {
       // Still processing—schedule next poll
       if (pollCount < MAX_POLLS) {
         setTimeout(() => {

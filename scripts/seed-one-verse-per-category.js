@@ -5,16 +5,17 @@ const VerseSong = require('../src/server/models/VerseSong');
 const CategoryStyle = require('../src/server/models/CategoryStyle');
 
 /**
- * Seed ONE verse from each category (22 total)
- * This creates ~22 VerseSong records and queues generation.
+ * Seed TWO verses from each category (44 total)
+ * This creates ~44 VerseSong records and queues generation.
  * Good for testing before full rollout.
  */
-async function seedOnePerCategory() {
+async function seedTwoPerCategory() {
   try {
     await mongoose.connect(process.env.MONGODB_URI);
     console.log('✅ Connected to MongoDB\n');
 
-    const globalVerses = require('../bible-verses');
+    const { loadSelectedVerses } = require('../bible-verses');
+    const globalVerses = loadSelectedVerses();
 
     // Group verses by category
     const byCategory = {};
@@ -31,45 +32,47 @@ async function seedOnePerCategory() {
     let totalSkipped = 0;
 
     for (const [category, verses] of Object.entries(byCategory)) {
-      // Take FIRST verse only from this category
-      const verse = verses[0];
+      // Take FIRST TWO verses from this category
+      const versesToSeed = verses.slice(0, 2); // Get up to 2 verses
 
-      // Check if already exists
-      const existing = await VerseSong.findOne({ verseReference: verse.Reference });
-      if (existing) {
-        console.log(`⏭️  Skipping ${verse.Reference} (already exists)`);
-        totalSkipped++;
-        continue;
+      for (const verse of versesToSeed) {
+        // Check if already exists
+        const existing = await VerseSong.findOne({ verseReference: verse.Reference });
+        if (existing) {
+          console.log(`⏭️  Skipping ${verse.Reference} (already exists)`);
+          totalSkipped++;
+          continue;
+        }
+
+        // Get category style
+        const categoryStyle = await CategoryStyle.findOne({ category });
+        const style = categoryStyle?.generationStyle || 'pop';
+
+        // Parse reference
+        const parts = verse.Reference.match(/^([A-Za-z\s]+)\s+(\d+):(\d+)(?:-(\d+))?$/);
+        if (!parts) {
+          console.error(`⚠️  Invalid reference format: ${verse.Reference}`);
+          continue;
+        }
+
+        // Create verse song
+        const verseSong = new VerseSong({
+          verseReference: verse.Reference,
+          book: parts[1].trim(),
+          chapter: parseInt(parts[2], 10),
+          startVerse: parseInt(parts[3], 10),
+          endVerse: parts[4] ? parseInt(parts[4], 10) : undefined,
+          category: verse.Category,
+          verseText: verse.Text,
+          generationStyle: style,
+          generationStatus: 'pending',
+          generationAttempts: 0
+        });
+
+        await verseSong.save();
+        totalCreated++;
+        console.log(`✨ Created: ${verse.Reference} (${category} → ${style})`);
       }
-
-      // Get category style
-      const categoryStyle = await CategoryStyle.findOne({ category });
-      const style = categoryStyle?.generationStyle || 'pop';
-
-      // Parse reference
-      const parts = verse.Reference.match(/^([A-Za-z\s]+)\s+(\d+):(\d+)(?:-(\d+))?$/);
-      if (!parts) {
-        console.error(`⚠️  Invalid reference format: ${verse.Reference}`);
-        continue;
-      }
-
-      // Create verse song
-      const verseSong = new VerseSong({
-        verseReference: verse.Reference,
-        book: parts[1].trim(),
-        chapter: parseInt(parts[2], 10),
-        startVerse: parseInt(parts[3], 10),
-        endVerse: parts[4] ? parseInt(parts[4], 10) : undefined,
-        category: verse.Category,
-        verseText: verse.Text,
-        generationStyle: style,
-        generationStatus: 'pending',
-        generationAttempts: 0
-      });
-
-      await verseSong.save();
-      totalCreated++;
-      console.log(`✨ Created: ${verse.Reference} (${category} → ${style})`);
     }
 
     console.log(`\n✅ Seeded ${totalCreated} verses (skipped ${totalSkipped} existing)`);
@@ -109,4 +112,4 @@ async function seedOnePerCategory() {
   }
 }
 
-seedOnePerCategory();
+seedTwoPerCategory();
