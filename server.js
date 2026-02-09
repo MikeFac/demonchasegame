@@ -15,6 +15,8 @@ const io = socketIO(server);
 
 // Middleware
 app.use(express.json());
+// Serve static files from both root (HTML, JS) and public (audio, images)
+app.use(express.static(path.join(__dirname)));
 app.use(express.static(path.join(__dirname, 'public')));
 
 app.get('/', (req, res) => {
