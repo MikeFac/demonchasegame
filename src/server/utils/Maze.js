@@ -182,9 +182,15 @@ function generateMaze(width, height, cellSize) {
         }
     }
 
-    // Spawn point: center of first room
-    const spawnX = centers[0].cx * cellSize;
-    const spawnY = centers[0].cy * cellSize;
+    // Spawn point: center of first room (in pixels, not cell coordinates)
+    // Calculate room bounds in pixels and find center
+    const firstRoom = rooms[0];
+    const roomPixelLeft = firstRoom.x * cellSize;
+    const roomPixelTop = firstRoom.y * cellSize;
+    const roomPixelRight = (firstRoom.x + firstRoom.w) * cellSize;
+    const roomPixelBottom = (firstRoom.y + firstRoom.h) * cellSize;
+    const spawnX = (roomPixelLeft + roomPixelRight) / 2;
+    const spawnY = (roomPixelTop + roomPixelBottom) / 2;
 
     return { walls, grid, cols, rows, spawnX, spawnY };
 }
