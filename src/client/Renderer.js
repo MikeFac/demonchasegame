@@ -277,7 +277,7 @@ class Renderer {
 
             this.ctx.drawImage(playerImage, screenX - playerData.width / 2, screenY - playerData.height / 2);
 
-            // Health bar with gradient
+            // Health bar with gradient (Green -> Yellow -> Red)
             const healthPercent = playerData.health / playerData.maxHealth;
             const healthBarX = screenX - 20;
             const healthBarY = screenY - playerData.height / 2 - 10;
@@ -291,12 +291,15 @@ class Renderer {
             const gradient = this.ctx.createLinearGradient(healthBarX, 0, healthBarX + healthBarWidth, 0);
 
             if (healthPercent > 0.6) {
+                // Green
                 gradient.addColorStop(0, '#00ff00');
                 gradient.addColorStop(1, '#7fff00');
             } else if (healthPercent > 0.3) {
-                gradient.addColorStop(0, '#ffaa00');
-                gradient.addColorStop(1, '#ff7700');
+                // Yellow
+                gradient.addColorStop(0, '#ffff00');
+                gradient.addColorStop(1, '#ffdd00');
             } else {
+                // Red
                 gradient.addColorStop(0, '#ff0000');
                 gradient.addColorStop(1, '#cc0000');
             }
@@ -359,7 +362,7 @@ class Renderer {
 
             // Health bar with gradient
             if (monster.showHealth && monster.health > 0) {
-                const healthPercent = monster.health / 10;
+                const healthPercent = monster.health / monster.maxHealth;
                 const healthBarX = screenX - monster.width / 2;
                 const healthBarY = screenY - monster.height / 2 - 10;
 
@@ -367,17 +370,20 @@ class Renderer {
                 this.ctx.fillStyle = 'rgba(30, 30, 30, 0.8)';
                 this.ctx.fillRect(healthBarX - 1, healthBarY - 1, monster.width + 2, 9);
 
-                // Gradient health bar based on health percentage
+                // Gradient health bar based on health percentage (Green -> Yellow -> Red)
                 const gradient = this.ctx.createLinearGradient(healthBarX, 0, healthBarX + monster.width, 0);
 
                 if (healthPercent > 0.6) {
-                    gradient.addColorStop(0, '#00ff00');  // Green
-                    gradient.addColorStop(1, '#7fff00');  // Chartreuse
+                    // Green
+                    gradient.addColorStop(0, '#00ff00');
+                    gradient.addColorStop(1, '#7fff00');
                 } else if (healthPercent > 0.3) {
-                    gradient.addColorStop(0, '#ffaa00');  // Orange
-                    gradient.addColorStop(1, '#ff7700');
+                    // Yellow
+                    gradient.addColorStop(0, '#ffff00');
+                    gradient.addColorStop(1, '#ffdd00');
                 } else {
-                    gradient.addColorStop(0, '#ff0000');  // Red
+                    // Red
+                    gradient.addColorStop(0, '#ff0000');
                     gradient.addColorStop(1, '#cc0000');
                 }
 
