@@ -86,7 +86,8 @@ async function createAndQueueVerseSong(verseReference) {
   const endVerse = parts[4] ? parseInt(parts[4], 10) : undefined;
 
   // Get verse text from bible-verses.js (loaded in server)
-  const globalVerses = require('../../bible-verses');
+  const bibleVersesModule = require('../../bible-verses');
+  const globalVerses = bibleVersesModule.loadSelectedVerses();
   const verseObj = globalVerses.find(v => v.Reference === verseReference);
   const verseText = verseObj?.Text || `[Verse: ${verseReference}]`;
   const category = verseObj?.Category || 'General';

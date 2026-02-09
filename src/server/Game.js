@@ -127,6 +127,15 @@ class Game {
             spawnY: this.spawnY
         });
 
+        // Send game config to client (quiz settings, difficulty info)
+        const isSoloGame = this.roomId && this.roomId.startsWith('solo-');
+        socket.emit('gameConfig', {
+            quizSettings: this.gameConfig.quizSettings,
+            preset: this.gameConfig.preset,
+            presetName: this.gameConfig.presetName,
+            isSoloGame: isSoloGame
+        });
+
         // Handle player disconnect
         socket.on('disconnect', () => {
             this.playerManager.removePlayer(socket);
@@ -237,9 +246,9 @@ class Game {
             this.gameState.terrainTheme = this.levelData[level].terrainTheme || 'stone';
 
             // Regenerate maze for new level
-            const mazeResult = generateMaze(Constants.WORLD_WIDTH, Constants.WORLD_HEIGHT);
+            const mazeResult = generateMaze(this.constants.WORLD_WIDTH, this.constants.WORLD_HEIGHT);
             this.walls = mazeResult.walls;
-            this.wallGrid = new WallGrid(mazeResult.grid, mazeResult.rows, mazeResult.cols, Constants.CELL_SIZE);
+            this.wallGrid = new WallGrid(mazeResult.grid, mazeResult.rows, mazeResult.cols, this.constants.CELL_SIZE);
             this.mazeGridData = {
                 rows: mazeResult.rows,
                 cols: mazeResult.cols,

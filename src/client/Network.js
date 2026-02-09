@@ -14,7 +14,8 @@ class Network {
             onPlayerNumber: null,
             onMonsterKilled: null,
             onWalls: null,
-            onLevelAdvancing: null
+            onLevelAdvancing: null,
+            onGameConfig: null
         };
     }
 
@@ -123,6 +124,13 @@ class Network {
                 this.callbacks.onLevelAdvancing(data);
             }
         });
+
+        // Game config (quiz settings, difficulty info)
+        this.socket.on('gameConfig', (config) => {
+            if (this.callbacks.onGameConfig) {
+                this.callbacks.onGameConfig(config);
+            }
+        });
     }
 
     // ==================== SEND METHODS ====================
@@ -229,10 +237,12 @@ class Network {
 
     /**
      * Request a solo game instance from the server
+     * @param {string} difficulty - 'easy', 'normal', or 'hard'
+     * @param {Object} quizSettings - Quiz mode distribution
      */
-    sendStartSoloGame() {
+    sendStartSoloGame(difficulty = 'normal', quizSettings = null) {
         if (this.socket) {
-            this.socket.emit('startSoloGame');
+            this.socket.emit('startSoloGame', { difficulty, quizSettings });
         }
     }
 

@@ -115,12 +115,22 @@ class RoomManager {
             }
         }
 
-        // Validate preset
+        // Validate monster difficulty preset
         const GameConfig = require('./config/GameConfig');
         const presetName = options.preset || 'normal';
 
         if (!GameConfig.PRESETS[presetName]) {
             return { success: false, error: 'Invalid difficulty preset' };
+        }
+
+        // Validate quiz settings (independent of monster difficulty)
+        let quizSettings = GameConfig.DEFAULT_QUIZ_SETTINGS;
+        if (options.quizSettings) {
+            if (GameConfig.validateQuizSettings(options.quizSettings)) {
+                quizSettings = options.quizSettings;
+            } else {
+                return { success: false, error: 'Quiz settings must have 4 modes summing to 100%' };
+            }
         }
 
         const room = {
@@ -138,7 +148,8 @@ class RoomManager {
             settings: {
                 category: options.category || '',
                 preset: presetName,
-                presetDisplay: GameConfig.PRESETS[presetName].name
+                presetDisplay: GameConfig.PRESETS[presetName].name,
+                quizSettings: quizSettings
             },
             createdAt: new Date()
         };

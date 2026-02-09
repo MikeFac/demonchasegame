@@ -82,7 +82,11 @@ ssh root@109.123.227.158 "su - dcgame -c 'cd /var/www/dcgame.4you.tel && git pul
 
 **Monster damage exception**: Monster damage to player is calculated client-side (game.js) and reported to server — the one exception to server-authoritative pattern.
 
-**Difficulty presets**: Room hosts select Easy/Normal/Hard when creating multiplayer rooms. Presets use multipliers to scale monster health (0.7x/1.0x/1.5x), spawn rates, healing frequency, and concurrent monster limits. Game.js constructor accepts optional `gameConfig` parameter (defaults to Normal for solo games).
+**Two-axis difficulty system**: Monster difficulty and quiz balance are **independent**. Room hosts configure both when creating multiplayer rooms:
+- **Monster Difficulty** (Easy/Normal/Hard): Scales monster health, spawn rate, healing frequency via multipliers in `GameConfig.js`. Does NOT affect quiz types.
+- **Quiz Balance** (custom sliders): Controls distribution of 4 quiz modes (First Letter/Missing Word/Category Match/True-False). Must sum to 100%. Quick presets available (Easy Quizzes/Balanced/Hard Quizzes). Stored in `room.settings.quizSettings`, broadcast to all clients via `gameConfig` socket event.
+- Game.js constructor accepts `gameConfig` parameter containing both (defaults to Normal monsters + Balanced quizzes for solo games).
+- In multiplayer, server is source of truth for quiz settings — client sliders become read-only.
 
 ## Important Gotchas
 

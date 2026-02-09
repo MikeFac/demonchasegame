@@ -1,6 +1,31 @@
 const Constants = require('../../shared/Constants');
 const LevelConfig = require('../../shared/LevelConfig');
 
+// Default quiz balance (used as starting point in UI, independent of monster difficulty)
+const DEFAULT_QUIZ_SETTINGS = {
+  firstLetter: 30,
+  missingWord: 30,
+  categoryMatch: 25,
+  trueFalse: 15
+};
+
+// Quick-select quiz balance presets (separate from monster difficulty presets)
+const QUIZ_BALANCE_PRESETS = {
+  easy: {
+    name: 'Easy Quizzes',
+    settings: { firstLetter: 5, missingWord: 15, categoryMatch: 30, trueFalse: 50 }
+  },
+  balanced: {
+    name: 'Balanced',
+    settings: { firstLetter: 30, missingWord: 30, categoryMatch: 25, trueFalse: 15 }
+  },
+  hard: {
+    name: 'Hard Quizzes',
+    settings: { firstLetter: 60, missingWord: 30, categoryMatch: 5, trueFalse: 5 }
+  }
+};
+
+// Monster difficulty presets (does NOT include quiz settings — they are independent)
 const PRESETS = {
   easy: {
     name: 'Easy',
@@ -41,9 +66,25 @@ const PRESETS = {
 };
 
 /**
- * Create game config by merging preset with base values
+ * Validate quiz settings: all 4 keys present, all non-negative integers, sum to 100
  */
-function createGameConfig(presetName = 'normal') {
+function validateQuizSettings(qs) {
+  if (!qs || typeof qs !== 'object') return false;
+  const keys = ['firstLetter', 'missingWord', 'categoryMatch', 'trueFalse'];
+  for (const k of keys) {
+    if (typeof qs[k] !== 'number' || qs[k] < 0 || !Number.isInteger(qs[k])) return false;
+  }
+  const total = keys.reduce((sum, k) => sum + qs[k], 0);
+  return total === 100;
+}
+
+/**
+ * Create game config by merging monster preset with base values.
+ * Quiz settings are passed separately (independent of monster difficulty).
+ * @param {string} presetName - Monster difficulty preset ('easy', 'normal', 'hard')
+ * @param {Object|null} customQuizSettings - Custom quiz balance, or null for defaults
+ */
+function createGameConfig(presetName = 'normal', customQuizSettings = null) {
   const preset = PRESETS[presetName] || PRESETS.normal;
   const m = preset.multipliers;
 
@@ -59,6 +100,11 @@ function createGameConfig(presetName = 'normal') {
       maxMonsters: Math.round(data.maxMonsters * m.maxMonsters)
     };
   }
+
+  // Use custom quiz settings if valid, otherwise defaults
+  const quizSettings = (customQuizSettings && validateQuizSettings(customQuizSettings))
+    ? { ...customQuizSettings }
+    : { ...DEFAULT_QUIZ_SETTINGS };
 
   return {
     preset: presetName,
@@ -79,16 +125,27 @@ function createGameConfig(presetName = 'normal') {
     multipliers: m,
 
     // Monster health multiplier (applied per monster)
-    monsterHealthMultiplier: m.monsterHealth
+    monsterHealthMultiplier: m.monsterHealth,
+
+    // Quiz settings (independent of monster difficulty)
+    quizSettings: quizSettings
   };
 }
 
 module.exports = {
   PRESETS,
+  DEFAULT_QUIZ_SETTINGS,
+  QUIZ_BALANCE_PRESETS,
+  validateQuizSettings,
   createGameConfig,
   getPresetList: () => Object.keys(PRESETS).map(key => ({
     id: key,
     name: PRESETS[key].name,
     description: PRESETS[key].description
+  })),
+  getQuizPresetList: () => Object.keys(QUIZ_BALANCE_PRESETS).map(key => ({
+    id: key,
+    name: QUIZ_BALANCE_PRESETS[key].name,
+    settings: QUIZ_BALANCE_PRESETS[key].settings
   }))
 };

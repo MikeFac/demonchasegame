@@ -236,6 +236,66 @@
             border-color: #667eea;
             box-shadow: 0 0 15px rgba(102, 126, 234, 0.5);
         }
+
+        .quiz-slider-group {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .slider-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .slider-item label {
+            flex: 0 0 160px;
+            font-size: 0.85em;
+        }
+
+        .slider-item input[type="range"] {
+            flex: 1;
+            margin: 0;
+            padding: 0;
+            cursor: pointer;
+            accent-color: #667eea;
+        }
+
+        .slider-item .pct {
+            flex: 0 0 35px;
+            font-size: 0.85em;
+            text-align: right;
+            opacity: 0.9;
+        }
+
+        .quiz-preset-btns {
+            display: flex;
+            gap: 8px;
+            margin-top: 10px;
+        }
+
+        .btn-quiz-preset {
+            flex: 1;
+            padding: 8px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 6px;
+            color: white;
+            cursor: pointer;
+            font-size: 0.85em;
+            transition: all 0.2s;
+        }
+
+        .btn-quiz-preset:hover {
+            background: rgba(255, 255, 255, 0.2);
+            border-color: rgba(255, 255, 255, 0.4);
+        }
+
+        .btn-quiz-preset.active {
+            background: rgba(102, 126, 234, 0.3);
+            border-color: #667eea;
+        }
     </style>
 </head>
 
@@ -272,20 +332,55 @@
             <input type="text" id="roomNameInput" placeholder="Room name (optional)">
 
             <div style="margin: 20px 0;">
-                <label style="display: block; margin-bottom: 10px; font-weight: bold;">Difficulty:</label>
+                <label style="display: block; margin-bottom: 10px; font-weight: bold;">Monster Difficulty:</label>
                 <div class="difficulty-selector">
                     <button class="preset-btn" data-preset="easy" onclick="selectPreset('easy')">
                         <div style="font-weight: bold; margin-bottom: 5px;">Easy</div>
-                        <div style="font-size: 0.85em; opacity: 0.8;">Relaxed pace, weaker monsters</div>
+                        <div style="font-size: 0.85em; opacity: 0.8;">Weaker monsters</div>
                     </button>
                     <button class="preset-btn active" data-preset="normal" onclick="selectPreset('normal')">
                         <div style="font-weight: bold; margin-bottom: 5px;">Normal</div>
-                        <div style="font-size: 0.85em; opacity: 0.8;">Balanced gameplay</div>
+                        <div style="font-size: 0.85em; opacity: 0.8;">Balanced combat</div>
                     </button>
                     <button class="preset-btn" data-preset="hard" onclick="selectPreset('hard')">
                         <div style="font-weight: bold; margin-bottom: 5px;">Hard</div>
-                        <div style="font-size: 0.85em; opacity: 0.8;">Intense challenge</div>
+                        <div style="font-size: 0.85em; opacity: 0.8;">Intense combat</div>
                     </button>
+                </div>
+            </div>
+
+            <div style="margin: 20px 0;">
+                <label style="display: block; margin-bottom: 10px; font-weight: bold;">Quiz Balance:</label>
+                <div class="quiz-slider-group">
+                    <div class="slider-item">
+                        <label>First Letter <span style="opacity:0.6">(Hard)</span></label>
+                        <input type="range" min="0" max="100" value="30" step="5"
+                               data-mode="firstLetter" class="quiz-slider">
+                        <span class="pct">30%</span>
+                    </div>
+                    <div class="slider-item">
+                        <label>Missing Word <span style="opacity:0.6">(Medium)</span></label>
+                        <input type="range" min="0" max="100" value="30" step="5"
+                               data-mode="missingWord" class="quiz-slider">
+                        <span class="pct">30%</span>
+                    </div>
+                    <div class="slider-item">
+                        <label>Category Match <span style="opacity:0.6">(Easy)</span></label>
+                        <input type="range" min="0" max="100" value="25" step="5"
+                               data-mode="categoryMatch" class="quiz-slider">
+                        <span class="pct">25%</span>
+                    </div>
+                    <div class="slider-item">
+                        <label>True / False <span style="opacity:0.6">(Easiest)</span></label>
+                        <input type="range" min="0" max="100" value="15" step="5"
+                               data-mode="trueFalse" class="quiz-slider">
+                        <span class="pct">15%</span>
+                    </div>
+                </div>
+                <div class="quiz-preset-btns">
+                    <button class="btn-quiz-preset" data-qpreset="easy" onclick="applyQuizPreset('easy')">Easy Quizzes</button>
+                    <button class="btn-quiz-preset active" data-qpreset="balanced" onclick="applyQuizPreset('balanced')">Balanced</button>
+                    <button class="btn-quiz-preset" data-qpreset="hard" onclick="applyQuizPreset('hard')">Hard Quizzes</button>
                 </div>
             </div>
 
@@ -299,6 +394,8 @@
                 <h2 id="roomTitle">Room</h2>
                 <button class="btn-danger" style="width: auto; padding: 8px 15px;" onclick="leaveRoom()">Leave</button>
             </div>
+
+            <div id="roomSettings" style="font-size: 0.85em; opacity: 0.8; margin-bottom: 15px;"></div>
 
             <div class="player-list" id="playerList">
                 <!-- Players will be populated here -->
@@ -457,8 +554,10 @@
 
         function showCreateRoom() {
             showScreen('createRoomScreen');
-            selectedPreset = 'normal'; // Reset to default
+            selectedPreset = 'normal';
             updatePresetButtons();
+            applyQuizPreset('balanced');
+            setupQuizSliders();
         }
 
         function selectPreset(preset) {
@@ -476,9 +575,105 @@
             });
         }
 
+        // ==================== Quiz Balance Sliders ====================
+
+        let quizSlidersInitialized = false;
+
+        function setupQuizSliders() {
+            if (quizSlidersInitialized) return;
+            quizSlidersInitialized = true;
+
+            document.querySelectorAll('.quiz-slider').forEach(slider => {
+                slider.addEventListener('input', () => {
+                    redistributeQuizSliders(slider);
+                    // Clear active quiz preset button (now custom)
+                    document.querySelectorAll('.btn-quiz-preset').forEach(b => b.classList.remove('active'));
+                });
+            });
+        }
+
+        function redistributeQuizSliders(changedSlider) {
+            const sliders = document.querySelectorAll('.quiz-slider');
+            const changedMode = changedSlider.dataset.mode;
+            const newVal = parseInt(changedSlider.value, 10);
+            const remaining = 100 - newVal;
+
+            let otherSum = 0;
+            sliders.forEach(s => {
+                if (s.dataset.mode !== changedMode) otherSum += parseInt(s.value, 10);
+            });
+
+            sliders.forEach(s => {
+                if (s.dataset.mode !== changedMode) {
+                    if (otherSum === 0) {
+                        s.value = Math.round(remaining / (sliders.length - 1) / 5) * 5;
+                    } else {
+                        s.value = Math.round((parseInt(s.value, 10) / otherSum) * remaining / 5) * 5;
+                    }
+                }
+            });
+
+            // Fix rounding to ensure sum is exactly 100
+            let total = 0;
+            sliders.forEach(s => { total += parseInt(s.value, 10); });
+            if (total !== 100) {
+                for (let i = sliders.length - 1; i >= 0; i--) {
+                    if (sliders[i].dataset.mode !== changedMode) {
+                        sliders[i].value = parseInt(sliders[i].value, 10) + (100 - total);
+                        break;
+                    }
+                }
+            }
+
+            updateQuizSliderLabels();
+        }
+
+        function updateQuizSliderLabels() {
+            document.querySelectorAll('.quiz-slider').forEach(s => {
+                const pct = s.closest('.slider-item').querySelector('.pct');
+                pct.textContent = s.value + '%';
+            });
+        }
+
+        function applyQuizPreset(type) {
+            const presets = {
+                easy: { firstLetter: 5, missingWord: 15, categoryMatch: 30, trueFalse: 50 },
+                balanced: { firstLetter: 30, missingWord: 30, categoryMatch: 25, trueFalse: 15 },
+                hard: { firstLetter: 60, missingWord: 30, categoryMatch: 5, trueFalse: 5 }
+            };
+
+            const preset = presets[type];
+            if (!preset) return;
+
+            document.querySelectorAll('.quiz-slider').forEach(slider => {
+                slider.value = preset[slider.dataset.mode];
+            });
+            updateQuizSliderLabels();
+
+            // Highlight active quiz preset button
+            document.querySelectorAll('.btn-quiz-preset').forEach(b => {
+                b.classList.toggle('active', b.dataset.qpreset === type);
+            });
+        }
+
+        function getQuizSettingsFromSliders() {
+            const settings = {};
+            document.querySelectorAll('.quiz-slider').forEach(slider => {
+                settings[slider.dataset.mode] = parseInt(slider.value, 10);
+            });
+            return settings;
+        }
+
+        // ==================== Room Creation ====================
+
         function createRoom() {
             const name = document.getElementById('roomNameInput').value.trim();
-            socket.emit('createRoom', { name, preset: selectedPreset }, (result) => {
+            const quizSettings = getQuizSettingsFromSliders();
+            socket.emit('createRoom', {
+                name,
+                preset: selectedPreset,
+                quizSettings: quizSettings
+            }, (result) => {
                 if (result.success) {
                     currentRoom = result.room;
                     isReady = false;
@@ -528,6 +723,13 @@
 
         function renderRoom() {
             document.getElementById('roomTitle').textContent = currentRoom.name;
+
+            // Show room settings summary
+            const s = currentRoom.settings;
+            const qs = s.quizSettings || {};
+            document.getElementById('roomSettings').innerHTML =
+                `Monsters: <strong>${s.presetDisplay || 'Normal'}</strong> &nbsp;|&nbsp; ` +
+                `Quiz: FL ${qs.firstLetter || 30}% / MW ${qs.missingWord || 30}% / CM ${qs.categoryMatch || 25}% / TF ${qs.trueFalse || 15}%`;
 
             const isHost = currentRoom.hostId === currentUser.id;
             const me = currentRoom.players.find(p => p.id === currentUser.id);

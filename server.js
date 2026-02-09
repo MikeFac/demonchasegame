@@ -52,10 +52,16 @@ app.get('/api/rooms', (req, res) => {
   res.json({ rooms: roomManager.getRoomList() });
 });
 
-// Get preset list
+// Get monster difficulty preset list
 app.get('/api/presets', (req, res) => {
   const GameConfig = require('./src/server/config/GameConfig');
   res.json({ presets: GameConfig.getPresetList() });
+});
+
+// Get quiz balance preset list
+app.get('/api/quiz-presets', (req, res) => {
+  const GameConfig = require('./src/server/config/GameConfig');
+  res.json({ presets: GameConfig.getQuizPresetList() });
 });
 
 // Verse Song Routes
@@ -66,10 +72,18 @@ app.use('/api/verse-song', verseSongRouter);
 io.on('connection', (socket) => {
   console.log(`Socket connected: ${socket.id}`);
 
-  // Solo game: each player gets their own isolated game instance
-  socket.on('startSoloGame', () => {
+  // Solo game: each player gets their own isolated game instance with custom config
+  socket.on('startSoloGame', (options = {}) => {
     const soloRoomId = `solo-${socket.id}`;
-    const game = new Game(io, soloRoomId);
+    const GameConfig = require('./src/server/config/GameConfig');
+
+    // Use player's selected difficulty and quiz settings, or defaults
+    const difficulty = options.difficulty || 'normal';
+    const quizSettings = options.quizSettings || null;
+
+    const gameConfig = GameConfig.createGameConfig(difficulty, quizSettings);
+    const game = new Game(io, soloRoomId, gameConfig);
+
     gameInstances.set(soloRoomId, game);
     game.onEmpty = () => {
       gameInstances.delete(soloRoomId);
@@ -168,10 +182,13 @@ io.on('connection', (socket) => {
     }
     const result = roomManager.startGame(socket.sessionToken, roomId);
     if (result.success) {
-      // Get room config and create game with preset
+      // Get room config and create game with preset + quiz settings
       const room = roomManager.rooms.get(roomId);
       const GameConfig = require('./src/server/config/GameConfig');
-      const gameConfig = GameConfig.createGameConfig(room.settings.preset);
+      const gameConfig = GameConfig.createGameConfig(
+        room.settings.preset,
+        room.settings.quizSettings
+      );
 
       // Create new Game instance for this room with config
       const game = new Game(io, roomId, gameConfig);

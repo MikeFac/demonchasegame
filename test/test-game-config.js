@@ -99,4 +99,88 @@ for (let level = 1; level <= 5; level++) {
 }
 console.log('✓ All levels scaled correctly\n');
 
+// ==================== Quiz Settings Tests ====================
+
+// Test 8: Default quiz settings in config
+console.log('=== Test 8: Default Quiz Settings ===');
+const defaultConfig = GameConfig.createGameConfig('normal');
+console.log('Default quiz settings:', defaultConfig.quizSettings);
+console.assert(defaultConfig.quizSettings.firstLetter === 30, 'Default firstLetter should be 30');
+console.assert(defaultConfig.quizSettings.missingWord === 30, 'Default missingWord should be 30');
+console.assert(defaultConfig.quizSettings.categoryMatch === 25, 'Default categoryMatch should be 25');
+console.assert(defaultConfig.quizSettings.trueFalse === 15, 'Default trueFalse should be 15');
+const defaultTotal = Object.values(defaultConfig.quizSettings).reduce((a, b) => a + b, 0);
+console.assert(defaultTotal === 100, 'Default quiz settings should sum to 100');
+console.log('✓ Default quiz settings OK\n');
+
+// Test 9: Custom quiz settings passed to config
+console.log('=== Test 9: Custom Quiz Settings ===');
+const customQuiz = { firstLetter: 60, missingWord: 20, categoryMatch: 10, trueFalse: 10 };
+const customConfig = GameConfig.createGameConfig('hard', customQuiz);
+console.log('Custom quiz settings:', customConfig.quizSettings);
+console.assert(customConfig.quizSettings.firstLetter === 60, 'Custom firstLetter should be 60');
+console.assert(customConfig.quizSettings.trueFalse === 10, 'Custom trueFalse should be 10');
+// Monster difficulty should still be hard
+console.assert(customConfig.monsterHealthMultiplier === 1.5, 'Hard preset should still have 1.5x health');
+console.log('✓ Custom quiz settings independent of monster difficulty\n');
+
+// Test 10: Invalid quiz settings fall back to defaults
+console.log('=== Test 10: Invalid Quiz Settings ===');
+const badQuiz1 = { firstLetter: 50, missingWord: 50, categoryMatch: 50, trueFalse: 50 }; // sum=200
+const fallback1 = GameConfig.createGameConfig('normal', badQuiz1);
+console.assert(fallback1.quizSettings.firstLetter === 30, 'Invalid sum should fall back to defaults');
+console.log('  Sum != 100: falls back to defaults ✓');
+
+const badQuiz2 = { firstLetter: 30, missingWord: 30 }; // missing keys
+const fallback2 = GameConfig.createGameConfig('normal', badQuiz2);
+console.assert(fallback2.quizSettings.categoryMatch === 25, 'Missing keys should fall back to defaults');
+console.log('  Missing keys: falls back to defaults ✓');
+
+const badQuiz3 = { firstLetter: -10, missingWord: 40, categoryMatch: 40, trueFalse: 30 }; // negative
+const fallback3 = GameConfig.createGameConfig('normal', badQuiz3);
+console.assert(fallback3.quizSettings.firstLetter === 30, 'Negative values should fall back to defaults');
+console.log('  Negative value: falls back to defaults ✓');
+
+const fallback4 = GameConfig.createGameConfig('normal', null);
+console.assert(fallback4.quizSettings.firstLetter === 30, 'null should fall back to defaults');
+console.log('  null: falls back to defaults ✓');
+console.log('✓ Invalid quiz settings all handled correctly\n');
+
+// Test 11: validateQuizSettings function
+console.log('=== Test 11: validateQuizSettings ===');
+console.assert(GameConfig.validateQuizSettings({ firstLetter: 25, missingWord: 25, categoryMatch: 25, trueFalse: 25 }) === true, 'Valid should pass');
+console.assert(GameConfig.validateQuizSettings({ firstLetter: 100, missingWord: 0, categoryMatch: 0, trueFalse: 0 }) === true, '100/0/0/0 should pass');
+console.assert(GameConfig.validateQuizSettings({ firstLetter: 50, missingWord: 50, categoryMatch: 50, trueFalse: 50 }) === false, 'Sum 200 should fail');
+console.assert(GameConfig.validateQuizSettings({ firstLetter: 50 }) === false, 'Missing keys should fail');
+console.assert(GameConfig.validateQuizSettings(null) === false, 'null should fail');
+console.assert(GameConfig.validateQuizSettings({ firstLetter: 25.5, missingWord: 24.5, categoryMatch: 25, trueFalse: 25 }) === false, 'Non-integer should fail');
+console.log('✓ validateQuizSettings OK\n');
+
+// Test 12: Quiz balance presets exist
+console.log('=== Test 12: Quiz Balance Presets ===');
+const quizPresets = GameConfig.getQuizPresetList();
+console.log('Quiz presets:', quizPresets.map(p => p.name));
+console.assert(quizPresets.length === 3, 'Should have 3 quiz presets');
+// Verify each preset sums to 100
+for (const qp of quizPresets) {
+    const sum = Object.values(qp.settings).reduce((a, b) => a + b, 0);
+    console.assert(sum === 100, `Quiz preset "${qp.name}" should sum to 100 (got ${sum})`);
+}
+console.log('✓ Quiz balance presets OK\n');
+
+// Test 13: Quiz settings are independent of monster preset
+console.log('=== Test 13: Independence of Difficulty Axes ===');
+const sameQuiz = { firstLetter: 50, missingWord: 20, categoryMatch: 20, trueFalse: 10 };
+const easyWithHardQuiz = GameConfig.createGameConfig('easy', sameQuiz);
+const hardWithHardQuiz = GameConfig.createGameConfig('hard', sameQuiz);
+// Same quiz settings
+console.assert(easyWithHardQuiz.quizSettings.firstLetter === 50, 'Easy+custom: quiz should match');
+console.assert(hardWithHardQuiz.quizSettings.firstLetter === 50, 'Hard+custom: quiz should match');
+// Different monster difficulty
+console.assert(easyWithHardQuiz.monsterHealthMultiplier === 0.7, 'Easy monsters: 0.7x health');
+console.assert(hardWithHardQuiz.monsterHealthMultiplier === 1.5, 'Hard monsters: 1.5x health');
+console.log('  Same quiz + different monsters: ✓');
+console.log('  Quiz settings completely independent of monster preset ✓');
+console.log('✓ Independence verified\n');
+
 console.log('=== All Tests Passed! ===');

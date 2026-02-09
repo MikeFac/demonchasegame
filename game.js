@@ -29,6 +29,24 @@ let clientWallGrid = null;
 
 let isGameLoaded = false;
 
+// Solo game difficulty selection
+let soloDifficulty = 'normal';
+
+function setSoloDifficulty(preset) {
+    window.soloDifficulty = preset;
+    document.querySelectorAll('.solo-difficulty-btn').forEach(btn => {
+        if (btn.dataset.preset === preset) {
+            btn.classList.add('active');
+            btn.style.background = 'rgba(100,150,255,0.3)';
+            btn.style.borderColor = 'rgba(100,150,255,0.5)';
+        } else {
+            btn.classList.remove('active');
+            btn.style.background = 'rgba(255,255,255,0.1)';
+            btn.style.borderColor = 'rgba(255,255,255,0.2)';
+        }
+    });
+}
+
 function drawLoadingScreen() {
     ctx.fillStyle = 'black';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
@@ -222,7 +240,10 @@ function startGame(mode, roomId) {
 
     init().then(() => {
         if (mode === 'solo') {
-            network.sendStartSoloGame();
+            // Get solo game settings (difficulty + quiz balance)
+            const soloDifficulty = window.soloDifficulty || 'normal';
+            const quizSettings = getQuizSettingsFromSliders();
+            network.sendStartSoloGame(soloDifficulty, quizSettings);
         } else if (mode === 'join' && roomId) {
             network.sendJoinGame(roomId);
         }
@@ -230,6 +251,16 @@ function startGame(mode, roomId) {
     }).catch((error) => {
         console.error('Error initializing game:', error);
     });
+}
+
+// Get quiz settings from sliders (for solo game)
+function getQuizSettingsFromSliders() {
+    const settings = {};
+    const sliders = document.querySelectorAll('#quizSliders input[type="range"]');
+    sliders.forEach(slider => {
+        settings[slider.dataset.mode] = parseInt(slider.value, 10);
+    });
+    return settings;
 }
 
 // Wait for the DOM content to load
@@ -355,6 +386,26 @@ async function init() {
                         setLevelData(gameState);
                     }
                 }, 1000);
+            },
+            onGameConfig: (config) => {
+                console.log('Received game config from server:', config);
+                // Override local quiz settings with server-authoritative values
+                if (config.quizSettings) {
+                    quizSettings = config.quizSettings;
+                    // Update in-game slider display to match server settings
+                    const sliders = document.querySelectorAll('#quizSliders input[type="range"]');
+                    sliders.forEach(function(slider) {
+                        const mode = slider.dataset.mode;
+                        if (config.quizSettings[mode] !== undefined) {
+                            slider.value = config.quizSettings[mode];
+                            slider.parentElement.querySelector('.pct').textContent = config.quizSettings[mode] + '%';
+                        }
+                        // Disable sliders in multiplayer (server is source of truth)
+                        if (!config.isSoloGame) {
+                            slider.disabled = true;
+                        }
+                    });
+                }
             }
         };
 

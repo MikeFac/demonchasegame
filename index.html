@@ -259,7 +259,18 @@
 <body>
   <div id="menuScreen">
     <h1>Demon Chase</h1>
-    <button id="btnSolo">Solo Game</button>
+
+    <!-- Monster Difficulty Selector for Solo -->
+    <div id="soloSettings" style="margin-bottom: 20px;">
+      <label style="display: block; margin-bottom: 10px; font-weight: bold; font-size: 14px;">Solo Game Difficulty:</label>
+      <div style="display: flex; gap: 8px; margin-bottom: 15px;">
+        <button id="soloEasy" class="solo-difficulty-btn" data-preset="easy" onclick="setSoloDifficulty('easy')" style="flex: 1; padding: 8px; background: rgba(255,255,255,0.1); border: 2px solid rgba(255,255,255,0.2); border-radius: 6px; color: white; cursor: pointer; font-size: 12px;">Easy Monsters</button>
+        <button id="soloNormal" class="solo-difficulty-btn active" data-preset="normal" onclick="setSoloDifficulty('normal')" style="flex: 1; padding: 8px; background: rgba(100,150,255,0.3); border: 2px solid rgba(100,150,255,0.5); border-radius: 6px; color: white; cursor: pointer; font-size: 12px;">Normal</button>
+        <button id="soloHard" class="solo-difficulty-btn" data-preset="hard" onclick="setSoloDifficulty('hard')" style="flex: 1; padding: 8px; background: rgba(255,255,255,0.1); border: 2px solid rgba(255,255,255,0.2); border-radius: 6px; color: white; cursor: pointer; font-size: 12px;">Hard Monsters</button>
+      </div>
+    </div>
+
+    <button id="btnSolo">Start Solo Game</button>
     <button id="btnMultiplayer">Join Multiplayer</button>
     <button id="btnInstructions">How to Play</button>
 
