@@ -4,11 +4,12 @@ const Physics = require('../utils/Physics');
 const crypto = require('crypto');
 
 class MonsterManager {
-    constructor(gameState, io, levelData, wallGrid) {
+    constructor(gameState, io, levelData, wallGrid, healthMultiplier = 1.0) {
         this.gameState = gameState;
         this.io = io;
         this.levelData = levelData;
         this.wallGrid = wallGrid || null;
+        this.healthMultiplier = healthMultiplier;
     }
 
     spawnMonster() {
@@ -112,11 +113,16 @@ class MonsterManager {
                     default: maxDamage = 1;
                 }
 
+                // Apply health multiplier from config
+                const baseHealth = 10;
+                const actualHealth = Math.round(baseHealth * this.healthMultiplier);
+
                 const newMonster = {
                     id: crypto.randomBytes(4).toString('hex'),
                     x: x,
                     y: y,
-                    health: 10,
+                    health: actualHealth,
+                    maxHealth: actualHealth,
                     width: Constants.MONSTER_WIDTH,
                     height: Constants.MONSTER_HEIGHT,
                     demonType: demonType,

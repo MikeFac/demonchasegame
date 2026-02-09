@@ -29,6 +29,26 @@ const LevelConfig = {
             spawnRate: 5000,
             maxMonsters: 12,
             terrainTheme: 'crystal'
+        },
+        4: {
+            qualities: ['Endurance', 'Hope', 'Prophecy'],
+            monsters: ['Despair', 'Weariness', 'Deception', 'Temptation'],
+            monsterDamageFactor: 2.0,
+            playerSpeed: 7,
+            monsterSpeed: 10,
+            spawnRate: 4000,
+            maxMonsters: 14,
+            terrainTheme: 'shadow'
+        },
+        5: {
+            qualities: ['Power', 'Identity', 'ShareGospel'],
+            monsters: ['Pride', 'Doubt', 'Fear', 'Condemnation', 'Unbelief'],
+            monsterDamageFactor: 2.5,
+            playerSpeed: 8,
+            monsterSpeed: 12,
+            spawnRate: 3000,
+            maxMonsters: 16,
+            terrainTheme: 'void'
         }
     },
 

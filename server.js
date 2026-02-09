@@ -52,6 +52,12 @@ app.get('/api/rooms', (req, res) => {
   res.json({ rooms: roomManager.getRoomList() });
 });
 
+// Get preset list
+app.get('/api/presets', (req, res) => {
+  const GameConfig = require('./src/server/config/GameConfig');
+  res.json({ presets: GameConfig.getPresetList() });
+});
+
 // Verse Song Routes
 app.use('/api/verse-song', verseSongRouter);
 
@@ -162,8 +168,13 @@ io.on('connection', (socket) => {
     }
     const result = roomManager.startGame(socket.sessionToken, roomId);
     if (result.success) {
-      // Create new Game instance for this room
-      const game = new Game(io, roomId);
+      // Get room config and create game with preset
+      const room = roomManager.rooms.get(roomId);
+      const GameConfig = require('./src/server/config/GameConfig');
+      const gameConfig = GameConfig.createGameConfig(room.settings.preset);
+
+      // Create new Game instance for this room with config
+      const game = new Game(io, roomId, gameConfig);
       gameInstances.set(roomId, game);
       game.onEmpty = () => {
         gameInstances.delete(roomId);

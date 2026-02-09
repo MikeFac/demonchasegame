@@ -115,6 +115,14 @@ class RoomManager {
             }
         }
 
+        // Validate preset
+        const GameConfig = require('./config/GameConfig');
+        const presetName = options.preset || 'normal';
+
+        if (!GameConfig.PRESETS[presetName]) {
+            return { success: false, error: 'Invalid difficulty preset' };
+        }
+
         const room = {
             id: crypto.randomBytes(4).toString('hex'),
             name: options.name || `${host.username}'s Room`,
@@ -129,7 +137,8 @@ class RoomManager {
             status: 'waiting',
             settings: {
                 category: options.category || '',
-                difficulty: options.difficulty || 1
+                preset: presetName,
+                presetDisplay: GameConfig.PRESETS[presetName].name
             },
             createdAt: new Date()
         };

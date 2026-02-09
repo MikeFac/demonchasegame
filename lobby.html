@@ -206,6 +206,36 @@
             margin-bottom: 20px;
             opacity: 0.8;
         }
+
+        .difficulty-selector {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .preset-btn {
+            flex: 1;
+            padding: 12px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            border-radius: 8px;
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 0.95em;
+            text-align: center;
+        }
+
+        .preset-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+            border-color: rgba(255, 255, 255, 0.4);
+        }
+
+        .preset-btn.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-color: #667eea;
+            box-shadow: 0 0 15px rgba(102, 126, 234, 0.5);
+        }
     </style>
 </head>
 
@@ -240,6 +270,25 @@
         <div id="createRoomScreen" class="panel hidden">
             <h2 style="margin-bottom: 20px;">Create Room</h2>
             <input type="text" id="roomNameInput" placeholder="Room name (optional)">
+
+            <div style="margin: 20px 0;">
+                <label style="display: block; margin-bottom: 10px; font-weight: bold;">Difficulty:</label>
+                <div class="difficulty-selector">
+                    <button class="preset-btn" data-preset="easy" onclick="selectPreset('easy')">
+                        <div style="font-weight: bold; margin-bottom: 5px;">Easy</div>
+                        <div style="font-size: 0.85em; opacity: 0.8;">Relaxed pace, weaker monsters</div>
+                    </button>
+                    <button class="preset-btn active" data-preset="normal" onclick="selectPreset('normal')">
+                        <div style="font-weight: bold; margin-bottom: 5px;">Normal</div>
+                        <div style="font-size: 0.85em; opacity: 0.8;">Balanced gameplay</div>
+                    </button>
+                    <button class="preset-btn" data-preset="hard" onclick="selectPreset('hard')">
+                        <div style="font-weight: bold; margin-bottom: 5px;">Hard</div>
+                        <div style="font-size: 0.85em; opacity: 0.8;">Intense challenge</div>
+                    </button>
+                </div>
+            </div>
+
             <button class="btn-success" onclick="createRoom()">Create & Join</button>
             <button class="btn-secondary" onclick="showLobby()">← Back</button>
         </div>
@@ -268,6 +317,7 @@
         let currentUser = null;
         let currentRoom = null;
         let isReady = false;
+        let selectedPreset = 'normal';
 
         // Initialize
         document.addEventListener('DOMContentLoaded', () => {
@@ -398,7 +448,7 @@
                 <div class="room-item" onclick="joinRoom('${room.id}')">
                     <div class="room-info">
                         <h3>📦 ${room.name}</h3>
-                        <span>${room.settings.category || 'All Categories'}</span>
+                        <span>${room.settings.presetDisplay || 'Normal'} • ${room.settings.category || 'All Categories'}</span>
                     </div>
                     <div class="player-count">${room.playerCount}/${room.maxPlayers}</div>
                 </div>
@@ -407,11 +457,28 @@
 
         function showCreateRoom() {
             showScreen('createRoomScreen');
+            selectedPreset = 'normal'; // Reset to default
+            updatePresetButtons();
+        }
+
+        function selectPreset(preset) {
+            selectedPreset = preset;
+            updatePresetButtons();
+        }
+
+        function updatePresetButtons() {
+            document.querySelectorAll('.preset-btn').forEach(btn => {
+                if (btn.dataset.preset === selectedPreset) {
+                    btn.classList.add('active');
+                } else {
+                    btn.classList.remove('active');
+                }
+            });
         }
 
         function createRoom() {
             const name = document.getElementById('roomNameInput').value.trim();
-            socket.emit('createRoom', { name }, (result) => {
+            socket.emit('createRoom', { name, preset: selectedPreset }, (result) => {
                 if (result.success) {
                     currentRoom = result.room;
                     isReady = false;

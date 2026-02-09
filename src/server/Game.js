@@ -7,7 +7,7 @@ const PlayerManager = require('./entities/PlayerManager');
 const BulletManager = require('./entities/BulletManager');
 
 class Game {
-    constructor(io, roomId = null) {
+    constructor(io, roomId = null, gameConfig = null) {
         this.roomId = roomId;
         this.lastUpdateTime = Date.now();
         this._io = io; // Keep raw io reference for direct socket emits
@@ -25,17 +25,19 @@ class Game {
         };
         this.shouldRun = false;
 
-        // Level Data (shared between client and server)
-        this.levelData = LevelConfig.levelData;
+        // Game Config (preset-based difficulty)
+        this.gameConfig = gameConfig || require('./config/GameConfig').createGameConfig('normal');
+        this.constants = this.gameConfig.constants;
+        this.levelData = this.gameConfig.levelData;
 
         // Generate dungeon maze
-        const mazeResult = generateMaze(Constants.WORLD_WIDTH, Constants.WORLD_HEIGHT);
+        const mazeResult = generateMaze(this.constants.WORLD_WIDTH, this.constants.WORLD_HEIGHT);
         this.walls = mazeResult.walls;
-        this.wallGrid = new WallGrid(mazeResult.grid, mazeResult.rows, mazeResult.cols, Constants.CELL_SIZE);
+        this.wallGrid = new WallGrid(mazeResult.grid, mazeResult.rows, mazeResult.cols, this.constants.CELL_SIZE);
         this.mazeGridData = {
             rows: mazeResult.rows,
             cols: mazeResult.cols,
-            cellSize: Constants.CELL_SIZE
+            cellSize: this.constants.CELL_SIZE
         };
         this.spawnX = mazeResult.spawnX;
         this.spawnY = mazeResult.spawnY;
@@ -54,16 +56,22 @@ class Game {
             monstersKilled: 0
         };
 
-        // Managers (pass wallGrid for spatial collision)
-        this.monsterManager = new MonsterManager(this.gameState, this.io, this.levelData, this.wallGrid);
+        // Managers (pass wallGrid for spatial collision and config)
+        this.monsterManager = new MonsterManager(
+            this.gameState,
+            this.io,
+            this.levelData,
+            this.wallGrid,
+            this.gameConfig.monsterHealthMultiplier
+        );
         this.playerManager = new PlayerManager(this.gameState, this.io, this.wallGrid);
         this.bulletManager = new BulletManager(this.io, this.monsterManager, this.wallGrid);
 
         // Track connected sockets for re-emitting walls on level change
         this.sockets = [];
 
-        // Healing Points
-        for (let i = 0; i < Constants.MAX_HEALING_POINTS; i++) {
+        // Healing Points (use config values)
+        for (let i = 0; i < this.constants.MAX_HEALING_POINTS; i++) {
             this.spawnHealingPoint();
         }
 
@@ -82,18 +90,18 @@ class Game {
                 this.update();
             }, 1000 / 60),
 
-            // Monster Spawning Loop (every 2s, spawns only if under limit)
+            // Monster Spawning Loop (use config spawn rate)
             setInterval(() => {
                 if (!this.shouldRun) return;
                 this.monsterManager.spawnMonster();
-            }, 2000),
+            }, this.levelData[1].spawnRate),
 
-            // Healing Point Spawning Loop
+            // Healing Point Spawning Loop (use config interval)
             setInterval(() => {
-                if (this.gameState.healingPoints.length < Constants.MAX_HEALING_POINTS) {
+                if (this.gameState.healingPoints.length < this.constants.MAX_HEALING_POINTS) {
                     this.spawnHealingPoint();
                 }
-            }, 30000)
+            }, this.constants.HEALING_SPAWN_INTERVAL)
         ];
     }
 

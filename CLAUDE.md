@@ -22,6 +22,7 @@ Tests are ad-hoc scripts, not a test framework:
 node test_quiz.js                        # Quiz unit tests
 node test/game-integration-test.js       # Integration (needs running server)
 node test/monster-spawn-debug.js         # Monster spawning debug
+node test/test-game-config.js            # GameConfig system tests
 ```
 
 ## Quiz Data Generation
@@ -45,11 +46,12 @@ ssh root@109.123.227.158 "su - dcgame -c 'cd /var/www/dcgame.4you.tel && git pul
 
 ### Server Side
 - `server.js` — Express + Socket.IO setup, routes solo players to isolated game instances after 500ms
-- `src/server/Game.js` — Game loop (60fps update, broadcasts `gameStateUpdate` every 50ms), level data, healing/shield spawning, socket event handlers
-- `src/server/entities/MonsterManager.js` — Monster spawning (every 2s), AI movement, damage
+- `src/server/Game.js` — Game loop (60fps update, broadcasts `gameStateUpdate` every 50ms), level data, healing/shield spawning, socket event handlers. **Accepts gameConfig parameter** for difficulty presets.
+- `src/server/config/GameConfig.js` — Difficulty preset system (Easy/Normal/Hard). Creates configs with multipliers for monster health, damage, speed, spawn rates, healing frequency.
+- `src/server/entities/MonsterManager.js` — Monster spawning (config-based spawn rate), AI movement, damage. **Applies health multiplier** from config.
 - `src/server/entities/PlayerManager.js` — Player add/remove, movement, XP/level
 - `src/server/entities/BulletManager.js` — Projectile physics, wall/monster collision
-- `src/server/RoomManager.js` — Multiplayer lobby, user auth, room management
+- `src/server/RoomManager.js` — Multiplayer lobby, user auth, room management. **Validates and stores difficulty preset** in room settings.
 
 ### Client Side
 - `game.js` — Main client loop, input callbacks, game state sync with server
@@ -62,7 +64,7 @@ ssh root@109.123.227.158 "su - dcgame -c 'cd /var/www/dcgame.4you.tel && git pul
 
 ### Shared (src/shared/)
 - `Constants.js` — Game constants loaded via `require()` on server and `<script>` tag on client (sets `window.Constants`)
-- `LevelConfig.js` — 3 levels with monster types, speeds, max counts
+- `LevelConfig.js` — **5 levels** with monster types, speeds, max counts. Levels 1-3 original, 4-5 added for extended gameplay.
 - `WallGrid.js` — O(1) spatial collision grid shared between server and client
 
 ### Data
@@ -79,6 +81,8 @@ ssh root@109.123.227.158 "su - dcgame -c 'cd /var/www/dcgame.4you.tel && git pul
 **Room isolation**: Each game (solo or multiplayer) gets its own Game instance. Solo players get room ID `solo-{socketId}`. Broadcasts use `io.to('room:roomId').emit()`.
 
 **Monster damage exception**: Monster damage to player is calculated client-side (game.js) and reported to server — the one exception to server-authoritative pattern.
+
+**Difficulty presets**: Room hosts select Easy/Normal/Hard when creating multiplayer rooms. Presets use multipliers to scale monster health (0.7x/1.0x/1.5x), spawn rates, healing frequency, and concurrent monster limits. Game.js constructor accepts optional `gameConfig` parameter (defaults to Normal for solo games).
 
 ## Important Gotchas
 
