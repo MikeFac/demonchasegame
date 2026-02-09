@@ -65,6 +65,13 @@ document.addEventListener('DOMContentLoaded', function () {
         // Get the 2D rendering context
         ctx = canvas.getContext('2d');
 
+        // Track mouse position for tooltips and hover effects
+        canvas.addEventListener('mousemove', (e) => {
+            const rect = canvas.getBoundingClientRect();
+            mouseX = e.clientX - rect.left;
+            mouseY = e.clientY - rect.top;
+        });
+
         // Rest of your game initialization code...
     } else {
         console.error('Canvas element not found');
@@ -766,7 +773,7 @@ function gameLoop() {
             inventoryOpen: inventoryOpen
         };
 
-        window.renderer.drawGame(gameState, player, playerCode, monsters, healingPoints, camera, uiState, shieldState, clientWalls, screenShake, damageNumbers);
+        window.renderer.drawGame(gameState, player, playerCode, monsters, healingPoints, camera, uiState, shieldState, clientWalls, screenShake, damageNumbers, mouseX, mouseY);
 
         // If game over, stop processing movement/combat but keep rendering
         if (gameOverFlag) {

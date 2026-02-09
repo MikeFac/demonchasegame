@@ -25,7 +25,7 @@ class Renderer {
         this.ctx.fillText('Loading...', this.canvas.width / 2 - 50, this.canvas.height / 2);
     }
 
-    drawGame(gameState, player, playerCode, monsters, healingPoints, camera, uiState, shieldState, walls, screenShake = {x:0, y:0}, damageNumbers = []) {
+    drawGame(gameState, player, playerCode, monsters, healingPoints, camera, uiState, shieldState, walls, screenShake = {x:0, y:0}, damageNumbers = [], mouseX = null, mouseY = null) {
         this.clear();
 
         // Draw UI Top Bar (no screen shake)
@@ -62,7 +62,10 @@ class Renderer {
         this.ctx.restore();
 
         // Draw HUD (Health, Level, etc.)
-        this.drawHUD(player, gameState, uiState.lastAttackedMonster);
+        this.drawHUD(player, gameState);
+
+        // Draw monster tooltip on hover
+        this.drawMonsterTooltip(monsters, camera, mouseX, mouseY);
 
         // Draw Shield HUD (inventory button, panel, active timer)
         // Always draw the inventory button even if shieldState is missing
@@ -178,17 +181,10 @@ class Renderer {
         });
     }
 
-    drawHUD(player, gameState, lastAttackedMonster) {
-        this.ctx.fillStyle = 'white';
-        this.ctx.font = '14px Arial';
+    drawHUD(player, gameState) {
         this.ctx.fillStyle = 'white';
         this.ctx.font = '14px Arial';
         this.ctx.fillText(`Health: ${player.health}  XP: ${player.xp}  Level: ${player.level}  Spirit: ${player.ammo || 0}`, 7, this.QUALITY_LINE_HEIGHT - 7);
-
-        if (lastAttackedMonster && lastAttackedMonster.health > 0) {
-            const enemyText = `Enemy: ${lastAttackedMonster.demonType} ${lastAttackedMonster.health}`;
-            this.ctx.fillText(enemyText, this.ctx.measureText(`Health: ${player.health}  XP: ${player.xp}  Level: ${player.level}`).width + 14, this.QUALITY_LINE_HEIGHT - 7);
-        }
 
         // Game Level
         this.ctx.fillStyle = 'yellow';
@@ -734,6 +730,65 @@ class Renderer {
         });
 
         this.ctx.restore();
+    }
+
+    drawMonsterTooltip(monsters, camera, mouseX, mouseY) {
+        if (!mouseX || !mouseY) return;
+
+        const playableTop = this.QUALITY_LINE_HEIGHT + this.BUTTON_HEIGHT;
+        const playableBottom = this.canvas.height - this.ANSWER_SECTION_HEIGHT;
+
+        // Check if cursor is over any monster
+        for (const monster of monsters) {
+            const screenX = monster.x - camera.x;
+            const screenY = monster.y - camera.y;
+
+            // Visibility check
+            if (screenY - monster.height / 2 < playableTop || screenY + monster.height / 2 > playableBottom) continue;
+            if (screenX + monster.width / 2 < 0 || screenX - monster.width / 2 > this.canvas.width) continue;
+
+            // Check if cursor is within monster bounds (with some margin)
+            const dx = mouseX - screenX;
+            const dy = mouseY - screenY;
+            const distance = Math.sqrt(dx * dx + dy * dy);
+
+            if (distance < Math.max(monster.width / 2, monster.height / 2) + 10) {
+                // Render tooltip
+                const tooltipText = `${monster.demonType} HP: ${monster.health}/${monster.maxHealth}`;
+
+                this.ctx.save();
+                this.ctx.font = 'bold 12px Arial';
+                const textMetrics = this.ctx.measureText(tooltipText);
+                const textWidth = textMetrics.width + 10;
+                const textHeight = 20;
+
+                // Position tooltip above cursor
+                let tooltipX = mouseX - textWidth / 2;
+                let tooltipY = mouseY - textHeight - 5;
+
+                // Keep tooltip on screen
+                if (tooltipX < 5) tooltipX = 5;
+                if (tooltipX + textWidth > this.canvas.width - 5) tooltipX = this.canvas.width - textWidth - 5;
+                if (tooltipY < playableTop + 5) tooltipY = mouseY + 10;
+
+                // Draw background
+                this.ctx.fillStyle = 'rgba(0, 0, 0, 0.9)';
+                this.ctx.fillRect(tooltipX - 5, tooltipY - 15, textWidth, textHeight);
+
+                // Draw border
+                this.ctx.strokeStyle = '#ffff00';
+                this.ctx.lineWidth = 1;
+                this.ctx.strokeRect(tooltipX - 5, tooltipY - 15, textWidth, textHeight);
+
+                // Draw text
+                this.ctx.fillStyle = '#ffff00';
+                this.ctx.textAlign = 'center';
+                this.ctx.fillText(tooltipText, mouseX, tooltipY);
+                this.ctx.restore();
+
+                return; // Only show tooltip for first monster under cursor
+            }
+        }
     }
 
     lightenColor(hex, percent) {
