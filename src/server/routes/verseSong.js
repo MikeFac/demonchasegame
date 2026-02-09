@@ -19,8 +19,14 @@ router.get('/', async (req, res) => {
       return res.status(400).json({ error: 'Missing ref parameter' });
     }
 
-    // Try to find existing verse song
-    let verseSong = await VerseSong.findOne({ verseReference: ref });
+    // Normalize reference for database lookup (e.g., "Psalms 118:6" → "psalms118-6")
+    const normalizedRef = normalizeReference(ref);
+
+    // Try to find existing verse song (first try normalized, then original format for backward compatibility)
+    let verseSong = await VerseSong.findOne({ verseReference: normalizedRef });
+    if (!verseSong) {
+      verseSong = await VerseSong.findOne({ verseReference: ref });
+    }
 
     if (verseSong && verseSong.status === 'active' && verseSong.audioUrl) {
       // Found a completed song—return it
@@ -97,9 +103,11 @@ async function createAndQueueVerseSong(verseReference) {
   const categoryStyle = await CategoryStyle.findOne({ category });
   const style = categoryStyle?.generationStyle || 'pop';
 
-  // Create verse song record
+  // Create verse song record with normalized reference
+  const normalizedVerseRef = normalizeReference(verseReference);
   const verseSong = new VerseSong({
-    verseReference,
+    verseReference: normalizedVerseRef,
+    verseReferenceFull: verseReference, // Keep full format for reference
     book,
     chapter,
     startVerse,
@@ -136,7 +144,12 @@ router.post('/record-play', async (req, res) => {
       return res.status(400).json({ error: 'Missing verseReference' });
     }
 
-    const verseSong = await VerseSong.findOne({ verseReference });
+    // Normalize reference for lookup
+    const normalizedRef = normalizeReference(verseReference);
+    let verseSong = await VerseSong.findOne({ verseReference: normalizedRef });
+    if (!verseSong) {
+      verseSong = await VerseSong.findOne({ verseReference });
+    }
     if (!verseSong) {
       return res.status(404).json({ error: 'Verse song not found' });
     }
