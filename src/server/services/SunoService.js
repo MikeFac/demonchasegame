@@ -120,10 +120,11 @@ async function pollSunoStatus(verseSongId, pollCount = 0) {
         throw new Error('No audio URL in response');
       }
 
-      // Download and store audio file locally
+      // Download and store audio file locally (include Suno ID for multi-version support)
       const audioPath = await downloadAndStoreAudio(
         sunoData.audioUrl,
-        verseSong.verseReference
+        verseSong.verseReference,
+        sunoData.id
       );
 
       // Update verse song with completed info
@@ -175,8 +176,9 @@ async function pollSunoStatus(verseSongId, pollCount = 0) {
 
 /**
  * Download audio from Suno and store locally
+ * Filename format: {normalized-reference}-{sunoId}.mp3 for multi-version support
  */
-async function downloadAndStoreAudio(audioUrl, verseReference) {
+async function downloadAndStoreAudio(audioUrl, verseReference, sunoId = null) {
   try {
     const response = await axios.get(audioUrl, { responseType: 'stream', timeout: 60000 });
 
@@ -184,8 +186,9 @@ async function downloadAndStoreAudio(audioUrl, verseReference) {
     const baseDir = path.join(process.cwd(), 'public', 'audio');
     await fs.mkdir(baseDir, { recursive: true });
 
-    // Filename: john-3-16.mp3 (use normalized reference)
-    const filename = normalizeReference(verseReference) + '.mp3';
+    // Filename: john-3-16.mp3 or john-3-16-{sunoId}.mp3 (include sunoId if available)
+    const normalizedRef = normalizeReference(verseReference);
+    const filename = sunoId ? `${normalizedRef}-${sunoId}.mp3` : `${normalizedRef}.mp3`;
 
     const filePath = path.join(baseDir, filename);
 

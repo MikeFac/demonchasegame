@@ -239,12 +239,16 @@ async function initializeDB() {
   try {
     await mongoose.connect(process.env.MONGODB_URI);
     console.log('✅ Connected to MongoDB for VerseSong');
+    console.log('   URI:', process.env.MONGODB_URI.replace(/:[^:]*@/, ':****@')); // Hide password
 
     // Start retry job for failed generations (every 30 minutes)
     setInterval(retryFailedGenerations, 30 * 60 * 1000);
     console.log('🔄 Retry job scheduled (30 minute interval)');
   } catch (err) {
-    console.error('❌ MongoDB connection error:', err);
+    console.error('❌ MongoDB connection error:', err.message);
+    console.error('   Connection URI:', process.env.MONGODB_URI.replace(/:[^:]*@/, ':****@')); // Hide password
+    console.error('   Make sure MongoDB is running on localhost:27017 with proper credentials');
+    console.error('   Or set MONGODB_URI to your MongoDB connection string');
   }
 }
 

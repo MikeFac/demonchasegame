@@ -19,16 +19,6 @@ router.get('/', async (req, res) => {
       return res.status(400).json({ error: 'Missing ref parameter' });
     }
 
-    // Gracefully handle case where MongoDB isn't available (e.g., local dev)
-    if (!process.env.MONGODB_URI) {
-      console.warn('MONGODB_URI not set—verse songs disabled (local development?)');
-      return res.json({
-        verseReference: ref,
-        status: 'unavailable',
-        message: 'Verse songs not available. Using fallback music.'
-      });
-    }
-
     // Normalize reference for database lookup (e.g., "Psalms 118:6" → "psalms118-6")
     const normalizedRef = normalizeReference(ref);
 
@@ -82,12 +72,12 @@ router.get('/', async (req, res) => {
       generationStatus: verseSong.generationStatus
     });
   } catch (err) {
-    console.error('Error in /api/verse-song:', err);
-    // Return graceful response instead of 500 error
+    console.error('❌ Error in /api/verse-song for', req.query.ref, ':', err.message);
+    // Return graceful response that triggers song generation retry
     res.json({
       verseReference: req.query.ref,
-      status: 'unavailable',
-      message: 'Verse songs unavailable. Using fallback music.'
+      status: 'pending_generation',
+      message: 'Song queued for generation (error retry). Using fallback music.'
     });
   }
 });
