@@ -252,7 +252,7 @@ class Game {
             this.mazeGridData = {
                 rows: mazeResult.rows,
                 cols: mazeResult.cols,
-                cellSize: Constants.CELL_SIZE
+                cellSize: this.constants.CELL_SIZE
             };
             this.spawnX = mazeResult.spawnX;
             this.spawnY = mazeResult.spawnY;

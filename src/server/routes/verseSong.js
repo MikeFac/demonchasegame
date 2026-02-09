@@ -3,6 +3,7 @@ const router = express.Router();
 const VerseSong = require('../models/VerseSong');
 const CategoryStyle = require('../models/CategoryStyle');
 const { generateVerseSong } = require('../services/SunoService');
+const { normalizeReference } = require('../utils/ReferenceNormalizer');
 
 /**
  * GET /api/verse-song?ref=John+3:16
