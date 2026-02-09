@@ -286,18 +286,18 @@ class Renderer {
             // Gradient health bar
             const gradient = this.ctx.createLinearGradient(healthBarX, 0, healthBarX + healthBarWidth, 0);
 
-            if (healthPercent > 0.6) {
-                // Green
+            if (healthPercent > 0.5) {
+                // Green (pure and vibrant)
                 gradient.addColorStop(0, '#00ff00');
-                gradient.addColorStop(1, '#7fff00');
-            } else if (healthPercent > 0.3) {
+                gradient.addColorStop(1, '#00dd00');
+            } else if (healthPercent > 0.25) {
                 // Yellow
                 gradient.addColorStop(0, '#ffff00');
                 gradient.addColorStop(1, '#ffdd00');
             } else {
                 // Red
-                gradient.addColorStop(0, '#ff0000');
-                gradient.addColorStop(1, '#cc0000');
+                gradient.addColorStop(0, '#ff3333');
+                gradient.addColorStop(1, '#dd0000');
             }
 
             this.ctx.fillStyle = gradient;
