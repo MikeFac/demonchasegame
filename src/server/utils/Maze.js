@@ -182,15 +182,53 @@ function generateMaze(width, height, cellSize) {
         }
     }
 
-    // Spawn point: center of first room (in pixels, not cell coordinates)
-    // Calculate room bounds in pixels and find center
+    // Spawn point: find safe position within first room
+    // Start from center, but search for a collision-free spot if needed
     const firstRoom = rooms[0];
     const roomPixelLeft = firstRoom.x * cellSize;
     const roomPixelTop = firstRoom.y * cellSize;
     const roomPixelRight = (firstRoom.x + firstRoom.w) * cellSize;
     const roomPixelBottom = (firstRoom.y + firstRoom.h) * cellSize;
-    const spawnX = (roomPixelLeft + roomPixelRight) / 2;
-    const spawnY = (roomPixelTop + roomPixelBottom) / 2;
+
+    let spawnX = (roomPixelLeft + roomPixelRight) / 2;
+    let spawnY = (roomPixelTop + roomPixelBottom) / 2;
+
+    // Helper to check if a position in grid is walkable (not a wall)
+    function isWalkable(pixelX, pixelY) {
+        const col = Math.floor(pixelX / cellSize);
+        const row = Math.floor(pixelY / cellSize);
+        if (col < 0 || col >= cols || row < 0 || row >= rows) return false;
+        return !grid[row][col];
+    }
+
+    // If center is blocked, search for nearby safe spot
+    if (grid[Math.floor(spawnY / cellSize)][Math.floor(spawnX / cellSize)]) {
+        let found = false;
+        // Search in expanding spiral from center of room
+        for (let searchDist = 1; searchDist < Math.max(firstRoom.w, firstRoom.h); searchDist++) {
+            for (let dx = -searchDist; dx <= searchDist; dx++) {
+                for (let dy = -searchDist; dy <= searchDist; dy++) {
+                    if (Math.abs(dx) !== searchDist && Math.abs(dy) !== searchDist) continue; // Only check perimeter
+
+                    const testX = spawnX + dx * cellSize;
+                    const testY = spawnY + dy * cellSize;
+
+                    // Stay within room bounds
+                    if (testX < roomPixelLeft || testX >= roomPixelRight ||
+                        testY < roomPixelTop || testY >= roomPixelBottom) continue;
+
+                    if (isWalkable(testX, testY)) {
+                        spawnX = testX;
+                        spawnY = testY;
+                        found = true;
+                        break;
+                    }
+                }
+                if (found) break;
+            }
+            if (found) break;
+        }
+    }
 
     return { walls, grid, cols, rows, spawnX, spawnY };
 }
