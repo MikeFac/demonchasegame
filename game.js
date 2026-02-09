@@ -154,6 +154,10 @@ let menuOpen = false;
 let explosionTimer = 0;
 const EXPLOSION_INTERVAL = 100; // Adjust the interval as needed
 
+// Visual effects - screen shake and damage numbers
+let screenShake = { x: 0, y: 0, intensity: 0, duration: 0 };
+let damageNumbers = [];  // Array of {x, y, damage, startTime, duration: 1000}
+
 const DEMON_TYPES = {
     Fear: `${scriptDirectory}/fear_demon.png`,
     Condemnation: `${scriptDirectory}/condemnation_demon.png`,
@@ -741,6 +745,19 @@ function gameLoop() {
         }
         window.renderer.assets = assets; // Update assets in case they loaded late
 
+        // Update screen shake
+        if (screenShake.duration > 0) {
+            screenShake.duration -= 16;  // Assume ~60fps = ~16ms per frame
+            if (screenShake.duration <= 0) {
+                screenShake = { x: 0, y: 0, intensity: 0, duration: 0 };
+            }
+        }
+
+        // Update damage numbers (remove expired ones)
+        damageNumbers = damageNumbers.filter(dn => {
+            return (Date.now() - dn.startTime) < dn.duration;
+        });
+
         // Build shield state for renderer
         const shieldState = {
             count: shieldInventory,
@@ -749,7 +766,7 @@ function gameLoop() {
             inventoryOpen: inventoryOpen
         };
 
-        window.renderer.drawGame(gameState, player, playerCode, monsters, healingPoints, camera, uiState, shieldState, clientWalls);
+        window.renderer.drawGame(gameState, player, playerCode, monsters, healingPoints, camera, uiState, shieldState, clientWalls, screenShake, damageNumbers);
 
         // If game over, stop processing movement/combat but keep rendering
         if (gameOverFlag) {
@@ -920,6 +937,24 @@ function gameLoop() {
                         setTimeout(() => {
                             monster.isAttacked = false; // Set isAttacked back to false after a short duration
                         }, 200); // Adjust the duration as needed
+
+                        // Screen shake effect
+                        screenShake = {
+                            x: (Math.random() - 0.5) * 10,  // -5 to +5 pixels
+                            y: (Math.random() - 0.5) * 10,
+                            intensity: 10,
+                            duration: 200  // ms
+                        };
+
+                        // Add floating damage number
+                        damageNumbers.push({
+                            x: monster.x,
+                            y: monster.y - 20,  // Start above monster
+                            damage: 1,
+                            startTime: Date.now(),
+                            duration: 1000  // 1 second
+                        });
+
                         // Create the attackData structure
                         handlePlayerAttack(monster);
                     }

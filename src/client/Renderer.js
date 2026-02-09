@@ -25,8 +25,14 @@ class Renderer {
         this.ctx.fillText('Loading...', this.canvas.width / 2 - 50, this.canvas.height / 2);
     }
 
-    drawGame(gameState, player, playerCode, monsters, healingPoints, camera, uiState, shieldState, walls) {
+    drawGame(gameState, player, playerCode, monsters, healingPoints, camera, uiState, shieldState, walls, screenShake = {x:0, y:0}, damageNumbers = []) {
         this.clear();
+
+        // Apply screen shake effect
+        this.ctx.save();
+        if (screenShake && screenShake.duration > 0) {
+            this.ctx.translate(screenShake.x, screenShake.y);
+        }
 
         // Draw UI Top Bar
         this.drawTopBar(uiState);
@@ -49,6 +55,9 @@ class Renderer {
         // Draw Bullets
         this.drawBullets(gameState.bullets, camera);
 
+        // Draw Damage Numbers (floaty combat feedback)
+        this.drawDamageNumbers(damageNumbers, camera);
+
         // Draw HUD (Health, Level, etc.)
         this.drawHUD(player, gameState, uiState.lastAttackedMonster);
 
@@ -68,6 +77,8 @@ class Renderer {
         if (uiState.menuState && uiState.menuState.menuOpen) {
             this.drawMenuPanel(uiState.menuState);
         }
+
+        this.ctx.restore();
     }
 
     drawTopBar(uiState) {
@@ -265,12 +276,37 @@ class Renderer {
 
             this.ctx.drawImage(playerImage, screenX - playerData.width / 2, screenY - playerData.height / 2);
 
-            // Health bar
-            const healthBarWidth = (playerData.health / playerData.maxHealth) * 40;
-            const healthBarColor = isCurrentPlayer ? 'green' : 'blue';
+            // Health bar with gradient
+            const healthPercent = playerData.health / playerData.maxHealth;
+            const healthBarX = screenX - 20;
+            const healthBarY = screenY - playerData.height / 2 - 10;
+            const healthBarWidth = 40;
 
-            this.ctx.fillStyle = healthBarColor;
-            this.ctx.fillRect(screenX - 20, screenY - playerData.height / 2 - 10, healthBarWidth, 5);
+            // Background bar
+            this.ctx.fillStyle = 'rgba(30, 30, 30, 0.8)';
+            this.ctx.fillRect(healthBarX - 1, healthBarY - 1, healthBarWidth + 2, 7);
+
+            // Gradient health bar
+            const gradient = this.ctx.createLinearGradient(healthBarX, 0, healthBarX + healthBarWidth, 0);
+
+            if (healthPercent > 0.6) {
+                gradient.addColorStop(0, '#00ff00');
+                gradient.addColorStop(1, '#7fff00');
+            } else if (healthPercent > 0.3) {
+                gradient.addColorStop(0, '#ffaa00');
+                gradient.addColorStop(1, '#ff7700');
+            } else {
+                gradient.addColorStop(0, '#ff0000');
+                gradient.addColorStop(1, '#cc0000');
+            }
+
+            this.ctx.fillStyle = gradient;
+            this.ctx.fillRect(healthBarX, healthBarY, healthBarWidth * healthPercent, 5);
+
+            // Border
+            this.ctx.strokeStyle = '#000000';
+            this.ctx.lineWidth = 1;
+            this.ctx.strokeRect(healthBarX, healthBarY, healthBarWidth, 5);
 
             // Name
             this.ctx.fillStyle = 'white';
@@ -299,6 +335,20 @@ class Renderer {
                 this.ctx.drawImage(demonImage, screenX - monster.width / 2, screenY - monster.height / 2);
             }
 
+            // White flash on hit
+            if (monster.isAttacked) {
+                this.ctx.save();
+                this.ctx.globalAlpha = 0.5;
+                this.ctx.fillStyle = '#ffffff';
+                this.ctx.fillRect(
+                    screenX - monster.width / 2,
+                    screenY - monster.height / 2,
+                    monster.width,
+                    monster.height
+                );
+                this.ctx.restore();
+            }
+
             // Explosion
             if (monster.isAttacked && Math.floor(explosionTimer / 100) % 2 === 0) {
                 const explosionImg = this.assets.explosionImg;
@@ -306,15 +356,44 @@ class Renderer {
                     this.ctx.drawImage(explosionImg, screenX - explosionImg.width / 2, screenY - explosionImg.height / 2);
             }
 
-            // Health bar
-            const healthBarWidth = (monster.health / 10) * monster.width;
-            this.ctx.fillStyle = monster.healthBar.color;
-            this.ctx.fillRect(screenX - monster.width / 2, screenY - monster.height / 2 - 10, healthBarWidth, 7);
+            // Health bar with gradient
+            if (monster.showHealth && monster.health > 0) {
+                const healthPercent = monster.health / 10;
+                const healthBarX = screenX - monster.width / 2;
+                const healthBarY = screenY - monster.height / 2 - 10;
 
-            if (monster.showHealth) {
+                // Background bar (dark gray)
+                this.ctx.fillStyle = 'rgba(30, 30, 30, 0.8)';
+                this.ctx.fillRect(healthBarX - 1, healthBarY - 1, monster.width + 2, 9);
+
+                // Gradient health bar based on health percentage
+                const gradient = this.ctx.createLinearGradient(healthBarX, 0, healthBarX + monster.width, 0);
+
+                if (healthPercent > 0.6) {
+                    gradient.addColorStop(0, '#00ff00');  // Green
+                    gradient.addColorStop(1, '#7fff00');  // Chartreuse
+                } else if (healthPercent > 0.3) {
+                    gradient.addColorStop(0, '#ffaa00');  // Orange
+                    gradient.addColorStop(1, '#ff7700');
+                } else {
+                    gradient.addColorStop(0, '#ff0000');  // Red
+                    gradient.addColorStop(1, '#cc0000');
+                }
+
+                this.ctx.fillStyle = gradient;
+                this.ctx.fillRect(healthBarX, healthBarY, monster.width * healthPercent, 7);
+
+                // Border
+                this.ctx.strokeStyle = '#000000';
+                this.ctx.lineWidth = 1;
+                this.ctx.strokeRect(healthBarX, healthBarY, monster.width, 7);
+
+                // Health text
                 this.ctx.font = '11px Arial';
-                this.ctx.fillStyle = 'black';
-                this.ctx.fillText(`${monster.health}`, screenX, screenY - 14); // Use screenX/Y not monster.x/y
+                this.ctx.fillStyle = 'white';
+                this.ctx.textAlign = 'center';
+                this.ctx.fillText(`${monster.health}`, screenX, healthBarY - 3);
+                this.ctx.textAlign = 'left';
             }
         });
     }
@@ -345,11 +424,32 @@ class Renderer {
 
             if (screenX + wall.width > 0 && screenX < this.canvas.width &&
                 screenY + wall.height > 0 && screenY < this.canvas.height) {
-                const color = palette[wall.type || 0];
-                this.ctx.fillStyle = color;
+                const baseColor = palette[wall.type || 0];
+
+                // Create vertical gradient (lighter at top, darker at bottom) for 3D effect
+                const gradient = this.ctx.createLinearGradient(
+                    screenX, screenY,
+                    screenX, screenY + wall.height
+                );
+                gradient.addColorStop(0, this.lightenColor(baseColor, 20));
+                gradient.addColorStop(1, this.darkenColor(baseColor, 20));
+
+                // Fill with gradient
+                this.ctx.fillStyle = gradient;
                 this.ctx.fillRect(screenX, screenY, wall.width, wall.height);
-                this.ctx.strokeStyle = '#222222';
+
+                // Add dark border for depth
+                this.ctx.strokeStyle = this.darkenColor(baseColor, 40);
+                this.ctx.lineWidth = 2;
                 this.ctx.strokeRect(screenX, screenY, wall.width, wall.height);
+
+                // Add highlight on top edge for extra depth
+                this.ctx.strokeStyle = this.lightenColor(baseColor, 30);
+                this.ctx.lineWidth = 1;
+                this.ctx.beginPath();
+                this.ctx.moveTo(screenX, screenY);
+                this.ctx.lineTo(screenX + wall.width, screenY);
+                this.ctx.stroke();
             }
         });
         this.ctx.restore();
@@ -595,5 +695,53 @@ class Renderer {
             const optTextWidth = this.ctx.measureText(optText).width;
             this.ctx.fillText(optText, buttonX + (buttonWidth - optTextWidth) / 2, buttonY + 15);
         }
+    }
+
+    drawDamageNumbers(damageNumbers, camera) {
+        this.ctx.save();
+        this.ctx.font = 'bold 16px Arial';
+        this.ctx.textAlign = 'center';
+        this.ctx.textBaseline = 'middle';
+
+        damageNumbers.forEach(dn => {
+            const elapsed = Date.now() - dn.startTime;
+            const progress = elapsed / dn.duration;
+
+            // Convert world coords to screen coords
+            const screenX = dn.x - camera.x;
+            const screenY = dn.y - camera.y;
+
+            // Float upward
+            const y = screenY - (progress * 30);  // Move up 30px
+
+            // Fade out
+            const alpha = 1 - progress;
+
+            // Draw shadow
+            this.ctx.fillStyle = 'rgba(0, 0, 0, ' + (alpha * 0.5) + ')';
+            this.ctx.fillText('-' + dn.damage, screenX + 1, y + 1);
+
+            // Draw damage number
+            this.ctx.fillStyle = 'rgba(255, 100, 100, ' + alpha + ')';
+            this.ctx.fillText('-' + dn.damage, screenX, y);
+        });
+
+        this.ctx.restore();
+    }
+
+    lightenColor(hex, percent) {
+        const num = parseInt(hex.replace('#', ''), 16);
+        const r = Math.min(255, ((num >> 16) & 0xff) + Math.floor(255 * percent / 100));
+        const g = Math.min(255, ((num >> 8) & 0xff) + Math.floor(255 * percent / 100));
+        const b = Math.min(255, (num & 0xff) + Math.floor(255 * percent / 100));
+        return `rgb(${r}, ${g}, ${b})`;
+    }
+
+    darkenColor(hex, percent) {
+        const num = parseInt(hex.replace('#', ''), 16);
+        const r = Math.max(0, ((num >> 16) & 0xff) - Math.floor(255 * percent / 100));
+        const g = Math.max(0, ((num >> 8) & 0xff) - Math.floor(255 * percent / 100));
+        const b = Math.max(0, (num & 0xff) - Math.floor(255 * percent / 100));
+        return `rgb(${r}, ${g}, ${b})`;
     }
 }
