@@ -98,6 +98,7 @@ let player = {
 // Game variables
 let ctx, monsters, healingPoints, chaseTrigger, lastAttackedMonster;
 let playerImg, otherPlayerImg, healingPointImg, demonImages, explosionImg;
+let buildingTilesImg, terrainTilesImg; // Tile sprite sheets (8x8 grids, 32x32 tiles)
 
 // Tint colors per player number (player 1 keeps original blue)
 const PLAYER_TINTS = {
@@ -191,6 +192,10 @@ let inventoryOpen = false;
 
 // Menu state
 let menuOpen = false;
+
+// Particle effects
+let particleBurstImg = null;
+let deathParticles = []; // Array of active death particle animations
 
 // for monster explosion
 let explosionTimer = 0;
@@ -386,9 +391,24 @@ async function init() {
                     console.error('Failed to load player sprite sheet');
                 };
             },
-            onMonsterKilled: ({ monsterId }) => {
+            onMonsterKilled: ({ monsterId, x, y }) => {
                 demonDies.play();
-                console.log(`Monster ${monsterId} was killed`);
+                console.log(`Monster ${monsterId} was killed at (${x}, ${y})`);
+
+                // Spawn death particle animation
+                if (particleBurstImg && particleBurstImg.complete) {
+                    deathParticles.push({
+                        x: x,
+                        y: y,
+                        frame: 0,
+                        frameTimer: 0,
+                        startTime: Date.now()
+                    });
+                    console.log(`✨ Spawned death particle at (${x}, ${y}), total active: ${deathParticles.length}`);
+                } else {
+                    console.warn('Particle burst image not loaded yet');
+                }
+
                 // Clear enemy HUD if this was the monster we were tracking
                 if (lastAttackedMonster && lastAttackedMonster.id === monsterId) {
                     lastAttackedMonster = null;
@@ -475,6 +495,19 @@ async function init() {
             healingPointImg = await loadImage(`${scriptDirectory}/healing_point.png`);
             console.log('Healing point image loaded successfully');
 
+            // Load particle burst sprite sheet
+            const particlePath = `${scriptDirectory}/images/effects/red-particle-burst__1_-removebg-preview.png`;
+            console.log('Loading particle sprite from:', particlePath);
+            particleBurstImg = await loadImage(particlePath);
+            console.log('✅ Particle burst sprite sheet loaded successfully', particleBurstImg.width, 'x', particleBurstImg.height);
+
+            // Load terrain tile sprite sheets
+            // Buildings: 4x4 grid, 100x100 per tile (400x400 total)
+            buildingTilesImg = await loadImage(`${scriptDirectory}/images/terrains/houses-and-buildings400.png`);
+            console.log('✅ Building tiles loaded (4x4 sheet, 16 tiles)', buildingTilesImg.width, 'x', buildingTilesImg.height);
+
+            terrainTilesImg = await loadImage(`${scriptDirectory}/images/terrains/terrain256.png`);
+            console.log('✅ Terrain tiles loaded (8x8 sheet, 64 tiles)', terrainTilesImg.width, 'x', terrainTilesImg.height);
 
             console.log('otherPLayer and healingPointImg loaded successfully');
         } catch (error) {
@@ -785,7 +818,10 @@ function gameLoop() {
             demonImages,
             explosionImg,
             healingPointImg,
-            shieldImg
+            shieldImg,
+            particleBurstImg,
+            buildingTilesImg,
+            terrainTilesImg
         };
 
         // Instantiate renderer if not already (hack for now, should be in init)
@@ -808,6 +844,21 @@ function gameLoop() {
             player.frameTimer = 0;
         }
 
+        // Update death particle animations
+        deathParticles = deathParticles.filter(particle => {
+            particle.frameTimer += 16; // ~16ms per frame at 60fps
+
+            // Advance frame every 100ms (10 fps for slower, more visible animation)
+            if (particle.frameTimer >= 100) {
+                particle.frame++;
+                particle.frameTimer = 0;
+            }
+
+            // Remove after 24 frames (using first 4 rows of 6x6 grid)
+            // At 100ms per frame, this is 2.4 seconds total
+            return particle.frame < 24;
+        });
+
         // Update screen shake
         if (screenShake.duration > 0) {
             screenShake.duration -= 16;  // Assume ~60fps = ~16ms per frame
@@ -829,7 +880,7 @@ function gameLoop() {
             inventoryOpen: inventoryOpen
         };
 
-        window.renderer.drawGame(gameState, player, playerCode, monsters, healingPoints, camera, uiState, shieldState, clientWalls, screenShake, damageNumbers, mouseX, mouseY);
+        window.renderer.drawGame(gameState, player, playerCode, monsters, healingPoints, camera, uiState, shieldState, clientWalls, screenShake, damageNumbers, deathParticles, mouseX, mouseY);
 
         // If game over, stop processing movement/combat but keep rendering
         if (gameOverFlag) {

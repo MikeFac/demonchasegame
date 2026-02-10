@@ -25,7 +25,7 @@ class Renderer {
         this.ctx.fillText('Loading...', this.canvas.width / 2 - 50, this.canvas.height / 2);
     }
 
-    drawGame(gameState, player, playerCode, monsters, healingPoints, camera, uiState, shieldState, walls, screenShake = {x:0, y:0}, damageNumbers = [], mouseX = null, mouseY = null) {
+    drawGame(gameState, player, playerCode, monsters, healingPoints, camera, uiState, shieldState, walls, screenShake = {x:0, y:0}, damageNumbers = [], deathParticles = [], mouseX = null, mouseY = null) {
         this.clear();
 
         // Draw UI Top Bar (no screen shake)
@@ -57,6 +57,9 @@ class Renderer {
 
         // Draw Damage Numbers (floaty combat feedback)
         this.drawDamageNumbers(damageNumbers, camera);
+
+        // Draw Death Particle Animations
+        this.drawDeathParticles(deathParticles, camera);
 
         // Restore context before drawing UI (undo screen shake)
         this.ctx.restore();
@@ -416,15 +419,44 @@ class Renderer {
         });
     }
 
+    // Helper: Draw a single tile from a sprite sheet
+    // Supports different grid sizes and tile sizes
+    drawTileFromSheet(sheet, tileIndex, destX, destY, destWidth = 25, destHeight = 25, gridSize = 8, tileSize = 32) {
+        if (!sheet || !sheet.complete) return false;
+
+        const row = Math.floor(tileIndex / gridSize);
+        const col = tileIndex % gridSize;
+        const sourceX = col * tileSize;
+        const sourceY = row * tileSize;
+
+        this.ctx.drawImage(
+            sheet,
+            sourceX, sourceY, tileSize, tileSize,  // Source: extract tile from sheet
+            destX, destY, destWidth, destHeight    // Dest: render on screen
+        );
+        return true;
+    }
+
     drawWalls(walls, camera, terrainTheme) {
         if (!walls || walls.length === 0) return;
 
+        // Building tiles from 4x4 grid (15 usable, excluding index 6 - doesn't fit)
+        // Grid layout: Row 0: 0,1,2,3  Row 1: 4,5,6,7  Row 2: 8,9,10,11  Row 3: 12,13,14,15
+        const buildingTiles = [0, 1, 2, 3, 4, 5, 7, 8, 9, 10, 11, 12, 13, 14, 15];
+
+        // ONE consistent grass tile (from 8x8 terrain sheet)
+        const grassTile = 0;
+
+        // Fallback color themes (used if sprite sheet not loaded)
         const themes = {
             stone:   ['#4a4a4a', '#3d3d3d', '#555555', '#424242'],
             earth:   ['#5c4033', '#4a3328', '#6b4c3b', '#503a2d'],
             crystal: ['#5b3a6b', '#4d2d5e', '#6b4a7b', '#553465']
         };
         const palette = themes[terrainTheme] || themes.stone;
+
+        const useTiles = this.assets.buildingTilesImg && this.assets.buildingTilesImg.complete &&
+                         this.assets.terrainTilesImg && this.assets.terrainTilesImg.complete;
 
         this.ctx.save();
         const playableTop = this.QUALITY_LINE_HEIGHT + this.BUTTON_HEIGHT;
@@ -434,42 +466,155 @@ class Renderer {
         this.ctx.rect(0, playableTop, this.canvas.width, playableBottom - playableTop);
         this.ctx.clip();
 
-        this.ctx.lineWidth = 1;
+        if (useTiles) {
+            // TWO-PASS RENDERING to prevent grass from covering buildings
 
-        walls.forEach(wall => {
-            const screenX = wall.x - camera.x;
-            const screenY = wall.y - camera.y;
+            // PASS 1: Draw ALL grass tiles first
+            walls.forEach(wall => {
+                const screenX = wall.x - camera.x;
+                const screenY = wall.y - camera.y;
 
-            if (screenX + wall.width > 0 && screenX < this.canvas.width &&
-                screenY + wall.height > 0 && screenY < this.canvas.height) {
-                const baseColor = palette[wall.type || 0];
+                if (screenX + wall.width > 0 && screenX < this.canvas.width &&
+                    screenY + wall.height > 0 && screenY < this.canvas.height) {
 
-                // Create vertical gradient (lighter at top, darker at bottom) for 3D effect
-                const gradient = this.ctx.createLinearGradient(
-                    screenX, screenY,
-                    screenX, screenY + wall.height
-                );
-                gradient.addColorStop(0, this.lightenColor(baseColor, 20));
-                gradient.addColorStop(1, this.darkenColor(baseColor, 20));
+                    // Draw grass background (8x8 grid, 32x32 tiles)
+                    this.drawTileFromSheet(
+                        this.assets.terrainTilesImg,
+                        grassTile,
+                        screenX,
+                        screenY,
+                        wall.width,
+                        wall.height,
+                        8,  // gridSize: 8x8 grid
+                        32  // tileSize: 32x32 tiles
+                    );
+                }
+            });
 
-                // Fill with gradient
-                this.ctx.fillStyle = gradient;
-                this.ctx.fillRect(screenX, screenY, wall.width, wall.height);
+            // Helper: Check if a 100x100 building centered at (x,y) would stay fully on walls
+            const isSafeForBuilding = (x, y, wallsList) => {
+                // Building is 100x100, centered on this cell
+                // Check if all 4 cardinal directions have walls within building bounds
+                const buildingHalfSize = 50; // Building extends 50px in each direction
 
-                // Add dark border for depth
-                this.ctx.strokeStyle = this.darkenColor(baseColor, 40);
-                this.ctx.lineWidth = 2;
-                this.ctx.strokeRect(screenX, screenY, wall.width, wall.height);
+                // Create a set of wall positions for fast lookup
+                const wallSet = new Set();
+                wallsList.forEach(w => {
+                    wallSet.add(`${w.x},${w.y}`);
+                });
 
-                // Add highlight on top edge for extra depth
-                this.ctx.strokeStyle = this.lightenColor(baseColor, 30);
-                this.ctx.lineWidth = 1;
-                this.ctx.beginPath();
-                this.ctx.moveTo(screenX, screenY);
-                this.ctx.lineTo(screenX + wall.width, screenY);
-                this.ctx.stroke();
-            }
-        });
+                // Check in all 4 cardinal directions at 2-cell intervals
+                // Ensure walls exist in all directions within building footprint
+                const directions = [
+                    { dx: -50, dy: 0 },   // Left
+                    { dx: 50, dy: 0 },    // Right
+                    { dx: 0, dy: -50 },   // Up
+                    { dx: 0, dy: 50 }     // Down
+                ];
+
+                for (const dir of directions) {
+                    const checkX = x + dir.dx;
+                    const checkY = y + dir.dy;
+
+                    // Look for wall within ±25px of check point
+                    let foundWall = false;
+                    for (let offsetX = -25; offsetX <= 25; offsetX += 25) {
+                        for (let offsetY = -25; offsetY <= 25; offsetY += 25) {
+                            if (wallSet.has(`${checkX + offsetX},${checkY + offsetY}`)) {
+                                foundWall = true;
+                                break;
+                            }
+                        }
+                        if (foundWall) break;
+                    }
+
+                    if (!foundWall) return false; // Missing wall in this direction
+                }
+
+                return true; // All directions have walls
+            };
+
+            // PASS 2: Draw buildings on top (so grass doesn't overwrite them)
+            walls.forEach(wall => {
+                const screenX = wall.x - camera.x;
+                const screenY = wall.y - camera.y;
+
+                if (screenX + wall.width > 0 && screenX < this.canvas.width &&
+                    screenY + wall.height > 0 && screenY < this.canvas.height) {
+
+                    // Deterministic random based on wall position
+                    // Use better hash mixing for even distribution
+                    let hash = wall.x * 73856093 + wall.y * 19349663;
+                    hash = ((hash >> 16) ^ hash) * 0x45d9f3b;
+                    hash = ((hash >> 16) ^ hash) * 0x45d9f3b;
+                    hash = (hash >> 16) ^ hash;
+                    const random = Math.abs(hash % 10000) / 10000;
+
+                    // 2% chance for building (sweet spot density)
+                    // Only place on walls where entire 100x100 building stays on grass
+                    if (random < 0.02 && isSafeForBuilding(wall.x, wall.y, walls)) {
+                        // Use all 16 building types with better distribution
+                        const buildingIndex = Math.abs(hash) % buildingTiles.length;
+                        const tileIndex = buildingTiles[buildingIndex];
+
+                        // Draw building at 100x100 size centered on the cell
+                        const buildingSize = 100;
+                        const offsetX = screenX - (buildingSize - wall.width) / 2;
+                        const offsetY = screenY - (buildingSize - wall.height) / 2;
+
+                        // Building sheet: 4x4 grid, 100x100 tiles
+                        this.drawTileFromSheet(
+                            this.assets.buildingTilesImg,
+                            tileIndex,
+                            offsetX,
+                            offsetY,
+                            buildingSize,
+                            buildingSize,
+                            4,    // gridSize: 4x4 grid
+                            100   // tileSize: 100x100 tiles
+                        );
+                    }
+                }
+            });
+        } else {
+            // Fallback: gradient rendering (single pass)
+            walls.forEach(wall => {
+                const screenX = wall.x - camera.x;
+                const screenY = wall.y - camera.y;
+
+                if (screenX + wall.width > 0 && screenX < this.canvas.width &&
+                    screenY + wall.height > 0 && screenY < this.canvas.height) {
+
+                    const baseColor = palette[wall.type || 0];
+
+                    // Create vertical gradient (lighter at top, darker at bottom) for 3D effect
+                    const gradient = this.ctx.createLinearGradient(
+                        screenX, screenY,
+                        screenX, screenY + wall.height
+                    );
+                    gradient.addColorStop(0, this.lightenColor(baseColor, 20));
+                    gradient.addColorStop(1, this.darkenColor(baseColor, 20));
+
+                    // Fill with gradient
+                    this.ctx.fillStyle = gradient;
+                    this.ctx.fillRect(screenX, screenY, wall.width, wall.height);
+
+                    // Add dark border for depth
+                    this.ctx.strokeStyle = this.darkenColor(baseColor, 40);
+                    this.ctx.lineWidth = 2;
+                    this.ctx.strokeRect(screenX, screenY, wall.width, wall.height);
+
+                    // Add highlight on top edge for extra depth
+                    this.ctx.strokeStyle = this.lightenColor(baseColor, 30);
+                    this.ctx.lineWidth = 1;
+                    this.ctx.beginPath();
+                    this.ctx.moveTo(screenX, screenY);
+                    this.ctx.lineTo(screenX + wall.width, screenY);
+                    this.ctx.stroke();
+                }
+            });
+        }
+
         this.ctx.restore();
     }
 
@@ -622,20 +767,29 @@ class Renderer {
     drawBullets(bullets, camera) {
         if (!bullets) return;
 
-        this.ctx.fillStyle = '#8B0000'; // Dark red
-        this.ctx.shadowBlur = 5;
-        this.ctx.shadowColor = '#ff0000';
-
         bullets.forEach(bullet => {
             const screenX = bullet.x - camera.x;
             const screenY = bullet.y - camera.y;
 
             // Visibility check
-            if (screenX + 5 > 0 && screenX - 5 < this.canvas.width &&
-                screenY + 5 > 0 && screenY - 5 < this.canvas.height) {
+            if (screenX + 10 > 0 && screenX - 10 < this.canvas.width &&
+                screenY + 10 > 0 && screenY - 10 < this.canvas.height) {
 
+                // Bright glow halo
+                this.ctx.save();
+                this.ctx.fillStyle = '#ff0000';
+                this.ctx.shadowBlur = 15;
+                this.ctx.shadowColor = '#ff0000';
+                this.ctx.globalAlpha = 0.6;
                 this.ctx.beginPath();
-                this.ctx.arc(screenX, screenY, 4, 0, Math.PI * 2);
+                this.ctx.arc(screenX, screenY, 8, 0, Math.PI * 2);
+                this.ctx.fill();
+                this.ctx.restore();
+
+                // Solid core
+                this.ctx.fillStyle = '#ff3333'; // Bright red
+                this.ctx.beginPath();
+                this.ctx.arc(screenX, screenY, 5, 0, Math.PI * 2);
                 this.ctx.fill();
             }
         });
@@ -820,5 +974,64 @@ class Renderer {
         const g = Math.max(0, ((num >> 8) & 0xff) - Math.floor(255 * percent / 100));
         const b = Math.max(0, (num & 0xff) - Math.floor(255 * percent / 100));
         return `rgb(${r}, ${g}, ${b})`;
+    }
+
+    drawDeathParticles(deathParticles, camera) {
+        if (!deathParticles || deathParticles.length === 0) return;
+
+        // DEBUG: Log when we're trying to draw particles
+        console.log(`🎨 Drawing ${deathParticles.length} death particles`);
+
+        // Fallback rendering if sprite sheet not loaded
+        if (!this.assets.particleBurstImg || !this.assets.particleBurstImg.complete) {
+            if (deathParticles.length > 0) {
+                console.warn('Particle sprite not loaded, using fallback rendering');
+                // Draw simple expanding red circles as fallback
+                deathParticles.forEach(particle => {
+                    const screenX = particle.x - camera.x;
+                    const screenY = particle.y - camera.y;
+                    const radius = 10 + (particle.frame * 2); // Expand over time
+                    const alpha = 1 - (particle.frame / 24); // Fade out
+
+                    this.ctx.save();
+                    this.ctx.globalAlpha = alpha;
+                    this.ctx.fillStyle = '#ff0000';
+                    this.ctx.beginPath();
+                    this.ctx.arc(screenX, screenY, radius, 0, Math.PI * 2);
+                    this.ctx.fill();
+                    this.ctx.restore();
+                });
+            }
+            return;
+        }
+
+        const spriteSheet = this.assets.particleBurstImg;
+        const frameSize = 64; // Each frame is 64x64 pixels
+        const columns = 6;    // 6 columns in the sprite sheet
+
+        deathParticles.forEach(particle => {
+            // Calculate which frame to show (0-23)
+            const frame = Math.min(particle.frame, 23);
+
+            // Calculate row and column in sprite sheet
+            const row = Math.floor(frame / columns);
+            const col = frame % columns;
+
+            // Source rectangle in sprite sheet
+            const sourceX = col * frameSize;
+            const sourceY = row * frameSize;
+
+            // Screen position (account for camera)
+            const screenX = particle.x - camera.x;
+            const screenY = particle.y - camera.y;
+
+            // Draw centered on death position
+            this.ctx.drawImage(
+                spriteSheet,
+                sourceX, sourceY, frameSize, frameSize,
+                screenX - frameSize / 2, screenY - frameSize / 2,
+                frameSize, frameSize
+            );
+        });
     }
 }
