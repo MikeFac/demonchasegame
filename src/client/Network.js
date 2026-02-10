@@ -13,6 +13,7 @@ class Network {
             onPlayerCode: null,
             onPlayerNumber: null,
             onMonsterKilled: null,
+            onBulletHit: null,
             onWalls: null,
             onLevelAdvancing: null,
             onGameConfig: null
@@ -108,6 +109,13 @@ class Network {
         this.socket.on('monsterKilled', (data) => {
             if (this.callbacks.onMonsterKilled) {
                 this.callbacks.onMonsterKilled(data);
+            }
+        });
+
+        // Bullet hit notification (for impact sound)
+        this.socket.on('bulletHit', (data) => {
+            if (this.callbacks.onBulletHit) {
+                this.callbacks.onBulletHit(data);
             }
         });
 

@@ -129,6 +129,10 @@ class PlayerManager {
         if (player && targetMonster) {
             targetMonster.health -= attackData.damage;
             if (targetMonster.health <= 0) {
+                // Store position before removing
+                const deathX = targetMonster.x;
+                const deathY = targetMonster.y;
+
                 const index = gameState.monsters.indexOf(targetMonster);
                 gameState.monsters.splice(index, 1);
 
@@ -151,7 +155,7 @@ class PlayerManager {
                     }
                 }
 
-                io.emit('monsterKilled', { monsterId: targetMonster.id, killer: playerCode });
+                io.emit('monsterKilled', { monsterId: targetMonster.id, killer: playerCode, x: deathX, y: deathY });
 
                 if (targetMonster.chaser) {
                     gameState.chaseTrigger = true;

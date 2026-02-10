@@ -82,6 +82,8 @@ class BulletManager {
                 )) {
                     bullet.active = false;
                     this.monsterManager.damageMonster(monster.id, Constants.BULLET_DAMAGE, bullet.playerCode);
+                    // Emit bullet hit event for sound effect
+                    this.io.emit('bulletHit', { x: bullet.x, y: bullet.y });
                     break;
                 }
             }

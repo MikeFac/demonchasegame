@@ -219,12 +219,17 @@ const DEMON_TYPES = {
 
 const levelXPRequirements = LevelConfig.levelXPRequirements;
 
-// Audio assets
-const attackSound = new Audio(`${scriptDirectory}/attack_sound.mp3`);
-const playerHit = new Audio(`${scriptDirectory}/player_hit.mp3`);
-const healingRecharge = new Audio(`${scriptDirectory}/healing_recharge.mp3`);
-const demonDies = new Audio(`${scriptDirectory}/demon_dies.mp3`);
-const gameOver = new Audio(`${scriptDirectory}/game_over.mp3`);
+// Audio assets - New sound effects
+const bulletImpact = new Audio(`${scriptDirectory}/sounds/bullet_impact.mp3`);
+const monsterExplosion = new Audio(`${scriptDirectory}/sounds/monster_explosion.mp3`);
+const levelUpSound = new Audio(`${scriptDirectory}/sounds/level_up.mp3`);
+const playerHit = new Audio(`${scriptDirectory}/sounds/player_attacked.mp3`);
+const attackSound = new Audio(`${scriptDirectory}/sounds/monster_attacked.mp3`);
+
+// Legacy sounds (keeping preferred old ones)
+const healingRecharge = new Audio(`${scriptDirectory}/sounds/healing_recharge.mp3`);
+const demonDies = monsterExplosion; // Using new explosion sound
+const gameOver = new Audio(`${scriptDirectory}/sounds/game_over.mp3`);
 
 let currentVerseIndex = null; // Index of the currently displayed verse
 let verseTimer = null; // Timer for displaying the next verse
@@ -413,6 +418,10 @@ async function init() {
                 if (lastAttackedMonster && lastAttackedMonster.id === monsterId) {
                     lastAttackedMonster = null;
                 }
+            },
+            onBulletHit: ({ x, y }) => {
+                // Play bullet impact sound
+                bulletImpact.play();
             },
             onWalls: (data) => {
                 clientWalls = data.walls;
@@ -1367,6 +1376,7 @@ function handlePlayerAttack(monster) {
 
 function updatePlayerLevel(xp) {
     console.log('Checking if we should update level');
+    const previousLevel = player.level;
     for (let i = player.level; i < levelXPRequirements.length; i++) {
         if (xp >= levelXPRequirements[i]) {
             player.level = i + 1;
@@ -1376,6 +1386,10 @@ function updatePlayerLevel(xp) {
         } else {
             break;
         }
+    }
+    // Play level up sound if level increased
+    if (player.level > previousLevel) {
+        levelUpSound.play();
     }
 }
 

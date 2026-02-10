@@ -247,7 +247,10 @@ class MonsterManager {
         }, 500);
 
         if (monster.health <= 0) {
-            // Monster killed
+            // Monster killed - store position before removing
+            const deathX = monster.x;
+            const deathY = monster.y;
+
             gameState.monsters.splice(monsterIndex, 1);
             gameState.monstersKilled = (gameState.monstersKilled || 0) + 1;
 
@@ -269,7 +272,7 @@ class MonsterManager {
                 }
             }
 
-            io.emit('monsterKilled', { monsterId: monsterId, killer: attackerPlayerCode });
+            io.emit('monsterKilled', { monsterId: monsterId, killer: attackerPlayerCode, x: deathX, y: deathY });
             return true;
         }
 
