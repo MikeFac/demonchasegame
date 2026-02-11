@@ -85,7 +85,7 @@ const VerseTestScreen = (function() {
      */
     function failTest() {
         result = false;
-        resultTimer = 8000; // Show verse for 8 seconds (or until audio finishes)
+        resultTimer = 999999; // Wait for audio to finish before counting down
 
         // Play verse audio using ReviewMode's convertRef + audio URL
         try {
@@ -96,20 +96,23 @@ const VerseTestScreen = (function() {
                 failAudio.type = 'audio/ogg';
                 failAudio.volume = 1;
                 failAudio.onended = function() {
-                    // Keep showing for 2 more seconds after audio ends
-                    if (result === false && resultTimer > 2000) {
-                        resultTimer = 2000;
-                    }
+                    // Audio finished — show verse for 2 more seconds
+                    resultTimer = 2000;
                 };
                 failAudio.onerror = function() {
                     console.error('Failed to load verse audio');
+                    resultTimer = 4000; // Fallback: just show verse for 4 seconds
                 };
                 failAudio.play().catch(function(err) {
                     console.error('Failed to play verse audio:', err);
+                    resultTimer = 4000; // Fallback: just show verse for 4 seconds
                 });
+            } else {
+                resultTimer = 4000; // No audio available, show for 4 seconds
             }
         } catch (e) {
             console.error('Error playing verse audio on fail:', e);
+            resultTimer = 4000;
         }
     }
 
