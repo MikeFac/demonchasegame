@@ -193,6 +193,12 @@ let inventoryOpen = false;
 // Menu state
 let menuOpen = false;
 
+// Goals overlay state
+let goalsOverlayVisible = false;
+
+// Flash messages for achievements
+let flashMessages = [];  // Array of { text, color, startTime, duration }
+
 // Particle effects
 let particleBurstImg = null;
 let deathParticles = []; // Array of active death particle animations
@@ -235,6 +241,26 @@ let currentVerseIndex = null; // Index of the currently displayed verse
 let verseTimer = null; // Timer for displaying the next verse
 let incorrectAnswerReferences = [];
 let currentReviewMode = 'quality'; // Possible values: 'incorrect', 'quality'
+
+// Daily Challenge State
+let dailyChallengeGoal = 5;  // Answer 5 first-letter quizzes correctly
+let dailyChallengeProgress = 0;
+let dailyChallengeCompleted = false;
+
+// Verse Learning Tracker (only first_letter mode)
+let versesLearned = 0;  // Total verses learned via 2-letter challenge
+const TOTAL_VERSES = 1618;  // Total verses in bible-verses.js
+
+// Game-Over Modal State
+let gameOverModalVisible = false;
+let sessionStartTime = null;  // Set when game starts
+let finalStats = {
+    level: 1,
+    monstersKilled: 0,
+    versesLearned: 0,
+    timePlayed: 0  // seconds
+};
+let restartButtonRect = { x: 0, y: 0, width: 0, height: 0 };
 
 // Helper function to load an image (if you don't already have this)
 function loadImage(src) {
@@ -349,6 +375,88 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 });
 
+
+// Initialize Daily Challenge (resets daily at midnight)
+function initializeDailyChallenge() {
+    const today = new Date().toISOString().split('T')[0];  // "2026-02-10"
+    const lastPlayed = localStorage.getItem('dailyChallengeDate');
+
+    if (lastPlayed !== today) {
+        // New day - reset challenge
+        localStorage.setItem('dailyChallengeDate', today);
+        localStorage.setItem('dailyChallengeProgress', '0');
+        localStorage.setItem('dailyChallengeCompleted', 'false');
+    }
+
+    // Load today's progress
+    dailyChallengeProgress = parseInt(localStorage.getItem('dailyChallengeProgress') || '0');
+    dailyChallengeCompleted = localStorage.getItem('dailyChallengeCompleted') === 'true';
+    console.log(`Daily Challenge: ${dailyChallengeProgress}/${dailyChallengeGoal} (Completed: ${dailyChallengeCompleted})`);
+}
+
+// Initialize Verse Counter (persists forever)
+function initializeVerseCounter() {
+    versesLearned = parseInt(localStorage.getItem('versesLearned') || '0');
+    console.log(`Verses Learned: ${versesLearned}/${TOTAL_VERSES}`);
+}
+
+// Callback for QuizManager to notify of correct answers
+window.onQuizCorrectAnswer = function(quizMode, verseReference) {
+    // Track daily challenge progress (only first_letter mode)
+    if (quizMode === 'first_letter') {
+        if (!dailyChallengeCompleted && dailyChallengeProgress < dailyChallengeGoal) {
+            dailyChallengeProgress++;
+            localStorage.setItem('dailyChallengeProgress', dailyChallengeProgress.toString());
+
+            // Flash: daily progress
+            flashMessages.push({
+                text: `Daily: ${dailyChallengeProgress}/${dailyChallengeGoal}`,
+                color: '#ffffff',
+                startTime: Date.now(),
+                duration: 1500
+            });
+
+            if (dailyChallengeProgress >= dailyChallengeGoal) {
+                dailyChallengeCompleted = true;
+                localStorage.setItem('dailyChallengeCompleted', 'true');
+
+                // Bonus reward: +20 XP
+                if (player) {
+                    player.xp += 20;
+                }
+
+                // Flash: daily completed
+                flashMessages.push({
+                    text: 'Daily Challenge Complete! +20 XP',
+                    color: '#00ff00',
+                    startTime: Date.now(),
+                    duration: 3000
+                });
+
+                // Fanfare sound
+                levelUpSound.play();
+                console.log("Daily challenge completed! Bonus +20 XP");
+            }
+        }
+
+        // Track unique verses learned (only first_letter mode counts)
+        const verseKey = `learned_${verseReference.replace(/\s+/g, '_')}`;
+        if (!localStorage.getItem(verseKey)) {
+            localStorage.setItem(verseKey, 'true');
+            versesLearned++;
+            localStorage.setItem('versesLearned', versesLearned.toString());
+
+            // Flash: new verse learned
+            flashMessages.push({
+                text: `New verse learned! (${versesLearned}/${TOTAL_VERSES})`,
+                color: '#ffcc00',
+                startTime: Date.now(),
+                duration: 2000
+            });
+            console.log(`Verse learned! Total: ${versesLearned}/${TOTAL_VERSES}`);
+        }
+    }
+};
 
 async function init() {
     return new Promise(async (resolve) => {
@@ -669,7 +777,7 @@ async function init() {
             onMenuItemClick: (itemId) => {
                 // Always close menu after selection
                 menuOpen = false;
-                
+
                 if (itemId === 'review') {
                     ReviewMode.saveGameState();
                     ReviewMode.startReviewMode();
@@ -682,6 +790,8 @@ async function init() {
                     const nextIndex = (state.currentTrackIndex + 1) % state.tracks.length;
                     MusicManager.playTrack(nextIndex);
                     console.log('Next song:', state.tracks[nextIndex].name);
+                } else if (itemId === 'goals') {
+                    goalsOverlayVisible = true;
                 }
             },
             onGameClick: (x, y) => {
@@ -766,6 +876,13 @@ async function init() {
             }
         });
 
+        // Initialize daily challenge and verse counter
+        initializeDailyChallenge();
+        initializeVerseCounter();
+
+        // Reset session start time when game starts
+        sessionStartTime = Date.now();
+
         console.log('Game initialized');
 
         resolve();
@@ -818,7 +935,17 @@ function gameLoop() {
                 menuOpen,
                 musicState: MusicManager.getState(),
                 reviewActive: gameMode === 'review'
-            }
+            },
+            dailyChallengeProgress,
+            dailyChallengeGoal,
+            dailyChallengeCompleted,
+            versesLearned,
+            totalVerses: TOTAL_VERSES,
+            gameOverModalVisible,
+            finalStats,
+            restartButtonRect,
+            goalsOverlayVisible,
+            flashMessages
         };
 
         const assets = {
@@ -879,6 +1006,11 @@ function gameLoop() {
         // Update damage numbers (remove expired ones)
         damageNumbers = damageNumbers.filter(dn => {
             return (Date.now() - dn.startTime) < dn.duration;
+        });
+
+        // Update flash messages (remove expired ones)
+        flashMessages = flashMessages.filter(fm => {
+            return (Date.now() - fm.startTime) < fm.duration;
         });
 
         // Build shield state for renderer
@@ -1054,6 +1186,9 @@ function gameLoop() {
         // Update InputHandler with current camera for click-to-world coord conversion
         if (inputHandler) {
             inputHandler.setCamera(camera);
+            // Update InputHandler with modal state for click detection
+            inputHandler.gameOverModalVisible = gameOverModalVisible;
+            inputHandler.restartButtonRect = restartButtonRect;
         }
 
 
@@ -1108,9 +1243,20 @@ function gameLoop() {
                         network.sendPlayerHit(damage);
 
                         playerHit.play(); // Play the attack sound effect
-                        if (player.health <= 0) {
+                        if (player.health <= 0 && !gameOverModalVisible) {
                             gameOver.play();
                             gameOverFlag = true;
+                            gameOverModalVisible = true;
+
+                            // Calculate final stats
+                            const sessionDuration = Math.floor((Date.now() - sessionStartTime) / 1000);  // seconds
+                            finalStats = {
+                                level: gameState.gameLevel || 1,
+                                monstersKilled: gameState.monstersKilled || 0,
+                                versesLearned: versesLearned,
+                                timePlayed: sessionDuration
+                            };
+                            console.log("Game Over - Final Stats:", finalStats);
                         }
                     }
                 }
@@ -1275,14 +1421,15 @@ function updateGameState(newGameState) {
                 // Update stats (health, xp, etc) but handle position carefully
                 player = { ...player, ...serverPlayer };
 
-                // Reconciliation: Only snap to server position if discrepancy is too large (20px)
-                // Otherwise, trust local prediction to avoid jitter
+                // Reconciliation: trust local prediction, only blend toward server if very far off
                 const dist = Math.sqrt(Math.pow(serverPlayer.x - x, 2) + Math.pow(serverPlayer.y - y, 2));
-                if (dist < 20) {
+                if (dist < 60) {
                     player.x = x;
                     player.y = y;
                 } else {
-                    // console.log("Reconciling position - too far from server");
+                    // Smooth blend toward server position instead of hard snap
+                    player.x = x + (serverPlayer.x - x) * 0.3;
+                    player.y = y + (serverPlayer.y - y) * 0.3;
                 }
 
                 if (width && height) {

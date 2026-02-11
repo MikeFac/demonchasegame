@@ -28,6 +28,12 @@ class Renderer {
     drawGame(gameState, player, playerCode, monsters, healingPoints, camera, uiState, shieldState, walls, screenShake = {x:0, y:0}, damageNumbers = [], deathParticles = [], mouseX = null, mouseY = null) {
         this.clear();
 
+        // Draw game-over modal if visible (overlays everything)
+        if (uiState.gameOverModalVisible) {
+            this.drawGameOverModal(this.canvas, uiState.finalStats, uiState.restartButtonRect);
+            return;  // Don't draw game elements behind modal
+        }
+
         // Draw UI Top Bar (no screen shake)
         this.drawTopBar(uiState);
 
@@ -82,9 +88,17 @@ class Renderer {
             this.displayBibleVerse(uiState.currentVerse.text, uiState.currentVerse.reference, uiState.quiz);
         }
 
+        // Draw flash messages (achievement notifications)
+        this.drawFlashMessages(uiState.flashMessages);
+
         // Draw menu panel LAST so it appears on top of everything
         if (uiState.menuState && uiState.menuState.menuOpen) {
             this.drawMenuPanel(uiState.menuState);
+        }
+
+        // Draw goals overlay on top of everything (including menu)
+        if (uiState.goalsOverlayVisible) {
+            this.drawGoalsPanel(uiState);
         }
     }
 
@@ -156,27 +170,30 @@ class Renderer {
         const musicState = menuState.musicState || {};
         const isPlaying = musicState.isPlaying;
 
-        // Panel background - 3 items now
+        const itemCount = 4;
+
+        // Panel background
         this.ctx.fillStyle = 'rgba(0, 0, 0, 0.9)';
-        this.ctx.fillRect(panelX, panelY, panelW, itemH * 3 + padding * 4);
+        this.ctx.fillRect(panelX, panelY, panelW, itemH * itemCount + padding * (itemCount + 1));
         this.ctx.strokeStyle = '#fff';
         this.ctx.lineWidth = 1;
-        this.ctx.strokeRect(panelX, panelY, panelW, itemH * 3 + padding * 4);
+        this.ctx.strokeRect(panelX, panelY, panelW, itemH * itemCount + padding * (itemCount + 1));
 
         // Menu items
         const items = [
             { id: 'review', label: '📖 Review' },
             { id: 'playPause', label: isPlaying ? '⏸ Stop' : '▶ Start' },
-            { id: 'nextSong', label: '⏭ Next Song' }
+            { id: 'nextSong', label: '⏭ Next Song' },
+            { id: 'goals', label: '🎯 Goals' }
         ];
 
         items.forEach((item, index) => {
             const itemY = panelY + padding + index * (itemH + padding / 2);
-            
+
             // Item background
             this.ctx.fillStyle = 'rgba(255, 255, 255, 0.1)';
             this.ctx.fillRect(panelX + padding, itemY, panelW - padding * 2, itemH);
-            
+
             // Item text
             this.ctx.fillStyle = '#fff';
             this.ctx.font = '12px Arial';
@@ -195,6 +212,126 @@ class Renderer {
         const gameLevelText = `${gameState.gameLevel}`;
         const gameLevelWidth = this.ctx.measureText(gameLevelText).width;
         this.ctx.fillText(gameLevelText, this.canvas.width - gameLevelWidth - 7, 40);
+    }
+
+    drawDailyChallenge(canvas, dailyChallengeProgress, dailyChallengeGoal, dailyChallengeCompleted) {
+        const x = 10;
+        const y = canvas.height - 30;  // Bottom-left corner
+
+        if (dailyChallengeCompleted) {
+            this.ctx.fillStyle = '#00ff00';  // Green for completed
+            this.ctx.font = 'bold 14px Arial';
+            this.ctx.fillText('✓ Daily Challenge Complete!', x, y);
+        } else {
+            this.ctx.fillStyle = '#ffffff';
+            this.ctx.font = '14px Arial';
+            this.ctx.fillText(`Daily: ${dailyChallengeProgress}/${dailyChallengeGoal} (First Letter)`, x, y);
+        }
+    }
+
+    drawVerseCounter(canvas, versesLearned, totalVerses) {
+        const x = 10;
+        const y = 50;  // Below player stats
+
+        this.ctx.fillStyle = '#ffff00';  // Yellow
+        this.ctx.font = '14px Arial';
+        this.ctx.fillText(`Verses Learned: ${versesLearned} / ${totalVerses}`, x, y);
+
+        // Progress bar
+        const barX = x;
+        const barY = y + 5;
+        const barWidth = 150;
+        const barHeight = 8;
+        const progress = versesLearned / totalVerses;
+
+        // Background bar
+        this.ctx.fillStyle = 'rgba(30, 30, 30, 0.8)';
+        this.ctx.fillRect(barX, barY, barWidth, barHeight);
+
+        // Progress fill
+        this.ctx.fillStyle = '#ffff00';
+        this.ctx.fillRect(barX, barY, barWidth * progress, barHeight);
+
+        // Border
+        this.ctx.strokeStyle = '#ffffff';
+        this.ctx.lineWidth = 1;
+        this.ctx.strokeRect(barX, barY, barWidth, barHeight);
+    }
+
+    drawGameOverModal(canvas, finalStats, restartButtonRect) {
+        const ctx = this.ctx;
+
+        // Full-screen semi-transparent overlay
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.85)';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        // Modal container (centered)
+        const modalWidth = 300;
+        const modalHeight = 280;
+        const modalX = (canvas.width - modalWidth) / 2;
+        const modalY = (canvas.height - modalHeight) / 2;
+
+        // Modal background
+        ctx.fillStyle = 'rgba(40, 40, 40, 0.95)';
+        ctx.fillRect(modalX, modalY, modalWidth, modalHeight);
+
+        // Modal border
+        ctx.strokeStyle = '#ff0000';
+        ctx.lineWidth = 3;
+        ctx.strokeRect(modalX, modalY, modalWidth, modalHeight);
+
+        // Title: "GAME OVER"
+        ctx.fillStyle = '#ff0000';
+        ctx.font = 'bold 32px Arial';
+        ctx.textAlign = 'center';
+        ctx.fillText('GAME OVER', canvas.width / 2, modalY + 50);
+
+        // Final Stats
+        ctx.fillStyle = '#ffffff';
+        ctx.font = '18px Arial';
+        ctx.textAlign = 'left';
+
+        const statsX = modalX + 30;
+        let statsY = modalY + 90;
+        const lineHeight = 28;
+
+        ctx.fillText(`Level Reached: ${finalStats.level}`, statsX, statsY);
+        statsY += lineHeight;
+        ctx.fillText(`Monsters Killed: ${finalStats.monstersKilled}`, statsX, statsY);
+        statsY += lineHeight;
+        ctx.fillText(`Verses Learned: ${finalStats.versesLearned}`, statsX, statsY);
+        statsY += lineHeight;
+
+        const minutes = Math.floor(finalStats.timePlayed / 60);
+        const seconds = finalStats.timePlayed % 60;
+        ctx.fillText(`Time Played: ${minutes}m ${seconds}s`, statsX, statsY);
+
+        // "Try Again" Button
+        const buttonWidth = 140;
+        const buttonHeight = 40;
+        const buttonX = (canvas.width - buttonWidth) / 2;
+        const buttonY = modalY + modalHeight - 60;
+
+        // Store button rect for click detection
+        restartButtonRect.x = buttonX;
+        restartButtonRect.y = buttonY;
+        restartButtonRect.width = buttonWidth;
+        restartButtonRect.height = buttonHeight;
+
+        // Button background
+        ctx.fillStyle = '#00aa00';
+        ctx.fillRect(buttonX, buttonY, buttonWidth, buttonHeight);
+
+        // Button border
+        ctx.strokeStyle = '#ffffff';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(buttonX, buttonY, buttonWidth, buttonHeight);
+
+        // Button text
+        ctx.fillStyle = '#ffffff';
+        ctx.font = 'bold 18px Arial';
+        ctx.textAlign = 'center';
+        ctx.fillText('Try Again', canvas.width / 2, buttonY + 26);
     }
 
     drawMessages(uiState) {
@@ -958,6 +1095,144 @@ class Renderer {
                 return; // Only show tooltip for first monster under cursor
             }
         }
+    }
+
+    drawGoalsPanel(uiState) {
+        const ctx = this.ctx;
+        const canvas = this.canvas;
+
+        // Full-screen semi-transparent overlay
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        // Modal container (centered)
+        const modalWidth = 280;
+        const modalHeight = 200;
+        const modalX = (canvas.width - modalWidth) / 2;
+        const modalY = (canvas.height - modalHeight) / 2;
+
+        // Modal background
+        ctx.fillStyle = 'rgba(30, 30, 30, 0.95)';
+        ctx.fillRect(modalX, modalY, modalWidth, modalHeight);
+
+        // Modal border
+        ctx.strokeStyle = '#ffcc00';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(modalX, modalY, modalWidth, modalHeight);
+
+        // Title
+        ctx.fillStyle = '#ffcc00';
+        ctx.font = 'bold 18px Arial';
+        ctx.textAlign = 'center';
+        ctx.fillText('Goals', canvas.width / 2, modalY + 28);
+
+        // --- Daily Challenge ---
+        const dcY = modalY + 50;
+        ctx.fillStyle = '#fff';
+        ctx.font = '14px Arial';
+        ctx.textAlign = 'left';
+
+        const dcProgress = uiState.dailyChallengeProgress || 0;
+        const dcGoal = uiState.dailyChallengeGoal || 5;
+        const dcCompleted = uiState.dailyChallengeCompleted || false;
+
+        if (dcCompleted) {
+            ctx.fillStyle = '#00ff00';
+            ctx.fillText('✓ Daily Challenge Complete!', modalX + 15, dcY);
+        } else {
+            ctx.fillText(`Daily: ${dcProgress}/${dcGoal} First Letter quizzes`, modalX + 15, dcY);
+        }
+
+        // Daily progress bar
+        const dcBarX = modalX + 15;
+        const dcBarY = dcY + 8;
+        const dcBarW = modalWidth - 30;
+        const dcBarH = 12;
+        const dcPercent = Math.min(dcProgress / dcGoal, 1);
+
+        ctx.fillStyle = 'rgba(30, 30, 30, 0.8)';
+        ctx.fillRect(dcBarX, dcBarY, dcBarW, dcBarH);
+        ctx.fillStyle = dcCompleted ? '#00ff00' : '#ffcc00';
+        ctx.fillRect(dcBarX, dcBarY, dcBarW * dcPercent, dcBarH);
+        ctx.strokeStyle = '#fff';
+        ctx.lineWidth = 1;
+        ctx.strokeRect(dcBarX, dcBarY, dcBarW, dcBarH);
+
+        // --- Verses Learned ---
+        const vlY = dcBarY + 35;
+        const vl = uiState.versesLearned || 0;
+        const vt = uiState.totalVerses || 1618;
+
+        ctx.fillStyle = '#fff';
+        ctx.font = '14px Arial';
+        ctx.fillText(`Verses Learned: ${vl} / ${vt}`, modalX + 15, vlY);
+
+        // Verses progress bar
+        const vlBarY = vlY + 8;
+        const vlPercent = Math.min(vl / vt, 1);
+
+        ctx.fillStyle = 'rgba(30, 30, 30, 0.8)';
+        ctx.fillRect(dcBarX, vlBarY, dcBarW, dcBarH);
+        ctx.fillStyle = '#ffff00';
+        ctx.fillRect(dcBarX, vlBarY, dcBarW * vlPercent, dcBarH);
+        ctx.strokeStyle = '#fff';
+        ctx.lineWidth = 1;
+        ctx.strokeRect(dcBarX, vlBarY, dcBarW, dcBarH);
+
+        // Dismiss hint
+        ctx.fillStyle = '#888';
+        ctx.font = '11px Arial';
+        ctx.textAlign = 'center';
+        ctx.fillText('Tap anywhere to close', canvas.width / 2, modalY + modalHeight - 12);
+
+        // Reset text align
+        ctx.textAlign = 'left';
+    }
+
+    drawFlashMessages(flashMessages) {
+        if (!flashMessages || flashMessages.length === 0) return;
+
+        const ctx = this.ctx;
+        const canvas = this.canvas;
+        const now = Date.now();
+
+        ctx.save();
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+
+        let yOffset = 0;
+        flashMessages.forEach(msg => {
+            const elapsed = now - msg.startTime;
+            if (elapsed >= msg.duration) return;
+
+            let alpha = 1;
+            const fadeStart = msg.duration - 300;
+            if (elapsed > fadeStart) {
+                alpha = 1 - (elapsed - fadeStart) / 300;
+            }
+
+            const y = canvas.height / 2 - 60 + yOffset;
+
+            // Shadow
+            ctx.font = 'bold 16px Arial';
+            ctx.fillStyle = `rgba(0, 0, 0, ${alpha * 0.6})`;
+            ctx.fillText(msg.text, canvas.width / 2 + 1, y + 1);
+
+            // Text
+            ctx.fillStyle = msg.color.replace(')', `, ${alpha})`).replace('rgb(', 'rgba(');
+            // Handle hex colors too
+            if (msg.color.startsWith('#')) {
+                const r = parseInt(msg.color.slice(1,3), 16);
+                const g = parseInt(msg.color.slice(3,5), 16);
+                const b = parseInt(msg.color.slice(5,7), 16);
+                ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${alpha})`;
+            }
+            ctx.fillText(msg.text, canvas.width / 2, y);
+
+            yOffset += 24;
+        });
+
+        ctx.restore();
     }
 
     lightenColor(hex, percent) {

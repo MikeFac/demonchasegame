@@ -234,6 +234,11 @@
             if (typeof window.MusicManager !== 'undefined' && window.MusicManager.recordVerseLearned) {
                 window.MusicManager.recordVerseLearned(currentReference, true);
             }
+
+            // Notify game.js of correct answer (for daily challenge & verse tracking)
+            if (typeof window.onQuizCorrectAnswer === 'function') {
+                window.onQuizCorrectAnswer(currentQuiz.mode, currentReference);
+            }
         } else {
             isAnswerCorrect = false;
             qualityIndex[vQuality] = (qualityIndex[vQuality] + 1) % organizedVerses[vQuality].length;

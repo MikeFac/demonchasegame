@@ -97,6 +97,27 @@ class InputHandler {
     _handleGameModeClick(clickedX, clickedY) {
         const { QUALITY_LINE_HEIGHT, BUTTON_HEIGHT, BUTTON_WIDTH, ANSWER_SECTION_HEIGHT } = this.constants;
 
+        // Check if goals overlay is visible (dismiss on any click)
+        if (typeof goalsOverlayVisible !== 'undefined' && goalsOverlayVisible) {
+            goalsOverlayVisible = false;
+            return;
+        }
+
+        // Check if game-over modal is visible (highest priority)
+        if (this.gameOverModalVisible && this.restartButtonRect) {
+            const { x: btnX, y: btnY, width: btnW, height: btnH } = this.restartButtonRect;
+
+            if (clickedX >= btnX && clickedX <= btnX + btnW &&
+                clickedY >= btnY && clickedY <= btnY + btnH) {
+                // Restart game
+                console.log("Restarting game...");
+                window.location.reload();  // Simple restart via page reload
+                return;
+            }
+            // Click anywhere else on modal is consumed (no action behind modal)
+            return;
+        }
+
         // Check hamburger menu button (top-right)
         const hb = UILayout.hamburgerButton;
         const hamburgerBtnX = UILayout.getHamburgerButtonX(this.canvas.width);
@@ -162,12 +183,27 @@ class InputHandler {
                 return;
             }
 
+            // Goals button area (fourth item)
+            const goalsY = panelY + padding + (itemH + padding / 2) * 3;
+            if (
+                clickedX >= panelX + padding &&
+                clickedX <= panelX + mp.width - padding &&
+                clickedY >= goalsY &&
+                clickedY <= goalsY + itemH
+            ) {
+                if (this.callbacks.onMenuItemClick) {
+                    this.callbacks.onMenuItemClick('goals');
+                }
+                return;
+            }
+
             // Click outside menu items but inside panel - just close menu
+            const itemCount = 4;
             if (
                 clickedX >= panelX &&
                 clickedX <= panelX + mp.width &&
                 clickedY >= panelY &&
-                clickedY <= panelY + itemH * 3 + padding * 4
+                clickedY <= panelY + itemH * itemCount + padding * (itemCount + 1)
             ) {
                 if (this.callbacks.onHamburgerClick) {
                     this.callbacks.onHamburgerClick(); // Toggle off
@@ -225,6 +261,7 @@ class InputHandler {
             const optionCount = currentQuiz.options.length;
             const buttonWidth = optionCount === 2 ? 70 : qo.width;
 
+            ctx.font = '11px Arial'; // Must match Renderer.displayQuizOptions font
             const textWidth = ctx.measureText(currentQuiz.questionLabel || '').width;
             for (let i = 0; i < optionCount; i++) {
                 const buttonX = optionStartX + textWidth + 14 + i * (buttonWidth + buttonSpacing);
