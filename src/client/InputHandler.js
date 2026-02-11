@@ -217,8 +217,22 @@ class InputHandler {
                 return;
             }
 
+            // Toggle Test Shield button area (sixth item)
+            const toggleShieldY = panelY + padding + (itemH + padding / 2) * 5;
+            if (
+                clickedX >= panelX + padding &&
+                clickedX <= panelX + mp.width - padding &&
+                clickedY >= toggleShieldY &&
+                clickedY <= toggleShieldY + itemH
+            ) {
+                if (this.callbacks.onMenuItemClick) {
+                    this.callbacks.onMenuItemClick('toggleTestShield');
+                }
+                return;
+            }
+
             // Click outside menu items but inside panel - just close menu
-            const itemCount = 5;
+            const itemCount = 6;
             if (
                 clickedX >= panelX &&
                 clickedX <= panelX + mp.width &&

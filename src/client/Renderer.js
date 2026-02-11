@@ -170,7 +170,8 @@ class Renderer {
         const musicState = menuState.musicState || {};
         const isPlaying = musicState.isPlaying;
 
-        const itemCount = 5;
+        const testShieldOn = menuState.verseTestShielded || false;
+        const itemCount = 6;
 
         // Panel background
         this.ctx.fillStyle = 'rgba(0, 0, 0, 0.9)';
@@ -185,7 +186,8 @@ class Renderer {
             { id: 'playPause', label: isPlaying ? '⏸ Stop' : '▶ Start' },
             { id: 'nextSong', label: '⏭ Next Song' },
             { id: 'goals', label: '🎯 Goals' },
-            { id: 'verseTest', label: '✏️ Verse Test' }
+            { id: 'verseTest', label: '✏️ Verse Test' },
+            { id: 'toggleTestShield', label: testShieldOn ? '🛡️ Test Shield: ON' : '🛡️ Test Shield: OFF' }
         ];
 
         items.forEach((item, index) => {

@@ -24,7 +24,7 @@
     // Uses quizSettings (global from index.html) to pick a mode via cumulative probability
     function selectMode() {
         const settings = (typeof quizSettings !== 'undefined') ? quizSettings
-            : { firstLetter: 30, missingWord: 30, categoryMatch: 25, trueFalse: 15 };
+            : { firstLetter: 25, missingWord: 25, categoryMatch: 20, trueFalse: 15, verseTest: 15 };
 
         const roll = Math.floor(Math.random() * 100);
         let cumulative = 0;
@@ -38,7 +38,10 @@
         cumulative += settings.categoryMatch;
         if (roll < cumulative) return 'category_match';
 
-        return 'true_false';
+        cumulative += (settings.trueFalse || 0);
+        if (roll < cumulative) return 'true_false';
+
+        return 'verse_test';
     }
 
     // --- Quiz Generators ---
@@ -205,6 +208,8 @@
             case 'missing_word': return generateMissingWordQuiz(verse);
             case 'category_match': return generateCategoryMatchQuiz(verse);
             case 'true_false': return generateTrueFalseQuiz(verse);
+            case 'verse_test':
+                return { mode: 'verse_test', promptText: verse.Text, questionLabel: '', options: [], correctAnswer: null };
             case 'first_letter':
             default: return generateFirstLetterQuiz(verse);
         }
@@ -259,6 +264,9 @@
     }
 
     function pickQualityVerse() {
+        // Don't rotate verse while verse test is active
+        if (typeof VerseTestScreen !== 'undefined' && VerseTestScreen.isActive()) return;
+
         console.log("Quality:" + vQuality + ", Index: " + qualityIndex[vQuality] + "out of" + organizedVerses[vQuality].length);
         currentVerseIndex = qualityIndex[vQuality];
         const verse = organizedVerses[vQuality][currentVerseIndex];
@@ -283,6 +291,8 @@
         answerResultTimeout = setTimeout(() => {
             clearAnswerResultTimeout();
             pickQualityVerse();
+            // Auto-launch verse test if selected by quiz mode
+            if (typeof checkAutoVerseTest === 'function') checkAutoVerseTest();
         }, duration);
     }
 

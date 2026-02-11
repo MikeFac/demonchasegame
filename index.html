@@ -279,22 +279,27 @@
       <div id="quizSliders">
         <div class="slider-row">
           <label>First Letter</label>
-          <input type="range" min="0" max="100" step="5" value="30" data-mode="firstLetter">
-          <span class="pct">30%</span>
+          <input type="range" min="0" max="100" step="5" value="25" data-mode="firstLetter">
+          <span class="pct">25%</span>
         </div>
         <div class="slider-row">
           <label>Missing Word</label>
-          <input type="range" min="0" max="100" step="5" value="30" data-mode="missingWord">
-          <span class="pct">30%</span>
+          <input type="range" min="0" max="100" step="5" value="25" data-mode="missingWord">
+          <span class="pct">25%</span>
         </div>
         <div class="slider-row">
           <label>Category Match</label>
-          <input type="range" min="0" max="100" step="5" value="25" data-mode="categoryMatch">
-          <span class="pct">25%</span>
+          <input type="range" min="0" max="100" step="5" value="20" data-mode="categoryMatch">
+          <span class="pct">20%</span>
         </div>
         <div class="slider-row">
           <label>True / False</label>
           <input type="range" min="0" max="100" step="5" value="15" data-mode="trueFalse">
+          <span class="pct">15%</span>
+        </div>
+        <div class="slider-row">
+          <label>Verse Test</label>
+          <input type="range" min="0" max="100" step="5" value="15" data-mode="verseTest">
           <span class="pct">15%</span>
         </div>
       </div>
@@ -335,7 +340,7 @@
     var gameCategory = urlParams.get('category') || '';
 
     // Quiz mode settings (read by QuizManager)
-    var quizSettings = { firstLetter: 30, missingWord: 30, categoryMatch: 25, trueFalse: 15 };
+    var quizSettings = { firstLetter: 25, missingWord: 25, categoryMatch: 20, trueFalse: 15, verseTest: 15 };
 
     // Slider UI logic
     (function() {

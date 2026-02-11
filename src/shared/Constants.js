@@ -31,7 +31,13 @@ const Constants = {
     MAX_SHIELD_POINTS: 1,       // One shield per level
     SHIELD_POINT_WIDTH: 32,
     SHIELD_POINT_HEIGHT: 32,
-    SHIELD_DURATION: 10000      // 10 seconds of invincibility
+    SHIELD_DURATION: 10000,      // 10 seconds of invincibility
+
+    // Verse Test Rewards
+    VERSE_TEST_AMMO_REWARD: 5,
+    VERSE_TEST_XP_REWARD: 15,
+    VERSE_TEST_HEALTH_REWARD: 10,
+    VERSE_TEST_SHIELD_DURATION: 15000  // 15s shield for shielded verse test
 };
 
 if (typeof module !== 'undefined' && module.exports) {

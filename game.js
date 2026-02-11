@@ -193,6 +193,10 @@ let inventoryOpen = false;
 // Menu state
 let menuOpen = false;
 
+// Verse Test shield setting (Option A/B)
+let verseTestShielded = localStorage.getItem('verseTestShielded') === 'true';
+let verseTestShieldActive = false;
+
 // Goals overlay state
 let goalsOverlayVisible = false;
 
@@ -343,6 +347,53 @@ function getQuizSettingsFromSliders() {
         settings[slider.dataset.mode] = parseInt(slider.value, 10);
     });
     return settings;
+}
+
+// Launch verse test with rewards on completion
+function launchVerseTest(text, ref, difficulty) {
+    if (VerseTestScreen.isActive()) return;
+
+    // Activate test shield if setting is ON
+    if (verseTestShielded) {
+        verseTestShieldActive = true;
+    }
+
+    VerseTestScreen.startTest(text, ref, difficulty, function(passed) {
+        // Always deactivate test shield
+        verseTestShieldActive = false;
+
+        if (passed) {
+            // Award ammo
+            player.ammo = (player.ammo || 0) + Constants.VERSE_TEST_AMMO_REWARD;
+
+            // Award health (capped at max)
+            player.health = Math.min(player.health + Constants.VERSE_TEST_HEALTH_REWARD, player.maxHealth);
+
+            // Award XP via server
+            network.sendQuizCorrect();
+
+            // Flash message
+            flashMessages.push({
+                text: `Verse Test Passed! +${Constants.VERSE_TEST_AMMO_REWARD} Spirit +${Constants.VERSE_TEST_HEALTH_REWARD} HP`,
+                color: '#44ff44',
+                startTime: Date.now(),
+                duration: 2500
+            });
+        } else {
+            console.log('Verse test failed — no penalty');
+        }
+    });
+}
+
+// Check if current quiz is a verse_test marker and auto-launch
+function checkAutoVerseTest() {
+    if (currentQuiz && currentQuiz.mode === 'verse_test' && !VerseTestScreen.isActive()) {
+        const verse = organizedVerses[vQuality][currentVerseIndex];
+        if (verse) {
+            const testDifficulty = Math.min(5 + player.level, 15);
+            launchVerseTest(verse.Text, verse.Reference, testDifficulty);
+        }
+    }
 }
 
 // Wait for the DOM content to load
@@ -688,10 +739,14 @@ async function init() {
 
         // Pick the initial quality verse
         QuizManager.pickQualityVerse();
+        checkAutoVerseTest();
         console.log('Initialised currentVerseIndex: ' + currentVerseIndex);
 
         // Set up the timer to display a new verse every 10 seconds
-        verseTimer = setInterval(QuizManager.pickQualityVerse, VERSECHANGETIME);
+        verseTimer = setInterval(function() {
+            QuizManager.pickQualityVerse();
+            checkAutoVerseTest();
+        }, VERSECHANGETIME);
 
         // Create quality buttons
         QuizManager.createQualityButtons();
@@ -764,6 +819,7 @@ async function init() {
             onQualityButtonClick: (qualityText) => {
                 vQuality = qualityText;
                 QuizManager.pickQualityVerse();
+                checkAutoVerseTest();
             },
             onQuizOptionClick: (selectedOption) => {
                 QuizManager.handleQuizAnswer(selectedOption);
@@ -793,22 +849,21 @@ async function init() {
                 } else if (itemId === 'goals') {
                     goalsOverlayVisible = true;
                 } else if (itemId === 'verseTest') {
-                    // Launch verse test with current verse
+                    // Launch verse test with current verse (with rewards)
                     const verse = organizedVerses[vQuality][currentVerseIndex];
                     if (verse) {
                         const testDifficulty = Math.min(5 + player.level, 15);
-                        VerseTestScreen.startTest(verse.Text, verse.Reference, testDifficulty, function(passed) {
-                            console.log('Verse test result:', passed ? 'PASSED' : 'FAILED');
-                            if (passed) {
-                                flashMessages.push({
-                                    text: 'Verse Test Passed!',
-                                    color: '#44ff44',
-                                    startTime: Date.now(),
-                                    duration: 2000
-                                });
-                            }
-                        });
+                        launchVerseTest(verse.Text, verse.Reference, testDifficulty);
                     }
+                } else if (itemId === 'toggleTestShield') {
+                    verseTestShielded = !verseTestShielded;
+                    localStorage.setItem('verseTestShielded', verseTestShielded.toString());
+                    flashMessages.push({
+                        text: verseTestShielded ? 'Test Shield: ON' : 'Test Shield: OFF',
+                        color: '#ffffff',
+                        startTime: Date.now(),
+                        duration: 1500
+                    });
                 }
             },
             onGameClick: (x, y) => {
@@ -951,7 +1006,8 @@ function gameLoop() {
             menuState: {
                 menuOpen,
                 musicState: MusicManager.getState(),
-                reviewActive: gameMode === 'review'
+                reviewActive: gameMode === 'review',
+                verseTestShielded
             },
             dailyChallengeProgress,
             dailyChallengeGoal,
@@ -1267,8 +1323,8 @@ function gameLoop() {
                     // Store the last attacked monster
                     lastAttackedMonster = monster;
 
-                    // Shield blocks monster damage
-                    if (!shieldActive) {
+                    // Shield blocks monster damage (inventory shield OR verse test shield)
+                    if (!shieldActive && !verseTestShieldActive) {
                         // Calculate random damage between 0 and the monster's maximum damage
                         const damage = Math.floor(Math.random() * (monster.maxDamage + 1) * gameState.gameLevel);
                         player.health -= damage; // Monster attacks the player locally for immediate feedback
