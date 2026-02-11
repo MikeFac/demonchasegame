@@ -2,6 +2,7 @@ const Constants = require('../shared/Constants');
 const LevelConfig = require('../shared/LevelConfig');
 const WallGrid = require('../shared/WallGrid');
 const generateMaze = require('./utils/Maze');
+const Physics = require('./utils/Physics');
 const MonsterManager = require('./entities/MonsterManager');
 const PlayerManager = require('./entities/PlayerManager');
 const BulletManager = require('./entities/BulletManager');
@@ -257,7 +258,33 @@ class Game {
             this.spawnX = mazeResult.spawnX;
             this.spawnY = mazeResult.spawnY;
 
-            // Teleport all players to new spawn point
+            // Find a safe spawn point (maze spawn may overlap walls for 48x48 player)
+            let safeX = this.spawnX;
+            let safeY = this.spawnY;
+            if (Physics.isOverlapping(safeX, safeY, this.constants.PLAYER_WIDTH, this.constants.PLAYER_HEIGHT, this.gameState, null, this.wallGrid)) {
+                console.warn(`Level ${level} spawn (${safeX}, ${safeY}) collides with wall, searching...`);
+                let found = false;
+                for (let attempts = 0; attempts < 100; attempts++) {
+                    const tryX = Math.random() * (this.constants.WORLD_WIDTH - 200) + 100;
+                    const tryY = Math.random() * (this.constants.WORLD_HEIGHT - 200) + 100;
+                    if (!Physics.isOverlapping(tryX, tryY, this.constants.PLAYER_WIDTH, this.constants.PLAYER_HEIGHT, this.gameState, null, this.wallGrid)) {
+                        safeX = tryX;
+                        safeY = tryY;
+                        found = true;
+                        console.log(`Found safe spawn at (${safeX.toFixed(1)}, ${safeY.toFixed(1)}) after ${attempts + 1} attempts`);
+                        break;
+                    }
+                }
+                if (!found) {
+                    safeX = 100;
+                    safeY = 100;
+                    console.warn(`Level ${level}: fallback spawn (100, 100)`);
+                }
+            }
+            this.spawnX = safeX;
+            this.spawnY = safeY;
+
+            // Teleport all players to safe spawn point
             for (const playerCode in this.gameState.players) {
                 this.gameState.players[playerCode].x = this.spawnX;
                 this.gameState.players[playerCode].y = this.spawnY;
