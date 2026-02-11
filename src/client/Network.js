@@ -16,7 +16,8 @@ class Network {
             onBulletHit: null,
             onWalls: null,
             onLevelAdvancing: null,
-            onGameConfig: null
+            onGameConfig: null,
+            onMonsterDrop: null
         };
     }
 
@@ -139,6 +140,13 @@ class Network {
                 this.callbacks.onGameConfig(config);
             }
         });
+
+        // Monster drop notification
+        this.socket.on('monsterDrop', (data) => {
+            if (this.callbacks.onMonsterDrop) {
+                this.callbacks.onMonsterDrop(data);
+            }
+        });
     }
 
     // ==================== SEND METHODS ====================
@@ -204,12 +212,32 @@ class Network {
     }
 
     /**
-     * Notify server of shield collection
-     * @param {string} shieldId
+     * Notify server of collectible collection
+     * @param {string} collectibleId
      */
-    sendCollectShield(shieldId) {
+    sendCollectCollectible(collectibleId) {
         if (this.socket) {
-            this.socket.emit('collectShield', shieldId);
+            this.socket.emit('collectCollectible', collectibleId);
+        }
+    }
+
+    /**
+     * Activate an inventory item (sword, breastplate, sandals, shield)
+     * @param {string} type
+     */
+    sendActivateItem(type) {
+        if (this.socket) {
+            this.socket.emit('activateItem', type);
+        }
+    }
+
+    /**
+     * Consume a passive item (belt, helmet)
+     * @param {string} type
+     */
+    sendConsumeItem(type) {
+        if (this.socket) {
+            this.socket.emit('consumeItem', type);
         }
     }
 

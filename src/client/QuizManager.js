@@ -200,14 +200,31 @@
     // --- Quiz Generation Entry Point ---
     function generateQuizForVerse(verse) {
         const mode = selectMode();
+        let quiz;
 
         switch (mode) {
-            case 'missing_word': return generateMissingWordQuiz(verse);
-            case 'category_match': return generateCategoryMatchQuiz(verse);
-            case 'true_false': return generateTrueFalseQuiz(verse);
+            case 'missing_word': quiz = generateMissingWordQuiz(verse); break;
+            case 'category_match': quiz = generateCategoryMatchQuiz(verse); break;
+            case 'true_false': quiz = generateTrueFalseQuiz(verse); break;
             case 'first_letter':
-            default: return generateFirstLetterQuiz(verse);
+            default: quiz = generateFirstLetterQuiz(verse); break;
         }
+
+        // Belt of Truth: auto-remove one wrong answer if belt available
+        if (quiz && typeof inventory !== 'undefined' && inventory.belt > 0 && quiz.options.length >= 3) {
+            const wrongOptions = quiz.options.filter(opt => !opt.isCorrect);
+            if (wrongOptions.length > 0) {
+                const removeIdx = quiz.options.indexOf(wrongOptions[Math.floor(Math.random() * wrongOptions.length)]);
+                quiz.options.splice(removeIdx, 1);
+                inventory.belt--;
+                if (typeof network !== 'undefined' && network.sendConsumeItem) {
+                    network.sendConsumeItem('belt');
+                }
+                console.log('Belt of Truth: removed 1 distractor. Belt remaining:', inventory.belt);
+            }
+        }
+
+        return quiz;
     }
 
     // --- Public verse/quiz flow ---

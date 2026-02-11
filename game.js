@@ -27,7 +27,15 @@ let gameState = {
 let clientWalls = [];
 let clientWallGrid = null;
 
+// Movement freeze during level transitions (prevents spawning into walls)
+let movementFrozen = false;
+let levelTransitionStartTime = 0;
+const MAX_TRANSITION_FREEZE_MS = 10000; // Safety timeout: 10 seconds max freeze
+
 let isGameLoaded = false;
+
+// [WallSpawn] Periodic wall-collision diagnostic (check every ~1s, not every frame)
+let _wallSpawnCheckTimer = 0;
 
 // Solo game difficulty selection
 let soloDifficulty = 'normal';
@@ -182,13 +190,27 @@ let repeatEnabled = false;
 let repeatTimeout = null;
 let hasPlayed = false;
 
-// Shield of Faith state
-let shieldInventory = 0;
-let shieldActive = false;
-let shieldEndTime = 0;
-let shieldImg = null;
-let shieldPoints = [];
+// Armor of God inventory & buffs
+let inventory = { sword: 0, belt: 0, helmet: 0, breastplate: 0, sandals: 0, shield: 0 };
+let activeBuffs = {
+    sword: { active: false, endTime: 0 },
+    shield: { active: false, endTime: 0 },
+    breastplate: { active: false, endTime: 0 },
+    sandals: { active: false, endTime: 0 }
+};
+let collectibles = [];
 let inventoryOpen = false;
+let shieldImg = null;
+
+// Collectible display names and colors
+const COLLECTIBLE_NAMES = {
+    sword: 'Sword of the Spirit', belt: 'Belt of Truth', helmet: 'Helmet of Salvation',
+    breastplate: 'Breastplate of Righteousness', sandals: 'Sandals of Peace', shield: 'Shield of Faith'
+};
+const COLLECTIBLE_COLORS = {
+    sword: '#FFD700', belt: '#DAA520', helmet: '#C0C0C0',
+    breastplate: '#CD7F32', sandals: '#87CEEB', shield: '#FFD700'
+};
 
 // Menu state
 let menuOpen = false;
@@ -574,6 +596,19 @@ async function init() {
                 // Play bullet impact sound
                 bulletImpact.play();
             },
+            onMonsterDrop: (data) => {
+                if (data.killer === playerCode) {
+                    const name = COLLECTIBLE_NAMES[data.type] || data.type;
+                    const color = COLLECTIBLE_COLORS[data.type] || '#ffffff';
+                    flashMessages.push({
+                        text: `Monster dropped: ${name}!`,
+                        color: color,
+                        startTime: Date.now(),
+                        duration: 2500
+                    });
+                    console.log(`Monster dropped ${data.type} at (${data.x}, ${data.y})`);
+                }
+            },
             onWalls: (data) => {
                 clientWalls = data.walls;
                 // Build client-side WallGrid from flat array
@@ -588,15 +623,34 @@ async function init() {
 
                 // Move player to spawn point if available
                 if (data.spawnX !== undefined && data.spawnY !== undefined) {
+                    const oldX = player.x, oldY = player.y;
                     player.x = data.spawnX;
                     player.y = data.spawnY;
+                    const spawnCollides = clientWallGrid.collides(player.x, player.y, player.width, player.height);
+                    console.log(`[WallSpawn] onWalls: moved player from (${oldX.toFixed(1)}, ${oldY.toFixed(1)}) to spawn (${player.x}, ${player.y}) wallCollides=${spawnCollides} w=${player.width} h=${player.height}`);
+                    if (spawnCollides) {
+                        console.error(`[WallSpawn] BUG: Server sent spawn point that collides with walls!`);
+                    }
                 }
+
+                // Unfreeze movement now that we have the new maze data
+                if (movementFrozen) {
+                    movementFrozen = false;
+                    console.log('[WallSpawn] Movement unfrozen - walls received');
+                }
+
                 console.log('Received walls:', clientWalls.length, 'tiles');
             },
             onLevelAdvancing: (data) => {
                 console.log('Level advancing! Countdown:', data.countdown);
                 levelCompleted = true;
                 levelAdvanceCountdown = data.countdown;
+
+                // Freeze movement during level transition to prevent spawning into walls
+                // Will be unfrozen when 'walls' event is received
+                movementFrozen = true;
+                levelTransitionStartTime = Date.now();
+                console.log('Movement frozen during level transition');
 
                 // Clear any existing timer
                 if (levelAdvanceTimer) clearInterval(levelAdvanceTimer);
@@ -874,24 +928,56 @@ async function init() {
                     const panelX = UILayout.getInventoryPanelX();
                     const panelY = ip.topOffset;
                     const panelW = ip.width;
-                    const panelH = ip.height;
+                    const panelH = ip.expandedHeight || 200;
 
-                    // "Use" button for shield
-                    const ub = UILayout.inventoryUseButton;
-                    const useBtnX = panelX + ub.xOffsetInPanel;
-                    const useBtnY = panelY + ub.yOffsetInPanel;
-                    const useBtnW = ub.width;
-                    const useBtnH = ub.height;
+                    // Check Use button clicks for activatable items
+                    const activatableItems = ['sword', 'breastplate', 'sandals', 'shield'];
+                    const rowHeight = 28;
+                    let rowIndex = 0;
 
-                    if (x >= useBtnX && x <= useBtnX + useBtnW &&
-                        y >= useBtnY && y <= useBtnY + useBtnH &&
-                        shieldInventory > 0 && !shieldActive) {
-                        shieldInventory--;
-                        shieldActive = true;
-                        shieldEndTime = Date.now() + Constants.SHIELD_DURATION;
-                        inventoryOpen = false;
-                        console.log('Shield of Faith activated!');
-                        return true;
+                    // Build visible items list (same order as renderer)
+                    const allTypes = ['sword', 'belt', 'helmet', 'breastplate', 'sandals', 'shield'];
+                    const visibleItems = allTypes.filter(t => inventory[t] > 0);
+
+                    for (const itemType of visibleItems) {
+                        const rowY = panelY + 24 + rowIndex * rowHeight;
+                        // Use button at right side of panel
+                        const useBtnX = panelX + panelW - 50;
+                        const useBtnY = rowY;
+                        const useBtnW = 40;
+                        const useBtnH = 22;
+
+                        if (activatableItems.includes(itemType) &&
+                            x >= useBtnX && x <= useBtnX + useBtnW &&
+                            y >= useBtnY && y <= useBtnY + useBtnH &&
+                            inventory[itemType] > 0 && !activeBuffs[itemType].active) {
+
+                            // Activate the item
+                            inventory[itemType]--;
+                            const durations = {
+                                sword: Constants.SWORD_DURATION,
+                                shield: Constants.SHIELD_DURATION,
+                                breastplate: Constants.BREASTPLATE_DURATION,
+                                sandals: Constants.SANDALS_DURATION
+                            };
+                            activeBuffs[itemType] = {
+                                active: true,
+                                endTime: Date.now() + durations[itemType]
+                            };
+                            network.sendActivateItem(itemType);
+                            inventoryOpen = false;
+
+                            const name = COLLECTIBLE_NAMES[itemType] || itemType;
+                            flashMessages.push({
+                                text: `${name} activated!`,
+                                color: COLLECTIBLE_COLORS[itemType] || '#ffffff',
+                                startTime: Date.now(),
+                                duration: 2000
+                            });
+                            console.log(`${name} activated!`);
+                            return true;
+                        }
+                        rowIndex++;
                     }
 
                     // Click anywhere in panel area consumes the click
@@ -977,6 +1063,14 @@ function gameLoop() {
     currentTime = Date.now();
     const elapsedTime = currentTime - lastUpdateTime;
 
+    // [WallSpawn] Periodic check: is the player currently inside a wall? (every ~1s)
+    if (player && clientWallGrid && player.width && player.height && currentTime - _wallSpawnCheckTimer > 1000) {
+        _wallSpawnCheckTimer = currentTime;
+        if (clientWallGrid.collides(player.x, player.y, player.width, player.height)) {
+            console.error(`[WallSpawn] STUCK: Player is inside a wall at (${player.x.toFixed(1)}, ${player.y.toFixed(1)}) w=${player.width} h=${player.height} frozen=${movementFrozen} level=${gameState.gameLevel}`);
+        }
+    }
+
     if (gameMode === 'game') {
         const uiState = {
             vQuality,
@@ -1007,6 +1101,7 @@ function gameLoop() {
             finalStats,
             restartButtonRect,
             goalsOverlayVisible,
+            movementFrozen,
             flashMessages
         };
 
@@ -1080,15 +1175,14 @@ function gameLoop() {
             VerseTestScreen.update(16);
         }
 
-        // Build shield state for renderer
-        const shieldState = {
-            count: shieldInventory,
-            active: shieldActive,
-            remaining: shieldActive ? Math.max(0, shieldEndTime - Date.now()) : 0,
+        // Build inventory state for renderer
+        const inventoryState = {
+            inventory: inventory,
+            activeBuffs: activeBuffs,
             inventoryOpen: inventoryOpen
         };
 
-        window.renderer.drawGame(gameState, player, playerCode, monsters, healingPoints, camera, uiState, shieldState, clientWalls, screenShake, damageNumbers, deathParticles, mouseX, mouseY);
+        window.renderer.drawGame(gameState, player, playerCode, monsters, healingPoints, camera, uiState, inventoryState, clientWalls, screenShake, damageNumbers, deathParticles, mouseX, mouseY);
 
         // Draw VerseTestScreen overlay on top of everything
         if (VerseTestScreen.isActive()) {
@@ -1187,7 +1281,23 @@ function gameLoop() {
         // Get movement target from InputHandler
         const worldTarget = inputHandler ? inputHandler.getWorldTarget() : null;
 
-        if (worldTarget) {
+        // Safety timeout: auto-unfreeze if walls never arrive
+        if (movementFrozen && Date.now() - levelTransitionStartTime > MAX_TRANSITION_FREEZE_MS) {
+            movementFrozen = false;
+            console.warn('Movement auto-unfrozen after safety timeout - walls may not have arrived');
+        }
+
+        // Skip movement if frozen during level transition
+        if (movementFrozen) {
+            // Clear any pending movement target so player doesn't auto-move when unfrozen
+            if (inputHandler) {
+                inputHandler.clearTarget();
+            }
+            // Reset moving state
+            player.isMoving = false;
+            player.currentFrame = 0;
+            player.frameTimer = 0;
+        } else if (worldTarget) {
             let dx = worldTarget.x - player.x;
             let dy = worldTarget.y - player.y;
             let distance = Math.sqrt(dx * dx + dy * dy);
@@ -1210,9 +1320,12 @@ function gameLoop() {
             }
 
             if (distance > THRESHOLD_DISTANCE) {
+                // Sandals of Peace: +50% move speed
+                const moveSpeed = activeBuffs.sandals.active ? PLAYER_SPEED * Constants.SANDALS_SPEED_BOOST : PLAYER_SPEED;
+
                 // Calculate new position
-                const newX = player.x + (dx / distance) * PLAYER_SPEED;
-                const newY = player.y + (dy / distance) * PLAYER_SPEED;
+                const newX = player.x + (dx / distance) * moveSpeed;
+                const newY = player.y + (dy / distance) * moveSpeed;
 
                 // Check monster collision
                 let monsterCollision = false;
@@ -1313,20 +1426,39 @@ function gameLoop() {
                     lastAttackedMonster = monster;
 
                     // Shield blocks monster damage (inventory shield OR verse test shield)
-                    if (!shieldActive && !verseTestShieldActive) {
+                    if (!activeBuffs.shield.active && !verseTestShieldActive) {
                         // Calculate random damage between 0 and the monster's maximum damage
-                        const damage = Math.floor(Math.random() * (monster.maxDamage + 1) * gameState.gameLevel);
-                        player.health -= damage; // Monster attacks the player locally for immediate feedback
+                        let damage = Math.floor(Math.random() * (monster.maxDamage + 1) * gameState.gameLevel);
+
+                        // Breastplate of Righteousness: 50% damage reduction
+                        if (activeBuffs.breastplate.active) {
+                            damage = Math.floor(damage * Constants.BREASTPLATE_REDUCTION);
+                        }
+
+                        player.health -= damage;
                         network.sendPlayerHit(damage);
 
-                        playerHit.play(); // Play the attack sound effect
-                        if (player.health <= 0 && !gameOverModalVisible) {
+                        playerHit.play();
+
+                        // Helmet of Salvation: auto-revive on death
+                        if (player.health <= 0 && inventory.helmet > 0) {
+                            inventory.helmet--;
+                            player.health = Math.floor(player.maxHealth * Constants.HELMET_REVIVE_HP_PERCENT);
+                            network.sendConsumeItem('helmet');
+                            flashMessages.push({
+                                text: 'Auto-revived! (Helmet of Salvation)',
+                                color: '#C0C0C0',
+                                startTime: Date.now(),
+                                duration: 3000
+                            });
+                            console.log('Helmet of Salvation auto-revive! HP:', player.health);
+                        } else if (player.health <= 0 && !gameOverModalVisible) {
                             gameOver.play();
                             gameOverFlag = true;
                             gameOverModalVisible = true;
 
                             // Calculate final stats
-                            const sessionDuration = Math.floor((Date.now() - sessionStartTime) / 1000);  // seconds
+                            const sessionDuration = Math.floor((Date.now() - sessionStartTime) / 1000);
                             finalStats = {
                                 level: gameState.gameLevel || 1,
                                 monstersKilled: gameState.monstersKilled || 0,
@@ -1375,23 +1507,33 @@ function gameLoop() {
             }
         });
 
-        // Check shield point collection
-        shieldPoints.forEach((shieldPoint) => {
-            let dx = shieldPoint.x - player.x;
-            let dy = shieldPoint.y - player.y;
+        // Check collectible collection (unified for all item types)
+        collectibles.forEach((item) => {
+            let dx = item.x - player.x;
+            let dy = item.y - player.y;
             let distance = Math.sqrt(dx * dx + dy * dy);
-            if (distance < player.width / 2 + shieldPoint.width / 2) {
-                shieldInventory++;
-                network.sendCollectShield(shieldPoint.id);
+            if (distance < player.width / 2 + item.width / 2) {
+                inventory[item.type]++;
+                network.sendCollectCollectible(item.id);
                 healingRecharge.play();
-                console.log('Shield of Faith collected! Inventory:', shieldInventory);
+                const name = COLLECTIBLE_NAMES[item.type] || item.type;
+                flashMessages.push({
+                    text: `Collected: ${name}`,
+                    color: COLLECTIBLE_COLORS[item.type] || '#ffffff',
+                    startTime: Date.now(),
+                    duration: 1500
+                });
+                console.log(`${name} collected! Inventory:`, inventory);
             }
         });
 
-        // Update shield timer
-        if (shieldActive && Date.now() >= shieldEndTime) {
-            shieldActive = false;
-            console.log('Shield of Faith expired');
+        // Update active buff timers (expire past endTime)
+        const now = Date.now();
+        for (const buffType in activeBuffs) {
+            if (activeBuffs[buffType].active && now >= activeBuffs[buffType].endTime) {
+                activeBuffs[buffType].active = false;
+                console.log(`${buffType} buff expired`);
+            }
         }
 
         /*
@@ -1507,6 +1649,13 @@ function updateGameState(newGameState) {
                     // Smooth blend toward server position instead of hard snap
                     player.x = x + (serverPlayer.x - x) * 0.3;
                     player.y = y + (serverPlayer.y - y) * 0.3;
+                    // Log large reconciliation — this blend could land player in a wall
+                    if (clientWallGrid && player.width && player.height) {
+                        const blendCollides = clientWallGrid.collides(player.x, player.y, player.width, player.height);
+                        if (blendCollides) {
+                            console.error(`[WallSpawn] BUG: Position blend put player in wall! local=(${x.toFixed(1)},${y.toFixed(1)}) server=(${serverPlayer.x.toFixed(1)},${serverPlayer.y.toFixed(1)}) result=(${player.x.toFixed(1)},${player.y.toFixed(1)}) dist=${dist.toFixed(1)}`);
+                        }
+                    }
                 }
 
                 if (width && height) {
@@ -1569,11 +1718,11 @@ function updateGameState(newGameState) {
         healingPoints = [];
     }
 
-    // Update shield points
-    if (newGameState.shieldPoints && Array.isArray(newGameState.shieldPoints)) {
-        shieldPoints = newGameState.shieldPoints;
+    // Update collectibles
+    if (newGameState.collectibles && Array.isArray(newGameState.collectibles)) {
+        collectibles = newGameState.collectibles;
     } else {
-        shieldPoints = [];
+        collectibles = [];
     }
 
     // Update bullets

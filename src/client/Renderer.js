@@ -25,7 +25,7 @@ class Renderer {
         this.ctx.fillText('Loading...', this.canvas.width / 2 - 50, this.canvas.height / 2);
     }
 
-    drawGame(gameState, player, playerCode, monsters, healingPoints, camera, uiState, shieldState, walls, screenShake = {x:0, y:0}, damageNumbers = [], deathParticles = [], mouseX = null, mouseY = null) {
+    drawGame(gameState, player, playerCode, monsters, healingPoints, camera, uiState, inventoryState, walls, screenShake = {x:0, y:0}, damageNumbers = [], deathParticles = [], mouseX = null, mouseY = null) {
         this.clear();
 
         // Draw game-over modal if visible (overlays everything)
@@ -47,7 +47,7 @@ class Renderer {
         this.drawWalls(walls, camera, gameState.terrainTheme);
 
         // Draw Players
-        this.drawPlayers(gameState.players, player, playerCode, camera, shieldState);
+        this.drawPlayers(gameState.players, player, playerCode, camera, inventoryState);
 
         // Draw Monsters
         this.drawMonsters(monsters, camera, uiState.explosionTimer);
@@ -55,8 +55,8 @@ class Renderer {
         // Draw Healing Points
         this.drawHealingPoints(healingPoints, camera);
 
-        // Draw Shield Points
-        this.drawShieldPoints(gameState.shieldPoints, camera);
+        // Draw Collectibles (all armor of god items)
+        this.drawCollectibles(gameState.collectibles, camera);
 
         // Draw Bullets
         this.drawBullets(gameState.bullets, camera);
@@ -76,12 +76,14 @@ class Renderer {
         // Draw monster tooltip on hover
         this.drawMonsterTooltip(monsters, camera, mouseX, mouseY);
 
-        // Draw Shield HUD (inventory button, panel, active timer)
-        // Always draw the inventory button even if shieldState is missing
-        this.drawShieldHUD(shieldState || { count: 0, active: false, remaining: 0, inventoryOpen: false }, shieldState ? shieldState.inventoryOpen : false);
+        // Draw Inventory HUD (button, panel, active buff timers)
+        this.drawInventoryHUD(inventoryState || { inventory: {}, activeBuffs: {}, inventoryOpen: false });
 
         // Draw Level/Game Messages
         this.drawMessages(uiState);
+
+        // Draw frozen movement indicator (during level transitions)
+        this.drawFrozenIndicator(uiState.movementFrozen);
 
         // Draw Bible Verse / Bottom UI (quiz answers)
         if (uiState.currentVerse) {
@@ -374,35 +376,73 @@ class Renderer {
         }
     }
 
-    drawPlayers(players, currentPlayer, playerCode, camera, shieldState) {
+    drawFrozenIndicator(movementFrozen) {
+        if (!movementFrozen) return;
+
+        // Draw a subtle frozen indicator at the bottom of the screen
+        const indicatorY = this.canvas.height - 30;
+
+        // Background bar
+        this.ctx.fillStyle = 'rgba(0, 100, 255, 0.3)';
+        this.ctx.fillRect(50, indicatorY - 15, this.canvas.width - 100, 25);
+
+        // Border
+        this.ctx.strokeStyle = 'rgba(0, 150, 255, 0.6)';
+        this.ctx.lineWidth = 2;
+        this.ctx.strokeRect(50, indicatorY - 15, this.canvas.width - 100, 25);
+
+        // Text
+        this.ctx.fillStyle = '#88ccff';
+        this.ctx.font = 'bold 14px Arial';
+        this.ctx.textAlign = 'center';
+        this.ctx.fillText('⚡ LOADING NEW MAZE - MOVEMENT PAUSED ⚡', this.canvas.width / 2, indicatorY);
+        this.ctx.textAlign = 'left';
+    }
+
+    drawPlayers(players, currentPlayer, playerCode, camera, inventoryState) {
         // If we have a playerCode but it's not in players yet, draw our local player anyway
         if (playerCode && currentPlayer && currentPlayer.x !== undefined) {
             const isInServerState = Object.keys(players).includes(playerCode);
             if (!isInServerState) {
-                this.drawPlayer(currentPlayer, true, camera, shieldState);
+                this.drawPlayer(currentPlayer, true, camera, inventoryState);
             }
         }
 
         Object.keys(players).forEach(code => {
             const isMyPlayer = (code === playerCode);
-            // Use local player object if it's me (for predicted movement), otherwise server state
             const playerData = isMyPlayer ? currentPlayer : players[code];
 
             if (playerData) {
-                this.drawPlayer(playerData, isMyPlayer, camera, isMyPlayer ? shieldState : null);
+                this.drawPlayer(playerData, isMyPlayer, camera, isMyPlayer ? inventoryState : null);
             }
         });
     }
 
-    drawPlayer(playerData, isCurrentPlayer, camera, shieldState) {
+    drawPlayer(playerData, isCurrentPlayer, camera, inventoryState) {
         const playerImage = isCurrentPlayer ? this.assets.playerImg : this.assets.otherPlayerImg;
 
         if (playerImage && (playerImage.complete || playerImage.tagName === 'CANVAS')) {
             const screenX = playerData.x - camera.x;
             const screenY = playerData.y - camera.y;
+            const buffs = inventoryState ? inventoryState.activeBuffs : {};
 
-            // Golden glow when shield is active
-            if (shieldState && shieldState.active) {
+            // Sandals of Peace: blue aura circle (150px radius)
+            if (buffs.sandals && buffs.sandals.active) {
+                this.ctx.save();
+                this.ctx.globalAlpha = 0.15;
+                this.ctx.fillStyle = '#87CEEB';
+                this.ctx.beginPath();
+                this.ctx.arc(screenX, screenY, 150, 0, Math.PI * 2);
+                this.ctx.fill();
+                this.ctx.globalAlpha = 0.4;
+                this.ctx.strokeStyle = '#87CEEB';
+                this.ctx.lineWidth = 2;
+                this.ctx.stroke();
+                this.ctx.restore();
+            }
+
+            // Shield of Faith: golden glow
+            if (buffs.shield && buffs.shield.active) {
                 this.ctx.save();
                 this.ctx.shadowBlur = 20;
                 this.ctx.shadowColor = 'gold';
@@ -410,6 +450,32 @@ class Renderer {
                 this.ctx.fillStyle = 'gold';
                 this.ctx.beginPath();
                 this.ctx.arc(screenX, screenY, playerData.width / 2 + 10, 0, Math.PI * 2);
+                this.ctx.fill();
+                this.ctx.restore();
+            }
+
+            // Sword of the Spirit: red glow
+            if (buffs.sword && buffs.sword.active) {
+                this.ctx.save();
+                this.ctx.shadowBlur = 15;
+                this.ctx.shadowColor = '#ff4444';
+                this.ctx.globalAlpha = 0.3;
+                this.ctx.fillStyle = '#ff4444';
+                this.ctx.beginPath();
+                this.ctx.arc(screenX, screenY, playerData.width / 2 + 8, 0, Math.PI * 2);
+                this.ctx.fill();
+                this.ctx.restore();
+            }
+
+            // Breastplate of Righteousness: bronze glow
+            if (buffs.breastplate && buffs.breastplate.active) {
+                this.ctx.save();
+                this.ctx.shadowBlur = 12;
+                this.ctx.shadowColor = '#CD7F32';
+                this.ctx.globalAlpha = 0.3;
+                this.ctx.fillStyle = '#CD7F32';
+                this.ctx.beginPath();
+                this.ctx.arc(screenX, screenY, playerData.width / 2 + 6, 0, Math.PI * 2);
                 this.ctx.fill();
                 this.ctx.restore();
             }
@@ -768,90 +834,123 @@ class Renderer {
         });
     }
 
-    drawShieldPoints(shieldPoints, camera) {
-        if (!shieldPoints) return;
+    drawCollectibles(collectibles, camera) {
+        if (!collectibles) return;
 
-        shieldPoints.forEach(sp => {
-            const screenX = sp.x - camera.x;
-            const screenY = sp.y - camera.y;
+        const fallbackColors = {
+            sword: '#FFD700', belt: '#DAA520', helmet: '#C0C0C0',
+            breastplate: '#CD7F32', sandals: '#87CEEB', shield: '#FFD700'
+        };
+
+        collectibles.forEach(item => {
+            const screenX = item.x - camera.x;
+            const screenY = item.y - camera.y;
 
             // Visibility check
-            if (screenX + sp.width / 2 < 0 || screenX - sp.width / 2 > this.canvas.width ||
-                screenY + sp.height / 2 < 0 || screenY - sp.height / 2 > this.canvas.height) return;
+            if (screenX + item.width / 2 < 0 || screenX - item.width / 2 > this.canvas.width ||
+                screenY + item.height / 2 < 0 || screenY - item.height / 2 > this.canvas.height) return;
 
-            if (this.assets.shieldImg && this.assets.shieldImg.complete) {
-                this.ctx.drawImage(this.assets.shieldImg, screenX - sp.width / 2, screenY - sp.height / 2, sp.width, sp.height);
-            } else {
-                // Fallback: draw a golden diamond shape
-                this.ctx.save();
-                this.ctx.fillStyle = 'gold';
-                this.ctx.shadowBlur = 10;
-                this.ctx.shadowColor = 'gold';
-                this.ctx.beginPath();
-                this.ctx.moveTo(screenX, screenY - sp.height / 2);
-                this.ctx.lineTo(screenX + sp.width / 2, screenY);
-                this.ctx.lineTo(screenX, screenY + sp.height / 2);
-                this.ctx.lineTo(screenX - sp.width / 2, screenY);
-                this.ctx.closePath();
-                this.ctx.fill();
-                this.ctx.strokeStyle = '#DAA520';
-                this.ctx.lineWidth = 2;
-                this.ctx.stroke();
-                this.ctx.restore();
+            // Try to use loaded image (shield uses shieldImg)
+            if (item.type === 'shield' && this.assets.shieldImg && this.assets.shieldImg.complete) {
+                this.ctx.drawImage(this.assets.shieldImg, screenX - item.width / 2, screenY - item.height / 2, item.width, item.height);
+                return;
             }
+
+            // Fallback: colored diamond shape with glow
+            const color = fallbackColors[item.type] || '#ffffff';
+            this.ctx.save();
+            this.ctx.fillStyle = color;
+            this.ctx.shadowBlur = 10;
+            this.ctx.shadowColor = color;
+            this.ctx.beginPath();
+            this.ctx.moveTo(screenX, screenY - item.height / 2);
+            this.ctx.lineTo(screenX + item.width / 2, screenY);
+            this.ctx.lineTo(screenX, screenY + item.height / 2);
+            this.ctx.lineTo(screenX - item.width / 2, screenY);
+            this.ctx.closePath();
+            this.ctx.fill();
+
+            // Type initial in center
+            this.ctx.shadowBlur = 0;
+            this.ctx.fillStyle = '#000';
+            this.ctx.font = 'bold 12px Arial';
+            this.ctx.textAlign = 'center';
+            this.ctx.textBaseline = 'middle';
+            this.ctx.fillText(item.type[0].toUpperCase(), screenX, screenY);
+            this.ctx.textAlign = 'left';
+            this.ctx.textBaseline = 'alphabetic';
+            this.ctx.restore();
         });
     }
 
-    drawShieldHUD(shieldState, inventoryOpen) {
-        // Floating "i" inventory button (top-left, within playable area) - ALWAYS draw this
+    drawInventoryHUD(inventoryState) {
+        const inv = inventoryState.inventory || {};
+        const buffs = inventoryState.activeBuffs || {};
+        const isOpen = inventoryState.inventoryOpen;
+
+        // Total item count
+        const totalItems = Object.values(inv).reduce((sum, c) => sum + c, 0);
+
+        // Floating "i" inventory button
         const ib = UILayout.inventoryButton;
         const btnX = UILayout.getInventoryButtonX();
         const btnY = ib.topOffset;
         const btnSize = ib.size;
-        const hasShields = shieldState && shieldState.count > 0;
 
-        // Draw button background
-        this.ctx.fillStyle = inventoryOpen ? '#DAA520' : (hasShields ? '#2a2a2a' : '#1a1a1a');
+        this.ctx.fillStyle = isOpen ? '#DAA520' : (totalItems > 0 ? '#2a2a2a' : '#1a1a1a');
         this.ctx.fillRect(btnX, btnY, btnSize, btnSize);
-        
-        // Draw border
-        this.ctx.strokeStyle = hasShields ? 'gold' : '#888';
+        this.ctx.strokeStyle = totalItems > 0 ? 'gold' : '#888';
         this.ctx.lineWidth = 2;
         this.ctx.strokeRect(btnX, btnY, btnSize, btnSize);
-        
-        // Draw "i" text
-        this.ctx.fillStyle = hasShields ? 'gold' : '#ccc';
+        this.ctx.fillStyle = totalItems > 0 ? 'gold' : '#ccc';
         this.ctx.font = 'bold 16px Arial';
         this.ctx.textAlign = 'center';
         this.ctx.fillText('i', btnX + btnSize / 2, btnY + 20);
         this.ctx.textAlign = 'left';
 
-        // Active timer display
-        if (shieldState && shieldState.active) {
-            const remaining = Math.ceil(shieldState.remaining / 1000);
-            this.ctx.fillStyle = 'gold';
-            this.ctx.font = 'bold 14px Arial';
-            this.ctx.fillText(`SHIELD: ${remaining}s`, 7, this.QUALITY_LINE_HEIGHT + 12);
-        }
-
-        // Badge for count
-        if (hasShields) {
+        // Badge for total count
+        if (totalItems > 0) {
             this.ctx.fillStyle = 'red';
             this.ctx.beginPath();
             this.ctx.arc(btnX + btnSize - 2, btnY + 4, 8, 0, Math.PI * 2);
             this.ctx.fill();
             this.ctx.fillStyle = 'white';
             this.ctx.font = 'bold 10px Arial';
-            this.ctx.fillText(`${shieldState.count}`, btnX + btnSize - 5, btnY + 8);
+            this.ctx.fillText(`${totalItems}`, btnX + btnSize - (totalItems >= 10 ? 8 : 5), btnY + 8);
+        }
+
+        // Active buff timers (stacked below button)
+        const buffColors = {
+            sword: '#FFD700', shield: '#FFD700', breastplate: '#CD7F32', sandals: '#87CEEB'
+        };
+        const buffNames = {
+            sword: 'SWORD', shield: 'SHIELD', breastplate: 'ARMOR', sandals: 'SPEED'
+        };
+        let timerY = btnY + btnSize + 4;
+        for (const type in buffs) {
+            if (buffs[type].active) {
+                const remaining = Math.ceil(Math.max(0, buffs[type].endTime - Date.now()) / 1000);
+                this.ctx.fillStyle = buffColors[type] || '#fff';
+                this.ctx.font = 'bold 11px Arial';
+                this.ctx.fillText(`${buffNames[type]}: ${remaining}s`, 7, timerY + 10);
+                timerY += 16;
+            }
         }
 
         // Inventory panel when open
-        if (inventoryOpen) {
+        if (isOpen) {
             const ip = UILayout.inventoryPanel;
             const panelX = UILayout.getInventoryPanelX();
             const panelY = ip.topOffset;
             const panelW = ip.width;
-            const panelH = ip.height;
+            const rowHeight = 28;
+
+            const allTypes = ['sword', 'belt', 'helmet', 'breastplate', 'sandals', 'shield'];
+            const visibleItems = allTypes.filter(t => inv[t] > 0);
+            const panelH = Math.max(50, 24 + visibleItems.length * rowHeight + 8);
+
+            // Store expanded height for click detection
+            ip.expandedHeight = panelH;
 
             // Panel background
             this.ctx.fillStyle = 'rgba(0, 0, 0, 0.9)';
@@ -863,43 +962,64 @@ class Renderer {
             // Title
             this.ctx.fillStyle = 'gold';
             this.ctx.font = 'bold 12px Arial';
-            this.ctx.fillText('Inventory', panelX + 8, panelY + 16);
+            this.ctx.fillText('Armor of God', panelX + 8, panelY + 16);
 
-            if (hasShields) {
-                // Shield icon (small diamond)
-                this.ctx.fillStyle = 'gold';
-                this.ctx.beginPath();
-                this.ctx.moveTo(panelX + 18, panelY + 30);
-                this.ctx.lineTo(panelX + 26, panelY + 38);
-                this.ctx.lineTo(panelX + 18, panelY + 46);
-                this.ctx.lineTo(panelX + 10, panelY + 38);
-                this.ctx.closePath();
-                this.ctx.fill();
-
-                // Item name and count
-                this.ctx.fillStyle = 'white';
-                this.ctx.font = '11px Arial';
-                this.ctx.fillText(`Shield x${shieldState.count}`, panelX + 32, panelY + 42);
-
-                // "Use" button
-                if (!shieldState.active) {
-                    const ub = UILayout.inventoryUseButton;
-                    const useBtnX = panelX + ub.xOffsetInPanel;
-                    const useBtnY = panelY + ub.yOffsetInPanel;
-                    this.ctx.fillStyle = '#228B22';
-                    this.ctx.fillRect(useBtnX, useBtnY, ub.width, ub.height);
-                    this.ctx.fillStyle = 'white';
-                    this.ctx.font = 'bold 11px Arial';
-                    this.ctx.fillText('Use', useBtnX + 8, useBtnY + 15);
-                } else {
-                    this.ctx.fillStyle = '#888';
-                    this.ctx.font = '10px Arial';
-                    this.ctx.fillText('(active)', panelX + panelW - 55, panelY + 45);
-                }
-            } else {
+            if (visibleItems.length === 0) {
                 this.ctx.fillStyle = '#888';
                 this.ctx.font = '11px Arial';
-                this.ctx.fillText('Empty', panelX + 8, panelY + 42);
+                this.ctx.fillText('Empty', panelX + 8, panelY + 38);
+            } else {
+                const itemColors = {
+                    sword: '#FFD700', belt: '#DAA520', helmet: '#C0C0C0',
+                    breastplate: '#CD7F32', sandals: '#87CEEB', shield: '#FFD700'
+                };
+                const shortNames = {
+                    sword: 'Sword', belt: 'Belt', helmet: 'Helmet',
+                    breastplate: 'Breastplate', sandals: 'Sandals', shield: 'Shield'
+                };
+                const activatable = ['sword', 'breastplate', 'sandals', 'shield'];
+
+                visibleItems.forEach((type, idx) => {
+                    const rowY = panelY + 24 + idx * rowHeight;
+
+                    // Color dot
+                    this.ctx.fillStyle = itemColors[type];
+                    this.ctx.beginPath();
+                    this.ctx.arc(panelX + 14, rowY + 10, 6, 0, Math.PI * 2);
+                    this.ctx.fill();
+
+                    // Name + count
+                    this.ctx.fillStyle = 'white';
+                    this.ctx.font = '11px Arial';
+                    this.ctx.fillText(`${shortNames[type]} x${inv[type]}`, panelX + 24, rowY + 14);
+
+                    // Use button for activatable items
+                    if (activatable.includes(type)) {
+                        const isActive = buffs[type] && buffs[type].active;
+                        const useBtnX = panelX + panelW - 50;
+                        const useBtnW = 40;
+                        const useBtnH = 22;
+
+                        if (isActive) {
+                            this.ctx.fillStyle = '#555';
+                            this.ctx.fillRect(useBtnX, rowY, useBtnW, useBtnH);
+                            this.ctx.fillStyle = '#aaa';
+                            this.ctx.font = '10px Arial';
+                            this.ctx.fillText('Active', useBtnX + 3, rowY + 15);
+                        } else {
+                            this.ctx.fillStyle = '#228B22';
+                            this.ctx.fillRect(useBtnX, rowY, useBtnW, useBtnH);
+                            this.ctx.fillStyle = 'white';
+                            this.ctx.font = 'bold 11px Arial';
+                            this.ctx.fillText('Use', useBtnX + 8, rowY + 15);
+                        }
+                    } else {
+                        // Belt/Helmet: auto-use label
+                        this.ctx.fillStyle = '#888';
+                        this.ctx.font = '10px Arial';
+                        this.ctx.fillText('(auto)', panelX + panelW - 45, rowY + 14);
+                    }
+                });
             }
         }
     }

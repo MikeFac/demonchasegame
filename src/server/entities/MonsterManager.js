@@ -156,9 +156,24 @@ class MonsterManager {
         const { gameState, levelData } = this;
         const currentLevelData = levelData[gameState.gameLevel];
         // Speed is based on 20fps, so we scale it for 60fps (approx 0.33)
-        const speed = currentLevelData.monsterSpeed * (20 / 60);
+        const baseSpeed = currentLevelData.monsterSpeed * (20 / 60);
 
         gameState.monsters.forEach(monster => {
+            // Check for Sandals of Peace slow aura from any player
+            let speed = baseSpeed;
+            for (const code in gameState.players) {
+                const p = gameState.players[code];
+                if (p && p.activeBuffs && p.activeBuffs.sandals && p.activeBuffs.sandals.active) {
+                    const dx = monster.x - p.x;
+                    const dy = monster.y - p.y;
+                    const dist = Math.sqrt(dx * dx + dy * dy);
+                    if (dist < Constants.SANDALS_SLOW_RADIUS) {
+                        speed *= Constants.SANDALS_SLOW_FACTOR;
+                        break; // Only apply one slow
+                    }
+                }
+            }
+
             if (monster.chaser) {
                 // Retrieve (or calculate) distance to nearest player to normalize speed
                 let nearestPlayer = Physics.findNearestPlayer(monster, gameState);
@@ -273,6 +288,16 @@ class MonsterManager {
             }
 
             io.emit('monsterKilled', { monsterId: monsterId, killer: attackerPlayerCode, x: deathX, y: deathY });
+
+            // Roll for monster drop
+            if (this.collectibleManager) {
+                const dropResult = this.collectibleManager.rollMonsterDrop(deathX, deathY);
+                if (dropResult.dropped) {
+                    io.emit('monsterDrop', { x: deathX, y: deathY, type: dropResult.type, killer: attackerPlayerCode });
+                    console.log(`Monster dropped [${dropResult.type}] at (${Math.round(deathX)}, ${Math.round(deathY)})`);
+                }
+            }
+
             return true;
         }
 

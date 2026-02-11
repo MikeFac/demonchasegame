@@ -6,6 +6,7 @@ const Physics = require('./utils/Physics');
 const MonsterManager = require('./entities/MonsterManager');
 const PlayerManager = require('./entities/PlayerManager');
 const BulletManager = require('./entities/BulletManager');
+const CollectibleManager = require('./entities/CollectibleManager');
 
 class Game {
     constructor(io, roomId = null, gameConfig = null) {
@@ -48,7 +49,7 @@ class Game {
             players: {},
             monsters: [],
             healingPoints: [],
-            shieldPoints: [],
+            collectibles: [],
             connectedPlayers: 0,
             gameLevel: 1,
             terrainTheme: this.levelData[1].terrainTheme || 'stone',
@@ -58,6 +59,7 @@ class Game {
         };
 
         // Managers (pass wallGrid for spatial collision and config)
+        this.collectibleManager = new CollectibleManager(this.gameState, this.wallGrid);
         this.monsterManager = new MonsterManager(
             this.gameState,
             this.io,
@@ -65,8 +67,9 @@ class Game {
             this.wallGrid,
             this.gameConfig.monsterHealthMultiplier
         );
+        this.monsterManager.collectibleManager = this.collectibleManager;
         this.playerManager = new PlayerManager(this.gameState, this.io, this.wallGrid);
-        this.bulletManager = new BulletManager(this.io, this.monsterManager, this.wallGrid);
+        this.bulletManager = new BulletManager(this.io, this.monsterManager, this.wallGrid, this.gameState);
 
         // Track connected sockets for re-emitting walls on level change
         this.sockets = [];
@@ -76,8 +79,8 @@ class Game {
             this.spawnHealingPoint();
         }
 
-        // Shield Points - one per level
-        this.spawnShieldPoint();
+        // Spawn all collectibles for level 1
+        this.collectibleManager.initializeLevelCollectibles();
     }
 
     start() {
@@ -102,7 +105,13 @@ class Game {
                 if (this.gameState.healingPoints.length < this.constants.MAX_HEALING_POINTS) {
                     this.spawnHealingPoint();
                 }
-            }, this.constants.HEALING_SPAWN_INTERVAL)
+            }, this.constants.HEALING_SPAWN_INTERVAL),
+
+            // Collectible Respawn Loop (belt + sandals every 45s)
+            setInterval(() => {
+                if (!this.shouldRun) return;
+                this.collectibleManager.respawnCollectibles();
+            }, Constants.COLLECTIBLE_SPAWN_INTERVAL)
         ];
     }
 
@@ -114,6 +123,8 @@ class Game {
     }
 
     addPlayer(socket) {
+        const spawnCollides = this.wallGrid.collides(this.spawnX, this.spawnY, this.constants.PLAYER_WIDTH, this.constants.PLAYER_HEIGHT);
+        console.log(`[WallSpawn] addPlayer ${socket.id} at (${this.spawnX}, ${this.spawnY}) wallCollides=${spawnCollides}`);
         this.playerManager.addPlayer(socket, this.spawnX, this.spawnY);
         this.sockets.push(socket);
 
@@ -175,13 +186,51 @@ class Game {
             }
         });
 
-        // Handle shield collection
-        socket.on('collectShield', (shieldId) => {
-            const index = this.gameState.shieldPoints.findIndex(sp => sp.id === shieldId);
-            if (index !== -1) {
-                this.gameState.shieldPoints.splice(index, 1);
+        // Handle collectible collection (unified for all item types)
+        socket.on('collectCollectible', (collectibleId) => {
+            const removed = this.collectibleManager.removeCollectible(collectibleId);
+            if (removed) {
                 this.io.emit('gameStateUpdate', this.gameState);
             }
+        });
+
+        // Handle item activation (sword, breastplate, sandals, shield)
+        socket.on('activateItem', (type) => {
+            const player = this.gameState.players[socket.playerCode];
+            if (!player) return;
+
+            if (!player.activeBuffs) player.activeBuffs = {};
+
+            const durations = {
+                sword: Constants.SWORD_DURATION,
+                shield: Constants.SHIELD_DURATION,
+                breastplate: Constants.BREASTPLATE_DURATION,
+                sandals: Constants.SANDALS_DURATION
+            };
+
+            const duration = durations[type];
+            if (!duration) return;
+
+            player.activeBuffs[type] = {
+                active: true,
+                endTime: Date.now() + duration
+            };
+
+            console.log(`Player ${socket.playerCode} activated ${type} for ${duration}ms`);
+
+            // Schedule buff expiry
+            setTimeout(() => {
+                if (player.activeBuffs && player.activeBuffs[type]) {
+                    player.activeBuffs[type].active = false;
+                    console.log(`Player ${socket.playerCode} ${type} buff expired`);
+                }
+            }, duration);
+        });
+
+        // Handle passive item consumption (belt, helmet)
+        socket.on('consumeItem', (type) => {
+            // Server acknowledges the consumption — client manages inventory counts
+            console.log(`Player ${socket.playerCode} consumed ${type}`);
         });
 
         // Handle level completion event (global game event)
@@ -243,7 +292,7 @@ class Game {
             this.gameState.monstersKilled = 0;
             this.gameState.monsters = [];
             this.gameState.healingPoints = [];
-            this.gameState.shieldPoints = [];
+            this.gameState.collectibles = [];
             this.gameState.terrainTheme = this.levelData[level].terrainTheme || 'stone';
 
             // Regenerate maze for new level
@@ -258,42 +307,53 @@ class Game {
             this.spawnX = mazeResult.spawnX;
             this.spawnY = mazeResult.spawnY;
 
+            const mazeSpawnCollides = this.wallGrid.collides(this.spawnX, this.spawnY, this.constants.PLAYER_WIDTH, this.constants.PLAYER_HEIGHT);
+            console.log(`[WallSpawn] Level ${level} maze spawn (${this.spawnX}, ${this.spawnY}) wallCollides=${mazeSpawnCollides}`);
+
             // Find a safe spawn point (maze spawn may overlap walls for 48x48 player)
+            // Use wallGrid.collides() directly — Physics.isOverlapping also checks
+            // player/monster entities which gives false positives here (players are
+            // still at old positions, haven't been teleported yet)
             let safeX = this.spawnX;
             let safeY = this.spawnY;
-            if (Physics.isOverlapping(safeX, safeY, this.constants.PLAYER_WIDTH, this.constants.PLAYER_HEIGHT, this.gameState, null, this.wallGrid)) {
-                console.warn(`Level ${level} spawn (${safeX}, ${safeY}) collides with wall, searching...`);
+            if (mazeSpawnCollides) {
+                console.warn(`[WallSpawn] Level ${level} spawn collides, searching for safe spot...`);
                 let found = false;
                 for (let attempts = 0; attempts < 100; attempts++) {
                     const tryX = Math.random() * (this.constants.WORLD_WIDTH - 200) + 100;
                     const tryY = Math.random() * (this.constants.WORLD_HEIGHT - 200) + 100;
-                    if (!Physics.isOverlapping(tryX, tryY, this.constants.PLAYER_WIDTH, this.constants.PLAYER_HEIGHT, this.gameState, null, this.wallGrid)) {
+                    if (!this.wallGrid.collides(tryX, tryY, this.constants.PLAYER_WIDTH, this.constants.PLAYER_HEIGHT)) {
                         safeX = tryX;
                         safeY = tryY;
                         found = true;
-                        console.log(`Found safe spawn at (${safeX.toFixed(1)}, ${safeY.toFixed(1)}) after ${attempts + 1} attempts`);
+                        console.log(`[WallSpawn] Found safe spawn at (${safeX.toFixed(1)}, ${safeY.toFixed(1)}) after ${attempts + 1} attempts`);
                         break;
                     }
                 }
                 if (!found) {
                     safeX = 100;
                     safeY = 100;
-                    console.warn(`Level ${level}: fallback spawn (100, 100)`);
+                    console.warn(`[WallSpawn] Level ${level}: ALL 100 random attempts failed! Fallback (100, 100) collides=${this.wallGrid.collides(100, 100, this.constants.PLAYER_WIDTH, this.constants.PLAYER_HEIGHT)}`);
                 }
             }
             this.spawnX = safeX;
             this.spawnY = safeY;
+            console.log(`[WallSpawn] Level ${level} final spawn (${this.spawnX}, ${this.spawnY})`);
 
             // Teleport all players to safe spawn point
             for (const playerCode in this.gameState.players) {
-                this.gameState.players[playerCode].x = this.spawnX;
-                this.gameState.players[playerCode].y = this.spawnY;
+                const p = this.gameState.players[playerCode];
+                const oldX = p.x, oldY = p.y;
+                p.x = this.spawnX;
+                p.y = this.spawnY;
+                console.log(`[WallSpawn] Teleported ${playerCode} from (${oldX.toFixed(1)}, ${oldY.toFixed(1)}) to (${p.x}, ${p.y})`);
             }
 
             // Update managers with new wallGrid
             this.monsterManager.wallGrid = this.wallGrid;
             this.playerManager.wallGrid = this.wallGrid;
             this.bulletManager.wallGrid = this.wallGrid;
+            this.collectibleManager.wallGrid = this.wallGrid;
 
             // Re-emit walls to all connected sockets
             const wallData = {
@@ -309,8 +369,8 @@ class Game {
                 sock.emit('walls', wallData);
             }
 
-            // Spawn a new shield for the new level
-            this.spawnShieldPoint();
+            // Spawn collectibles for the new level
+            this.collectibleManager.initializeLevelCollectibles();
             console.log(`Level ${level} data reset.`);
         }
     }
@@ -351,31 +411,6 @@ class Game {
         }
     }
 
-    spawnShieldPoint() {
-        const { WORLD_WIDTH, WORLD_HEIGHT } = Constants;
-
-        if (this.gameState.shieldPoints.length < Constants.MAX_SHIELD_POINTS) {
-            let x, y;
-            let attempts = 0;
-            do {
-                x = Math.random() * WORLD_WIDTH;
-                y = Math.random() * WORLD_HEIGHT;
-                attempts++;
-            } while (this.wallGrid.collides(x, y, Constants.SHIELD_POINT_WIDTH, Constants.SHIELD_POINT_HEIGHT) && attempts < 50);
-
-            if (attempts < 50) {
-                const shieldPoint = {
-                    id: Date.now() + Math.random(),
-                    x: x,
-                    y: y,
-                    width: Constants.SHIELD_POINT_WIDTH,
-                    height: Constants.SHIELD_POINT_HEIGHT
-                };
-                this.gameState.shieldPoints.push(shieldPoint);
-                console.log(`Shield point spawned at (${x}, ${y})`);
-            }
-        }
-    }
 }
 
 module.exports = Game;

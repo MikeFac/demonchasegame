@@ -2,10 +2,11 @@ const Constants = require('../../shared/Constants');
 const Physics = require('../utils/Physics');
 
 class BulletManager {
-    constructor(io, monsterManager, wallGrid) {
+    constructor(io, monsterManager, wallGrid, gameState) {
         this.io = io;
         this.monsterManager = monsterManager;
         this.wallGrid = wallGrid || null;
+        this.gameState = gameState || null;
         this.bullets = [];
         this.bulletIdCounter = 0;
     }
@@ -74,17 +75,32 @@ class BulletManager {
             }
             if (!bullet.active) continue;
 
-            // Check collision with monsters
+            // Check collision with monsters (Sword buff: 2x damage + pierce)
+            const player = gameState.players ? gameState.players[bullet.playerCode] : null;
+            const hasSword = player && player.activeBuffs && player.activeBuffs.sword && player.activeBuffs.sword.active;
+            const damage = hasSword ? Constants.BULLET_DAMAGE * Constants.SWORD_DAMAGE_MULTIPLIER : Constants.BULLET_DAMAGE;
+            const maxHits = hasSword ? Constants.SWORD_PIERCE_COUNT : 1;
+
+            if (!bullet.hitCount) bullet.hitCount = 0;
+
             for (const monster of gameState.monsters) {
                 if (Physics.checkCollisionCircleRect(
                     { x: bullet.x, y: bullet.y, radius: bullet.radius },
                     monster
                 )) {
-                    bullet.active = false;
-                    this.monsterManager.damageMonster(monster.id, Constants.BULLET_DAMAGE, bullet.playerCode);
-                    // Emit bullet hit event for sound effect
+                    // Skip monsters already hit by this bullet (pierce)
+                    if (!bullet.hitMonsters) bullet.hitMonsters = [];
+                    if (bullet.hitMonsters.includes(monster.id)) continue;
+
+                    bullet.hitMonsters.push(monster.id);
+                    bullet.hitCount++;
+                    this.monsterManager.damageMonster(monster.id, damage, bullet.playerCode);
                     this.io.emit('bulletHit', { x: bullet.x, y: bullet.y });
-                    break;
+
+                    if (bullet.hitCount >= maxHits) {
+                        bullet.active = false;
+                        break;
+                    }
                 }
             }
         }

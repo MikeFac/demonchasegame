@@ -65,12 +65,13 @@ const UILayout = (function() {
             size: 28
         },
 
-        // Inventory panel
+        // Inventory panel (expandedHeight set dynamically by Renderer)
         inventoryPanel: {
             leftOffset: 7,
             topOffset: QUALITY_LINE_HEIGHT + BUTTON_HEIGHT + 38,
-            width: 150,
-            height: 70
+            width: 170,
+            height: 200,
+            expandedHeight: 200
         },
 
         // Inventory "Use" button (offsets relative to panel top-left)
