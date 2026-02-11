@@ -24,7 +24,7 @@
     // Uses quizSettings (global from index.html) to pick a mode via cumulative probability
     function selectMode() {
         const settings = (typeof quizSettings !== 'undefined') ? quizSettings
-            : { firstLetter: 25, missingWord: 25, categoryMatch: 20, trueFalse: 15, verseTest: 15 };
+            : { firstLetter: 30, missingWord: 30, categoryMatch: 25, trueFalse: 15 };
 
         const roll = Math.floor(Math.random() * 100);
         let cumulative = 0;
@@ -38,10 +38,7 @@
         cumulative += settings.categoryMatch;
         if (roll < cumulative) return 'category_match';
 
-        cumulative += (settings.trueFalse || 0);
-        if (roll < cumulative) return 'true_false';
-
-        return 'verse_test';
+        return 'true_false';
     }
 
     // --- Quiz Generators ---
@@ -208,8 +205,6 @@
             case 'missing_word': return generateMissingWordQuiz(verse);
             case 'category_match': return generateCategoryMatchQuiz(verse);
             case 'true_false': return generateTrueFalseQuiz(verse);
-            case 'verse_test':
-                return { mode: 'verse_test', promptText: verse.Text, questionLabel: '', options: [], correctAnswer: null };
             case 'first_letter':
             default: return generateFirstLetterQuiz(verse);
         }
@@ -291,8 +286,6 @@
         answerResultTimeout = setTimeout(() => {
             clearAnswerResultTimeout();
             pickQualityVerse();
-            // Auto-launch verse test if selected by quiz mode
-            if (typeof checkAutoVerseTest === 'function') checkAutoVerseTest();
         }, duration);
     }
 

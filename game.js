@@ -363,6 +363,9 @@ function launchVerseTest(text, ref, difficulty) {
         verseTestShieldActive = false;
 
         if (passed) {
+            // Enable shooting (same as answering a quiz correctly)
+            isAnswerCorrect = true;
+
             // Award ammo
             player.ammo = (player.ammo || 0) + Constants.VERSE_TEST_AMMO_REWARD;
 
@@ -383,17 +386,6 @@ function launchVerseTest(text, ref, difficulty) {
             console.log('Verse test failed — no penalty');
         }
     });
-}
-
-// Check if current quiz is a verse_test marker and auto-launch
-function checkAutoVerseTest() {
-    if (currentQuiz && currentQuiz.mode === 'verse_test' && !VerseTestScreen.isActive()) {
-        const verse = organizedVerses[vQuality][currentVerseIndex];
-        if (verse) {
-            const testDifficulty = Math.min(5 + player.level, 15);
-            launchVerseTest(verse.Text, verse.Reference, testDifficulty);
-        }
-    }
 }
 
 // Wait for the DOM content to load
@@ -739,13 +731,11 @@ async function init() {
 
         // Pick the initial quality verse
         QuizManager.pickQualityVerse();
-        checkAutoVerseTest();
         console.log('Initialised currentVerseIndex: ' + currentVerseIndex);
 
         // Set up the timer to display a new verse every 10 seconds
         verseTimer = setInterval(function() {
             QuizManager.pickQualityVerse();
-            checkAutoVerseTest();
         }, VERSECHANGETIME);
 
         // Create quality buttons
@@ -819,7 +809,6 @@ async function init() {
             onQualityButtonClick: (qualityText) => {
                 vQuality = qualityText;
                 QuizManager.pickQualityVerse();
-                checkAutoVerseTest();
             },
             onQuizOptionClick: (selectedOption) => {
                 QuizManager.handleQuizAnswer(selectedOption);
