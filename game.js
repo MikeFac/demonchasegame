@@ -1052,6 +1052,11 @@ function gameLoop() {
 
         // If game over, stop processing movement/combat but keep rendering
         if (gameOverFlag) {
+            // Sync modal state so InputHandler can detect restart button clicks
+            if (inputHandler) {
+                inputHandler.gameOverModalVisible = gameOverModalVisible;
+                inputHandler.restartButtonRect = restartButtonRect;
+            }
             requestAnimationFrame(gameLoop);
             return;
         }
