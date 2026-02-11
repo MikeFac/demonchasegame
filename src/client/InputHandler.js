@@ -293,12 +293,51 @@ class InputHandler {
             const buttonY = UILayout.getQuizButtonY(this.canvas.height);
 
             const optionCount = currentQuiz.options.length;
-            const buttonWidth = optionCount === 2 ? 70 : qo.width;
+
+            // Button sizing: true/false=70px, missing word=65px, others=49px (must match Renderer)
+            let buttonWidth;
+            if (optionCount === 2) {
+                buttonWidth = 70;  // True/false
+            } else if (optionCount === 4) {
+                buttonWidth = 65;  // Missing word
+            } else {
+                buttonWidth = qo.width;  // Default
+            }
 
             ctx.font = '11px Arial'; // Must match Renderer.displayQuizOptions font
-            const textWidth = ctx.measureText(currentQuiz.questionLabel || '').width;
+            const labelText = currentQuiz.questionLabel || '';
+            const labelTextWidth = ctx.measureText(labelText).width;
+            const maxLabelWidth = this.canvas.width - optionStartX - (qo.rightPadding || 7) - (optionCount * buttonWidth + (optionCount - 1) * buttonSpacing) - 14;
+
+            // Calculate label width (accounting for possible 2-line wrapping)
+            let labelWidth = labelTextWidth;
+            if (labelTextWidth > maxLabelWidth) {
+                // Label wraps to 2 lines, calculate actual width
+                const words = labelText.split(' ');
+                let line1 = '';
+                let currentLine = '';
+
+                for (let i = 0; i < words.length; i++) {
+                    const testLine = currentLine ? currentLine + ' ' + words[i] : words[i];
+                    const testWidth = ctx.measureText(testLine).width;
+
+                    if (testWidth > maxLabelWidth && currentLine.length > 0) {
+                        line1 = currentLine;
+                        currentLine = words[i];
+                    } else {
+                        currentLine = testLine;
+                    }
+                }
+
+                const line2 = currentLine;
+                labelWidth = Math.max(
+                    ctx.measureText(line1).width,
+                    ctx.measureText(line2).width
+                );
+            }
+
             for (let i = 0; i < optionCount; i++) {
-                const buttonX = optionStartX + textWidth + 14 + i * (buttonWidth + buttonSpacing);
+                const buttonX = optionStartX + labelWidth + 14 + i * (buttonWidth + buttonSpacing);
 
                 if (
                     clickedX >= buttonX &&

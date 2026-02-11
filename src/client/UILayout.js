@@ -5,7 +5,7 @@
  *
  * Depends on window.Constants being loaded first.
  */
-const UILayout = (function() {
+const UILayout = (function () {
     const C = window.Constants || {};
     const QUALITY_LINE_HEIGHT = C.QUALITY_LINE_HEIGHT || 45;
     const BUTTON_WIDTH = C.BUTTON_WIDTH || 84;
@@ -51,10 +51,11 @@ const UILayout = (function() {
 
         // Quiz option buttons
         quizOptions: {
-            width: 49,
+            width: 49,  // Base width for most quizzes
             height: 21,
             spacing: 7,
-            startX: 7,
+            startX: 14,  // Doubled from 7px for better mobile readability
+            rightPadding: 7,  // Right-side padding constraint
             bottomOffset: 23
         },
 

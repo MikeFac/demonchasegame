@@ -25,7 +25,7 @@ class Renderer {
         this.ctx.fillText('Loading...', this.canvas.width / 2 - 50, this.canvas.height / 2);
     }
 
-    drawGame(gameState, player, playerCode, monsters, healingPoints, camera, uiState, inventoryState, walls, screenShake = {x:0, y:0}, damageNumbers = [], deathParticles = [], mouseX = null, mouseY = null) {
+    drawGame(gameState, player, playerCode, monsters, healingPoints, camera, uiState, inventoryState, walls, screenShake = { x: 0, y: 0 }, damageNumbers = [], deathParticles = [], mouseX = null, mouseY = null) {
         this.clear();
 
         // Draw game-over modal if visible (overlays everything)
@@ -142,7 +142,7 @@ class Renderer {
         // Button background - more visible
         this.ctx.fillStyle = isOpen ? '#444' : '#2a2a2a';
         this.ctx.fillRect(btnX, btnY, btnW, btnH);
-        
+
         // Thicker border
         this.ctx.strokeStyle = isOpen ? '#fff' : '#aaa';
         this.ctx.lineWidth = 2;
@@ -655,14 +655,14 @@ class Renderer {
 
         // Fallback color themes (used if sprite sheet not loaded)
         const themes = {
-            stone:   ['#4a4a4a', '#3d3d3d', '#555555', '#424242'],
-            earth:   ['#5c4033', '#4a3328', '#6b4c3b', '#503a2d'],
+            stone: ['#4a4a4a', '#3d3d3d', '#555555', '#424242'],
+            earth: ['#5c4033', '#4a3328', '#6b4c3b', '#503a2d'],
             crystal: ['#5b3a6b', '#4d2d5e', '#6b4a7b', '#553465']
         };
         const palette = themes[terrainTheme] || themes.stone;
 
         const useTiles = this.assets.buildingTilesImg && this.assets.buildingTilesImg.complete &&
-                         this.assets.terrainTilesImg && this.assets.terrainTilesImg.complete;
+            this.assets.terrainTilesImg && this.assets.terrainTilesImg.complete;
 
         this.ctx.save();
         const playableTop = this.QUALITY_LINE_HEIGHT + this.BUTTON_HEIGHT;
@@ -694,6 +694,35 @@ class Renderer {
                         8,  // gridSize: 8x8 grid
                         32  // tileSize: 32x32 tiles
                     );
+
+                    // Add subtle hue variation to grass for visual interest
+                    // Use deterministic random based on position
+                    let hash = wall.x * 73856093 + wall.y * 19349663;
+                    hash = ((hash >> 16) ^ hash) * 0x45d9f3b;
+                    hash = ((hash >> 16) ^ hash) * 0x45d9f3b;
+                    hash = (hash >> 16) ^ hash;
+                    const random = Math.abs(hash % 100) / 100;
+
+                    // Apply visible tint using overlay mode (better for grass)
+                    this.ctx.save();
+                    this.ctx.globalCompositeOperation = 'overlay';
+                    this.ctx.globalAlpha = 0.15 + random * 0.1; // 15-25% opacity for testing
+
+                    // Vary between darker and lighter greens
+                    const hueValue = random;
+                    if (hueValue < 0.33) {
+                        // Darker green
+                        this.ctx.fillStyle = '#2d5016';
+                    } else if (hueValue < 0.66) {
+                        // Lighter/yellower green
+                        this.ctx.fillStyle = '#d4ff88';
+                    } else {
+                        // Medium green
+                        this.ctx.fillStyle = '#7fb347';
+                    }
+
+                    this.ctx.fillRect(screenX, screenY, wall.width, wall.height);
+                    this.ctx.restore();
                 }
             });
 
@@ -1059,36 +1088,51 @@ class Renderer {
     }
 
     displayBibleVerse(verseText, verseReference, quiz) {
-        const maxCharsPerLine = 60;
+        const leftPadding = 14;
+        const rightPadding = 7;
+        const maxWidth = this.canvas.width - leftPadding - rightPadding;
         const maxLines = 5;
         const lineHeight = 21;
+
+        // Set font before measuring
+        this.ctx.font = '14px Arial';
+
+        // Word-wrap based on actual pixel width
         let lines = [];
+        let words = verseText.split(' ');
         let currentLine = '';
 
-        for (let i = 0; i < verseText.length; i++) {
-            const char = verseText[i];
-            if (char === ' ' && currentLine.length >= maxCharsPerLine) {
-                lines.push(currentLine.trim());
-                currentLine = '';
+        for (let i = 0; i < words.length; i++) {
+            const testLine = currentLine ? currentLine + ' ' + words[i] : words[i];
+            const metrics = this.ctx.measureText(testLine);
+
+            if (metrics.width > maxWidth && currentLine.length > 0) {
+                // Line would be too long, push current line and start new one
+                lines.push(currentLine);
+                currentLine = words[i];
             } else {
-                currentLine += char;
-            }
-            if (i === verseText.length - 1 && currentLine.trim().length > 0) {
-                lines.push(currentLine.trim());
+                currentLine = testLine;
             }
         }
+
+        // Push the last line
+        if (currentLine.length > 0) {
+            lines.push(currentLine);
+        }
+
+        // Limit to max lines
         lines = lines.slice(0, maxLines);
 
+        // Draw verse lines
         for (let i = 0; i < lines.length; i++) {
             const y = this.canvas.height - 112 + i * lineHeight;
             this.ctx.fillStyle = 'black';
-            this.ctx.font = '14px Arial';
-            this.ctx.fillText(lines[i], 7, y);
+            this.ctx.fillText(lines[i], leftPadding, y);
         }
 
+        // Draw verse reference
         this.ctx.fillStyle = 'black';
-        this.ctx.font = '14px Arial';
-        this.ctx.fillText(verseReference, 7, this.canvas.height - 112 + lines.length * lineHeight);
+        this.ctx.fillText(verseReference, leftPadding, this.canvas.height - 112 + lines.length * lineHeight);
 
         if (quiz) {
             this.displayQuizOptions(quiz);
@@ -1100,22 +1144,73 @@ class Renderer {
         const buttonHeight = qo.height;
         const buttonSpacing = qo.spacing;
         const optionStartX = qo.startX;
+        const rightPadding = qo.rightPadding || 7;
         const buttonY = UILayout.getQuizButtonY(this.canvas.height);
-        const labelY = buttonY + 16;
-
-        // Draw question label
-        this.ctx.fillStyle = 'black';
-        this.ctx.font = '11px Arial';
-        this.ctx.fillText(quiz.questionLabel, optionStartX, labelY);
-
-        const textWidth = this.ctx.measureText(quiz.questionLabel).width;
         const optionCount = quiz.options.length;
 
-        // For true/false (2 buttons), use wider buttons. For 4 options, use standard width.
-        const buttonWidth = optionCount === 2 ? 70 : qo.width;
+        // Button sizing: true/false=70px, missing word=65px, others=49px
+        let buttonWidth;
+        if (optionCount === 2) {
+            buttonWidth = 70;  // True/false
+        } else if (optionCount === 4) {
+            buttonWidth = 65;  // Missing word (needs wider for long words)
+        } else {
+            buttonWidth = qo.width;  // Default
+        }
 
+        // Calculate total width needed for buttons
+        const totalButtonWidth = optionCount * buttonWidth + (optionCount - 1) * buttonSpacing;
+
+        // Calculate max width for question label (allow 2 lines)
+        const maxLabelWidth = this.canvas.width - optionStartX - rightPadding - totalButtonWidth - 14;
+
+        // Draw question label with wrapping to 2 lines if needed
+        this.ctx.fillStyle = 'black';
+        this.ctx.font = '11px Arial';
+
+        const labelText = quiz.questionLabel;
+        const labelTextWidth = this.ctx.measureText(labelText).width;
+
+        let line1 = '';
+        let line2 = '';
+        let labelWidth = labelTextWidth;
+
+        if (labelTextWidth > maxLabelWidth) {
+            // Need to wrap to 2 lines
+            const words = labelText.split(' ');
+            let currentLine = '';
+
+            for (let i = 0; i < words.length; i++) {
+                const testLine = currentLine ? currentLine + ' ' + words[i] : words[i];
+                const testWidth = this.ctx.measureText(testLine).width;
+
+                if (testWidth > maxLabelWidth && currentLine.length > 0) {
+                    // Start second line
+                    line1 = currentLine;
+                    currentLine = words[i];
+                } else {
+                    currentLine = testLine;
+                }
+            }
+
+            line2 = currentLine;
+            labelWidth = Math.max(
+                this.ctx.measureText(line1).width,
+                this.ctx.measureText(line2).width
+            );
+
+            // Draw two lines
+            this.ctx.fillText(line1, optionStartX, buttonY + 4);
+            this.ctx.fillText(line2, optionStartX, buttonY + 16);
+        } else {
+            // Single line
+            this.ctx.fillText(labelText, optionStartX, buttonY + 16);
+            labelWidth = labelTextWidth;
+        }
+
+        // Draw option buttons
         for (let i = 0; i < optionCount; i++) {
-            const buttonX = optionStartX + textWidth + 14 + i * (buttonWidth + buttonSpacing);
+            const buttonX = optionStartX + labelWidth + 14 + i * (buttonWidth + buttonSpacing);
 
             this.ctx.fillStyle = 'lightgray';
             this.ctx.fillRect(buttonX, buttonY, buttonWidth, buttonHeight);
@@ -1345,9 +1440,9 @@ class Renderer {
             ctx.fillStyle = msg.color.replace(')', `, ${alpha})`).replace('rgb(', 'rgba(');
             // Handle hex colors too
             if (msg.color.startsWith('#')) {
-                const r = parseInt(msg.color.slice(1,3), 16);
-                const g = parseInt(msg.color.slice(3,5), 16);
-                const b = parseInt(msg.color.slice(5,7), 16);
+                const r = parseInt(msg.color.slice(1, 3), 16);
+                const g = parseInt(msg.color.slice(3, 5), 16);
+                const b = parseInt(msg.color.slice(5, 7), 16);
                 ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${alpha})`;
             }
             ctx.fillText(msg.text, canvas.width / 2, y);

@@ -10,6 +10,7 @@
     // Music state
     let isPlaying = false;
     let isMuted = false;
+    let userPaused = false;  // Track if user explicitly paused (vs never started)
     let currentTrackIndex = 0;
     let currentAudio = null;
     let tracks = [];
@@ -52,12 +53,12 @@
 
         currentTrackIndex = index;
         const track = tracks[index];
-        
+
         try {
             currentAudio = new Audio(getTrackPath(track));
             currentAudio.volume = isMuted ? 0 : volume;
             currentAudio.loop = true;
-            
+
             currentAudio.play()
                 .then(() => {
                     isPlaying = true;
@@ -68,7 +69,7 @@
                     isPlaying = false;
                 });
 
-            currentAudio.onended = function() {
+            currentAudio.onended = function () {
                 // Loop is enabled, but just in case
                 if (currentAudio && currentAudio.loop) {
                     currentAudio.currentTime = 0;
@@ -99,7 +100,23 @@
         if (isPlaying) {
             pause();
         } else {
-            playTrack(currentTrackIndex);
+            // Clear paused flag when user clicks play
+            userPaused = false;
+            // Prioritize Scripture-specific music over default tracks
+            if (currentVerseReference) {
+                // Try to play verse-specific music first
+                playVerseTrack(currentVerseReference).then(wasPlayed => {
+                    if (!wasPlayed) {
+                        // Fall back to default track if verse music not available
+                        playTrack(currentTrackIndex);
+                    }
+                }).catch(() => {
+                    playTrack(currentTrackIndex);
+                });
+            } else {
+                // No verse reference, use default track
+                playTrack(currentTrackIndex);
+            }
         }
     }
 
@@ -111,6 +128,7 @@
             currentAudio.pause();
         }
         isPlaying = false;
+        userPaused = true;  // Mark that user explicitly paused
     }
 
     /**
@@ -174,6 +192,7 @@
      * Play a song for a specific verse (educational learning music)
      * Non-blocking: query happens in background
      * Returns false if song not ready yet; client should use default music
+     * Respects pause state: won't auto-play if user explicitly paused
      */
     async function playVerseTrack(verseReference) {
         try {
@@ -186,10 +205,14 @@
             const verseTrack = await window.VerseSongService.getSongForVerse(verseReference);
 
             if (verseTrack && verseTrack.status === 'ready' && verseTrack.audioUrl) {
-                // Song is ready—play it
-                playTrackUrl(verseTrack.audioUrl);
+                // Song is ready—only pause if user explicitly paused (not just stopped)
+                playTrackUrl(verseTrack.audioUrl, userPaused);
                 currentVerseReference = verseReference;
-                console.log(`🎵 Now playing verse song: ${verseReference}`);
+                if (!userPaused) {
+                    console.log(`🎵 Now playing verse song: ${verseReference}`);
+                } else {
+                    console.log(`🎵 Loaded verse song (paused): ${verseReference}`);
+                }
                 return true;
             } else {
                 // Song not ready yet—use fallback
@@ -208,22 +231,29 @@
 
     /**
      * Play URL directly (helper)
+     * @param {string} audioUrl - URL of the audio to play
+     * @param {boolean} shouldPause - If true, load but don't auto-play (respects pause state)
      */
-    function playTrackUrl(audioUrl) {
+    function playTrackUrl(audioUrl, shouldPause = false) {
         stop();
 
         currentAudio = new Audio(audioUrl);
         currentAudio.volume = isMuted ? 0 : volume;
         currentAudio.loop = true;
 
-        currentAudio.play()
-            .then(() => {
-                isPlaying = true;
-            })
-            .catch((err) => {
-                console.error('Error playing audio:', err);
-                isPlaying = false;
-            });
+        if (!shouldPause) {
+            currentAudio.play()
+                .then(() => {
+                    isPlaying = true;
+                })
+                .catch((err) => {
+                    console.error('Error playing audio:', err);
+                    isPlaying = false;
+                });
+        } else {
+            // Load but don't play (preserve paused state)
+            isPlaying = false;
+        }
     }
 
     /**
