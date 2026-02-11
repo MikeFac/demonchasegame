@@ -97,6 +97,12 @@ class InputHandler {
     _handleGameModeClick(clickedX, clickedY) {
         const { QUALITY_LINE_HEIGHT, BUTTON_HEIGHT, BUTTON_WIDTH, ANSWER_SECTION_HEIGHT } = this.constants;
 
+        // Check if VerseTestScreen is active (highest priority overlay)
+        if (typeof VerseTestScreen !== 'undefined' && VerseTestScreen.isActive()) {
+            VerseTestScreen.handleClick(clickedX, clickedY, this.canvas.width, this.canvas.height);
+            return;
+        }
+
         // Check if goals overlay is visible (dismiss on any click)
         if (typeof goalsOverlayVisible !== 'undefined' && goalsOverlayVisible) {
             goalsOverlayVisible = false;
@@ -197,8 +203,22 @@ class InputHandler {
                 return;
             }
 
+            // Verse Test button area (fifth item)
+            const verseTestY = panelY + padding + (itemH + padding / 2) * 4;
+            if (
+                clickedX >= panelX + padding &&
+                clickedX <= panelX + mp.width - padding &&
+                clickedY >= verseTestY &&
+                clickedY <= verseTestY + itemH
+            ) {
+                if (this.callbacks.onMenuItemClick) {
+                    this.callbacks.onMenuItemClick('verseTest');
+                }
+                return;
+            }
+
             // Click outside menu items but inside panel - just close menu
-            const itemCount = 4;
+            const itemCount = 5;
             if (
                 clickedX >= panelX &&
                 clickedX <= panelX + mp.width &&

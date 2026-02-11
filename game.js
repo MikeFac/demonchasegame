@@ -792,6 +792,23 @@ async function init() {
                     console.log('Next song:', state.tracks[nextIndex].name);
                 } else if (itemId === 'goals') {
                     goalsOverlayVisible = true;
+                } else if (itemId === 'verseTest') {
+                    // Launch verse test with current verse
+                    const verse = organizedVerses[vQuality][currentVerseIndex];
+                    if (verse) {
+                        const testDifficulty = Math.min(5 + player.level, 15);
+                        VerseTestScreen.startTest(verse.Text, verse.Reference, testDifficulty, function(passed) {
+                            console.log('Verse test result:', passed ? 'PASSED' : 'FAILED');
+                            if (passed) {
+                                flashMessages.push({
+                                    text: 'Verse Test Passed!',
+                                    color: '#44ff44',
+                                    startTime: Date.now(),
+                                    duration: 2000
+                                });
+                            }
+                        });
+                    }
                 }
             },
             onGameClick: (x, y) => {
@@ -1013,6 +1030,11 @@ function gameLoop() {
             return (Date.now() - fm.startTime) < fm.duration;
         });
 
+        // Update VerseTestScreen timer
+        if (VerseTestScreen.isActive()) {
+            VerseTestScreen.update(16);
+        }
+
         // Build shield state for renderer
         const shieldState = {
             count: shieldInventory,
@@ -1022,6 +1044,11 @@ function gameLoop() {
         };
 
         window.renderer.drawGame(gameState, player, playerCode, monsters, healingPoints, camera, uiState, shieldState, clientWalls, screenShake, damageNumbers, deathParticles, mouseX, mouseY);
+
+        // Draw VerseTestScreen overlay on top of everything
+        if (VerseTestScreen.isActive()) {
+            VerseTestScreen.render(ctx, canvas.width, canvas.height);
+        }
 
         // If game over, stop processing movement/combat but keep rendering
         if (gameOverFlag) {

@@ -392,6 +392,8 @@
         startReviewMode,
         saveGameState,
         restoreGameState,
-        stopAudio
+        stopAudio,
+        convertRef,
+        playAudio
     };
 })();
