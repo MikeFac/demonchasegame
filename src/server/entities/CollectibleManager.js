@@ -2,12 +2,12 @@ const Constants = require('../../shared/Constants');
 const crypto = require('crypto');
 
 const COLLECTIBLE_CONFIG = {
-    sword:       { maxCount: 1, respawn: false, width: 32, height: 32 },
-    belt:        { maxCount: 2, respawn: true,  width: 28, height: 28 },
-    helmet:      { maxCount: 1, respawn: false, width: 32, height: 32 },
-    breastplate: { maxCount: 1, respawn: false, width: 36, height: 36 },
-    sandals:     { maxCount: 2, respawn: true,  width: 28, height: 28 },
-    shield:      { maxCount: 1, respawn: false, width: 32, height: 32 }
+    sword:       { maxCount: 0, respawn: false, width: 32, height: 32 },  // Only from drops
+    belt:        { maxCount: 1, respawn: true,  width: 28, height: 28 },
+    helmet:      { maxCount: 0, respawn: false, width: 32, height: 32 },  // Only from drops
+    breastplate: { maxCount: 0, respawn: false, width: 36, height: 36 },  // Only from drops
+    sandals:     { maxCount: 1, respawn: true,  width: 28, height: 28 },
+    shield:      { maxCount: 1, respawn: false, width: 32, height: 32 }   // Spawns in maze
 };
 
 // Weighted drop table for monster drops (higher = more common)

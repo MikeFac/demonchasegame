@@ -41,7 +41,7 @@ const Constants = {
 
     // Collectible Constants
     COLLECTIBLE_SPAWN_INTERVAL: 45000,  // 45s respawn for belt/sandals
-    MONSTER_DROP_CHANCE: 0.20,          // 20% chance on kill
+    MONSTER_DROP_CHANCE: 0.50,          // 50% chance on kill
 
     // Sword of the Spirit
     SWORD_DURATION: 10000,              // 10s
