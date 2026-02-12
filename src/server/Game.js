@@ -123,6 +123,51 @@ class Game {
     }
 
     addPlayer(socket) {
+        // Check for reconnection (player with same username who disconnected)
+        if (this._disconnectedPlayers && socket.username) {
+            for (const [code, info] of this._disconnectedPlayers.entries()) {
+                if (info.username === socket.username) {
+                    const player = this.gameState.players[code];
+                    if (player && player.state === 'disconnected') {
+                        // Reconnect — restore player state
+                        player.state = player.health > 0 ? 'alive' : 'ghost';
+                        player.disconnectTime = null;
+                        socket.playerCode = code;
+                        this.sockets.push(socket);
+                        this._disconnectedPlayers.delete(code);
+
+                        // Re-register socket handlers
+                        this._registerSocketHandlers(socket);
+
+                        // Send current state to reconnected client
+                        socket.emit('playerCode', code);
+                        socket.emit('walls', {
+                            walls: this.walls,
+                            gridFlat: this._flattenGrid(),
+                            rows: this.mazeGridData.rows,
+                            cols: this.mazeGridData.cols,
+                            cellSize: this.mazeGridData.cellSize,
+                            spawnX: this.spawnX,
+                            spawnY: this.spawnY
+                        });
+                        const isSoloGame = this.roomId && this.roomId.startsWith('solo-');
+                        socket.emit('gameConfig', {
+                            quizSettings: this.gameConfig.quizSettings,
+                            preset: this.gameConfig.preset,
+                            presetName: this.gameConfig.presetName,
+                            isSoloGame: isSoloGame
+                        });
+                        socket.emit('playerNumber', Object.keys(this.gameState.players).indexOf(code) + 1);
+
+                        this.io.emit('playerReconnected', { code, username: socket.username });
+                        console.log(`Player ${code} (${socket.username}) reconnected!`);
+                        return;
+                    }
+                }
+            }
+        }
+
+        // New player — spawn normally
         const spawnCollides = this.wallGrid.collides(this.spawnX, this.spawnY, this.constants.PLAYER_WIDTH, this.constants.PLAYER_HEIGHT);
         console.log(`[WallSpawn] addPlayer ${socket.id} at (${this.spawnX}, ${this.spawnY}) wallCollides=${spawnCollides}`);
         this.playerManager.addPlayer(socket, this.spawnX, this.spawnY);
@@ -148,13 +193,42 @@ class Game {
             isSoloGame: isSoloGame
         });
 
+        // Register all socket event handlers
+        this._registerSocketHandlers(socket);
+    }
+
+    /**
+     * Register all socket event handlers for a player.
+     * Extracted from addPlayer() so it can be reused for reconnection.
+     */
+    _registerSocketHandlers(socket) {
+        const isSoloGame = this.roomId && this.roomId.startsWith('solo-');
+
         // Handle player disconnect
         socket.on('disconnect', () => {
-            this.playerManager.removePlayer(socket);
-            this.sockets = this.sockets.filter(s => s !== socket);
-            if (this.gameState.connectedPlayers <= 0) {
-                this.stop();
-                if (this.onEmpty) this.onEmpty();
+            const player = this.gameState.players[socket.playerCode];
+            if (!player) return;
+
+            if (isSoloGame) {
+                // Solo games: remove immediately (no grace period)
+                this.playerManager.removePlayer(socket);
+                this.sockets = this.sockets.filter(s => s !== socket);
+                if (this.gameState.connectedPlayers <= 0) {
+                    this.stop();
+                    if (this.onEmpty) this.onEmpty();
+                }
+            } else {
+                // Multiplayer: grace period (30 seconds)
+                player.state = 'disconnected';
+                player.disconnectTime = Date.now();
+
+                this.io.emit('playerDisconnected', { code: socket.playerCode, username: player.username || 'Player' });
+                this.sockets = this.sockets.filter(s => s !== socket);
+
+                // Store info for reconnection
+                if (!this._disconnectedPlayers) this._disconnectedPlayers = new Map();
+                this._disconnectedPlayers.set(socket.playerCode, { username: player.username });
+                console.log(`Player ${socket.playerCode} (${player.username || 'Player'}) disconnected — 30s grace period`);
             }
         });
 
@@ -178,16 +252,18 @@ class Game {
             const index = this.gameState.healingPoints.findIndex(hp => hp.id === healingPointId);
             if (index !== -1) {
                 const player = this.gameState.players[socket.playerCode];
-                if (player) {
+                if (player && player.state === 'alive') { // Ghosts can't collect
                     player.health = Math.min(player.health + 25, player.maxHealth);
+                    this.gameState.healingPoints.splice(index, 1);
+                    this.io.emit('gameStateUpdate', this.gameState);
                 }
-                this.gameState.healingPoints.splice(index, 1);
-                this.io.emit('gameStateUpdate', this.gameState);
             }
         });
 
         // Handle collectible collection (unified for all item types)
         socket.on('collectCollectible', (collectibleId) => {
+            const player = this.gameState.players[socket.playerCode];
+            if (!player || player.state !== 'alive') return; // Ghosts can't collect
             const removed = this.collectibleManager.removeCollectible(collectibleId);
             if (removed) {
                 this.io.emit('gameStateUpdate', this.gameState);
@@ -233,11 +309,32 @@ class Game {
             console.log(`Player ${socket.playerCode} consumed ${type}`);
         });
 
+        // Handle player leaving the game
+        socket.on('leaveGame', () => {
+            const player = this.gameState.players[socket.playerCode];
+            if (player) {
+                this.io.emit('playerLeftGame', { code: socket.playerCode, username: player.username || 'Player' });
+            }
+            this.playerManager.removePlayer(socket);
+            this.sockets = this.sockets.filter(s => s !== socket);
+            if (this._disconnectedPlayers) this._disconnectedPlayers.delete(socket.playerCode);
+            if (this.gameState.connectedPlayers <= 0) {
+                this.stop();
+                if (this.onEmpty) this.onEmpty();
+            }
+        });
+
         // Handle level completion event (global game event)
         socket.on('levelCompleted', () => {
             // Prevent duplicate triggers during countdown
             if (this._levelAdvancing) return;
-            if (this.gameState.gameLevel >= Object.keys(this.levelData).length) return;
+            if (this._gameEnded) return;
+
+            // Check if this was the last level — trigger victory
+            if (this.gameState.gameLevel >= Object.keys(this.levelData).length) {
+                this._endGame('victory');
+                return;
+            }
 
             this._levelAdvancing = true;
             const nextLevel = this.gameState.gameLevel + 1;
@@ -259,7 +356,7 @@ class Game {
         // Handle player shooting
         socket.on('playerShoot', (data) => {
             const player = this.gameState.players[socket.playerCode];
-            if (player && player.ammo >= 1) { // 1 = AMMO_COST
+            if (player && player.state === 'alive' && player.ammo >= 1) { // Ghosts can't shoot
                 player.ammo -= 1;
                 this.bulletManager.addBullet(socket.playerCode, player, data);
             }
@@ -281,8 +378,92 @@ class Game {
         // Update Bullets
         this.bulletManager.update(this.gameState);
 
+        // Check disconnect grace periods (multiplayer)
+        this._checkGracePeriods();
+
+        // Check multiplayer game end condition
+        this._checkGameEnd();
+
         // Broadcast State (walls are NOT included)
         this.io.emit('gameStateUpdate', this.gameState);
+    }
+
+    /**
+     * Check disconnected players' grace periods and remove expired ones
+     */
+    _checkGracePeriods() {
+        const now = Date.now();
+        const GRACE_PERIOD_MS = 30000; // 30 seconds
+
+        for (const code in this.gameState.players) {
+            const p = this.gameState.players[code];
+            if (p.state === 'disconnected' && p.disconnectTime && (now - p.disconnectTime > GRACE_PERIOD_MS)) {
+                // Grace period expired — remove player
+                const username = p.username || 'Player';
+                delete this.gameState.players[code];
+                this.gameState.connectedPlayers--;
+                this.io.emit('playerLeftGame', { code, username });
+                if (this._disconnectedPlayers) this._disconnectedPlayers.delete(code);
+                console.log(`Player ${code} (${username}) grace period expired — removed`);
+
+                if (this.gameState.connectedPlayers <= 0) {
+                    this.stop();
+                    if (this.onEmpty) this.onEmpty();
+                }
+            }
+        }
+    }
+
+    /**
+     * Check if multiplayer game should end (all players dead/gone)
+     */
+    _checkGameEnd() {
+        if (this._gameEnded) return;
+        const isSolo = this.roomId && this.roomId.startsWith('solo-');
+        if (isSolo) return; // Solo handles game over client-side
+
+        const players = Object.values(this.gameState.players);
+        if (players.length === 0) return;
+
+        // Only count non-disconnected players for defeat check
+        const activePlayers = players.filter(p => p.state !== 'disconnected');
+        if (activePlayers.length === 0) return;
+
+        const livingPlayers = activePlayers.filter(p => p.state === 'alive');
+
+        // All active players are ghosts → defeat
+        if (livingPlayers.length === 0) {
+            this._endGame('defeat');
+        }
+    }
+
+    _endGame(result) {
+        this._gameEnded = true;
+
+        const playerStats = {};
+        for (const code in this.gameState.players) {
+            const p = this.gameState.players[code];
+            playerStats[code] = {
+                username: p.username || 'Player',
+                level: p.level,
+                xp: p.xp
+            };
+        }
+
+        this.io.emit('gameEnded', {
+            result, // 'victory' | 'defeat'
+            level: this.gameState.gameLevel,
+            monstersKilled: this.gameState.monstersKilled || 0,
+            playerStats
+        });
+
+        console.log(`Game ended: ${result} (room: ${this.roomId}, level: ${this.gameState.gameLevel})`);
+
+        // Stop game after brief delay (players see results)
+        setTimeout(() => {
+            this.stop();
+            if (this.onEmpty) this.onEmpty();
+        }, 10000);
     }
 
     resetLevelData(level) {

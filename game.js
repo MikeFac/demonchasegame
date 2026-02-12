@@ -215,6 +215,9 @@ const COLLECTIBLE_COLORS = {
 // Menu state
 let menuOpen = false;
 
+// Multiplayer state
+let isSoloGame = true; // Updated from server gameConfig
+
 // Verse Test shield setting (Option A/B)
 let verseTestShielded = localStorage.getItem('verseTestShielded') === 'true';
 let verseTestShieldActive = false;
@@ -609,6 +612,44 @@ async function init() {
                     console.log(`Monster dropped ${data.type} at (${data.x}, ${data.y})`);
                 }
             },
+            // Multiplayer lifecycle notifications
+            onPlayerDied: (data) => {
+                if (data.playerCode === playerCode) {
+                    flashMessages.push({ text: 'You died! You are now a ghost.', color: '#ff6666', startTime: Date.now(), duration: 4000 });
+                    gameOver.play();
+                } else {
+                    flashMessages.push({ text: `${data.username} has died!`, color: '#ff4444', startTime: Date.now(), duration: 3000 });
+                }
+            },
+            onPlayerJoinedGame: (data) => {
+                if (data.code !== playerCode) {
+                    flashMessages.push({ text: `${data.username} joined!`, color: '#44ff44', startTime: Date.now(), duration: 3000 });
+                }
+            },
+            onPlayerLeftGame: (data) => {
+                flashMessages.push({ text: `${data.username} left the game`, color: '#888888', startTime: Date.now(), duration: 3000 });
+            },
+            onPlayerDisconnected: (data) => {
+                if (data.code !== playerCode) {
+                    flashMessages.push({ text: `${data.username} disconnected`, color: '#ffaa00', startTime: Date.now(), duration: 3000 });
+                }
+            },
+            onPlayerReconnected: (data) => {
+                flashMessages.push({ text: `${data.username} reconnected!`, color: '#44ff44', startTime: Date.now(), duration: 3000 });
+            },
+            onGameEnded: (data) => {
+                gameOverFlag = true;
+                gameOverModalVisible = true;
+                const sessionDuration = Math.floor((Date.now() - sessionStartTime) / 1000);
+                finalStats = {
+                    result: data.result,
+                    level: data.level,
+                    monstersKilled: data.monstersKilled,
+                    playerStats: data.playerStats,
+                    versesLearned: versesLearned,
+                    timePlayed: sessionDuration
+                };
+            },
             onWalls: (data) => {
                 clientWalls = data.walls;
                 // Build client-side WallGrid from flat array
@@ -670,6 +711,10 @@ async function init() {
             },
             onGameConfig: (config) => {
                 console.log('Received game config from server:', config);
+                // Track solo vs multiplayer
+                if (config.isSoloGame !== undefined) {
+                    isSoloGame = config.isSoloGame;
+                }
                 // Override local quiz settings with server-authoritative values
                 if (config.quizSettings) {
                     quizSettings = config.quizSettings;
@@ -907,6 +952,11 @@ async function init() {
                         startTime: Date.now(),
                         duration: 1500
                     });
+                } else if (itemId === 'leave') {
+                    if (confirm('Leave this game? You must rejoin to play again.')) {
+                        network.sendLeaveGame();
+                        window.location.href = isSoloGame ? '/' : '/lobby';
+                    }
                 }
             },
             onGameClick: (x, y) => {
@@ -1390,8 +1440,8 @@ function gameLoop() {
             let dy = monster.y - player.y;
             let distance = Math.sqrt(dx * dx + dy * dy);
 
-            if (distance < COMBAT_DISTANCE) {
-                // Handle combat
+            if (distance < COMBAT_DISTANCE && (!player.state || player.state === 'alive')) {
+                // Handle combat (ghosts cannot fight)
                 if (currentTime - lastAttackTime > ATTACK_RATE) {
                     lastAttackTime = currentTime;
                     if (isAnswerCorrect === true) {
@@ -1453,19 +1503,24 @@ function gameLoop() {
                             });
                             console.log('Helmet of Salvation auto-revive! HP:', player.health);
                         } else if (player.health <= 0 && !gameOverModalVisible) {
-                            gameOver.play();
-                            gameOverFlag = true;
-                            gameOverModalVisible = true;
+                            if (isSoloGame) {
+                                // Solo: show game over modal (existing behavior)
+                                gameOver.play();
+                                gameOverFlag = true;
+                                gameOverModalVisible = true;
 
-                            // Calculate final stats
-                            const sessionDuration = Math.floor((Date.now() - sessionStartTime) / 1000);
-                            finalStats = {
-                                level: gameState.gameLevel || 1,
-                                monstersKilled: gameState.monstersKilled || 0,
-                                versesLearned: versesLearned,
-                                timePlayed: sessionDuration
-                            };
-                            console.log("Game Over - Final Stats:", finalStats);
+                                // Calculate final stats
+                                const sessionDuration = Math.floor((Date.now() - sessionStartTime) / 1000);
+                                finalStats = {
+                                    level: gameState.gameLevel || 1,
+                                    monstersKilled: gameState.monstersKilled || 0,
+                                    versesLearned: versesLearned,
+                                    timePlayed: sessionDuration
+                                };
+                                console.log("Game Over - Final Stats:", finalStats);
+                            }
+                            // Multiplayer: server handles ghost state via playerDied event
+                            // Player continues as ghost — no modal shown on death
                         }
                     }
                 }

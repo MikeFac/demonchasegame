@@ -53,6 +53,9 @@ class Physics {
 
         for (const playerCode in gameState.players) {
             const player = gameState.players[playerCode];
+            // Skip ghosts and disconnected players — monsters only target living players
+            if (player.state && player.state !== 'alive') continue;
+
             const dx = player.x - monster.x;
             const dy = player.y - monster.y;
             const distance = Math.sqrt(dx * dx + dy * dy);

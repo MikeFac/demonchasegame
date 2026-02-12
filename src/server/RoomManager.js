@@ -176,8 +176,8 @@ class RoomManager {
             return { success: false, error: 'Room not found' };
         }
 
-        if (room.status !== 'waiting') {
-            return { success: false, error: 'Game already in progress' };
+        if (room.status !== 'waiting' && room.status !== 'playing') {
+            return { success: false, error: 'Room is not joinable' };
         }
 
         if (room.players.length >= room.maxPlayers) {
@@ -291,7 +291,7 @@ class RoomManager {
     getRoomList() {
         const rooms = [];
         for (const room of this.rooms.values()) {
-            if (room.status === 'waiting') {
+            if (room.status === 'waiting' || room.status === 'playing') {
                 rooms.push(this.sanitizeRoom(room));
             }
         }
@@ -332,6 +332,13 @@ class RoomManager {
             status: room.status,
             settings: room.settings
         };
+    }
+
+    /**
+     * Get session token for a socket ID
+     */
+    getTokenForSocket(socketId) {
+        return this.userSockets.get(socketId) || null;
     }
 
     /**

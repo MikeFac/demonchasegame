@@ -173,7 +173,7 @@ class Renderer {
         const isPlaying = musicState.isPlaying;
 
         const testShieldOn = menuState.verseTestShielded || false;
-        const itemCount = 6;
+        const itemCount = 7;
 
         // Panel background
         this.ctx.fillStyle = 'rgba(0, 0, 0, 0.9)';
@@ -189,18 +189,19 @@ class Renderer {
             { id: 'nextSong', label: '⏭ Next Song' },
             { id: 'goals', label: '🎯 Goals' },
             { id: 'verseTest', label: '✏️ Verse Test' },
-            { id: 'toggleTestShield', label: testShieldOn ? '🛡️ Test Shield: ON' : '🛡️ Test Shield: OFF' }
+            { id: 'toggleTestShield', label: testShieldOn ? '🛡️ Test Shield: ON' : '🛡️ Test Shield: OFF' },
+            { id: 'leave', label: '🚪 Leave Game', color: '#ff4444' }
         ];
 
         items.forEach((item, index) => {
             const itemY = panelY + padding + index * (itemH + padding / 2);
 
             // Item background
-            this.ctx.fillStyle = 'rgba(255, 255, 255, 0.1)';
+            this.ctx.fillStyle = item.id === 'leave' ? 'rgba(255, 50, 50, 0.15)' : 'rgba(255, 255, 255, 0.1)';
             this.ctx.fillRect(panelX + padding, itemY, panelW - padding * 2, itemH);
 
             // Item text
-            this.ctx.fillStyle = '#fff';
+            this.ctx.fillStyle = item.color || '#fff';
             this.ctx.font = '12px Arial';
             this.ctx.fillText(item.label, panelX + padding * 2, itemY + itemH / 2 + 4);
         });
@@ -265,14 +266,19 @@ class Renderer {
 
     drawGameOverModal(canvas, finalStats, restartButtonRect) {
         const ctx = this.ctx;
+        const isVictory = finalStats.result === 'victory';
+        const isDefeat = finalStats.result === 'defeat';
+        const isMultiplayer = !!finalStats.playerStats;
 
         // Full-screen semi-transparent overlay
         ctx.fillStyle = 'rgba(0, 0, 0, 0.85)';
         ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-        // Modal container (centered)
+        // Modal container (centered, taller for multiplayer stats)
         const modalWidth = 300;
-        const modalHeight = 280;
+        const hasLeaderboard = isMultiplayer && finalStats.playerStats;
+        const leaderboardCount = hasLeaderboard ? Object.keys(finalStats.playerStats).length : 0;
+        const modalHeight = hasLeaderboard ? 320 + leaderboardCount * 22 : 280;
         const modalX = (canvas.width - modalWidth) / 2;
         const modalY = (canvas.height - modalHeight) / 2;
 
@@ -280,25 +286,33 @@ class Renderer {
         ctx.fillStyle = 'rgba(40, 40, 40, 0.95)';
         ctx.fillRect(modalX, modalY, modalWidth, modalHeight);
 
-        // Modal border
-        ctx.strokeStyle = '#ff0000';
+        // Modal border (color depends on result)
+        ctx.strokeStyle = isVictory ? '#00ff00' : '#ff0000';
         ctx.lineWidth = 3;
         ctx.strokeRect(modalX, modalY, modalWidth, modalHeight);
 
-        // Title: "GAME OVER"
-        ctx.fillStyle = '#ff0000';
-        ctx.font = 'bold 32px Arial';
+        // Title
+        ctx.font = 'bold 28px Arial';
         ctx.textAlign = 'center';
-        ctx.fillText('GAME OVER', canvas.width / 2, modalY + 50);
+        if (isVictory) {
+            ctx.fillStyle = '#00ff00';
+            ctx.fillText('VICTORY!', canvas.width / 2, modalY + 45);
+        } else if (isDefeat) {
+            ctx.fillStyle = '#ff4444';
+            ctx.fillText('ALL DEFEATED', canvas.width / 2, modalY + 45);
+        } else {
+            ctx.fillStyle = '#ff0000';
+            ctx.fillText('GAME OVER', canvas.width / 2, modalY + 45);
+        }
 
         // Final Stats
         ctx.fillStyle = '#ffffff';
-        ctx.font = '18px Arial';
+        ctx.font = '16px Arial';
         ctx.textAlign = 'left';
 
-        const statsX = modalX + 30;
-        let statsY = modalY + 90;
-        const lineHeight = 28;
+        const statsX = modalX + 25;
+        let statsY = modalY + 80;
+        const lineHeight = 24;
 
         ctx.fillText(`Level Reached: ${finalStats.level}`, statsX, statsY);
         statsY += lineHeight;
@@ -310,12 +324,32 @@ class Renderer {
         const minutes = Math.floor(finalStats.timePlayed / 60);
         const seconds = finalStats.timePlayed % 60;
         ctx.fillText(`Time Played: ${minutes}m ${seconds}s`, statsX, statsY);
+        statsY += lineHeight;
 
-        // "Try Again" Button
-        const buttonWidth = 140;
+        // Player leaderboard (multiplayer only)
+        if (hasLeaderboard) {
+            statsY += 8;
+            ctx.fillStyle = '#aaaaaa';
+            ctx.font = 'bold 14px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText('— Players —', canvas.width / 2, statsY);
+            statsY += 20;
+
+            ctx.font = '13px Arial';
+            ctx.textAlign = 'left';
+            const sorted = Object.values(finalStats.playerStats).sort((a, b) => (b.xp || 0) - (a.xp || 0));
+            sorted.forEach((ps, i) => {
+                ctx.fillStyle = i === 0 ? '#FFD700' : '#cccccc';
+                ctx.fillText(`${i + 1}. ${ps.username} — Lv${ps.level} (${ps.xp || 0} XP)`, statsX, statsY);
+                statsY += 20;
+            });
+        }
+
+        // Button
+        const buttonWidth = 160;
         const buttonHeight = 40;
         const buttonX = (canvas.width - buttonWidth) / 2;
-        const buttonY = modalY + modalHeight - 60;
+        const buttonY = modalY + modalHeight - 55;
 
         // Store button rect for click detection
         restartButtonRect.x = buttonX;
@@ -324,7 +358,7 @@ class Renderer {
         restartButtonRect.height = buttonHeight;
 
         // Button background
-        ctx.fillStyle = '#00aa00';
+        ctx.fillStyle = isVictory ? '#00aa00' : '#00aa00';
         ctx.fillRect(buttonX, buttonY, buttonWidth, buttonHeight);
 
         // Button border
@@ -334,9 +368,9 @@ class Renderer {
 
         // Button text
         ctx.fillStyle = '#ffffff';
-        ctx.font = 'bold 18px Arial';
+        ctx.font = 'bold 16px Arial';
         ctx.textAlign = 'center';
-        ctx.fillText('Try Again', canvas.width / 2, buttonY + 26);
+        ctx.fillText(isMultiplayer ? 'Return to Lobby' : 'Try Again', canvas.width / 2, buttonY + 26);
     }
 
     drawMessages(uiState) {
@@ -424,6 +458,16 @@ class Renderer {
         if (playerImage && (playerImage.complete || playerImage.tagName === 'CANVAS')) {
             const screenX = playerData.x - camera.x;
             const screenY = playerData.y - camera.y;
+
+            const isGhost = playerData.state === 'ghost';
+            const isDisconnected = playerData.state === 'disconnected';
+
+            // Ghost/disconnected players rendered semi-transparent
+            if (isGhost || isDisconnected) {
+                this.ctx.save();
+                this.ctx.globalAlpha = 0.35;
+            }
+
             const buffs = inventoryState ? inventoryState.activeBuffs : {};
 
             // Sandals of Peace: blue aura circle (150px radius)
@@ -497,6 +541,33 @@ class Renderer {
                 playerData.width, playerData.height
             );
 
+            // Ghost label + skip health bar
+            if (isGhost) {
+                this.ctx.restore();
+                this.ctx.fillStyle = 'rgba(200, 200, 255, 0.8)';
+                this.ctx.font = 'bold 10px Arial';
+                this.ctx.textAlign = 'center';
+                this.ctx.fillText('GHOST', screenX, screenY - playerData.height / 2 - 18);
+                // Name below ghost label
+                const displayName = isCurrentPlayer ? 'You' : (playerData.username || 'Player');
+                this.ctx.fillStyle = 'rgba(200, 200, 255, 0.6)';
+                this.ctx.fillText(displayName, screenX, screenY - playerData.height / 2 - 30);
+                this.ctx.textAlign = 'left';
+                return;
+            }
+            if (isDisconnected) {
+                this.ctx.restore();
+                this.ctx.fillStyle = 'rgba(255, 170, 0, 0.8)';
+                this.ctx.font = 'bold 9px Arial';
+                this.ctx.textAlign = 'center';
+                this.ctx.fillText('OFFLINE', screenX, screenY - playerData.height / 2 - 18);
+                const displayName = playerData.username || 'Player';
+                this.ctx.fillStyle = 'rgba(255, 170, 0, 0.6)';
+                this.ctx.fillText(displayName, screenX, screenY - playerData.height / 2 - 30);
+                this.ctx.textAlign = 'left';
+                return;
+            }
+
             // Health bar with gradient (Green -> Yellow -> Red)
             const healthPercent = playerData.health / playerData.maxHealth;
             const healthBarX = screenX - 20;
@@ -535,7 +606,7 @@ class Renderer {
             // Name
             this.ctx.fillStyle = 'white';
             this.ctx.font = '12px Arial';
-            const displayName = isCurrentPlayer ? 'You' : 'Player';
+            const displayName = isCurrentPlayer ? 'You' : (playerData.username || 'Player');
             this.ctx.fillText(displayName, screenX - 20, screenY - playerData.height / 2 - 15);
         }
     }

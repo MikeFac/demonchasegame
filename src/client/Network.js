@@ -17,7 +17,14 @@ class Network {
             onWalls: null,
             onLevelAdvancing: null,
             onGameConfig: null,
-            onMonsterDrop: null
+            onMonsterDrop: null,
+            // Multiplayer lifecycle events
+            onPlayerDied: null,
+            onPlayerJoinedGame: null,
+            onPlayerLeftGame: null,
+            onPlayerDisconnected: null,
+            onPlayerReconnected: null,
+            onGameEnded: null
         };
     }
 
@@ -146,6 +153,31 @@ class Network {
             if (this.callbacks.onMonsterDrop) {
                 this.callbacks.onMonsterDrop(data);
             }
+        });
+
+        // Multiplayer lifecycle events
+        this.socket.on('playerDied', (data) => {
+            if (this.callbacks.onPlayerDied) this.callbacks.onPlayerDied(data);
+        });
+
+        this.socket.on('playerJoinedGame', (data) => {
+            if (this.callbacks.onPlayerJoinedGame) this.callbacks.onPlayerJoinedGame(data);
+        });
+
+        this.socket.on('playerLeftGame', (data) => {
+            if (this.callbacks.onPlayerLeftGame) this.callbacks.onPlayerLeftGame(data);
+        });
+
+        this.socket.on('playerDisconnected', (data) => {
+            if (this.callbacks.onPlayerDisconnected) this.callbacks.onPlayerDisconnected(data);
+        });
+
+        this.socket.on('playerReconnected', (data) => {
+            if (this.callbacks.onPlayerReconnected) this.callbacks.onPlayerReconnected(data);
+        });
+
+        this.socket.on('gameEnded', (data) => {
+            if (this.callbacks.onGameEnded) this.callbacks.onGameEnded(data);
         });
     }
 
@@ -289,6 +321,15 @@ class Network {
     sendJoinGame(roomId) {
         if (this.socket) {
             this.socket.emit('joinGame', roomId);
+        }
+    }
+
+    /**
+     * Leave the current game (multiplayer)
+     */
+    sendLeaveGame() {
+        if (this.socket) {
+            this.socket.emit('leaveGame');
         }
     }
 

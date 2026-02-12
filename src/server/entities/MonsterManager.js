@@ -21,8 +21,9 @@ class MonsterManager {
             gameState.spawnsLeft = levelData[gameState.gameLevel].maxMonsters;
         }
 
-        // Check if there are any connected players
-        if (gameState.connectedPlayers > 0) {
+        // Only spawn if there are living players (not ghosts/disconnected)
+        const livingPlayers = Object.values(gameState.players).filter(p => p.state === 'alive' || !p.state);
+        if (livingPlayers.length > 0) {
             // Only check concurrent monster limit, not spawnsLeft (allows continuous respawning)
             if (gameState.monsters.length < levelData[gameState.gameLevel].maxMonsters) {
 

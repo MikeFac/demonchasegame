@@ -115,9 +115,14 @@ class InputHandler {
 
             if (clickedX >= btnX && clickedX <= btnX + btnW &&
                 clickedY >= btnY && clickedY <= btnY + btnH) {
-                // Restart game
-                console.log("Restarting game...");
-                window.location.reload();  // Simple restart via page reload
+                // Restart game or return to lobby
+                if (typeof isSoloGame !== 'undefined' && !isSoloGame) {
+                    console.log("Returning to lobby...");
+                    window.location.href = '/lobby';
+                } else {
+                    console.log("Restarting game...");
+                    window.location.reload();
+                }
                 return;
             }
             // Click anywhere else on modal is consumed (no action behind modal)
@@ -231,8 +236,22 @@ class InputHandler {
                 return;
             }
 
+            // Leave Game button area (seventh item)
+            const leaveY = panelY + padding + (itemH + padding / 2) * 6;
+            if (
+                clickedX >= panelX + padding &&
+                clickedX <= panelX + mp.width - padding &&
+                clickedY >= leaveY &&
+                clickedY <= leaveY + itemH
+            ) {
+                if (this.callbacks.onMenuItemClick) {
+                    this.callbacks.onMenuItemClick('leave');
+                }
+                return;
+            }
+
             // Click outside menu items but inside panel - just close menu
-            const itemCount = 6;
+            const itemCount = 7;
             if (
                 clickedX >= panelX &&
                 clickedX <= panelX + mp.width &&

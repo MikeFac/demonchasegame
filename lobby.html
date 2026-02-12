@@ -541,15 +541,20 @@
                 return;
             }
 
-            container.innerHTML = rooms.map(room => `
-                <div class="room-item" onclick="joinRoom('${room.id}')">
+            container.innerHTML = rooms.map(room => {
+                const isPlaying = room.status === 'playing';
+                const badge = isPlaying ? '<span style="color:#ffaa00;font-size:11px;margin-left:6px;">[IN PROGRESS]</span>' : '';
+                const clickAction = isPlaying ? `joinInProgressGame('${room.id}')` : `joinRoom('${room.id}')`;
+                return `
+                <div class="room-item" onclick="${clickAction}">
                     <div class="room-info">
-                        <h3>📦 ${room.name}</h3>
+                        <h3>📦 ${room.name}${badge}</h3>
                         <span>${room.settings.presetDisplay || 'Normal'} • ${room.settings.category || 'All Categories'}</span>
                     </div>
                     <div class="player-count">${room.playerCount}/${room.maxPlayers}</div>
                 </div>
-            `).join('');
+                `;
+            }).join('');
         }
 
         function showCreateRoom() {
@@ -692,6 +697,17 @@
                     isReady = false;
                     showScreen('roomScreen');
                     renderRoom();
+                } else {
+                    alert(result.error);
+                }
+            });
+        }
+
+        function joinInProgressGame(roomId) {
+            // Join an in-progress game directly (skip lobby room screen)
+            socket.emit('joinRoom', roomId, (result) => {
+                if (result.success) {
+                    window.location.href = `/?room=${roomId}`;
                 } else {
                     alert(result.error);
                 }

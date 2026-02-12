@@ -67,7 +67,10 @@ class PlayerManager {
             color: 'blue', // Default, client overrides with sprite
             xp: 0,
             level: 1,
-            ammo: 0 // Must earn ammo by answering quizzes correctly
+            ammo: 0, // Must earn ammo by answering quizzes correctly
+            state: 'alive',        // 'alive' | 'ghost' | 'disconnected'
+            canAttack: true,
+            username: socket.username || null
         };
         gameState.connectedPlayers++;
 
@@ -75,7 +78,7 @@ class PlayerManager {
         socket.emit('playerCode', playerCode);
         socket.emit('playerNumber', gameState.connectedPlayers); // This triggers client to load playerX.png
         socket.emit('gameStateUpdate', gameState);
-        io.emit('playerConnected', { code: playerCode, players: gameState.connectedPlayers });
+        io.emit('playerJoinedGame', { code: playerCode, username: socket.username || 'Player', players: gameState.connectedPlayers });
 
         console.log(`Player ${playerCode} connected. Total: ${gameState.connectedPlayers}`);
     }
@@ -84,10 +87,12 @@ class PlayerManager {
         const { gameState, io } = this;
         const playerCode = socket.playerCode;
         if (playerCode && gameState.players[playerCode]) {
+            const player = gameState.players[playerCode];
+            const username = player.username || 'Player';
             delete gameState.players[playerCode];
             gameState.connectedPlayers--;
-            io.emit('playerDisconnected', playerCode);
-            console.log(`Player ${playerCode} disconnected. Total: ${gameState.connectedPlayers}`);
+            io.emit('playerDisconnected', { code: playerCode, username });
+            console.log(`Player ${playerCode} (${username}) disconnected. Total: ${gameState.connectedPlayers}`);
         }
     }
 
@@ -170,13 +175,25 @@ class PlayerManager {
         const playerCode = socket.playerCode;
         const player = gameState.players[playerCode];
 
-        if (player) {
-            player.health -= damage;
-            if (player.health < 0) player.health = 0;
-            // console.log(`Player ${playerCode} took ${damage} damage. Health: ${player.health}`);
-            // Broadcast the health update
-            this.io.emit('gameStateUpdate', gameState);
+        if (!player) return;
+        if (player.state !== 'alive') return; // Ghosts can't take damage
+
+        player.health -= damage;
+        if (player.health < 0) player.health = 0;
+
+        // Death detection — convert to ghost
+        if (player.health <= 0 && player.state === 'alive') {
+            player.state = 'ghost';
+            player.canAttack = false;
+            this.io.emit('playerDied', {
+                playerCode,
+                username: player.username || 'Player'
+            });
+            console.log(`Player ${playerCode} (${player.username || 'Player'}) died — now a ghost`);
         }
+
+        // Broadcast the health update
+        this.io.emit('gameStateUpdate', gameState);
     }
 }
 

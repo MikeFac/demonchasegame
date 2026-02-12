@@ -100,6 +100,12 @@ io.on('connection', (socket) => {
   socket.on('joinGame', (roomId) => {
     const game = gameInstances.get(roomId);
     if (game) {
+      // Look up username from RoomManager session
+      const token = roomManager.getTokenForSocket(socket.id);
+      if (token) {
+        const user = roomManager.users.get(token);
+        if (user) socket.username = user.username;
+      }
       socket.join(`room:${roomId}`);
       game.addPlayer(socket);
     } else {
