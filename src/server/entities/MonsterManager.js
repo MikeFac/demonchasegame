@@ -157,7 +157,9 @@ class MonsterManager {
         const { gameState, levelData } = this;
         const currentLevelData = levelData[gameState.gameLevel];
         // Speed is based on 20fps, so we scale it for 60fps (approx 0.33)
-        const baseSpeed = currentLevelData.monsterSpeed * (20 / 60);
+        // Apply game speed multiplier from config
+        const speedMultiplier = gameState.speedMultiplier || 1.0;
+        const baseSpeed = currentLevelData.monsterSpeed * (20 / 60) * speedMultiplier;
 
         gameState.monsters.forEach(monster => {
             // Check for Sandals of Peace slow aura from any player

@@ -83,8 +83,10 @@
     #instructionsOverlay {
       display: none;
       position: fixed;
-      top: 0; left: 0;
-      width: 100%; height: 100%;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
       background: rgba(0, 0, 0, 0.85);
       z-index: 100;
       justify-content: center;
@@ -145,7 +147,7 @@
     }
 
     #instructionsPanel .page-content .key {
-      background: rgba(255,255,255,0.15);
+      background: rgba(255, 255, 255, 0.15);
       padding: 1px 6px;
       border-radius: 4px;
       font-family: monospace;
@@ -194,7 +196,7 @@
     }
 
     .page-indicator {
-      color: rgba(255,255,255,0.5);
+      color: rgba(255, 255, 255, 0.5);
       font-size: 0.9em;
     }
 
@@ -207,7 +209,7 @@
     #quizSettings h3 {
       font-size: 1em;
       margin-bottom: 10px;
-      color: rgba(255,255,255,0.7);
+      color: rgba(255, 255, 255, 0.7);
       text-align: center;
       cursor: pointer;
       user-select: none;
@@ -262,11 +264,31 @@
 
     <!-- Monster Difficulty Selector for Solo -->
     <div id="soloSettings" style="margin-bottom: 20px;">
-      <label style="display: block; margin-bottom: 10px; font-weight: bold; font-size: 14px;">Solo Game Difficulty:</label>
+      <label style="display: block; margin-bottom: 10px; font-weight: bold; font-size: 14px;">Solo Game
+        Difficulty:</label>
       <div style="display: flex; gap: 8px; margin-bottom: 15px;">
-        <button id="soloEasy" class="solo-difficulty-btn" data-preset="easy" onclick="setSoloDifficulty('easy')" style="flex: 1; padding: 8px; background: rgba(255,255,255,0.1); border: 2px solid rgba(255,255,255,0.2); border-radius: 6px; color: white; cursor: pointer; font-size: 12px;">Easy Monsters</button>
-        <button id="soloNormal" class="solo-difficulty-btn active" data-preset="normal" onclick="setSoloDifficulty('normal')" style="flex: 1; padding: 8px; background: rgba(100,150,255,0.3); border: 2px solid rgba(100,150,255,0.5); border-radius: 6px; color: white; cursor: pointer; font-size: 12px;">Normal</button>
-        <button id="soloHard" class="solo-difficulty-btn" data-preset="hard" onclick="setSoloDifficulty('hard')" style="flex: 1; padding: 8px; background: rgba(255,255,255,0.1); border: 2px solid rgba(255,255,255,0.2); border-radius: 6px; color: white; cursor: pointer; font-size: 12px;">Hard Monsters</button>
+        <button id="soloEasy" class="solo-difficulty-btn" data-preset="easy" onclick="setSoloDifficulty('easy')"
+          style="flex: 1; padding: 8px; background: rgba(255,255,255,0.1); border: 2px solid rgba(255,255,255,0.2); border-radius: 6px; color: white; cursor: pointer; font-size: 12px;">Easy
+          Monsters</button>
+        <button id="soloNormal" class="solo-difficulty-btn active" data-preset="normal"
+          onclick="setSoloDifficulty('normal')"
+          style="flex: 1; padding: 8px; background: rgba(100,150,255,0.3); border: 2px solid rgba(100,150,255,0.5); border-radius: 6px; color: white; cursor: pointer; font-size: 12px;">Normal</button>
+        <button id="soloHard" class="solo-difficulty-btn" data-preset="hard" onclick="setSoloDifficulty('hard')"
+          style="flex: 1; padding: 8px; background: rgba(255,255,255,0.1); border: 2px solid rgba(255,255,255,0.2); border-radius: 6px; color: white; cursor: pointer; font-size: 12px;">Hard
+          Monsters</button>
+      </div>
+    </div>
+
+    <!-- Game Speed Selector for Solo -->
+    <div id="speedSettings" style="margin-bottom: 20px;">
+      <label style="display: block; margin-bottom: 10px; font-weight: bold; font-size: 14px;">Game Speed:</label>
+      <div style="display: flex; gap: 8px; margin-bottom: 15px;">
+        <button id="speedSlow" class="speed-btn" data-speed="slow" onclick="setGameSpeed('slow')"
+          style="flex: 1; padding: 8px; background: rgba(255,255,255,0.1); border: 2px solid rgba(255,255,255,0.2); border-radius: 6px; color: white; cursor: pointer; font-size: 12px;">Slow</button>
+        <button id="speedNormal" class="speed-btn active" data-speed="normal" onclick="setGameSpeed('normal')"
+          style="flex: 1; padding: 8px; background: rgba(100,150,255,0.3); border: 2px solid rgba(100,150,255,0.5); border-radius: 6px; color: white; cursor: pointer; font-size: 12px;">Normal</button>
+        <button id="speedFast" class="speed-btn" data-speed="fast" onclick="setGameSpeed('fast')"
+          style="flex: 1; padding: 8px; background: rgba(255,255,255,0.1); border: 2px solid rgba(255,255,255,0.2); border-radius: 6px; color: white; cursor: pointer; font-size: 12px;">Fast</button>
       </div>
     </div>
 
@@ -338,29 +360,29 @@
     var quizSettings = { firstLetter: 30, missingWord: 30, categoryMatch: 25, trueFalse: 15 };
 
     // Slider UI logic
-    (function() {
+    (function () {
       const toggle = document.getElementById('quizSettingsToggle');
       const panel = document.getElementById('quizSliders');
-      toggle.addEventListener('click', function() {
+      toggle.addEventListener('click', function () {
         toggle.classList.toggle('open');
         panel.classList.toggle('visible');
       });
 
       const sliders = panel.querySelectorAll('input[type="range"]');
-      sliders.forEach(function(slider) {
-        slider.addEventListener('input', function() {
+      sliders.forEach(function (slider) {
+        slider.addEventListener('input', function () {
           const changedMode = slider.dataset.mode;
           const newVal = parseInt(slider.value, 10);
           const remaining = 100 - newVal;
 
           // Sum of other sliders
           let otherSum = 0;
-          sliders.forEach(function(s) {
+          sliders.forEach(function (s) {
             if (s.dataset.mode !== changedMode) otherSum += parseInt(s.value, 10);
           });
 
           // Redistribute proportionally
-          sliders.forEach(function(s) {
+          sliders.forEach(function (s) {
             if (s.dataset.mode !== changedMode) {
               if (otherSum === 0) {
                 s.value = Math.round(remaining / (sliders.length - 1) / 5) * 5;
@@ -372,7 +394,7 @@
 
           // Fix rounding: adjust last non-changed slider
           let total = 0;
-          sliders.forEach(function(s) { total += parseInt(s.value, 10); });
+          sliders.forEach(function (s) { total += parseInt(s.value, 10); });
           if (total !== 100) {
             for (let i = sliders.length - 1; i >= 0; i--) {
               if (sliders[i].dataset.mode !== changedMode) {
@@ -383,13 +405,31 @@
           }
 
           // Update labels and quizSettings
-          sliders.forEach(function(s) {
+          sliders.forEach(function (s) {
             s.parentElement.querySelector('.pct').textContent = s.value + '%';
             quizSettings[s.dataset.mode] = parseInt(s.value, 10);
           });
         });
       });
     })();
+
+    // Game speed selection
+    var selectedGameSpeed = 'normal';
+    function setGameSpeed(speed) {
+      selectedGameSpeed = speed;
+      // Update button active states
+      document.querySelectorAll('.speed-btn').forEach(btn => {
+        btn.classList.remove('active');
+        btn.style.background = 'rgba(255,255,255,0.1)';
+        btn.style.border = '2px solid rgba(255,255,255,0.2)';
+      });
+      const activeBtn = document.querySelector(`.speed-btn[data-speed="${speed}"]`);
+      if (activeBtn) {
+        activeBtn.classList.add('active');
+        activeBtn.style.background = 'rgba(100,150,255,0.3)';
+        activeBtn.style.border = '2px solid rgba(100,150,255,0.5)';
+      }
+    }
   </script>
   <script src="game.js?v=2.05"></script>
 

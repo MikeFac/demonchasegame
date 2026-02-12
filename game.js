@@ -140,6 +140,8 @@ function createTintedSprite(baseImage, tintColor) {
 }
 let PLAYER_SPEED = 5;
 let MONSTER_SPEED = 1; // Slower monster speed
+let gameSpeedMultiplier = 1.0; // Controlled by server (0.5 = slow, 1.0 = normal, 1.3 = fast)
+
 
 const ATTACK_RATE = 700; // milliseconds (0.5 seconds)
 const MAX_HEALING_POINTS = 2; // Maximum number of healing points on the screen
@@ -351,10 +353,11 @@ function startGame(mode, roomId) {
 
     init().then(() => {
         if (mode === 'solo') {
-            // Get solo game settings (difficulty + quiz balance)
+            // Get solo game settings (difficulty + quiz balance + speed)
             const soloDifficulty = window.soloDifficulty || 'normal';
+            const gameSpeed = window.selectedGameSpeed || 'normal';
             const quizSettings = getQuizSettingsFromSliders();
-            network.sendStartSoloGame(soloDifficulty, quizSettings);
+            network.sendStartSoloGame(soloDifficulty, quizSettings, gameSpeed);
         } else if (mode === 'join' && roomId) {
             network.sendJoinGame(roomId);
         }
@@ -732,6 +735,11 @@ async function init() {
                         }
                     });
                 }
+            },
+            onGameSpeedUpdate: (speed) => {
+                const multipliers = { slow: 0.3, normal: 0.5, fast: 1.0 };
+                gameSpeedMultiplier = multipliers[speed] || 0.5;
+                console.log(`Game speed set to ${speed} (${gameSpeedMultiplier}x)`);
             }
         };
 
@@ -1370,8 +1378,9 @@ function gameLoop() {
             }
 
             if (distance > THRESHOLD_DISTANCE) {
-                // Sandals of Peace: +50% move speed
-                const moveSpeed = activeBuffs.sandals.active ? PLAYER_SPEED * Constants.SANDALS_SPEED_BOOST : PLAYER_SPEED;
+                // Apply game speed multiplier to all speeds
+                const baseSpeed = activeBuffs.sandals.active ? PLAYER_SPEED * Constants.SANDALS_SPEED_BOOST : PLAYER_SPEED;
+                const moveSpeed = baseSpeed * gameSpeedMultiplier;
 
                 // Calculate new position
                 const newX = player.x + (dx / distance) * moveSpeed;

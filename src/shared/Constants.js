@@ -62,7 +62,12 @@ const Constants = {
     SANDALS_DURATION: 12000,            // 12s
     SANDALS_SPEED_BOOST: 1.5,           // +50% move speed
     SANDALS_SLOW_RADIUS: 150,           // pixels
-    SANDALS_SLOW_FACTOR: 0.7            // 30% slow
+    SANDALS_SLOW_FACTOR: 0.7,           // 30% slow
+
+    // Game Speed Presets
+    SPEED_SLOW: 0.3,
+    SPEED_NORMAL: 0.5,
+    SPEED_FAST: 1.0
 };
 
 if (typeof module !== 'undefined' && module.exports) {

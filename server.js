@@ -79,11 +79,24 @@ io.on('connection', (socket) => {
     const soloRoomId = `solo-${socket.id}`;
     const GameConfig = require('./src/server/config/GameConfig');
 
-    // Use player's selected difficulty and quiz settings, or defaults
+    // Use player's selected difficulty, quiz settings, and game speed
     const difficulty = options.difficulty || 'normal';
     const quizSettings = options.quizSettings || null;
+    const gameSpeed = options.gameSpeed || 'normal';
+
+    // Map speed to multiplier
+    const Constants = require('./src/shared/Constants');
+    const speedMultipliers = {
+      slow: Constants.SPEED_SLOW,
+      normal: Constants.SPEED_NORMAL,
+      fast: Constants.SPEED_FAST
+    };
+    const speedMultiplier = speedMultipliers[gameSpeed] || Constants.SPEED_NORMAL;
 
     const gameConfig = GameConfig.createGameConfig(difficulty, quizSettings);
+    gameConfig.gameSpeed = gameSpeed;
+    gameConfig.speedMultiplier = speedMultiplier;
+
     const game = new Game(io, soloRoomId, gameConfig);
 
     gameInstances.set(soloRoomId, game);
@@ -94,6 +107,9 @@ io.on('connection', (socket) => {
     socket.join(`room:${soloRoomId}`);
     game.addPlayer(socket);
     game.start();
+
+    // Emit game speed to client
+    socket.emit('gameSpeedUpdate', gameSpeed);
   });
 
   // Join an existing multiplayer game (from lobby redirect)

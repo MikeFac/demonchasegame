@@ -24,7 +24,8 @@ class Network {
             onPlayerLeftGame: null,
             onPlayerDisconnected: null,
             onPlayerReconnected: null,
-            onGameEnded: null
+            onGameEnded: null,
+            onGameSpeedUpdate: null
         };
     }
 
@@ -179,6 +180,11 @@ class Network {
         this.socket.on('gameEnded', (data) => {
             if (this.callbacks.onGameEnded) this.callbacks.onGameEnded(data);
         });
+
+        // Game speed update
+        this.socket.on('gameSpeedUpdate', (speed) => {
+            if (this.callbacks.onGameSpeedUpdate) this.callbacks.onGameSpeedUpdate(speed);
+        });
     }
 
     // ==================== SEND METHODS ====================
@@ -307,10 +313,11 @@ class Network {
      * Request a solo game instance from the server
      * @param {string} difficulty - 'easy', 'normal', or 'hard'
      * @param {Object} quizSettings - Quiz mode distribution
+     * @param {string} gameSpeed - 'slow', 'normal', or 'fast'
      */
-    sendStartSoloGame(difficulty = 'normal', quizSettings = null) {
+    sendStartSoloGame(difficulty = 'normal', quizSettings = null, gameSpeed = 'normal') {
         if (this.socket) {
-            this.socket.emit('startSoloGame', { difficulty, quizSettings });
+            this.socket.emit('startSoloGame', { difficulty, quizSettings, gameSpeed });
         }
     }
 
