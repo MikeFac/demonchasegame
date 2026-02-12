@@ -275,16 +275,14 @@ class MonsterManager {
             if (player) {
                 player.xp = (player.xp || 0) + 10;
 
-                // Level up check (matches client thresholds)
+                // Level up check - ONLY check next level threshold to prevent multi-level jumps
                 const xpReqs = LevelConfig.levelXPRequirements;
-                for (let i = player.level; i < xpReqs.length; i++) {
-                    if (player.xp >= xpReqs[i]) {
-                        player.level = i + 1;
-                        player.maxHealth = 50 + player.level * 50;
-                        player.health = player.maxHealth;
-                    } else {
-                        break;
-                    }
+                const nextLevelIndex = player.level; // next level is current+1, which is at index player.level
+                if (nextLevelIndex < xpReqs.length && player.xp >= xpReqs[nextLevelIndex]) {
+                    player.level = nextLevelIndex + 1;
+                    player.maxHealth = 50 + player.level * 50;
+                    player.health = player.maxHealth;
+                    console.log(`Player ${attackerPlayerCode} reached level ${player.level}!`);
                 }
             }
 

@@ -147,17 +147,14 @@ class PlayerManager {
                 // Award XP
                 player.xp += 10; // 10 XP per kill
 
-                // Level Up Logic - matches client thresholds
+                // Level Up Logic - ONLY check next level threshold to prevent multi-level jumps
                 const xpReqs = LevelConfig.levelXPRequirements;
-                for (let i = player.level; i < xpReqs.length; i++) {
-                    if (player.xp >= xpReqs[i]) {
-                        player.level = i + 1;
-                        player.maxHealth = 50 + player.level * 50;
-                        player.health = player.maxHealth; // Full heal on level up
-                        console.log(`Player ${playerCode} reached level ${player.level}!`);
-                    } else {
-                        break;
-                    }
+                const nextLevelIndex = player.level; // next level is current+1, which is at index player.level
+                if (nextLevelIndex < xpReqs.length && player.xp >= xpReqs[nextLevelIndex]) {
+                    player.level = nextLevelIndex + 1;
+                    player.maxHealth = 50 + player.level * 50;
+                    player.health = player.maxHealth; // Full heal on level up
+                    console.log(`Player ${playerCode} reached level ${player.level}!`);
                 }
 
                 io.emit('monsterKilled', { monsterId: targetMonster.id, killer: playerCode, x: deathX, y: deathY });

@@ -383,7 +383,7 @@ function launchVerseTest(text, ref, difficulty) {
         verseTestShieldActive = true;
     }
 
-    VerseTestScreen.startTest(text, ref, difficulty, function(passed) {
+    VerseTestScreen.startTest(text, ref, difficulty, function (passed) {
         // Always deactivate test shield
         verseTestShieldActive = false;
 
@@ -469,7 +469,7 @@ function initializeVerseCounter() {
 }
 
 // Callback for QuizManager to notify of correct answers
-window.onQuizCorrectAnswer = function(quizMode, verseReference) {
+window.onQuizCorrectAnswer = function (quizMode, verseReference) {
     // Track daily challenge progress (only first_letter mode)
     if (quizMode === 'first_letter') {
         if (!dailyChallengeCompleted && dailyChallengeProgress < dailyChallengeGoal) {
@@ -720,7 +720,7 @@ async function init() {
                     quizSettings = config.quizSettings;
                     // Update in-game slider display to match server settings
                     const sliders = document.querySelectorAll('#quizSliders input[type="range"]');
-                    sliders.forEach(function(slider) {
+                    sliders.forEach(function (slider) {
                         const mode = slider.dataset.mode;
                         if (config.quizSettings[mode] !== undefined) {
                             slider.value = config.quizSettings[mode];
@@ -833,7 +833,7 @@ async function init() {
         console.log('Initialised currentVerseIndex: ' + currentVerseIndex);
 
         // Set up the timer to display a new verse every 10 seconds
-        verseTimer = setInterval(function() {
+        verseTimer = setInterval(function () {
             QuizManager.pickQualityVerse();
         }, VERSECHANGETIME);
 
@@ -1562,12 +1562,19 @@ function gameLoop() {
             }
         });
 
-        // Check collectible collection (unified for all item types)
+        //Check collectible collection (unified for all item types)
         collectibles.forEach((item) => {
             let dx = item.x - player.x;
             let dy = item.y - player.y;
             let distance = Math.sqrt(dx * dx + dy * dy);
             if (distance < player.width / 2 + item.width / 2) {
+                // NEW: Track collected IDs to prevent duplicate messages
+                if (!window._collectedItems) window._collectedItems = new Set();
+                if (window._collectedItems.has(item.id)) {
+                    return; // Already collected this item, skip
+                }
+                window._collectedItems.add(item.id);
+
                 inventory[item.type]++;
                 network.sendCollectCollectible(item.id);
                 healingRecharge.play();
@@ -1805,16 +1812,16 @@ function handlePlayerAttack(monster) {
 function updatePlayerLevel(xp) {
     console.log('Checking if we should update level');
     const previousLevel = player.level;
-    for (let i = player.level; i < levelXPRequirements.length; i++) {
-        if (xp >= levelXPRequirements[i]) {
-            player.level = i + 1;
-            player.maxHealth = 50 + player.level * 50;
-            player.health = player.maxHealth; // Set player's health to the new max health
-            console.log(`Player reached level ${player.level}!`);
-        } else {
-            break;
-        }
+
+    // ONLY check next level threshold to prevent multi-level jumps
+    const nextLevelIndex = player.level; // next level is current+1, which is at index player.level
+    if (nextLevelIndex < levelXPRequirements.length && xp >= levelXPRequirements[nextLevelIndex]) {
+        player.level = nextLevelIndex + 1;
+        player.maxHealth = 50 + player.level * 50;
+        player.health = player.maxHealth; // Set player's health to the new max health
+        console.log(`Player reached level ${player.level}!`);
     }
+
     // Play level up sound if level increased
     if (player.level > previousLevel) {
         levelUpSound.play();
