@@ -7,7 +7,7 @@ const LevelConfig = {
             playerSpeed: 5,
             monsterSpeed: 5,
             spawnRate: 10000,
-            maxMonsters: 8,
+            maxMonsters: 18,
             terrainTheme: 'stone'
         },
         2: {
@@ -17,7 +17,7 @@ const LevelConfig = {
             playerSpeed: 6,
             monsterSpeed: 7,
             spawnRate: 8000,
-            maxMonsters: 10,
+            maxMonsters: 22,
             terrainTheme: 'earth'
         },
         3: {
@@ -27,7 +27,7 @@ const LevelConfig = {
             playerSpeed: 6,
             monsterSpeed: 9,
             spawnRate: 5000,
-            maxMonsters: 12,
+            maxMonsters: 27,
             terrainTheme: 'crystal'
         },
         4: {
@@ -37,7 +37,7 @@ const LevelConfig = {
             playerSpeed: 7,
             monsterSpeed: 10,
             spawnRate: 4000,
-            maxMonsters: 14,
+            maxMonsters: 31,
             terrainTheme: 'shadow'
         },
         5: {
@@ -47,7 +47,7 @@ const LevelConfig = {
             playerSpeed: 8,
             monsterSpeed: 12,
             spawnRate: 3000,
-            maxMonsters: 16,
+            maxMonsters: 36,
             terrainTheme: 'void'
         }
     },
