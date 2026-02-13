@@ -35,10 +35,11 @@ async function main() {
     console.log(`✅ All ${pending.length} verses queued for generation`);
     console.log('Check progress with: node test/verse-song-test.js\n');
 
+    const keepAliveTime = (pending.length * 2000) + 5000;
     setTimeout(() => {
-      console.log('Closing connection. Generation continues in background.');
+      console.log(`✅ All ${pending.length} songs queued. Daemon will process generation and downloads.`);
       process.exit(0);
-    }, 5000);
+    }, keepAliveTime);
   } catch (err) {
     console.error('❌ Error:', err);
     process.exit(1);

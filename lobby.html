@@ -332,6 +332,18 @@
             <input type="text" id="roomNameInput" placeholder="Room name (optional)">
 
             <div style="margin: 20px 0;">
+                <label style="display: block; margin-bottom: 10px; font-weight: bold;">Map Style:</label>
+                <select id="mapStyleInput"
+                    style="width: 100%; padding: 15px; border-radius: 10px; border: none; font-size: 1.1em; background: rgba(255, 255, 255, 0.9);">
+                    <option value="classic">Classic Dungeon</option>
+                    <option value="narrow">Narrow Paths</option>
+                    <option value="labyrinth">Complex Labyrinth</option>
+                    <option value="open">Open Plains</option>
+                    <option value="city">Grid City</option>
+                </select>
+            </div>
+
+            <div style="margin: 20px 0;">
                 <label style="display: block; margin-bottom: 10px; font-weight: bold;">Monster Difficulty:</label>
                 <div class="difficulty-selector">
                     <button class="preset-btn" data-preset="easy" onclick="selectPreset('easy')">
@@ -354,33 +366,36 @@
                 <div class="quiz-slider-group">
                     <div class="slider-item">
                         <label>First Letter <span style="opacity:0.6">(Hard)</span></label>
-                        <input type="range" min="0" max="100" value="30" step="5"
-                               data-mode="firstLetter" class="quiz-slider">
+                        <input type="range" min="0" max="100" value="30" step="5" data-mode="firstLetter"
+                            class="quiz-slider">
                         <span class="pct">30%</span>
                     </div>
                     <div class="slider-item">
                         <label>Missing Word <span style="opacity:0.6">(Medium)</span></label>
-                        <input type="range" min="0" max="100" value="30" step="5"
-                               data-mode="missingWord" class="quiz-slider">
+                        <input type="range" min="0" max="100" value="30" step="5" data-mode="missingWord"
+                            class="quiz-slider">
                         <span class="pct">30%</span>
                     </div>
                     <div class="slider-item">
                         <label>Category Match <span style="opacity:0.6">(Easy)</span></label>
-                        <input type="range" min="0" max="100" value="25" step="5"
-                               data-mode="categoryMatch" class="quiz-slider">
+                        <input type="range" min="0" max="100" value="25" step="5" data-mode="categoryMatch"
+                            class="quiz-slider">
                         <span class="pct">25%</span>
                     </div>
                     <div class="slider-item">
                         <label>True / False <span style="opacity:0.6">(Easiest)</span></label>
-                        <input type="range" min="0" max="100" value="15" step="5"
-                               data-mode="trueFalse" class="quiz-slider">
+                        <input type="range" min="0" max="100" value="15" step="5" data-mode="trueFalse"
+                            class="quiz-slider">
                         <span class="pct">15%</span>
                     </div>
                 </div>
                 <div class="quiz-preset-btns">
-                    <button class="btn-quiz-preset" data-qpreset="easy" onclick="applyQuizPreset('easy')">Easy Quizzes</button>
-                    <button class="btn-quiz-preset active" data-qpreset="balanced" onclick="applyQuizPreset('balanced')">Balanced</button>
-                    <button class="btn-quiz-preset" data-qpreset="hard" onclick="applyQuizPreset('hard')">Hard Quizzes</button>
+                    <button class="btn-quiz-preset" data-qpreset="easy" onclick="applyQuizPreset('easy')">Easy
+                        Quizzes</button>
+                    <button class="btn-quiz-preset active" data-qpreset="balanced"
+                        onclick="applyQuizPreset('balanced')">Balanced</button>
+                    <button class="btn-quiz-preset" data-qpreset="hard" onclick="applyQuizPreset('hard')">Hard
+                        Quizzes</button>
                 </div>
             </div>
 
@@ -673,10 +688,12 @@
 
         function createRoom() {
             const name = document.getElementById('roomNameInput').value.trim();
+            const mapStyle = document.getElementById('mapStyleInput').value;
             const quizSettings = getQuizSettingsFromSliders();
             socket.emit('createRoom', {
                 name,
                 preset: selectedPreset,
+                mapStyle: mapStyle,
                 quizSettings: quizSettings
             }, (result) => {
                 if (result.success) {

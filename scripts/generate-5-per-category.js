@@ -13,7 +13,7 @@ async function main() {
 
     const globalVerses = loadSelectedVerses();
     const categories = await CategoryStyle.find().sort({ category: 1 });
-    
+
     // Group verses by category
     const byCategory = {};
     for (const verse of globalVerses) {
@@ -23,7 +23,7 @@ async function main() {
       byCategory[verse.Category].push(verse);
     }
 
-    console.log(`📊 Generating 5 songs per category...\n`);
+    console.log(`📊 Generating up to 10 songs per category...\n`);
     console.log('═'.repeat(70) + '\n');
 
     let totalCreated = 0;
@@ -33,8 +33,8 @@ async function main() {
 
     for (const category of categories) {
       const verses = byCategory[category.category] || [];
-      const targetCount = Math.min(5, verses.length);
-      
+      const targetCount = Math.min(10, verses.length);
+
       console.log(`📚 ${category.category} (targeting ${targetCount}/${verses.length} verses)`);
 
       let categoryCreated = 0;
@@ -53,7 +53,7 @@ async function main() {
           }
 
           // Create new song
-          const parts = verse.Reference.match(/^([A-Za-z\s]+)\s+(\d+):(\d+)(?:-(\d+))?$/);
+          const parts = verse.Reference.match(/^([\dA-Za-z\s]+)\s+(\d+):(\d+)(?:-(\d+))?$/);
           if (!parts) {
             throw new Error(`Invalid reference format: ${verse.Reference}`);
           }

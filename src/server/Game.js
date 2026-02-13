@@ -1,7 +1,7 @@
 const Constants = require('../shared/Constants');
 const LevelConfig = require('../shared/LevelConfig');
 const WallGrid = require('../shared/WallGrid');
-const generateMaze = require('./utils/Maze');
+const MapGeneratorFactory = require('./utils/map-generators');
 const Physics = require('./utils/Physics');
 const MonsterManager = require('./entities/MonsterManager');
 const PlayerManager = require('./entities/PlayerManager');
@@ -32,8 +32,9 @@ class Game {
         this.constants = this.gameConfig.constants;
         this.levelData = this.gameConfig.levelData;
 
-        // Generate dungeon maze
-        const mazeResult = generateMaze(this.constants.WORLD_WIDTH, this.constants.WORLD_HEIGHT, this.constants.CELL_SIZE);
+        // Generate dungeon maze based on config style
+        const mapStyle = this.gameConfig.mapStyle || 'classic';
+        const mazeResult = MapGeneratorFactory.generateMap(mapStyle, this.constants.WORLD_WIDTH, this.constants.WORLD_HEIGHT, this.constants.CELL_SIZE);
         this.walls = mazeResult.walls;
         this.wallGrid = new WallGrid(mazeResult.grid, mazeResult.rows, mazeResult.cols, this.constants.CELL_SIZE);
         this.mazeGridData = {
@@ -55,7 +56,9 @@ class Game {
             terrainTheme: this.levelData[1].terrainTheme || 'stone',
             maxSpawns: this.levelData[1].maxMonsters,
             spawnsLeft: this.levelData[1].maxMonsters,
-            monstersKilled: 0
+            spawnsLeft: this.levelData[1].maxMonsters,
+            monstersKilled: 0,
+            monstersToKill: this.levelData[1].monstersToKill || 10
         };
 
         // Managers (pass wallGrid for spatial collision and config)
@@ -94,11 +97,8 @@ class Game {
                 this.update();
             }, 1000 / 60),
 
-            // Monster Spawning Loop (use config spawn rate)
-            setInterval(() => {
-                if (!this.shouldRun) return;
-                this.monsterManager.spawnMonster();
-            }, this.levelData[1].spawnRate),
+            // Monster Spawning Loop (dynamic based on level spawn rate)
+            this.scheduleNextSpawn(),
 
             // Healing Point Spawning Loop (use config interval)
             setInterval(() => {
@@ -115,9 +115,25 @@ class Game {
         ];
     }
 
+    scheduleNextSpawn() {
+        if (!this.shouldRun) return;
+
+        // Get current level's spawn rate
+        const currentLevel = this.gameState.gameLevel || 1;
+        const spawnRate = this.levelData[currentLevel] ? this.levelData[currentLevel].spawnRate : 5000;
+
+        this.spawnTimeout = setTimeout(() => {
+            if (this.shouldRun) {
+                this.monsterManager.spawnMonster();
+                this.scheduleNextSpawn(); // Reschedule
+            }
+        }, spawnRate);
+    }
+
     stop() {
         this.shouldRun = false;
         this.intervals.forEach(id => clearInterval(id));
+        if (this.spawnTimeout) clearTimeout(this.spawnTimeout);
         this.intervals = [];
         console.log(`Game stopped (room: ${this.roomId || 'global'})`);
     }
@@ -384,6 +400,33 @@ class Game {
         // Check multiplayer game end condition
         this._checkGameEnd();
 
+
+        // Check Level Completion (Server-side trigger)
+        if (this.gameState.monstersKilled >= (this.gameState.monstersToKill || 999) && !this._levelAdvancing && !this._gameEnded) {
+            // Simulate level completion logic
+            // We can reuse the socket handler logic by extracting it or just replicating it here
+            // Replicating for clarity/server-authority:
+
+            // Check if this was the last level — trigger victory
+            if (this.gameState.gameLevel >= Object.keys(this.levelData).length) {
+                this._endGame('victory');
+            } else {
+                this._levelAdvancing = true;
+                const nextLevel = this.gameState.gameLevel + 1;
+
+                // Broadcast countdown to all clients
+                this.io.emit('levelAdvancing', { countdown: 5, nextLevel });
+
+                // After 5 seconds, actually advance
+                setTimeout(() => {
+                    this.gameState.gameLevel = nextLevel;
+                    this.resetLevelData(this.gameState.gameLevel);
+                    this._levelAdvancing = false;
+                    this.io.emit('gameStateUpdate', this.gameState);
+                }, 5000);
+            }
+        }
+
         // Broadcast State (walls are NOT included)
         this.io.emit('gameStateUpdate', this.gameState);
     }
@@ -470,14 +513,17 @@ class Game {
         if (this.levelData[level]) {
             this.gameState.maxSpawns = this.levelData[level].maxMonsters;
             this.gameState.spawnsLeft = this.levelData[level].maxMonsters;
+            this.gameState.spawnsLeft = this.levelData[level].maxMonsters;
             this.gameState.monstersKilled = 0;
+            this.gameState.monstersToKill = this.levelData[level].monstersToKill || (10 + level * 5); // Fallback if missing
             this.gameState.monsters = [];
             this.gameState.healingPoints = [];
             this.gameState.collectibles = [];
             this.gameState.terrainTheme = this.levelData[level].terrainTheme || 'stone';
 
             // Regenerate maze for new level
-            const mazeResult = generateMaze(this.constants.WORLD_WIDTH, this.constants.WORLD_HEIGHT, this.constants.CELL_SIZE);
+            const mapStyle = this.gameConfig.mapStyle || 'classic';
+            const mazeResult = MapGeneratorFactory.generateMap(mapStyle, this.constants.WORLD_WIDTH, this.constants.WORLD_HEIGHT, this.constants.CELL_SIZE);
             this.walls = mazeResult.walls;
             this.wallGrid = new WallGrid(mazeResult.grid, mazeResult.rows, mazeResult.cols, this.constants.CELL_SIZE);
             this.mazeGridData = {

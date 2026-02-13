@@ -151,13 +151,7 @@ const styles = [
     generationDuration: 120,
     repeatCount: 3
   },
-  {
-    category: 'ShareGospel',
-    generationStyle: 'contemporary pop',
-    description: 'Modern and catchy pop—accessible and inviting',
-    generationDuration: 120,
-    repeatCount: 3
-  }
+
 ];
 
 async function seedStyles() {

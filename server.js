@@ -96,6 +96,7 @@ io.on('connection', (socket) => {
     const gameConfig = GameConfig.createGameConfig(difficulty, quizSettings);
     gameConfig.gameSpeed = gameSpeed;
     gameConfig.speedMultiplier = speedMultiplier;
+    gameConfig.mapStyle = options.mapStyle || 'classic';
 
     const game = new Game(io, soloRoomId, gameConfig);
 
@@ -211,8 +212,10 @@ io.on('connection', (socket) => {
       const GameConfig = require('./src/server/config/GameConfig');
       const gameConfig = GameConfig.createGameConfig(
         room.settings.preset,
+        room.settings.preset,
         room.settings.quizSettings
       );
+      gameConfig.mapStyle = room.settings.mapStyle || 'classic';
 
       // Create new Game instance for this room with config
       const game = new Game(io, roomId, gameConfig);

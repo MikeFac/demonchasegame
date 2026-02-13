@@ -292,6 +292,18 @@
       </div>
     </div>
 
+    <!-- Map Style -->
+    <div style="margin-bottom: 20px;">
+      <label for="mapStyleSelect" style="display: block; margin-bottom: 5px;">Map Style:</label>
+      <select id="mapStyleSelect" style="padding: 5px; width: 100%; max-width: 200px;">
+        <option value="classic" selected>Classic Dungeon</option>
+        <option value="narrow">Narrow Paths</option>
+        <option value="labyrinth">Complex Labyrinth</option>
+        <option value="open">Open Plains</option>
+        <option value="city">Grid City</option>
+      </select>
+    </div>
+
     <button id="btnSolo">Start Solo Game</button>
     <button id="btnMultiplayer">Join Multiplayer</button>
     <button id="btnInstructions">How to Play</button>
@@ -431,7 +443,17 @@
       }
     }
   </script>
-  <script src="game.js?v=2.05"></script>
+  <script src="game.js?v=2.06"></script>
+  <script>
+    // Override startSoloGame to include mapStyle
+    const originalStartSoloGame = window.startSoloGame; // There isn't one globally exposed like this usually, let's check how button is bound. 
+    // Ah, the buttons are bound via ID in game.js usually? or inline? 
+    // Looking at the file content, buttons have IDs but no inline onclick.
+    // So game.js likely attaches listeners.
+    // I should check game.js to see how it handles the start button.
+    // BUT, I can just add a listener here that might override or I should edit game.js?
+    // Wait, let's check game.js first.
+  </script>
 
   <script>
     // Instructions pages

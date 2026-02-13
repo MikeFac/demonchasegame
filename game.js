@@ -364,8 +364,9 @@ function startGame(mode, roomId) {
             // Get solo game settings (difficulty + quiz balance + speed)
             const soloDifficulty = window.soloDifficulty || 'normal';
             const gameSpeed = window.selectedGameSpeed || 'normal';
+            const mapStyle = document.getElementById('mapStyleSelect') ? document.getElementById('mapStyleSelect').value : 'classic';
             const quizSettings = getQuizSettingsFromSliders();
-            network.sendStartSoloGame(soloDifficulty, quizSettings, gameSpeed);
+            network.sendStartSoloGame(soloDifficulty, quizSettings, gameSpeed, mapStyle);
         } else if (mode === 'join' && roomId) {
             network.sendJoinGame(roomId);
         }
@@ -807,7 +808,7 @@ async function init() {
 
 
         // this might get replaced in PRD on the server - check
-        ALL_QUALITIES = ['Faith', 'Courage', 'Knowledge', 'Love', 'Wisdom', 'Healing', 'Joy', 'Focus', 'Prosperity', 'Purity', 'Humility', 'Forgiveness', 'Hope', 'Praise', 'Intercession', 'Endurance', 'Good News', 'Identity', 'Deliverance', 'Power', 'Prophecy', 'ShareGospel'];
+        ALL_QUALITIES = ['Faith', 'Courage', 'Knowledge', 'Love', 'Wisdom', 'Healing', 'Joy', 'Focus', 'Prosperity', 'Purity', 'Humility', 'Forgiveness', 'Hope', 'Praise', 'Intercession', 'Endurance', 'Good News', 'Identity', 'Deliverance', 'Power', 'Prophecy'];
 
         if (PRD) {
             try {

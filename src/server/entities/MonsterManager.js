@@ -35,8 +35,9 @@ class MonsterManager {
 
                 // Build list of valid positions across the entire world
                 const validPositions = [];
-                for (let testX = 100; testX < Constants.WORLD_WIDTH - 100; testX += 150) {
-                    for (let testY = 100; testY < Constants.WORLD_HEIGHT - 100; testY += 150) {
+                // Use smaller step (50px) to find valid spots in narrow corridors (checking 25px grid is ideal but costly, 50px is good compromise)
+                for (let testX = 50; testX < Constants.WORLD_WIDTH - 50; testX += 50) {
+                    for (let testY = 50; testY < Constants.WORLD_HEIGHT - 50; testY += 50) {
                         if (Physics.isOverlapping(testX, testY, Constants.MONSTER_WIDTH, Constants.MONSTER_HEIGHT, gameState, null, this.wallGrid)) continue;
 
                         // Check distance from all players
@@ -60,8 +61,8 @@ class MonsterManager {
                 // Fallback: relax to 200px minimum distance if nothing found
                 if (validPositions.length === 0) {
                     const relaxedDistance = 200;
-                    for (let testX = 100; testX < Constants.WORLD_WIDTH - 100; testX += 150) {
-                        for (let testY = 100; testY < Constants.WORLD_HEIGHT - 100; testY += 150) {
+                    for (let testX = 50; testX < Constants.WORLD_WIDTH - 50; testX += 50) {
+                        for (let testY = 50; testY < Constants.WORLD_HEIGHT - 50; testY += 50) {
                             if (Physics.isOverlapping(testX, testY, Constants.MONSTER_WIDTH, Constants.MONSTER_HEIGHT, gameState, null, this.wallGrid)) continue;
                             let tooClose = false;
                             for (const code of playerCodes) {
@@ -123,7 +124,9 @@ class MonsterManager {
                 }
 
                 // Apply health multiplier from config
-                const baseHealth = 10;
+                // Scale base health by level: Level 1 = 10, Level 5 = 30 (+5 per level)
+                const baseHealth = 10 + (gameState.gameLevel - 1) * 5;
+
                 // Stronghold demons (Pride, Condemnation, Unbelief) get 2x HP
                 const isStronghold = Constants.STRONGHOLD_DEMONS.includes(demonType);
                 const hpMult = isStronghold ? Constants.STRONGHOLD_HP_MULTIPLIER : 1.0;
@@ -353,6 +356,30 @@ class MonsterManager {
 
             gameState.monsters.splice(monsterIndex, 1);
             gameState.monstersKilled = (gameState.monstersKilled || 0) + 1;
+
+            // Check Level Completion
+            if (gameState.monstersKilled >= (gameState.monstersToKill || 999)) {
+                // Emit level completion event to Game.js via io (Game.js listens on socket, but we need to trigger it internally or via emit)
+                // Since MonsterManager doesn't have direct access to Game instance methods, we'll emit a special internal event or 
+                // relying on Game.js to check this state.
+                // BETTER APPROACH: Game.js should check this in its update loop or listener.
+                // However, for now, let's emit a 'levelCompleted' event that the server listens to? 
+                // No, Game.js handles 'levelCompleted' from CLIENT. 
+                // Let's emit to all clients that level is done, and let ONE client trigger it? 
+                // OR better, let's just emit 'levelProgress' and let Game.js check it in update()?
+
+                // actually Game.js passes `io` to MonsterManager. 
+                // The current architecture relies on a client sending 'levelCompleted'.
+                // We should update that: Server should detect it.
+
+                // Let's emit an event that clients can use to show "Level Complete" UI,
+                // and then *they* send 'levelCompleted' as before (legacy compat), 
+                // OR we upgrade Game.js to detect this.
+
+                // For now, let's just log it and rely on Game.js to check it in update() or add a check here if we pass a callback.
+                // But wait, I can just emit to the room.
+                io.emit('levelProgress', { killed: gameState.monstersKilled, required: gameState.monstersToKill });
+            }
 
             // Award XP to attacker
             const player = gameState.players[attackerPlayerCode];

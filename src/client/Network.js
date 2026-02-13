@@ -322,9 +322,9 @@ class Network {
      * @param {Object} quizSettings - Quiz mode distribution
      * @param {string} gameSpeed - 'slow', 'normal', or 'fast'
      */
-    sendStartSoloGame(difficulty = 'normal', quizSettings = null, gameSpeed = 'normal') {
+    sendStartSoloGame(difficulty = 'normal', quizSettings = null, gameSpeed = 'normal', mapStyle = 'classic') {
         if (this.socket) {
-            this.socket.emit('startSoloGame', { difficulty, quizSettings, gameSpeed });
+            this.socket.emit('startSoloGame', { difficulty, quizSettings, gameSpeed, mapStyle });
         }
     }
 

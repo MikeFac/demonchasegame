@@ -149,7 +149,8 @@ class RoomManager {
                 category: options.category || '',
                 preset: presetName,
                 presetDisplay: GameConfig.PRESETS[presetName].name,
-                quizSettings: quizSettings
+                quizSettings: quizSettings,
+                mapStyle: options.mapStyle || 'classic'
             },
             createdAt: new Date()
         };

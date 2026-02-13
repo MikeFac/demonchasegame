@@ -16,3 +16,6 @@ Thumbs.db
 # Environment variables
 .env
 .env.local
+
+# Generated audio files (deployed via SCP)
+public/audio/

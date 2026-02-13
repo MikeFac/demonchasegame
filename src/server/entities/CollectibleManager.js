@@ -2,12 +2,12 @@ const Constants = require('../../shared/Constants');
 const crypto = require('crypto');
 
 const COLLECTIBLE_CONFIG = {
-    sword:       { maxCount: 0, respawn: false, width: 32, height: 32 },  // Only from drops
-    belt:        { maxCount: 1, respawn: true,  width: 28, height: 28 },
-    helmet:      { maxCount: 0, respawn: false, width: 32, height: 32 },  // Only from drops
-    breastplate: { maxCount: 0, respawn: false, width: 36, height: 36 },  // Only from drops
-    sandals:     { maxCount: 1, respawn: true,  width: 28, height: 28 },
-    shield:      { maxCount: 1, respawn: false, width: 32, height: 32 }   // Spawns in maze
+    sword: { maxCount: 0, respawn: false, width: 32, height: 32 },
+    belt: { maxCount: 0, respawn: true, width: 28, height: 28 }, // Reduced freq: 0 maxCount (spawned manually)
+    helmet: { maxCount: 0, respawn: false, width: 32, height: 32 },
+    breastplate: { maxCount: 0, respawn: false, width: 36, height: 36 },
+    sandals: { maxCount: 0, respawn: true, width: 28, height: 28 }, // Reduced freq
+    shield: { maxCount: 0, respawn: false, width: 32, height: 32 }  // Reduced freq
 };
 
 // Weighted drop table for monster drops (higher = more common)
@@ -35,15 +35,15 @@ class CollectibleManager {
 
     /**
      * Spawn a collectible of the given type at a random non-wall position.
-     * Respects max count per type.
+     * Respects max count per type unless ignoreMaxCount is true.
      */
-    spawnCollectible(type) {
+    spawnCollectible(type, ignoreMaxCount = false) {
         const config = COLLECTIBLE_CONFIG[type];
         if (!config) return null;
 
         // Check max count
         const currentCount = this.gameState.collectibles.filter(c => c.type === type).length;
-        if (currentCount >= config.maxCount) return null;
+        if (!ignoreMaxCount && currentCount >= config.maxCount) return null;
 
         const { WORLD_WIDTH, WORLD_HEIGHT } = Constants;
         let x, y;
@@ -124,14 +124,14 @@ class CollectibleManager {
         // Clear existing
         this.gameState.collectibles = [];
 
-        // Spawn each type up to its maxCount
-        for (const [type, config] of Object.entries(COLLECTIBLE_CONFIG)) {
-            for (let i = 0; i < config.maxCount; i++) {
-                this.spawnCollectible(type);
-            }
-        }
+        // Spawn exactly ONE random armor piece for the level
+        const allTypes = Object.keys(COLLECTIBLE_CONFIG);
+        const randomType = allTypes[Math.floor(Math.random() * allTypes.length)];
 
-        console.log(`Level collectibles spawned: ${this.gameState.collectibles.length} items`);
+        // Force spawn ignoring maxCount
+        this.spawnCollectible(randomType, true);
+
+        console.log(`Level collectibles spawned: ${this.gameState.collectibles.length} items (Selected: ${randomType})`);
     }
 
     /**
