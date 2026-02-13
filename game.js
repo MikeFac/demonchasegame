@@ -1163,7 +1163,7 @@ function gameLoop() {
             explosionTimer,
             currentVerse: {
                 text: answerFullVerse || (currentQuiz ? currentQuiz.promptText : ''),
-                reference: organizedVerses[vQuality][currentVerseIndex].Reference
+                reference: (organizedVerses[vQuality] && organizedVerses[vQuality][currentVerseIndex]) ? organizedVerses[vQuality][currentVerseIndex].Reference : ''
             },
             quiz: answerFullVerse ? null : currentQuiz,
             menuState: {

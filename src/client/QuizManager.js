@@ -233,7 +233,8 @@
         if (!currentQuiz) return;
 
         const isCorrect = selectedOption.isCorrect;
-        const currentReference = organizedVerses[vQuality][currentVerseIndex].Reference;
+        const verseEntry = organizedVerses[vQuality] && organizedVerses[vQuality][currentVerseIndex];
+        const currentReference = verseEntry ? verseEntry.Reference : '';
 
         if (isCorrect) {
             isAnswerCorrect = true;
@@ -251,6 +252,7 @@
                 );
                 if (availableQualities.length > 0) {
                     vQuality = availableQualities[Math.floor(Math.random() * availableQualities.length)];
+                    currentVerseIndex = qualityIndex[vQuality] || 0;
                     console.log('✨ Quality rotated to: ' + vQuality);
                 }
             }
@@ -258,7 +260,8 @@
             player.ammo = (player.ammo || 0) + Constants.AMMO_REWARD;
             network.sendQuizCorrect();
 
-            answerFullVerse = organizedVerses[vQuality][currentVerseIndex].Text;
+            const correctVerse = organizedVerses[vQuality] && organizedVerses[vQuality][currentVerseIndex];
+            answerFullVerse = correctVerse ? correctVerse.Text : '';
             setAnswerResultTimeout(3000);
 
             // Track verse learning via music (if available)
@@ -273,7 +276,8 @@
         } else {
             isAnswerCorrect = false;
             qualityIndex[vQuality] = (qualityIndex[vQuality] + 1) % organizedVerses[vQuality].length;
-            answerFullVerse = organizedVerses[vQuality][currentVerseIndex].Text;
+            const wrongVerse = organizedVerses[vQuality] && organizedVerses[vQuality][currentVerseIndex];
+            answerFullVerse = wrongVerse ? wrongVerse.Text : '';
             setAnswerResultTimeout(3000);
 
             if (!incorrectAnswerReferences.includes(currentReference)) {
