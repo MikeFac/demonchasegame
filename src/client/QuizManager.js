@@ -52,7 +52,7 @@
             mode: 'first_letter',
             promptText: testVerse,
             questionLabel: 'First letters of missing words:',
-            options: options.map(function(opt) {
+            options: options.map(function (opt) {
                 return { text: opt, isCorrect: opt === firstLettersStr };
             }),
             correctAnswer: firstLettersStr
@@ -133,7 +133,7 @@
             mode: 'missing_word',
             promptText: qd.question,
             questionLabel: 'Fill in the missing word:',
-            options: qd.options.map(function(opt) {
+            options: qd.options.map(function (opt) {
                 return { text: opt, isCorrect: opt === qd.answer };
             }),
             correctAnswer: qd.answer
@@ -154,7 +154,7 @@
             mode: 'category_match',
             promptText: verse.Text,
             questionLabel: 'Which quality does this verse teach?',
-            options: allOptions.map(function(opt) {
+            options: allOptions.map(function (opt) {
                 return { text: opt, isCorrect: opt === qd.correctCategory };
             }),
             correctAnswer: qd.correctCategory
@@ -241,6 +241,20 @@
             qualityTotal[vQuality] = qualityTotal[vQuality] + 1;
             console.log(vQuality + " total correct is: " + qualityTotal[vQuality]);
 
+            // Auto-rotate quality every 3 correct answers
+            if (qualityTotal[vQuality] % 3 === 0) {
+                // Pick a new random quality from qualities that have verses available
+                const availableQualities = Object.keys(organizedVerses).filter(q =>
+                    q !== vQuality &&
+                    organizedVerses[q] &&
+                    organizedVerses[q].length > 0
+                );
+                if (availableQualities.length > 0) {
+                    vQuality = availableQualities[Math.floor(Math.random() * availableQualities.length)];
+                    console.log('✨ Quality rotated to: ' + vQuality);
+                }
+            }
+
             player.ammo = (player.ammo || 0) + Constants.AMMO_REWARD;
             network.sendQuizCorrect();
 
@@ -279,7 +293,7 @@
         // Don't rotate verse while verse test is active
         if (typeof VerseTestScreen !== 'undefined' && VerseTestScreen.isActive()) return;
 
-        console.log("Quality:" + vQuality + ", Index: " + qualityIndex[vQuality] + "out of" + organizedVerses[vQuality].length);
+        console.log("Learn:" + vQuality + ", Index: " + qualityIndex[vQuality] + "out of" + organizedVerses[vQuality].length);
         currentVerseIndex = qualityIndex[vQuality];
         const verse = organizedVerses[vQuality][currentVerseIndex];
         currentQuiz = generateQuizForVerse(verse);

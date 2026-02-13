@@ -2,7 +2,7 @@ const LevelConfig = {
     levelData: {
         1: {
             qualities: ['Faith', 'Courage', 'Knowledge'],
-            monsters: ['Fear', 'Ignorance'],
+            monsters: ['Fear', 'Ignorance', 'Blindness'],
             monsterDamageFactor: 1,
             playerSpeed: 5,
             monsterSpeed: 5,
@@ -12,7 +12,7 @@ const LevelConfig = {
         },
         2: {
             qualities: ['Love', 'Wisdom', 'Healing'],
-            monsters: ['Strife', 'Confusion', 'Infirmity'],
+            monsters: ['Strife', 'Confusion', 'Infirmity', 'Poverty', 'Shame'],
             monsterDamageFactor: 1.5,
             playerSpeed: 6,
             monsterSpeed: 7,
@@ -22,7 +22,7 @@ const LevelConfig = {
         },
         3: {
             qualities: ['Forgiveness', 'Good News', 'Focus'],
-            monsters: ['Condemnation', 'Unbelief', 'Depression', 'Doubt'],
+            monsters: ['Condemnation', 'Unbelief', 'Depression', 'Doubt', 'Despair'],
             monsterDamageFactor: 1.5,
             playerSpeed: 6,
             monsterSpeed: 9,
@@ -32,7 +32,7 @@ const LevelConfig = {
         },
         4: {
             qualities: ['Endurance', 'Hope', 'Prophecy'],
-            monsters: ['Despair', 'Weariness', 'Deception', 'Temptation'],
+            monsters: ['Despair', 'Deception', 'Temptation', 'Swarm'],
             monsterDamageFactor: 2.0,
             playerSpeed: 7,
             monsterSpeed: 10,
@@ -42,7 +42,7 @@ const LevelConfig = {
         },
         5: {
             qualities: ['Power', 'Identity', 'ShareGospel'],
-            monsters: ['Pride', 'Doubt', 'Fear', 'Condemnation', 'Unbelief'],
+            monsters: ['Pride', 'Doubt', 'Fear', 'Condemnation', 'Unbelief', 'Swarm'],
             monsterDamageFactor: 2.5,
             playerSpeed: 8,
             monsterSpeed: 12,

@@ -75,7 +75,7 @@
 
                 ctx.font = '20px Arial';
                 ctx.fillStyle = 'black';
-                ctx.fillText(`Quality: ${verseDetails.category}`, 10, canvas.height - 90);
+                ctx.fillText(`Learn: ${verseDetails.category}`, 10, canvas.height - 90);
 
                 ctx.font = '20px Arial';
                 ctx.fillStyle = 'black';

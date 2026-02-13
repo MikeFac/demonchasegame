@@ -243,15 +243,23 @@ let screenShake = { x: 0, y: 0, intensity: 0, duration: 0 };
 let damageNumbers = [];  // Array of {x, y, damage, startTime, duration: 1000}
 
 const DEMON_TYPES = {
-    Fear: `${scriptDirectory}/fear_demon.png`,
-    Condemnation: `${scriptDirectory}/condemnation_demon.png`,
-    Unbelief: `${scriptDirectory}/unbelief_demon.png`,
-    Ignorance: `${scriptDirectory}/ignorance_spirit.png`,
-    Depression: `${scriptDirectory}/depression_spirit.png`,
-    Strife: `${scriptDirectory}/strife_spirit.png`,
-    Confusion: `${scriptDirectory}/confusion_spirit.png`,
-    Infirmity: `${scriptDirectory}/infirmity_spirit.png`,
-    Doubt: `${scriptDirectory}/doubt_spirit.png`
+    Fear: `${scriptDirectory}/images/monsters/fear_demon.png`,
+    Condemnation: `${scriptDirectory}/images/monsters/condemnation_demon.png`,
+    Unbelief: `${scriptDirectory}/images/monsters/unbelief_demon.png`,
+    Ignorance: `${scriptDirectory}/images/monsters/ignorance_spirit.png`,
+    Depression: `${scriptDirectory}/images/monsters/depression_spirit.png`,
+    Strife: `${scriptDirectory}/images/monsters/strife_spirit.png`,
+    Confusion: `${scriptDirectory}/images/monsters/confusion_spirit.png`,
+    Infirmity: `${scriptDirectory}/images/monsters/infirmity_spirit.png`,
+    Doubt: `${scriptDirectory}/images/monsters/doubt_spirit.png`,
+    Deception: `${scriptDirectory}/images/monsters/DECEPTION_SPIRIT1.png`,
+    Despair: `${scriptDirectory}/images/monsters/DISCOURAGEMENT.png`,
+    Pride: `${scriptDirectory}/images/monsters/PRIDE.PNG`,
+    Temptation: `${scriptDirectory}/images/monsters/JEZEBEL.png`,
+    Poverty: `${scriptDirectory}/images/monsters/DEMON-OF-POVERTY.png`,
+    Shame: `${scriptDirectory}/images/monsters/SHAME-ACCUSATION.png`,
+    Blindness: `${scriptDirectory}/images/monsters/SPIRITUALBLINDNESS.png`,
+    Swarm: `${scriptDirectory}/images/monsters/DEMON-SWARM.png`
 };
 
 const levelXPRequirements = LevelConfig.levelXPRequirements;
@@ -785,7 +793,7 @@ async function init() {
 
 
         // this might get replaced in PRD on the server - check
-        ALL_QUALITIES = ['Faith', 'Courage', 'Knowledge', 'Love', 'Wisdom', 'Healing', 'Joy', 'Focus', 'Prosperity', 'Purity', 'Humility', 'Forgiveness', 'Hope', 'Praise', 'Intercession', 'Endurance', 'Good News', 'Identity'];
+        ALL_QUALITIES = ['Faith', 'Courage', 'Knowledge', 'Love', 'Wisdom', 'Healing', 'Joy', 'Focus', 'Prosperity', 'Purity', 'Humility', 'Forgiveness', 'Hope', 'Praise', 'Intercession', 'Endurance', 'Good News', 'Identity', 'Deliverance', 'Power', 'Prophecy', 'ShareGospel'];
 
         if (PRD) {
             try {
@@ -1267,7 +1275,7 @@ function gameLoop() {
         ctx.fillRect(0, 0, canvas.width, QUALITY_LINE_HEIGHT);
         ctx.fillStyle = 'white';
         ctx.font = '14px Arial'; // Set the font size
-        ctx.fillText(`Quality: ${vQuality}`, 7, 22);
+        this.ctx.fillText(`Learn: ${vQuality}`, 7, 22);
 
         drawReviewButton();
 

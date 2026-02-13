@@ -111,6 +111,14 @@ class MonsterManager {
                     case 'Depression': maxDamage = 3; break;
                     case 'Doubt': maxDamage = 4; break;
                     case 'Infirmity': maxDamage = 7; break;
+                    case 'Deception': maxDamage = 4; break;
+                    case 'Despair': maxDamage = 4; break;
+                    case 'Temptation': maxDamage = 5; break;
+                    case 'Pride': maxDamage = 6; break;
+                    case 'Poverty': maxDamage = 3; break;
+                    case 'Shame': maxDamage = 3; break;
+                    case 'Blindness': maxDamage = 2; break;
+                    case 'Swarm': maxDamage = 5; break;
                     default: maxDamage = 1;
                 }
 

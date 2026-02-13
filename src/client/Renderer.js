@@ -112,7 +112,7 @@ class Renderer {
         this.ctx.fillRect(0, 0, this.canvas.width, this.QUALITY_LINE_HEIGHT);
         this.ctx.fillStyle = 'white';
         this.ctx.font = '14px Arial';
-        this.ctx.fillText(`Quality: ${vQuality}`, 7, 22);
+        this.ctx.fillText(`Learn: ${vQuality}`, 7, 22);
 
         // Quality Buttons (drawn first so hamburger appears on top if overlapping)
         const buttonStartX = UILayout.getQualityButtonStartX(this.canvas.width, qualityButtons.length);
