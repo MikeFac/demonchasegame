@@ -124,7 +124,10 @@ class MonsterManager {
 
                 // Apply health multiplier from config
                 const baseHealth = 10;
-                const actualHealth = Math.round(baseHealth * this.healthMultiplier);
+                // Stronghold demons (Pride, Condemnation, Unbelief) get 2x HP
+                const isStronghold = Constants.STRONGHOLD_DEMONS.includes(demonType);
+                const hpMult = isStronghold ? Constants.STRONGHOLD_HP_MULTIPLIER : 1.0;
+                const actualHealth = Math.round(baseHealth * this.healthMultiplier * hpMult);
 
                 const newMonster = {
                     id: crypto.randomBytes(4).toString('hex'),
@@ -142,7 +145,13 @@ class MonsterManager {
                     showHealth: true,
                     showHealthTimeout: null,
                     isAttacked: false,
-                    healthBar: { x: 0, y: 0, width: 0, height: 7, color: 'green' }
+                    healthBar: { x: 0, y: 0, width: 0, height: 7, color: 'green' },
+                    // Demon ability flags
+                    armorHits: demonType === 'Pride' ? Constants.PRIDE_ARMOR_HITS : 0,
+                    freezeAura: Constants.PARALYZER_DEMONS.includes(demonType),
+                    erratic: Constants.MISLEADER_DEMONS.includes(demonType),
+                    isDashing: false,
+                    dashCooldownEnd: 0
                 };
 
                 // Final validation
@@ -185,7 +194,43 @@ class MonsterManager {
                 }
             }
 
-            if (monster.chaser) {
+            // Dash Attack (Strife): periodically lunge at 3x speed
+            const now = Date.now();
+            if (monster.demonType === 'Strife') {
+                if (monster.isDashing && now < monster.dashEndTime) {
+                    // Currently dashing — move at dash speed toward nearest player
+                    let nearestPlayer = Physics.findNearestPlayer(monster, gameState);
+                    if (nearestPlayer) {
+                        let dx = nearestPlayer.x - monster.x;
+                        let dy = nearestPlayer.y - monster.y;
+                        let distance = Math.sqrt(dx * dx + dy * dy);
+                        const dashSpeed = speed * Constants.DASH_SPEED_MULT;
+                        const newX = monster.x + (dx / distance) * dashSpeed;
+                        const newY = monster.y + (dy / distance) * dashSpeed;
+                        if (!Physics.isOverlapping(newX, newY, Constants.MONSTER_WIDTH, Constants.MONSTER_HEIGHT, gameState, monster.id, this.wallGrid)) {
+                            monster.x = newX;
+                            monster.y = newY;
+                        }
+                    }
+                    // Skip normal movement while dashing
+                } else {
+                    // End dash if expired
+                    if (monster.isDashing) {
+                        monster.isDashing = false;
+                        monster.dashCooldownEnd = now + Constants.DASH_COOLDOWN;
+                    }
+                    // Roll for new dash if cooldown expired
+                    if (!monster.isDashing && now >= (monster.dashCooldownEnd || 0) && Math.random() < Constants.DASH_CHANCE) {
+                        monster.isDashing = true;
+                        monster.dashEndTime = now + Constants.DASH_DURATION;
+                    }
+                }
+            }
+
+            // Skip normal movement if dashing
+            if (monster.isDashing) {
+                // Already moved above
+            } else if (monster.chaser) {
                 // Retrieve (or calculate) distance to nearest player to normalize speed
                 let nearestPlayer = Physics.findNearestPlayer(monster, gameState);
                 if (nearestPlayer) {
@@ -193,9 +238,15 @@ class MonsterManager {
                     let dy = nearestPlayer.y - monster.y;
                     let distance = Math.sqrt(dx * dx + dy * dy);
 
+                    // Erratic Movement: misleader demons zig-zag unpredictably
+                    let moveAngle = Math.atan2(dy, dx);
+                    if (monster.erratic && Math.random() < Constants.ERRATIC_CHANCE) {
+                        moveAngle += (Math.random() - 0.5) * 2 * Constants.ERRATIC_ANGLE_OFFSET;
+                    }
+
                     // Calculate new position
-                    const newX = monster.x + (dx / distance) * speed;
-                    const newY = monster.y + (dy / distance) * speed;
+                    const newX = monster.x + Math.cos(moveAngle) * speed;
+                    const newY = monster.y + Math.sin(moveAngle) * speed;
 
                     // Check wall collision before moving
                     if (!Physics.isOverlapping(newX, newY, Constants.MONSTER_WIDTH, Constants.MONSTER_HEIGHT, gameState, monster.id, this.wallGrid)) {
@@ -210,8 +261,14 @@ class MonsterManager {
                     monster.angle = Math.random() * 2 * Math.PI;
                 }
 
-                let dx = Math.cos(monster.angle) * speed;
-                let dy = Math.sin(monster.angle) * speed;
+                // Erratic Movement for random walkers: randomize angle more often
+                let walkAngle = monster.angle;
+                if (monster.erratic && Math.random() < Constants.ERRATIC_CHANCE) {
+                    walkAngle += (Math.random() - 0.5) * 2 * Constants.ERRATIC_ANGLE_OFFSET;
+                }
+
+                let dx = Math.cos(walkAngle) * speed;
+                let dy = Math.sin(walkAngle) * speed;
 
                 // Calculate new position
                 const newX = monster.x + dx;
@@ -260,6 +317,23 @@ class MonsterManager {
         if (monsterIndex === -1) return false;
 
         const monster = gameState.monsters[monsterIndex];
+
+        // Pride armor: absorb hits before taking damage
+        if (monster.armorHits > 0) {
+            monster.armorHits--;
+            monster.isAttacked = true;
+            monster.showHealth = true;
+            monster.showHealthTimeout = Date.now() + 3000;
+            // Emit armor absorb event for client visual feedback
+            io.emit('armorAbsorb', { monsterId: monster.id, armorLeft: monster.armorHits });
+            setTimeout(() => {
+                if (monster && gameState.monsters.includes(monster)) {
+                    monster.isAttacked = false;
+                }
+            }, 500);
+            return false; // Not killed, damage absorbed
+        }
+
         monster.health -= damage;
         monster.isAttacked = true;
         monster.showHealth = true;

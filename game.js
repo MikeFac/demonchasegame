@@ -610,6 +610,20 @@ async function init() {
                 // Play bullet impact sound
                 bulletImpact.play();
             },
+            onArmorAbsorb: ({ monsterId, armorLeft }) => {
+                // Find monster and show armor absorb visual
+                const monster = monsters.find(m => m.id === monsterId);
+                if (monster) {
+                    damageNumbers.push({
+                        x: monster.x,
+                        y: monster.y - 20,
+                        damage: 'BLOCKED',
+                        color: '#FFD700',
+                        startTime: Date.now(),
+                        duration: 800
+                    });
+                }
+            },
             onMonsterDrop: (data) => {
                 if (data.killer === playerCode) {
                     const name = COLLECTIBLE_NAMES[data.type] || data.type;
@@ -1388,7 +1402,20 @@ function gameLoop() {
             if (distance > THRESHOLD_DISTANCE) {
                 // Apply game speed multiplier to all speeds
                 const baseSpeed = activeBuffs.sandals.active ? PLAYER_SPEED * Constants.SANDALS_SPEED_BOOST : PLAYER_SPEED;
-                const moveSpeed = baseSpeed * gameSpeedMultiplier;
+                let moveSpeed = baseSpeed * gameSpeedMultiplier;
+
+                // Freezing Aura: check if any paralyzer demon is nearby
+                for (const monster of monsters) {
+                    if (monster.freezeAura) {
+                        const mdx = monster.x - player.x;
+                        const mdy = monster.y - player.y;
+                        const mdist = Math.sqrt(mdx * mdx + mdy * mdy);
+                        if (mdist < Constants.FREEZE_AURA_RADIUS) {
+                            moveSpeed *= Constants.FREEZE_AURA_SLOW;
+                            break; // Only apply one slow
+                        }
+                    }
+                }
 
                 // Calculate new position
                 const newX = player.x + (dx / distance) * moveSpeed;
@@ -1504,6 +1531,33 @@ function gameLoop() {
 
                         player.health -= damage;
                         network.sendPlayerHit(damage);
+
+                        // Spirit Drain: Poverty drains XP, Temptation drains Ammo
+                        if (damage > 0 && Math.random() < Constants.DRAIN_CHANCE) {
+                            if (monster.demonType === 'Poverty') {
+                                const drained = Math.min(player.xp || 0, Constants.POVERTY_XP_DRAIN);
+                                if (drained > 0) {
+                                    player.xp -= drained;
+                                    flashMessages.push({
+                                        text: `Poverty drained ${drained} XP!`,
+                                        color: '#FF4444',
+                                        startTime: Date.now(),
+                                        duration: 2000
+                                    });
+                                }
+                            } else if (monster.demonType === 'Temptation') {
+                                const drained = Math.min(player.ammo || 0, Constants.TEMPTATION_AMMO_DRAIN);
+                                if (drained > 0) {
+                                    player.ammo -= drained;
+                                    flashMessages.push({
+                                        text: `Temptation drained ${drained} Ammo!`,
+                                        color: '#FF4444',
+                                        startTime: Date.now(),
+                                        duration: 2000
+                                    });
+                                }
+                            }
+                        }
 
                         playerHit.play();
 

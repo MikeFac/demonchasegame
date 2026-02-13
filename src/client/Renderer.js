@@ -626,8 +626,57 @@ class Renderer {
             if (screenY - monster.height / 2 < playableTop || screenY + monster.height / 2 > playableBottom) return;
             if (screenX + monster.width / 2 < 0 || screenX - monster.width / 2 > this.canvas.width) return;
 
+            // Freezing Aura: draw blue circle around paralyzer demons
+            if (monster.freezeAura) {
+                this.ctx.save();
+                this.ctx.beginPath();
+                this.ctx.arc(screenX, screenY, Constants.FREEZE_AURA_RADIUS, 0, Math.PI * 2);
+                this.ctx.fillStyle = 'rgba(100, 150, 255, 0.08)';
+                this.ctx.fill();
+                this.ctx.strokeStyle = 'rgba(100, 150, 255, 0.25)';
+                this.ctx.lineWidth = 1;
+                this.ctx.stroke();
+                this.ctx.restore();
+            }
+
             if (demonImage && demonImage.complete) {
                 this.ctx.drawImage(demonImage, screenX - monster.width / 2, screenY - monster.height / 2);
+            }
+
+            // Pride armor indicator: golden shield overlay
+            if (monster.armorHits > 0) {
+                this.ctx.save();
+                this.ctx.globalAlpha = 0.4;
+                this.ctx.strokeStyle = '#FFD700';
+                this.ctx.lineWidth = 3;
+                this.ctx.strokeRect(
+                    screenX - monster.width / 2 - 2,
+                    screenY - monster.height / 2 - 2,
+                    monster.width + 4,
+                    monster.height + 4
+                );
+                // Show armor count
+                this.ctx.globalAlpha = 1.0;
+                this.ctx.font = 'bold 10px Arial';
+                this.ctx.fillStyle = '#FFD700';
+                this.ctx.textAlign = 'center';
+                this.ctx.fillText(`🛡${monster.armorHits}`, screenX, screenY - monster.height / 2 - 14);
+                this.ctx.textAlign = 'left';
+                this.ctx.restore();
+            }
+
+            // Dash indicator: red glow when dashing
+            if (monster.isDashing) {
+                this.ctx.save();
+                this.ctx.globalAlpha = 0.3;
+                this.ctx.fillStyle = '#FF0000';
+                this.ctx.fillRect(
+                    screenX - monster.width / 2 - 3,
+                    screenY - monster.height / 2 - 3,
+                    monster.width + 6,
+                    monster.height + 6
+                );
+                this.ctx.restore();
             }
 
             // White flash on hit
@@ -1315,13 +1364,24 @@ class Renderer {
             // Fade out
             const alpha = 1 - progress;
 
+            // Support custom text (e.g. "BLOCKED") or numeric damage
+            const text = typeof dn.damage === 'string' ? dn.damage : '-' + dn.damage;
+
             // Draw shadow
             this.ctx.fillStyle = 'rgba(0, 0, 0, ' + (alpha * 0.5) + ')';
-            this.ctx.fillText('-' + dn.damage, screenX + 1, y + 1);
+            this.ctx.fillText(text, screenX + 1, y + 1);
 
-            // Draw damage number
-            this.ctx.fillStyle = 'rgba(255, 100, 100, ' + alpha + ')';
-            this.ctx.fillText('-' + dn.damage, screenX, y);
+            // Draw damage number (support custom color)
+            if (dn.color) {
+                // Parse hex color and apply alpha
+                const r = parseInt(dn.color.slice(1, 3), 16);
+                const g = parseInt(dn.color.slice(3, 5), 16);
+                const b = parseInt(dn.color.slice(5, 7), 16);
+                this.ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${alpha})`;
+            } else {
+                this.ctx.fillStyle = 'rgba(255, 100, 100, ' + alpha + ')';
+            }
+            this.ctx.fillText(text, screenX, y);
         });
 
         this.ctx.restore();

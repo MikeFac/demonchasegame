@@ -121,6 +121,13 @@ class Network {
             }
         });
 
+        // Armor absorb notification (Pride shield)
+        this.socket.on('armorAbsorb', (data) => {
+            if (this.callbacks.onArmorAbsorb) {
+                this.callbacks.onArmorAbsorb(data);
+            }
+        });
+
         // Bullet hit notification (for impact sound)
         this.socket.on('bulletHit', (data) => {
             if (this.callbacks.onBulletHit) {
