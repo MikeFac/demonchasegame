@@ -254,7 +254,7 @@ const DEMON_TYPES = {
     Doubt: `${scriptDirectory}/images/monsters/doubt_spirit.png`,
     Deception: `${scriptDirectory}/images/monsters/DECEPTION_SPIRIT1.png`,
     Despair: `${scriptDirectory}/images/monsters/DISCOURAGEMENT.png`,
-    Pride: `${scriptDirectory}/images/monsters/PRIDE.PNG`,
+    Pride: `${scriptDirectory}/images/monsters/PRIDE.png`,
     Temptation: `${scriptDirectory}/images/monsters/JEZEBEL.png`,
     Poverty: `${scriptDirectory}/images/monsters/DEMON-OF-POVERTY.png`,
     Shame: `${scriptDirectory}/images/monsters/SHAME-ACCUSATION.png`,
