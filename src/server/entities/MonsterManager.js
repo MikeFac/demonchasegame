@@ -105,9 +105,21 @@ class MonsterManager {
             height: Constants.MONSTER_HEIGHT,
             chaser: chaser,
             maxDamage: maxDamage,
+            demonType: demonType,
             monsterType: demonType,
             health: finalHealth,
             maxHealth: finalHealth,
+            chasingStartTime: null,
+            behaviorStartTime: Date.now(),
+            showHealth: true,
+            showHealthTimeout: null,
+            isAttacked: false,
+            healthBar: { x: 0, y: 0, width: 0, height: 7, color: 'green' },
+            armorHits: demonType === 'Pride' ? Constants.PRIDE_ARMOR_HITS : 0,
+            freezeAura: Constants.PARALYZER_DEMONS.includes(demonType),
+            erratic: Constants.MISLEADER_DEMONS.includes(demonType),
+            isDashing: false,
+            dashCooldownEnd: 0,
             specialAbilities: {}
         };
 
