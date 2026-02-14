@@ -212,7 +212,6 @@ io.on('connection', (socket) => {
       const GameConfig = require('./src/server/config/GameConfig');
       const gameConfig = GameConfig.createGameConfig(
         room.settings.preset,
-        room.settings.preset,
         room.settings.quizSettings
       );
       gameConfig.mapStyle = room.settings.mapStyle || 'classic';

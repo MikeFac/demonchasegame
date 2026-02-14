@@ -35,5 +35,9 @@ Demon Chase Game is a multiplayer web-based game where players fight against "de
 ## Key Features
 - **Multiplayer Support**: Players can create and join rooms.
 - **Real-time Combat**: Latency-compensated multiplayer movement and shooting.
-- **Level System**: Progression through levels with increasing difficulty.
-- **Educational Aspect**: Integration of Bible verses and quizzes.
+- **Level System**: 5 levels with server-detected completion, scaling monster HP, and configurable kill targets.
+- **5 Map Styles**: Classic Dungeon, Narrow Paths, Complex Labyrinth, Open Plains, Grid City — selectable per game.
+- **Demon Special Abilities**: Freezing Aura, Armored Shell, Spirit Drain, Dash Attack, Erratic Movement.
+- **Educational Aspect**: Integration of Bible verses and 5 quiz modes.
+- **Armor of God Collectibles**: 6 item types with active abilities (Sword, Belt, Helmet, Breastplate, Sandals, Shield).
+- **Verse-to-Song Learning**: Optional music-based verse memorization via Suno API.

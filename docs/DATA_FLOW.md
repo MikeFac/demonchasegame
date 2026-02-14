@@ -50,9 +50,10 @@ gameState = {
     ],
     connectedPlayers: 1,
     gameLevel: 1,
-    maxSpawns: 8,
-    spawnsLeft: 8,
+    maxSpawns: 25,
+    spawnsLeft: 25,
     monstersKilled: 0,
+    monstersToKill: 15,
     terrainTheme: "stone"
 }
 ```
@@ -85,7 +86,7 @@ Server state arrives every 50ms
 Client connects → io()
 Server: 'connection' event fires
   ↓
-Client → 'startSoloGame' { difficulty: 'normal', quizSettings: {...} }
+Client → 'startSoloGame' { difficulty: 'normal', quizSettings: {...}, gameSpeed: 'normal', mapStyle: 'classic' }
   OR
 Client → 'joinGame' roomId
   ↓
@@ -135,16 +136,16 @@ On collecting items:
 ### Level Transitions
 
 ```
-Client detects 60% monsters killed:
-  Client → 'levelCompleted'
+Server detects monstersKilled >= monstersToKill (or client sends 'levelCompleted' as backup):
   Server sets _levelAdvancing flag (prevent duplicates)
   Server → 'levelAdvancing' { countdown: 5 }
 
 After 5s:
   Server: resetLevelData(nextLevel)
-    - Regenerate maze
+    - Regenerate map (using selected map style)
     - Teleport all players
-    - Spawn new shield
+    - Spawn 1 random armor collectible
+    - Reschedule monster spawning at new rate
   Server → 'walls' { new walls, grid, spawn }   // To all sockets
   Server continues broadcasting gameStateUpdate with new level data
 ```
@@ -326,8 +327,9 @@ Server → 'gameStarted' { roomId }  // All room members redirect to /?room=ID
     └─────────┴───────┘
               │
          ┌────┼────┐
-       Physics Maze WallGrid
-         .js   .js   .js
+       Physics  MapGen  WallGrid
+         .js   Factory   .js
+               (5 styles)
 ```
 
 ---

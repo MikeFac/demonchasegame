@@ -66,8 +66,15 @@ dcgame/
 │   │   │   └── SunoService.js         # Suno API song generation
 │   │   └── utils/
 │   │       ├── Physics.js             # Collision helpers
-│   │       ├── Maze.js                # Dungeon-room maze generator
-│   │       └── ReferenceNormalizer.js  # Verse reference canonicalization
+│   │       ├── Maze.js                # Legacy maze generator
+│   │       ├── ReferenceNormalizer.js  # Verse reference canonicalization
+│   │       └── map-generators/        # Pluggable map generation system
+│   │           ├── index.js           # Factory router (5 map styles)
+│   │           ├── ClassicMaze.js     # Room-based dungeon, MST corridors
+│   │           ├── NarrowPaths.js     # Tight 50px corridor rooms
+│   │           ├── ComplexLabyrinth.js # Recursive backtracking labyrinth
+│   │           ├── GridCity.js        # Regular grid city blocks
+│   │           └── OpenPlains.js      # Open space, scattered buildings
 │   │
 │   ├── client/
 │   │   ├── Renderer.js                # All canvas drawing (class)
@@ -122,15 +129,16 @@ dcgame/
 
 **Constructor** receives `io`, `roomId`, `gameConfig`:
 1. Creates room-scoped emitter: `io.to('room:' + roomId).emit()`
-2. Generates maze via `Maze.generateMaze()`, creates WallGrid
-3. Initializes gameState: players, monsters, healingPoints, shieldPoints, bullets
-4. Creates entity managers (MonsterManager, PlayerManager, BulletManager)
-5. Spawns initial collectibles
+2. Generates map via `MapGeneratorFactory.generateMap(mapStyle, ...)` (5 styles available), creates WallGrid
+3. Initializes gameState: players, monsters, healingPoints, shieldPoints, bullets, monstersToKill
+4. Creates entity managers (MonsterManager, PlayerManager, BulletManager, CollectibleManager)
+5. Spawns initial collectibles (1 random armor piece per level)
 
-**Three Interval Loops** (`start()`):
-1. **Main loop** (60fps / 16.67ms): `update()` → move monsters, update bullets, broadcast state
-2. **Monster spawning**: Config-adjusted rate (default 10s level 1)
+**Loops** (`start()`):
+1. **Main loop** (60fps / 16.67ms): `update()` → move monsters, update bullets, check level completion, broadcast state
+2. **Monster spawning**: Dynamic `setTimeout` scheduling via `scheduleNextSpawn()` (respects current level's spawn rate, reschedules recursively)
 3. **Healing spawning**: Config-adjusted rate (default 30s)
+4. **Server-side level completion**: Detects `monstersKilled >= monstersToKill`, broadcasts 5s countdown, auto-advances level
 
 **`addPlayer(socket)`** — registers per-player socket handlers:
 - `playerPosition`: Update position (trusts client)
@@ -146,15 +154,22 @@ dcgame/
 
 ### src/server/entities/MonsterManager.js
 
-**Spawning**: Grid scan for valid positions (100px margins, 400px+ from players, no wall overlap). 50% chasers, 50% random walkers.
+**Spawning**: Grid scan at 50px intervals for valid positions (50px margins, 400px+ from players, no wall overlap). 50% chasers, 50% random walkers.
 
-**Damage per demon type**: Fear(3), Condemnation(2), Unbelief(5), Ignorance(2), Strife(6), Confusion(4), Depression(3), Doubt(4), Infirmity(7).
+**Damage per demon type**: Fear(3), Condemnation(2), Unbelief(5), Ignorance(2), Strife(6), Confusion(4), Depression(3), Doubt(4), Infirmity(7), Deception(4), Despair(4), Temptation(5), Pride(6), Poverty(3), Shame(3), Blindness(2), Swarm(5).
 
-**Health**: Base 10 HP × `healthMultiplier` (0.7 easy / 1.0 normal / 1.5 hard).
+**Health**: Base HP scales by level: `10 + (level - 1) * 5` (Level 1→10, Level 5→30) × `healthMultiplier` (0.7/1.0/1.5) × demon type multiplier (Strongholds get 2x).
 
-**AI**: Chasers follow nearest player. Walkers pick random direction and distance, re-roll on wall collision.
+**AI**: Chasers follow nearest player (Misleader demons zig-zag with 30% erratic chance). Walkers pick random direction. Strife demons periodically dash at 3x speed.
 
-**On kill**: +10 XP to attacker, level-up check (maxHealth = 50 + level × 50, full heal), emit `monsterKilled`.
+**Demon Special Abilities** (configured in Constants.js):
+- **Freezing Aura** (Fear, Doubt, Depression, Despair): 40% speed slow within 150px
+- **Armored Shell** (Pride, Condemnation, Unbelief): 2x HP; Pride absorbs first 3 hits
+- **Spirit Drain** (Poverty, Temptation): 40% chance to drain 5 XP or 5 Ammo on hit
+- **Dash Attack** (Strife): 15% chance to lunge at 3x speed for 500ms (5s cooldown)
+- **Erratic Movement** (Confusion, Deception, Ignorance, Blindness): 30% zig-zag per move update
+
+**On kill**: +10 XP to attacker, level-up check (maxHealth = 50 + level × 50, full heal), emit `monsterKilled`. 60% chance to drop armor collectible.
 
 ### src/server/entities/BulletManager.js
 
@@ -172,9 +187,9 @@ dcgame/
 
 **User auth**: Username registration → session token (16-byte hex). Socket association for disconnect cleanup.
 
-**Room creation**: Validates difficulty preset + quiz settings (5 keys, sum to 100), stores in `room.settings`.
+**Room creation**: Validates difficulty preset + quiz settings (5 keys, sum to 100), stores in `room.settings`. Also stores `mapStyle` selection.
 
-**Game start**: Host-only, all non-host players must be ready. server.js creates GameConfig from room settings.
+**Game start**: Host-only, all non-host players must be ready. server.js creates GameConfig from room settings including map style.
 
 ### src/server/config/GameConfig.js
 
@@ -352,21 +367,35 @@ Singleton. `getSongForVerse(ref)` fetches from `/api/verse-song?ref=...`, caches
 
 Dual export: `module.exports` (Node) + `window.Constants` (browser).
 
-**Key constants**: World 2000×2000, Cell 25px, Canvas 400×600, Player/Monster 48×48, Bullet speed 15, Bullet damage 2, Ammo reward 2, Shield duration 10s, Verse test rewards (ammo 5, XP 15, health 10, shield 15s).
+**Key constants**: World 3000×3000, Cell 25px, Canvas 400×600, Player/Monster 48×48, Bullet speed 15, Bullet damage 2, Ammo reward 2, Shield duration 10s, Verse test rewards (ammo 5, XP 15, health 20, shield 15s). Monster drop chance 60%. Demon ability constants (freeze radius/slow, erratic chance, stronghold HP multiplier, drain chance/amounts, dash speed/duration/cooldown).
 
 ### src/shared/LevelConfig.js
 
-**5 Levels** with increasing difficulty:
+**5 Levels** with increasing difficulty. Each level has a `monstersToKill` target for level completion (server-detected). Monster base HP scales: `10 + (level-1)*5`.
 
-| Level | Theme | Monsters | Max | Speed | Spawn Rate | Damage |
-|-------|-------|----------|-----|-------|------------|--------|
-| 1 | Stone | Fear, Ignorance | 8 | 5 | 10s | 1.0× |
-| 2 | Earth | Strife, Confusion, Infirmity | 10 | 7 | 8s | 1.5× |
-| 3 | Crystal | Condemnation, Unbelief, Depression, Doubt | 12 | 9 | 5s | 1.5× |
-| 4 | Shadow | Despair, Weariness, Deception, Temptation | 14 | 10 | 4s | 2.0× |
-| 5 | Void | Pride, Doubt, Fear, Condemnation, Unbelief | 16 | 12 | 3s | 2.5× |
+| Level | Theme | Monsters | Max | Kill Target | Speed | Spawn Rate | Damage | Base HP |
+|-------|-------|----------|-----|-------------|-------|------------|--------|---------|
+| 1 | Stone | Fear, Ignorance, Blindness, Doubt, Confusion | 25 | 15 | 5 | 4s | 1.0× | 10 |
+| 2 | Earth | Strife, Confusion, Infirmity, Poverty, Shame, Deception, Fear | 30 | 23 | 7 | 3.5s | 1.5× | 15 |
+| 3 | Crystal | Condemnation, Unbelief, Depression, Doubt, Despair, Pride, Strife | 35 | 30 | 9 | 3s | 1.5× | 20 |
+| 4 | Shadow | Despair, Deception, Temptation, Swarm, Unbelief, Condemnation | 40 | 38 | 10 | 2.5s | 2.0× | 25 |
+| 5 | Void | Pride, Doubt, Fear, Condemnation, Unbelief, Swarm, Temptation, Poverty | 50 | 45 | 12 | 2s | 2.5× | 30 |
 
 **XP thresholds**: 0, 30, 100, 200, 350, 500 (levels 1-6).
+
+### Map Generation System
+
+5 selectable map styles via `MapGeneratorFactory` (factory pattern in `src/server/utils/map-generators/`):
+
+| Style | Description | Corridor Width | Key Feature |
+|-------|-------------|---------------|-------------|
+| Classic | Room-based dungeon | 150px (6 cells) | 12 rooms, MST + extra corridors |
+| Narrow | Tight corridor rooms | 50px (2 cells) | 15 rooms, designed for close combat |
+| Labyrinth | Recursive backtracking | 75px (3 cells) | Few rooms, many loops, maze-like |
+| City | Regular grid blocks | 100px streets | City blocks with 10% parks |
+| Open | Scattered buildings | Open field | 40 buildings (50% hollow), safe spawn zone |
+
+Maps regenerate on each level advance. Player selects style before starting (solo dropdown or multiplayer room setting).
 
 ### src/shared/WallGrid.js
 
@@ -384,7 +413,7 @@ IIFE with dual export. O(1) spatial collision via boolean grid.
 
 | Event | Payload | Handler |
 |-------|---------|---------|
-| `startSoloGame` | `{difficulty, quizSettings}` | server.js → creates Game |
+| `startSoloGame` | `{difficulty, quizSettings, gameSpeed, mapStyle}` | server.js → creates Game |
 | `joinGame` | `roomId` | server.js → addPlayer |
 | `playerPosition` | `{x, y}` | Game.js → PlayerManager |
 | `playerHit` | `damage` (number) | Game.js → PlayerManager |
@@ -408,6 +437,8 @@ IIFE with dual export. O(1) spatial collision via boolean grid.
 | `monsterKilled` | `{monsterId, x, y}` | game.js → death animation |
 | `bulletHit` | `{x, y}` | game.js → impact sound |
 | `levelAdvancing` | `{countdown}` | game.js → countdown timer |
+| `armorAbsorb` | `{monsterId, armorLeft}` | game.js → "BLOCKED" damage number |
+| `levelProgress` | `{killed, required}` | game.js → progress tracking |
 
 ---
 
@@ -535,17 +566,19 @@ Verse Test Shield:
 
 ## Level Progression
 
-**Trigger**: 60% of `maxSpawns` killed → `levelCompleted` event to server.
+**Trigger**: Server detects `monstersKilled >= monstersToKill` (configured per level in LevelConfig). Client also checks 60% killed as a backup trigger via `levelCompleted` event.
 
 **Server flow**:
-1. Broadcast `levelAdvancing` with 5s countdown
-2. After 5s: `resetLevelData(nextLevel)`
-3. Regenerate maze, new WallGrid
-4. Validate spawn safety (search collision-free position)
-5. Teleport ALL players to safe spawn
-6. Re-emit `walls` to all sockets
-7. Spawn new shield
-8. Reset counters (monstersKilled = 0)
+1. Server detects completion in `update()` loop (or receives `levelCompleted` from client)
+2. Broadcast `levelAdvancing` with 5s countdown (protected by `_levelAdvancing` flag)
+3. After 5s: `resetLevelData(nextLevel)`
+4. Regenerate map (using selected map style), new WallGrid
+5. Validate spawn safety (search collision-free position)
+6. Teleport ALL players to safe spawn
+7. Re-emit `walls` to all sockets
+8. Spawn 1 random armor collectible
+9. Reset counters (monstersKilled = 0), set new monstersToKill
+10. Reschedule monster spawning at new level's rate
 
 **Player leveling** (via XP from kills):
 - maxHealth = 50 + level × 50 (100/150/200/250/300/350)
@@ -555,16 +588,18 @@ Verse Test Shield:
 
 ## Difficulty & Config System
 
-**Two independent axes**:
+**Three independent axes**:
 
 1. **Monster Difficulty** (easy/normal/hard): Multipliers applied to base LevelConfig values in GameConfig.createGameConfig(). Affects monster HP, damage, speed, spawn rate, healing frequency, max concurrent monsters.
 
 2. **Quiz Balance** (custom sliders): Percentage distribution across 5 quiz modes. Default: 25/25/20/15/15. Must sum to 100%. Validated server-side.
 
+3. **Map Style** (classic/narrow/labyrinth/open/city): Selectable per game. Affects dungeon layout, corridor widths, and combat dynamics. Map regenerates each level.
+
 **Config flow**:
 ```
-Solo: UI sliders → startSoloGame → GameConfig.createGameConfig() → Game constructor
-Multi: Room settings → startGame → GameConfig.createGameConfig() → Game constructor
+Solo: UI sliders + map dropdown → startSoloGame → GameConfig.createGameConfig() → Game constructor
+Multi: Room settings (preset + quiz + map) → startGame → GameConfig.createGameConfig() → Game constructor
 ```
 
 ---
@@ -590,7 +625,7 @@ Multi: Room settings → startGame → GameConfig.createGameConfig() → Game co
 Triggered by monster hit. ±5px translation on game world for 200ms. Applies via `ctx.translate()`, undone before HUD rendering.
 
 ### Floating Damage Numbers
-Red "-1" text floats up 30px over 1s with fade-out. Stored in world coords, converted to screen via camera.
+Red "-1" text floats up 30px over 1s with fade-out. Supports custom text (e.g. "BLOCKED" for Pride armor) and custom colors (e.g. gold for armor absorb). Stored in world coords, converted to screen via camera.
 
 ### Death Particles
 Sprite sheet animation (6×6 grid, 64×64 frames, 24 frames total). 100ms per frame = 2.4s duration. Fallback: expanding red circles.

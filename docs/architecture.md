@@ -30,18 +30,22 @@ The game uses a standard client-server architecture with authoritative server lo
 ## Modules
 
 ### Server-side (`src/server/`)
-- `Game.js`: Main game loop and logic.
-- `RoomManager.js`: Handles room lifecycle and user sessions.
-- `MonsterManager.js`: Spawns and updates monsters.
-- `PlayerManager.js`: Handles player movement and actions.
-- `BulletManager.js`: Updates bullet positions and collision detection.
+- `Game.js`: Main game loop, state management, server-side level completion detection.
+- `RoomManager.js`: Handles room lifecycle, user sessions, map style storage.
+- `entities/MonsterManager.js`: Spawns and updates monsters, demon abilities (armor, dash, erratic), level-scaling HP.
+- `entities/PlayerManager.js`: Handles player movement and actions.
+- `entities/BulletManager.js`: Updates bullet positions and collision detection.
+- `entities/CollectibleManager.js`: Armor of God item spawning (1 random per level).
+- `config/GameConfig.js`: Difficulty presets and quiz settings validation.
+- `utils/map-generators/`: 5 pluggable map styles (Classic, Narrow, Labyrinth, City, Open).
 
 ### Client-side (`src/client/`)
-- `Network.js`: Wrapper around Socket.IO client.
-- `Renderer.js`: Canvas rendering logic.
-- `InputHandler.js`: Input management.
+- `Network.js`: Socket.IO wrapper with armor absorb, level progress events.
+- `Renderer.js`: Canvas rendering with demon ability visuals (freeze aura, armor indicator, dash glow).
+- `InputHandler.js`: Input management and coordinate conversion.
+- `QuizManager.js`: 5 quiz modes with weighted selection.
 - `UILayout.js`: UI positioning constants.
 
 ### Shared (`src/shared/`)
-- `Constants.js`: World dimensions, configuration constants.
-- `LevelConfig.js`: Level-specific settings (monsters per level, speed, etc.).
+- `Constants.js`: World dimensions, demon ability parameters, game configuration.
+- `LevelConfig.js`: 5 levels with monstersToKill targets, scaling spawn rates (4s→2s).

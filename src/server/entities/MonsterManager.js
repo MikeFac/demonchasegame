@@ -297,7 +297,7 @@ class MonsterManager {
             // Update health bar position
             monster.healthBar.x = monster.x - monster.width / 2;
             monster.healthBar.y = monster.y - monster.height / 2 - 10;
-            monster.healthBar.width = (monster.health / 10) * monster.width;
+            monster.healthBar.width = (monster.health / monster.maxHealth) * monster.width;
 
             // Update showHealthTimeout
             if (monster.showHealthTimeout && Date.now() > monster.showHealthTimeout) {
