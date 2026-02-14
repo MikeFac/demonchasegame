@@ -598,6 +598,19 @@ class Game {
 
             // Spawn collectibles for the new level
             this.collectibleManager.initializeLevelCollectibles();
+
+            // Spawn initial monsters (30% of max monsters)
+            const initialMonsterCount = Math.ceil(this.levelData[level].maxMonsters * 0.3);
+            console.log(`Spawning ${initialMonsterCount} initial monsters for level ${level}`);
+
+            // Spawn first monster at medium distance (400-700px)
+            this.monsterManager.spawnMonsterAtDistance(400, 700, true);
+
+            // Spawn remaining initial monsters anywhere valid
+            for (let i = 1; i < initialMonsterCount; i++) {
+                this.monsterManager.spawnMonster();
+            }
+
             console.log(`Level ${level} data reset.`);
         }
     }

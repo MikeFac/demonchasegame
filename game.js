@@ -1746,6 +1746,13 @@ function gameLoop() {
             let dy = healingPoint.y - player.y;
             let distance = Math.sqrt(dx * dx + dy * dy);
             if (distance < player.width / 2 + healingPoint.width / 2) {
+                // Prevent duplicate collection while waiting for server response
+                if (!window._collectedHealingPoints) window._collectedHealingPoints = new Set();
+                if (window._collectedHealingPoints.has(healingPoint.id)) {
+                    return; // Already collected this healing point, skip
+                }
+                window._collectedHealingPoints.add(healingPoint.id);
+
                 // ===== ONBOARDING: Detect healing point collection =====
                 if (!firstGameTips.healingCollected && isInOnboardingWindow()) {
                     firstGameTips.healingCollected = true;

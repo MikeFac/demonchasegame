@@ -12,6 +12,116 @@ class MonsterManager {
         this.healthMultiplier = healthMultiplier;
     }
 
+    /**
+     * Spawn a monster at a specific distance range from players
+     * @param {number} minDistance - Minimum distance from players
+     * @param {number} maxDistance - Maximum distance from players
+     * @param {boolean} isFirst - If true, this is the first monster (use chaser behavior)
+     */
+    spawnMonsterAtDistance(minDistance, maxDistance, isFirst = false) {
+        const { gameState, levelData } = this;
+
+        if (gameState.monsters.length >= levelData[gameState.gameLevel].maxMonsters) {
+            return; // Already at max
+        }
+
+        const playerCodes = Object.keys(gameState.players);
+        if (playerCodes.length === 0) return;
+
+        // Build list of positions within the distance range
+        const validPositions = [];
+        for (let testX = 50; testX < Constants.WORLD_WIDTH - 50; testX += 50) {
+            for (let testY = 50; testY < Constants.WORLD_HEIGHT - 50; testY += 50) {
+                if (Physics.isOverlapping(testX, testY, Constants.MONSTER_WIDTH, Constants.MONSTER_HEIGHT, gameState, null, this.wallGrid)) continue;
+
+                // Check distance from all players - must be in range
+                let inRange = false;
+                for (const code of playerCodes) {
+                    const p = gameState.players[code];
+                    if (!p) continue;
+                    const dx = testX - p.x;
+                    const dy = testY - p.y;
+                    const dist = Math.sqrt(dx * dx + dy * dy);
+                    if (dist >= minDistance && dist <= maxDistance) {
+                        inRange = true;
+                        break;
+                    }
+                }
+                if (inRange) {
+                    validPositions.push({ x: testX, y: testY });
+                }
+            }
+        }
+
+        if (validPositions.length === 0) {
+            console.log(`No valid positions found in distance range ${minDistance}-${maxDistance}, using fallback`);
+            this.spawnMonster(); // Fallback to regular spawn
+            return;
+        }
+
+        const chosen = validPositions[Math.floor(Math.random() * validPositions.length)];
+        const x = chosen.x;
+        const y = chosen.y;
+
+        // First monster is always a chaser for engagement
+        const chaser = isFirst ? true : Math.random() < 0.5;
+        console.log(isFirst ? 'Spawning FIRST CHASER monster' : (chaser ? 'Spawning CHASER monster' : 'Spawning RANDOM WALKER monster'));
+
+        const demonType = levelData[gameState.gameLevel].monsters[Math.floor(Math.random() * levelData[gameState.gameLevel].monsters.length)];
+
+        // Set the maximum damage based on the demon type
+        let maxDamage;
+        switch (demonType) {
+            case 'Condemnation': maxDamage = 2; break;
+            case 'Fear': maxDamage = 3; break;
+            case 'Unbelief': maxDamage = 5; break;
+            case 'Ignorance': maxDamage = 2; break;
+            case 'Strife': maxDamage = 6; break;
+            case 'Confusion': maxDamage = 4; break;
+            case 'Depression': maxDamage = 3; break;
+            case 'Doubt': maxDamage = 4; break;
+            case 'Infirmity': maxDamage = 7; break;
+            case 'Deception': maxDamage = 4; break;
+            case 'Despair': maxDamage = 4; break;
+            case 'Temptation': maxDamage = 5; break;
+            case 'Pride': maxDamage = 6; break;
+            case 'Poverty': maxDamage = 3; break;
+            case 'Shame': maxDamage = 3; break;
+            case 'Slumber': maxDamage = 2; break;
+            case 'Jezebel': maxDamage = 8; break;
+            case 'SpiritSlumber': maxDamage = 2; break;
+            default: maxDamage = 3;
+        }
+
+        // Base health from level config, then apply multiplier
+        const baseHealth = levelData[gameState.gameLevel].monsterHealth || 10;
+        const finalHealth = Math.round(baseHealth * this.healthMultiplier);
+
+        const monster = {
+            id: crypto.randomUUID(),
+            x: x,
+            y: y,
+            width: Constants.MONSTER_WIDTH,
+            height: Constants.MONSTER_HEIGHT,
+            chaser: chaser,
+            maxDamage: maxDamage,
+            monsterType: demonType,
+            health: finalHealth,
+            maxHealth: finalHealth,
+            specialAbilities: {}
+        };
+
+        // Special abilities for specific demons (only easy/medium)
+        if (demonType === 'Confusion') {
+            monster.specialAbilities.freezingAura = true;
+        } else if (demonType === 'Pride') {
+            monster.specialAbilities.armorPlating = { active: true, hits: 3 };
+        }
+
+        gameState.monsters.push(monster);
+        console.log('Monster spawned. Total monsters:', gameState.monsters.length);
+    }
+
     spawnMonster() {
         const { gameState, levelData, io } = this;
 
