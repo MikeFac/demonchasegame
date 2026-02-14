@@ -2491,7 +2491,7 @@ function loadSelectedVerses() {
           ]
         },
         "trueFalse": {
-          "falseCategory": "Intercession",
+          "falseCategory": "Prayer",
           "falseReference": "Romans 10:1"
         }
       }
@@ -5671,7 +5671,7 @@ function loadSelectedVerses() {
           ]
         },
         "trueFalse": {
-          "falseCategory": "Intercession",
+          "falseCategory": "Prayer",
           "falseReference": "Jeremiah 29:12"
         }
       }
@@ -7381,7 +7381,7 @@ function loadSelectedVerses() {
           ]
         },
         "trueFalse": {
-          "falseCategory": "Intercession",
+          "falseCategory": "Prayer",
           "falseReference": "1 Kings 2:9"
         }
       }
@@ -7741,7 +7741,7 @@ function loadSelectedVerses() {
           ]
         },
         "trueFalse": {
-          "falseCategory": "Intercession",
+          "falseCategory": "Prayer",
           "falseReference": "Psalms 91:12"
         }
       }
@@ -8731,7 +8731,7 @@ function loadSelectedVerses() {
           ]
         },
         "trueFalse": {
-          "falseCategory": "Intercession",
+          "falseCategory": "Prayer",
           "falseReference": "Colossians 4:9"
         }
       }
@@ -9061,7 +9061,7 @@ function loadSelectedVerses() {
           ]
         },
         "trueFalse": {
-          "falseCategory": "Intercession",
+          "falseCategory": "Prayer",
           "falseReference": "2 Chronicles 2:10"
         }
       }
@@ -11641,7 +11641,7 @@ function loadSelectedVerses() {
           ]
         },
         "trueFalse": {
-          "falseCategory": "Intercession",
+          "falseCategory": "Prayer",
           "falseReference": "Matthew 7:12"
         }
       }
@@ -12481,7 +12481,7 @@ function loadSelectedVerses() {
           ]
         },
         "trueFalse": {
-          "falseCategory": "Intercession",
+          "falseCategory": "Prayer",
           "falseReference": "Psalm 120:169"
         }
       }
@@ -14827,7 +14827,7 @@ function loadSelectedVerses() {
           ]
         },
         "trueFalse": {
-          "falseCategory": "Intercession",
+          "falseCategory": "Prayer",
           "falseReference": "Psalms 70:6"
         }
       }
@@ -15397,7 +15397,7 @@ function loadSelectedVerses() {
           ]
         },
         "trueFalse": {
-          "falseCategory": "Intercession",
+          "falseCategory": "Prayer",
           "falseReference": "James 6:16"
         }
       }
@@ -15547,7 +15547,7 @@ function loadSelectedVerses() {
           ]
         },
         "trueFalse": {
-          "falseCategory": "Intercession",
+          "falseCategory": "Prayer",
           "falseReference": "James 4:14"
         }
       }
@@ -15937,7 +15937,7 @@ function loadSelectedVerses() {
           ]
         },
         "trueFalse": {
-          "falseCategory": "Intercession",
+          "falseCategory": "Prayer",
           "falseReference": "James 2:14-15"
         }
       }
@@ -19255,7 +19255,7 @@ function loadSelectedVerses() {
           ]
         },
         "trueFalse": {
-          "falseCategory": "Intercession",
+          "falseCategory": "Prayer",
           "falseReference": "1 Thessalonians 4:16-18"
         }
       }
@@ -22015,7 +22015,7 @@ function loadSelectedVerses() {
           ]
         },
         "trueFalse": {
-          "falseCategory": "Intercession",
+          "falseCategory": "Prayer",
           "falseReference": "Luke 22:44"
         }
       }
@@ -23245,7 +23245,7 @@ function loadSelectedVerses() {
           ]
         },
         "trueFalse": {
-          "falseCategory": "Intercession",
+          "falseCategory": "Prayer",
           "falseReference": "Philippians 1:9"
         }
       }
@@ -24235,7 +24235,7 @@ function loadSelectedVerses() {
           ]
         },
         "trueFalse": {
-          "falseCategory": "Intercession",
+          "falseCategory": "Prayer",
           "falseReference": "Psalms 120:25"
         }
       }
@@ -24295,7 +24295,7 @@ function loadSelectedVerses() {
           ]
         },
         "trueFalse": {
-          "falseCategory": "Intercession",
+          "falseCategory": "Prayer",
           "falseReference": "1 Chronicles 6:10"
         }
       }
@@ -24325,7 +24325,7 @@ function loadSelectedVerses() {
           ]
         },
         "trueFalse": {
-          "falseCategory": "Intercession",
+          "falseCategory": "Prayer",
           "falseReference": "Psalms 42:17"
         }
       }
@@ -25585,7 +25585,7 @@ function loadSelectedVerses() {
           ]
         },
         "trueFalse": {
-          "falseCategory": "Intercession",
+          "falseCategory": "Prayer",
           "falseReference": "Nehemiah 2:8"
         }
       }
@@ -26575,7 +26575,7 @@ function loadSelectedVerses() {
           ]
         },
         "trueFalse": {
-          "falseCategory": "Intercession",
+          "falseCategory": "Prayer",
           "falseReference": "1 Timothy 2:2"
         }
       }
@@ -26635,7 +26635,7 @@ function loadSelectedVerses() {
           ]
         },
         "trueFalse": {
-          "falseCategory": "Intercession",
+          "falseCategory": "Prayer",
           "falseReference": "Hebrews 10:18"
         }
       }
@@ -28903,7 +28903,7 @@ function loadSelectedVerses() {
           ]
         },
         "trueFalse": {
-          "falseCategory": "Intercession",
+          "falseCategory": "Prayer",
           "falseReference": "Psalms 6:1"
         }
       }
@@ -31531,7 +31531,7 @@ function loadSelectedVerses() {
           ]
         },
         "trueFalse": {
-          "falseCategory": "Intercession",
+          "falseCategory": "Prayer",
           "falseReference": "Genesis 19:27"
         }
       }
@@ -31981,7 +31981,7 @@ function loadSelectedVerses() {
           ]
         },
         "trueFalse": {
-          "falseCategory": "Intercession",
+          "falseCategory": "Prayer",
           "falseReference": "Mark 12:25"
         }
       }
@@ -32311,7 +32311,7 @@ function loadSelectedVerses() {
           ]
         },
         "trueFalse": {
-          "falseCategory": "Intercession",
+          "falseCategory": "Prayer",
           "falseReference": "Matthew 7:12"
         }
       }
@@ -33637,7 +33637,7 @@ function loadSelectedVerses() {
           ]
         },
         "trueFalse": {
-          "falseCategory": "Intercession",
+          "falseCategory": "Prayer",
           "falseReference": "James 4:14-15"
         }
       }
@@ -36163,7 +36163,7 @@ function loadSelectedVerses() {
           ]
         },
         "trueFalse": {
-          "falseCategory": "Intercession",
+          "falseCategory": "Prayer",
           "falseReference": "Micah 2:7"
         }
       }
@@ -36343,7 +36343,7 @@ function loadSelectedVerses() {
           ]
         },
         "trueFalse": {
-          "falseCategory": "Intercession",
+          "falseCategory": "Prayer",
           "falseReference": "Psalms 7:17"
         }
       }
@@ -38083,7 +38083,7 @@ function loadSelectedVerses() {
           ]
         },
         "trueFalse": {
-          "falseCategory": "Intercession",
+          "falseCategory": "Prayer",
           "falseReference": "James 4:13"
         }
       }
@@ -40508,7 +40508,7 @@ function loadSelectedVerses() {
     },
     {
       "Id": 1374,
-      "Category": "Intercession",
+      "Category": "Prayer",
       "Reference": "Romans 8:26",
       "Text": "In the same way, the Spirit also helps our weaknesses, for we don’t know how to pray as we ought. But the Spirit himself makes intercession for us with groanings which can’t be uttered.",
       "quizData": {
@@ -40538,7 +40538,7 @@ function loadSelectedVerses() {
     },
     {
       "Id": 1375,
-      "Category": "Intercession",
+      "Category": "Prayer",
       "Reference": "Romans 8:27",
       "Text": "He who searches the hearts knows what is on the Spirit’s mind, because he makes intercession for the saints according to God.",
       "quizData": {
@@ -40568,7 +40568,7 @@ function loadSelectedVerses() {
     },
     {
       "Id": 1376,
-      "Category": "Intercession",
+      "Category": "Prayer",
       "Reference": "Matthew 6:13",
       "Text": "Bring us not into temptation, but deliver us from the evil one.",
       "quizData": {
@@ -44311,7 +44311,7 @@ function loadSelectedVerses() {
           ]
         },
         "trueFalse": {
-          "falseCategory": "Intercession",
+          "falseCategory": "Prayer",
           "falseReference": "Ephesians 5:20"
         }
       }
@@ -48651,7 +48651,7 @@ function loadSelectedVerses() {
           ]
         },
         "trueFalse": {
-          "falseCategory": "Intercession",
+          "falseCategory": "Prayer",
           "falseReference": "Ephesians 5:18"
         }
       }

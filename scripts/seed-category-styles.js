@@ -145,7 +145,7 @@ const styles = [
     repeatCount: 3
   },
   {
-    category: 'Intercession',
+    category: 'Prayer',
     generationStyle: 'worship',
     description: 'Reverent worship with spacious arrangement—prayerful and intimate',
     generationDuration: 120,

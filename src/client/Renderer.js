@@ -210,7 +210,7 @@ class Renderer {
     drawHUD(player, gameState) {
         this.ctx.fillStyle = 'white';
         this.ctx.font = '14px Arial';
-        this.ctx.fillText(`Health: ${player.health}  XP: ${player.xp}  Level: ${player.level}  Spirit: ${player.ammo || 0}`, 7, this.QUALITY_LINE_HEIGHT - 7);
+        this.ctx.fillText(`Health: ${player.health}  XP: ${player.xp}  Level: ${player.level}  Ammo: ${player.ammo || 0}`, 7, this.QUALITY_LINE_HEIGHT - 7);
 
         // Game Level
         this.ctx.fillStyle = 'yellow';

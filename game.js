@@ -306,7 +306,9 @@ let firstGameTips = {
     demonAppeared: false,
     healingCollected: false,
     ammoEarned: false,
-    monsterKilled: false
+    monsterKilled: false,
+    firstCorrectAnswer: false,
+    firstKill: false
 };
 let modalPaused = false;
 let modalPauseStartTime = 0;
@@ -560,6 +562,22 @@ function initializeVerseCounter() {
 
 // Callback for QuizManager to notify of correct answers
 window.onQuizCorrectAnswer = function (quizMode, verseReference) {
+    // ===== FIRST 60 SECONDS: Show "POWERED UP!" on first correct answer =====
+    if (!firstGameTips.firstCorrectAnswer && isInOnboardingWindow()) {
+        firstGameTips.firstCorrectAnswer = true;
+        // Show big centered message
+        flashMessages.push({
+            text: '⚡ POWERED UP! ⚡',
+            color: '#FFD700',
+            x: canvas.width / 2,
+            y: canvas.height / 2 - 50,
+            startTime: Date.now(),
+            duration: 2000,
+            fontSize: 32,
+            centered: true
+        });
+    }
+
     // ===== ONBOARDING: Detect first ammo earned =====
     if (!firstGameTips.ammoEarned && isInOnboardingWindow()) {
         firstGameTips.ammoEarned = true;
@@ -669,6 +687,25 @@ async function init() {
                 };
             },
             onMonsterKilled: ({ monsterId, x, y }) => {
+                // ===== FIRST 60 SECONDS: Show "FIRST BLOOD!" on first kill =====
+                if (!firstGameTips.firstKill && isInOnboardingWindow()) {
+                    firstGameTips.firstKill = true;
+                    // Epic first kill message
+                    flashMessages.push({
+                        text: '🔥 FIRST BLOOD! 🔥',
+                        color: '#FF4444',
+                        x: canvas.width / 2,
+                        y: canvas.height / 2 - 50,
+                        startTime: Date.now(),
+                        duration: 2500,
+                        fontSize: 36,
+                        centered: true
+                    });
+                    // Extra screen shake for first kill
+                    screenShake = { x: Math.random() * 10 - 5, y: Math.random() * 10 - 5 };
+                    setTimeout(() => { screenShake = { x: 0, y: 0 }; }, 300);
+                }
+
                 // ===== ONBOARDING: Detect first monster killed =====
                 if (!firstGameTips.monsterKilled && isInOnboardingWindow()) {
                     firstGameTips.monsterKilled = true;
@@ -1200,6 +1237,13 @@ async function init() {
 
         // Reset session start time when game starts
         sessionStartTime = Date.now();
+
+        // ===== FIRST 60 SECONDS: Show pre-game tip =====
+        setTimeout(() => {
+            if (isInOnboardingWindow()) {
+                showToast('💡 TIP: Answer quizzes correctly to deal damage!', 4000);
+            }
+        }, 1000); // Show 1 second after game starts
 
         // Set up onboarding modal dismiss handler
         const onboardingModal = document.getElementById('onboardingModal');
