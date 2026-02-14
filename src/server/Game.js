@@ -216,7 +216,7 @@ class Game {
         const playerCount = Object.keys(this.gameState.players).length;
         if (playerCount === 1 && this.gameState.monsters.length === 0) {
             const currentLevel = this.gameState.gameLevel || 1;
-            const initialMonsterCount = Math.ceil(this.levelData[currentLevel].maxMonsters * 0.3);
+            const initialMonsterCount = Math.ceil(this.levelData[currentLevel].maxMonsters * 0.25);
             console.log(`First player joined - spawning ${initialMonsterCount} initial monsters for level ${currentLevel}`);
 
             // Spawn first monster at medium distance (400-700px)
@@ -615,8 +615,8 @@ class Game {
             // Spawn collectibles for the new level
             this.collectibleManager.initializeLevelCollectibles();
 
-            // Spawn initial monsters (30% of max monsters)
-            const initialMonsterCount = Math.ceil(this.levelData[level].maxMonsters * 0.3);
+            // Spawn initial monsters (25% of max monsters)
+            const initialMonsterCount = Math.ceil(this.levelData[level].maxMonsters * 0.25);
             console.log(`Spawning ${initialMonsterCount} initial monsters for level ${level}`);
 
             // Spawn first monster at medium distance (400-700px)

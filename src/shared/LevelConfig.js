@@ -6,7 +6,7 @@ const LevelConfig = {
             monsterDamageFactor: 1,
             playerSpeed: 5,
             monsterSpeed: 5,
-            spawnRate: 4000, // 4s interval
+            spawnRate: 10000, // 10s interval
             maxMonsters: 25,
             monstersToKill: 15, // Increased by 50% (was 10)
             terrainTheme: 'stone'
