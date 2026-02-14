@@ -271,6 +271,106 @@
       text-align: right;
       font-weight: bold;
     }
+
+    /* Onboarding Modal */
+    #onboardingModal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.7);
+      z-index: 200;
+      justify-content: center;
+      align-items: center;
+      font-family: 'Segoe UI', sans-serif;
+    }
+
+    #onboardingModal.visible {
+      display: flex;
+    }
+
+    #onboardingModalPanel {
+      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+      border-radius: 15px;
+      padding: 30px 25px;
+      color: #fff;
+      max-width: 350px;
+      width: 85%;
+      text-align: center;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+    }
+
+    #onboardingModalPanel h3 {
+      font-size: 1.3em;
+      margin-bottom: 15px;
+      color: #e94560;
+    }
+
+    #onboardingModalPanel p {
+      font-size: 0.95em;
+      line-height: 1.5;
+      margin-bottom: 20px;
+      color: rgba(255, 255, 255, 0.9);
+    }
+
+    #onboardingModalPanel .dismiss-hint {
+      font-size: 0.8em;
+      color: rgba(255, 255, 255, 0.5);
+      margin-top: 10px;
+    }
+
+    /* Toast Notifications */
+    #toastContainer {
+      position: fixed;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 150;
+      pointer-events: none;
+    }
+
+    .toast {
+      background: linear-gradient(135deg, #2d6a4f 0%, #1b4332 100%);
+      color: #fff;
+      padding: 12px 20px;
+      border-radius: 8px;
+      margin-top: 10px;
+      font-family: 'Segoe UI', sans-serif;
+      font-size: 0.9em;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+      text-align: center;
+      max-width: 300px;
+      animation: slideUp 0.3s ease-out;
+      pointer-events: auto;
+    }
+
+    @keyframes slideUp {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @keyframes slideDown {
+      from {
+        opacity: 1;
+        transform: translateY(0);
+      }
+      to {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+    }
+
+    .toast.fade-out {
+      animation: slideDown 0.3s ease-out forwards;
+    }
   </style>
 </head>
 
@@ -363,6 +463,18 @@
       </div>
     </div>
   </div>
+
+  <!-- Onboarding Modal -->
+  <div id="onboardingModal">
+    <div id="onboardingModalPanel">
+      <h3 id="onboardingModalTitle"></h3>
+      <p id="onboardingModalText"></p>
+      <div class="dismiss-hint">Tap anywhere or wait to continue...</div>
+    </div>
+  </div>
+
+  <!-- Toast Notification Container -->
+  <div id="toastContainer"></div>
 
   <canvas id="gameCanvas" width="800" height="600"></canvas>
 

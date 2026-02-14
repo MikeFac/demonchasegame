@@ -301,6 +301,18 @@ let finalStats = {
 };
 let restartButtonRect = { x: 0, y: 0, width: 0, height: 0 };
 
+// Onboarding tips tracking - shown only once per game session
+let firstGameTips = {
+    demonAppeared: false,
+    healingCollected: false,
+    ammoEarned: false,
+    monsterKilled: false
+};
+let modalPaused = false;
+let modalPauseStartTime = 0;
+const MODAL_DISPLAY_TIME = 3500; // 3.5 seconds
+const ONBOARDING_DURATION = 5 * 60 * 1000; // 5 minutes in ms
+
 // Helper function to load an image (if you don't already have this)
 function loadImage(src) {
     return new Promise((resolve, reject) => {
@@ -309,6 +321,72 @@ function loadImage(src) {
         img.onerror = () => reject(new Error(`Failed to load image: ${src}`));
         img.src = src;
     });
+}
+
+// ===== ONBOARDING TIPS SYSTEM =====
+
+/**
+ * Show onboarding modal (pauses game)
+ * @param {string} title - Modal title
+ * @param {string} text - Modal text
+ */
+function showOnboardingModal(title, text) {
+    const modal = document.getElementById('onboardingModal');
+    const titleEl = document.getElementById('onboardingModalTitle');
+    const textEl = document.getElementById('onboardingModalText');
+
+    if (modal && titleEl && textEl) {
+        titleEl.textContent = title;
+        textEl.textContent = text;
+        modal.classList.add('visible');
+        modalPaused = true;
+        modalPauseStartTime = Date.now();
+    }
+}
+
+/**
+ * Hide onboarding modal (resumes game)
+ */
+function hideOnboardingModal() {
+    const modal = document.getElementById('onboardingModal');
+    if (modal) {
+        modal.classList.remove('visible');
+        modalPaused = false;
+        modalPauseStartTime = 0;
+    }
+}
+
+/**
+ * Show toast notification at bottom of screen
+ * @param {string} message - Toast message (supports emoji)
+ * @param {number} duration - Duration in ms (default 3500)
+ */
+function showToast(message, duration = 3500) {
+    const container = document.getElementById('toastContainer');
+    if (!container) return;
+
+    const toast = document.createElement('div');
+    toast.className = 'toast';
+    toast.textContent = message;
+    container.appendChild(toast);
+
+    // Auto-dismiss
+    setTimeout(() => {
+        toast.classList.add('fade-out');
+        setTimeout(() => {
+            toast.remove();
+        }, 300);
+    }, duration);
+}
+
+/**
+ * Check if player is in onboarding window (level 1, within 5 min)
+ */
+function isInOnboardingWindow() {
+    if (player.level > 1) return false;
+    if (!sessionStartTime) return true; // If session time not set, assume we're in onboarding
+    const elapsed = Date.now() - sessionStartTime;
+    return elapsed < ONBOARDING_DURATION;
 }
 
 // to retrieve verses from database in PRD
@@ -482,6 +560,12 @@ function initializeVerseCounter() {
 
 // Callback for QuizManager to notify of correct answers
 window.onQuizCorrectAnswer = function (quizMode, verseReference) {
+    // ===== ONBOARDING: Detect first ammo earned =====
+    if (!firstGameTips.ammoEarned && isInOnboardingWindow()) {
+        firstGameTips.ammoEarned = true;
+        showToast('💡 Earn ammo by answering quizzes correctly');
+    }
+
     // Track daily challenge progress (only first_letter mode)
     if (quizMode === 'first_letter') {
         if (!dailyChallengeCompleted && dailyChallengeProgress < dailyChallengeGoal) {
@@ -585,6 +669,12 @@ async function init() {
                 };
             },
             onMonsterKilled: ({ monsterId, x, y }) => {
+                // ===== ONBOARDING: Detect first monster killed =====
+                if (!firstGameTips.monsterKilled && isInOnboardingWindow()) {
+                    firstGameTips.monsterKilled = true;
+                    showToast('💡 Killing demons earns XP and increases your level');
+                }
+
                 demonDies.play();
                 console.log(`Monster ${monsterId} was killed at (${x}, ${y})`);
 
@@ -1111,6 +1201,17 @@ async function init() {
         // Reset session start time when game starts
         sessionStartTime = Date.now();
 
+        // Set up onboarding modal dismiss handler
+        const onboardingModal = document.getElementById('onboardingModal');
+        if (onboardingModal) {
+            onboardingModal.addEventListener('click', function(e) {
+                // Close modal on click
+                if (e.target === onboardingModal || e.target === document.getElementById('onboardingModalPanel')) {
+                    hideOnboardingModal();
+                }
+            });
+        }
+
         console.log('Game initialized');
 
         resolve();
@@ -1264,6 +1365,14 @@ function gameLoop() {
         };
 
         window.renderer.drawGame(gameState, player, playerCode, monsters, healingPoints, camera, uiState, inventoryState, clientWalls, screenShake, damageNumbers, deathParticles, mouseX, mouseY);
+
+        // ===== ONBOARDING: Auto-dismiss modal after timeout =====
+        if (modalPaused && modalPauseStartTime > 0) {
+            const elapsed = Date.now() - modalPauseStartTime;
+            if (elapsed >= MODAL_DISPLAY_TIME) {
+                hideOnboardingModal();
+            }
+        }
 
         // Draw VerseTestScreen overlay on top of everything
         if (VerseTestScreen.isActive()) {
@@ -1600,6 +1709,15 @@ function gameLoop() {
 
         });
 
+        // ===== ONBOARDING: Detect first demon appearance =====
+        if (!firstGameTips.demonAppeared && isInOnboardingWindow() && monsters.length > 0) {
+            firstGameTips.demonAppeared = true;
+            showOnboardingModal(
+                'A demon is attacking!',
+                'Tap the quiz answer below to fight back.'
+            );
+        }
+
         // Check if the level is completed
         // Require 60% of monsters to be killed (allows some to be stuck/missed)
         const killed = gameState.monstersKilled || 0;
@@ -1628,6 +1746,12 @@ function gameLoop() {
             let dy = healingPoint.y - player.y;
             let distance = Math.sqrt(dx * dx + dy * dy);
             if (distance < player.width / 2 + healingPoint.width / 2) {
+                // ===== ONBOARDING: Detect healing point collection =====
+                if (!firstGameTips.healingCollected && isInOnboardingWindow()) {
+                    firstGameTips.healingCollected = true;
+                    showToast('💡 Walk over green crosses to restore health');
+                }
+
                 // Heal the player
                 network.sendCollectHealingPoint(healingPoint.id);
                 healingRecharge.play(); // Play the attack sound effect
