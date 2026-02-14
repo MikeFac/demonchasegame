@@ -380,6 +380,91 @@
     .toast.fade-out {
       animation: slideDown 0.3s ease-out forwards;
     }
+
+    /* Privacy Policy Modal */
+    #privacyModal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.7);
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+    }
+
+    #privacyModal.open {
+      display: flex;
+    }
+
+    #privacyModalContent {
+      background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+      color: #fff;
+      padding: 30px;
+      border-radius: 12px;
+      max-width: 600px;
+      width: 90%;
+      max-height: 80vh;
+      overflow-y: auto;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+      font-family: 'Segoe UI', sans-serif;
+    }
+
+    #privacyModalContent h2 {
+      margin-top: 0;
+      margin-bottom: 20px;
+      font-size: 1.5em;
+      border-bottom: 2px solid rgba(255, 255, 255, 0.3);
+      padding-bottom: 10px;
+    }
+
+    #privacyModalContent p {
+      margin-bottom: 12px;
+      line-height: 1.6;
+      font-size: 0.95em;
+    }
+
+    #privacyModalContent strong {
+      color: #FFD700;
+    }
+
+    #privacyModalContent ul {
+      margin-left: 20px;
+      margin-bottom: 12px;
+    }
+
+    #privacyModalContent li {
+      margin-bottom: 8px;
+      line-height: 1.5;
+    }
+
+    #privacyModalContent a {
+      color: #FFD700;
+      text-decoration: none;
+    }
+
+    #privacyModalContent a:hover {
+      text-decoration: underline;
+    }
+
+    #btnClosePrivacy {
+      background: linear-gradient(135deg, #2d6a4f, #1b4332);
+      color: #fff;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 1em;
+      margin-top: 20px;
+      transition: all 0.3s ease;
+    }
+
+    #btnClosePrivacy:hover {
+      box-shadow: 0 4px 12px rgba(45, 106, 79, 0.6);
+      transform: scale(1.05);
+    }
   </style>
 </head>
 
@@ -432,6 +517,7 @@
     <button id="btnSolo">Start Solo Game</button>
     <button id="btnMultiplayer">Join Multiplayer</button>
     <button id="btnInstructions">How to Play</button>
+    <button id="btnPrivacy" style="font-size: 12px; padding: 6px 12px; margin-top: 10px; opacity: 0.8;">Privacy Policy</button>
 
     <div id="quizSettings">
       <h3 id="quizSettingsToggle">Quiz Settings</h3>
@@ -479,6 +565,44 @@
       <h3 id="onboardingModalTitle"></h3>
       <p id="onboardingModalText"></p>
       <div class="dismiss-hint">Tap anywhere or wait to continue...</div>
+    </div>
+  </div>
+
+  <!-- Privacy Policy Modal -->
+  <div id="privacyModal">
+    <div id="privacyModalContent">
+      <h2>Privacy Policy</h2>
+
+      <p><strong>VerseBattles does not collect or sell personal information.</strong></p>
+
+      <h3>Data Collection</h3>
+      <ul>
+        <li>We use <strong>Google Analytics 4</strong> to understand how players use the game</li>
+        <li>Analytics collects: gameplay events (correct answers, levels completed, monsters defeated), device type, browser, and general location (country/region)</li>
+        <li><strong>No personal information</strong> such as names, emails, or personally identifiable information are collected</li>
+        <li>Google Analytics data is governed by <a href="https://policies.google.com/privacy" target="_blank">Google's Privacy Policy</a></li>
+      </ul>
+
+      <h3>Data Use</h3>
+      <ul>
+        <li>Analytics data helps us improve the game and measure how players discover and use VerseBattles</li>
+        <li>We do not share data with third parties except Google</li>
+        <li>Data is not used for targeted advertising or user profiling</li>
+      </ul>
+
+      <h3>Your Rights</h3>
+      <ul>
+        <li>You can disable analytics collection in your browser settings</li>
+        <li>We do not use tracking cookies (only session cookies for gameplay)</li>
+        <li>Your gameplay data is not saved or associated with any account</li>
+      </ul>
+
+      <h3>Contact</h3>
+      <p>Questions about our privacy practices? Email us at <strong><a href="mailto:michaelfackerell@gmail.com">michaelfackerell@gmail.com</a></strong></p>
+
+      <p style="font-size: 0.9em; opacity: 0.8; margin-top: 30px;">Last updated: February 2026</p>
+
+      <button id="btnClosePrivacy">Close</button>
     </div>
   </div>
 
@@ -782,6 +906,28 @@
         open();
         btnInstructions.classList.add('pulse');
       }
+    })();
+
+    // Privacy Policy Modal
+    (function () {
+      const privacyModal = document.getElementById('privacyModal');
+      const btnPrivacy = document.getElementById('btnPrivacy');
+      const btnClosePrivacy = document.getElementById('btnClosePrivacy');
+
+      btnPrivacy.addEventListener('click', function () {
+        privacyModal.classList.add('open');
+      });
+
+      btnClosePrivacy.addEventListener('click', function () {
+        privacyModal.classList.remove('open');
+      });
+
+      // Close privacy modal when clicking outside
+      privacyModal.addEventListener('click', function (e) {
+        if (e.target === privacyModal) {
+          privacyModal.classList.remove('open');
+        }
+      });
     })();
   </script>
 </body>
