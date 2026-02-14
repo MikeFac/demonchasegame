@@ -435,6 +435,14 @@ function setLevelData(gameState) {
 }
 
 function startGame(mode, roomId) {
+    // Track game start in Google Analytics
+    if (typeof gtag !== 'undefined') {
+        gtag('event', 'game_start', {
+            game_mode: mode,
+            timestamp: new Date().toISOString()
+        });
+    }
+
     const menuScreen = document.getElementById('menuScreen');
     if (menuScreen) menuScreen.style.display = 'none';
     canvas.style.display = 'block';
@@ -562,6 +570,14 @@ function initializeVerseCounter() {
 
 // Callback for QuizManager to notify of correct answers
 window.onQuizCorrectAnswer = function (quizMode, verseReference) {
+    // Track correct answer in Google Analytics
+    if (typeof gtag !== 'undefined') {
+        gtag('event', 'quiz_correct', {
+            quiz_mode: quizMode,
+            verse_reference: verseReference
+        });
+    }
+
     // ===== SOUND: Play ding on correct answer =====
     if (window.SoundEffects) {
         SoundEffects.playDing();
@@ -692,6 +708,13 @@ async function init() {
                 };
             },
             onMonsterKilled: ({ monsterId, x, y }) => {
+                // Track monster kill in Google Analytics
+                if (typeof gtag !== 'undefined') {
+                    gtag('event', 'monster_killed', {
+                        level: gameState.gameLevel
+                    });
+                }
+
                 // ===== FIRST 60 SECONDS: Show "FIRST BLOOD!" on first kill =====
                 if (!firstGameTips.firstKill && isInOnboardingWindow()) {
                     firstGameTips.firstKill = true;
@@ -845,6 +868,14 @@ async function init() {
                 console.log('Received walls:', clientWalls.length, 'tiles');
             },
             onLevelAdvancing: (data) => {
+                // Track level completion in Google Analytics
+                if (typeof gtag !== 'undefined') {
+                    gtag('event', 'level_complete', {
+                        level: gameState.gameLevel,
+                        kills: gameState.monstersKilled || 0
+                    });
+                }
+
                 console.log('Level advancing! Countdown:', data.countdown);
                 levelCompleted = true;
                 levelAdvanceCountdown = data.countdown;
