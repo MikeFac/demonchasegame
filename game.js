@@ -562,6 +562,11 @@ function initializeVerseCounter() {
 
 // Callback for QuizManager to notify of correct answers
 window.onQuizCorrectAnswer = function (quizMode, verseReference) {
+    // ===== SOUND: Play ding on correct answer =====
+    if (window.SoundEffects) {
+        SoundEffects.playDing();
+    }
+
     // ===== FIRST 60 SECONDS: Show "POWERED UP!" on first correct answer =====
     if (!firstGameTips.firstCorrectAnswer && isInOnboardingWindow()) {
         firstGameTips.firstCorrectAnswer = true;
@@ -690,6 +695,10 @@ async function init() {
                 // ===== FIRST 60 SECONDS: Show "FIRST BLOOD!" on first kill =====
                 if (!firstGameTips.firstKill && isInOnboardingWindow()) {
                     firstGameTips.firstKill = true;
+                    // Epic first kill sound
+                    if (window.SoundEffects) {
+                        SoundEffects.playFirstKill();
+                    }
                     // Epic first kill message
                     flashMessages.push({
                         text: '🔥 FIRST BLOOD! 🔥',
@@ -839,6 +848,34 @@ async function init() {
                 console.log('Level advancing! Countdown:', data.countdown);
                 levelCompleted = true;
                 levelAdvanceCountdown = data.countdown;
+
+                // ===== SHARE BUTTON: Show after completing level 1 =====
+                if (gameState.gameLevel === 1 && !localStorage.getItem('hasShared')) {
+                    setTimeout(() => {
+                        const kills = gameState.monstersKilled || 0;
+                        const shareText = `I just defeated ${kills} demons while learning Bible verses! Play Demon Chase: ${window.location.origin}`;
+
+                        if (navigator.share) {
+                            // Mobile share API
+                            navigator.share({
+                                title: 'Demon Chase Game',
+                                text: shareText,
+                                url: window.location.origin
+                            }).then(() => {
+                                localStorage.setItem('hasShared', 'true');
+                                showToast('✅ Thanks for sharing!', 2000);
+                            }).catch(() => {
+                                // User cancelled, no action needed
+                            });
+                        } else {
+                            // Desktop: Copy to clipboard
+                            navigator.clipboard.writeText(shareText).then(() => {
+                                localStorage.setItem('hasShared', 'true');
+                                showToast('📋 Share text copied to clipboard!', 3000);
+                            });
+                        }
+                    }, 2000); // Show share prompt 2s after level complete
+                }
 
                 // Freeze movement during level transition to prevent spawning into walls
                 // Will be unfrozen when 'walls' event is received
@@ -1771,6 +1808,32 @@ function gameLoop() {
             console.log("Checking level completion. Killed:", killed, "Total:", total);
             if (gameState.gameLevel < Object.keys(levelData).length) {
                 console.log("Level completed — notifying server");
+
+                // ===== VICTORY SCREEN: Show level complete message =====
+                if (window.SoundEffects) {
+                    SoundEffects.playLevelComplete();
+                }
+                flashMessages.push({
+                    text: `🏆 LEVEL ${gameState.gameLevel} COMPLETE! 🏆`,
+                    color: '#FFD700',
+                    x: canvas.width / 2,
+                    y: canvas.height / 2 - 80,
+                    startTime: Date.now(),
+                    duration: 3000,
+                    fontSize: 28,
+                    centered: true
+                });
+                flashMessages.push({
+                    text: `${killed} Demons Defeated!`,
+                    color: '#FFFFFF',
+                    x: canvas.width / 2,
+                    y: canvas.height / 2 - 40,
+                    startTime: Date.now(),
+                    duration: 3000,
+                    fontSize: 20,
+                    centered: true
+                });
+
                 // Notify server; it will broadcast levelAdvancing to all clients
                 network.sendLevelCompleted();
                 // Set flag to prevent duplicate sends (server countdown will set levelCompleted via callback)
