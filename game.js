@@ -1642,6 +1642,15 @@ function gameLoop() {
                         player.health -= damage;
                         network.sendPlayerHit(damage);
 
+                        // ===== ONBOARDING: Show modal on first damage taken =====
+                        if (!firstGameTips.demonAppeared && isInOnboardingWindow() && damage > 0) {
+                            firstGameTips.demonAppeared = true;
+                            showOnboardingModal(
+                                'A demon is attacking!',
+                                'Tap the quiz answer below to fight back.'
+                            );
+                        }
+
                         // Spirit Drain: Poverty drains XP, Temptation drains Ammo
                         if (damage > 0 && Math.random() < Constants.DRAIN_CHANCE) {
                             if (monster.demonType === 'Poverty') {
@@ -1708,15 +1717,6 @@ function gameLoop() {
             }
 
         });
-
-        // ===== ONBOARDING: Detect first demon appearance =====
-        if (!firstGameTips.demonAppeared && isInOnboardingWindow() && monsters.length > 0) {
-            firstGameTips.demonAppeared = true;
-            showOnboardingModal(
-                'A demon is attacking!',
-                'Tap the quiz answer below to fight back.'
-            );
-        }
 
         // Check if the level is completed
         // Require 60% of monsters to be killed (allows some to be stuck/missed)
