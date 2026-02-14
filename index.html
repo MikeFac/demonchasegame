@@ -200,6 +200,22 @@
       font-size: 0.9em;
     }
 
+    #btnStartPlaying {
+      background: linear-gradient(135deg, #2d6a4f, #1b4332);
+      color: #fff;
+      font-size: 0.85em;
+      padding: 8px 16px;
+    }
+
+    @keyframes subtlePulse {
+      0%, 100% { box-shadow: 0 4px 15px rgba(45, 106, 79, 0.4); }
+      50% { box-shadow: 0 4px 25px rgba(45, 200, 100, 0.7), 0 0 15px rgba(45, 200, 100, 0.3); }
+    }
+
+    #btnInstructions.pulse {
+      animation: subtlePulse 2s ease-in-out infinite;
+    }
+
     /* Quiz Settings */
     #quizSettings {
       margin: 20px 0 5px 0;
@@ -342,6 +358,7 @@
       <div class="instructions-nav">
         <button id="btnPrev">Back</button>
         <span class="page-indicator" id="pageIndicator"></span>
+        <button id="btnStartPlaying">Start Playing</button>
         <button id="btnNext">Next</button>
       </div>
     </div>
@@ -466,7 +483,7 @@
             <p>Demon Chase is an action game where you fight spiritual enemies by learning Bible verses. Demons representing fears, doubts, and lies chase you through dungeon rooms.</p>
             <p>Your weapon? <span class="highlight">The Word of God.</span> Answer verse quizzes correctly to power up your attacks and defeat the demons.</p>
             <h3>Goal</h3>
-            <p>Defeat enough monsters in each level to advance. There are 3 levels, each harder than the last with faster and stronger enemies.</p>
+            <p>Defeat enough monsters in each level to advance. There are <span class="highlight">5 levels</span>, each harder than the last with faster and stronger enemies. Choose from 5 map styles: Classic Dungeon, Narrow Paths, Complex Labyrinth, Open Plains, and Grid City.</p>
           `
         },
         {
@@ -501,7 +518,7 @@
           `
         },
         {
-          title: 'Items & Shields',
+          title: 'Items & Collectibles',
           content: `
             <h3>Healing Points</h3>
             <p>Green crosses appear in the dungeon. Walk over them to <span class="highlight">restore 25 health</span>. Up to 2 exist at a time.</p>
@@ -512,6 +529,15 @@
               <li>Tap <span class="highlight">Use</span> to activate the shield</li>
               <li>While active (10 seconds), you take <span class="highlight">zero damage</span> from demons</li>
               <li>A golden glow surrounds your character and a timer shows remaining time</li>
+            </ul>
+            <h3>Armor of God</h3>
+            <p>Collect pieces of the Armor of God as they appear in the dungeon:</p>
+            <ul>
+              <li><span class="highlight">Sword of the Spirit</span> — increased melee damage</li>
+              <li><span class="highlight">Belt of Truth</span> — bonus protection</li>
+              <li><span class="highlight">Helmet of Salvation</span> — extra health</li>
+              <li><span class="highlight">Breastplate of Righteousness</span> — damage reduction</li>
+              <li><span class="highlight">Sandals of Peace</span> — movement speed boost</li>
             </ul>
           `
         },
@@ -525,11 +551,13 @@
               <li>Full health restore on level up</li>
             </ul>
             <h3>Game Levels</h3>
-            <p>There are <span class="highlight">3 game levels</span>. Beat 60% of the monsters to advance:</p>
+            <p>There are <span class="highlight">5 game levels</span>. Beat 60% of the monsters to advance:</p>
             <ul>
               <li><span class="highlight">Level 1 (Stone Dungeon):</span> Fear & Ignorance — slow, weak</li>
               <li><span class="highlight">Level 2 (Earth Dungeon):</span> Strife, Confusion & Infirmity — faster, hit harder</li>
               <li><span class="highlight">Level 3 (Crystal Dungeon):</span> Condemnation, Unbelief, Depression & Doubt — fast, dangerous</li>
+              <li><span class="highlight">Level 4 (Shadow Dungeon):</span> Pride, Spirit of Slumber & Jezebel — stronger with special abilities</li>
+              <li><span class="highlight">Level 5 (Inferno Dungeon):</span> All demon types — the ultimate challenge with scaling HP</li>
             </ul>
             <p>Each level generates a new dungeon layout with a different colour theme.</p>
           `
@@ -546,10 +574,17 @@
               <li>Watch your Spirit ammo counter — keep answering quizzes to stay stocked</li>
               <li>Use the <span class="highlight">Review</span> button to study verses you got wrong</li>
             </ul>
-            <h3>Demon Types</h3>
+            <h3>Demon Types & Abilities</h3>
             <ul>
               <li><span class="highlight">Chasers</span> — follow you relentlessly</li>
               <li><span class="highlight">Wanderers</span> — walk randomly, but still hurt if you get close</li>
+            </ul>
+            <p>Watch out for <span class="highlight">demon special abilities</span> in later levels:</p>
+            <ul>
+              <li><span class="highlight">Freezing Aura</span> — slows your movement when nearby</li>
+              <li><span class="highlight">Pride Armor</span> — reduces damage taken until broken</li>
+              <li><span class="highlight">Spirit Drain</span> — steals your Spirit ammo on hit</li>
+              <li><span class="highlight">Strife Dash</span> — charges at you with a burst of speed</li>
             </ul>
             <p>Good luck, and may the Word be your sword!</p>
           `
@@ -564,6 +599,8 @@
       const indicatorEl = document.getElementById('pageIndicator');
       const btnPrev = document.getElementById('btnPrev');
       const btnNext = document.getElementById('btnNext');
+      const btnStartPlaying = document.getElementById('btnStartPlaying');
+      const btnInstructions = document.getElementById('btnInstructions');
 
       function showPage(index) {
         currentPage = index;
@@ -590,9 +627,11 @@
 
       function close() {
         overlay.classList.remove('visible');
+        localStorage.setItem('hasSeenTutorial', 'true');
+        btnInstructions.classList.remove('pulse');
       }
 
-      document.getElementById('btnInstructions').addEventListener('click', open);
+      btnInstructions.addEventListener('click', open);
 
       btnPrev.addEventListener('click', function () {
         if (currentPage > 0) showPage(currentPage - 1);
@@ -606,10 +645,21 @@
         }
       });
 
+      btnStartPlaying.addEventListener('click', function () {
+        close();
+        startGame('solo');
+      });
+
       // Close on overlay background click
       overlay.addEventListener('click', function (e) {
         if (e.target === overlay) close();
       });
+
+      // Auto-open for first-time visitors, pulse for returning players
+      if (!localStorage.getItem('hasSeenTutorial')) {
+        open();
+        btnInstructions.classList.add('pulse');
+      }
     })();
   </script>
 </body>
