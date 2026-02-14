@@ -935,7 +935,7 @@ async function init() {
 
 
         // this might get replaced in PRD on the server - check
-        ALL_QUALITIES = ['Faith', 'Courage', 'Knowledge', 'Love', 'Wisdom', 'Healing', 'Joy', 'Focus', 'Prosperity', 'Purity', 'Humility', 'Forgiveness', 'Hope', 'Praise', 'Intercession', 'Endurance', 'Good News', 'Identity', 'Deliverance', 'Power', 'Prophecy'];
+        ALL_QUALITIES = ['Faith', 'Courage', 'Knowledge', 'Love', 'Wisdom', 'Healing', 'Joy', 'Focus', 'Prosperity', 'Purity', 'Humility', 'Forgiveness', 'Hope', 'Praise', 'Prayer', 'Endurance', 'Good News', 'Identity', 'Deliverance', 'Power', 'Prophecy'];
 
         if (PRD) {
             try {
