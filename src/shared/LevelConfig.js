@@ -6,7 +6,7 @@ const LevelConfig = {
             monsterDamageFactor: 1,
             playerSpeed: 5,
             monsterSpeed: 5,
-            spawnRate: 10000, // 10s interval
+            spawnRate: 20000, // 20s interval
             maxMonsters: 25,
             monstersToKill: 15, // Increased by 50% (was 10)
             terrainTheme: 'stone'
@@ -17,7 +17,7 @@ const LevelConfig = {
             monsterDamageFactor: 1.5,
             playerSpeed: 6,
             monsterSpeed: 7,
-            spawnRate: 3500, // 3.5s interval
+            spawnRate: 7000, // 7s interval
             maxMonsters: 30,
             monstersToKill: 23, // Increased by 50% (was 15)
             terrainTheme: 'earth'
@@ -28,7 +28,7 @@ const LevelConfig = {
             monsterDamageFactor: 1.5,
             playerSpeed: 6,
             monsterSpeed: 9,
-            spawnRate: 3000, // 3s interval
+            spawnRate: 6000, // 6s interval
             maxMonsters: 35,
             monstersToKill: 30, // Increased by 50% (was 20)
             terrainTheme: 'crystal'
@@ -39,7 +39,7 @@ const LevelConfig = {
             monsterDamageFactor: 2.0,
             playerSpeed: 7,
             monsterSpeed: 10,
-            spawnRate: 2500, // 2.5s interval
+            spawnRate: 5000, // 5s interval
             maxMonsters: 40,
             monstersToKill: 38, // Increased by 50% (was 25)
             terrainTheme: 'shadow'
@@ -50,7 +50,7 @@ const LevelConfig = {
             monsterDamageFactor: 2.5,
             playerSpeed: 8,
             monsterSpeed: 12,
-            spawnRate: 2000, // 2s interval
+            spawnRate: 4000, // 4s interval
             maxMonsters: 50,
             monstersToKill: 45, // Increased by 50% (was 30)
             terrainTheme: 'void'
