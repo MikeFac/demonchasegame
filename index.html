@@ -27,7 +27,7 @@
       align-items: center;
       height: 100vh;
       overflow: hidden;
-      background-color: #e6f2ff;
+      background-color: #3a4a5e;
     }
 
     canvas {
@@ -36,37 +36,138 @@
     }
 
     #menuScreen {
-      font-family: 'Segoe UI', sans-serif;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
       background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
-      border-radius: 15px;
-      padding: 40px 30px;
+      border-radius: 12px;
+      padding: 25px;
       text-align: center;
       color: #fff;
       max-width: 400px;
       width: 100%;
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
     }
 
-    #menuScreen h1 {
-      font-size: 2.5em;
-      margin-bottom: 40px;
-      text-shadow: 0 0 20px rgba(100, 200, 255, 0.5);
+    #menuScreen .logo-container {
+      margin-bottom: 15px;
+    }
+
+    #menuScreen .logo-container img {
+      max-width: 200px;
+      height: auto;
+    }
+
+    #menuScreen .settings-row {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+
+    #menuScreen .settings-section {
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 8px;
+      padding: 12px;
+      margin-bottom: 12px;
+      text-align: left;
+      flex: 1;
+    }
+
+    #menuScreen .settings-section h3 {
+      font-size: 0.7em;
+      font-weight: 600;
+      margin-bottom: 10px;
+      color: #a8c5e6;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    #menuScreen .radio-group {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+
+    #menuScreen .radio-option {
+      flex: 1;
+      min-width: 50px;
+    }
+
+    #menuScreen .radio-option input[type="radio"] {
+      display: none;
+    }
+
+    #menuScreen .radio-option label {
+      display: block;
+      padding: 6px 2px;
+      background: rgba(255, 255, 255, 0.08);
+      border: 2px solid rgba(255, 255, 255, 0.15);
+      border-radius: 5px;
+      cursor: pointer;
+      transition: all 0.2s;
+      text-align: center;
+      font-size: 0.7em;
+      font-weight: 500;
+    }
+
+    #menuScreen .radio-option input[type="radio"]:checked + label {
+      background: rgba(100, 150, 255, 0.25);
+      border-color: rgba(100, 150, 255, 0.6);
+      box-shadow: 0 0 15px rgba(100, 150, 255, 0.3);
+    }
+
+    #menuScreen .radio-option label:hover {
+      background: rgba(255, 255, 255, 0.12);
+      border-color: rgba(255, 255, 255, 0.3);
+    }
+
+    #menuScreen select {
+      width: 100%;
+      padding: 8px;
+      background: rgba(255, 255, 255, 0.08);
+      border: 2px solid rgba(255, 255, 255, 0.15);
+      border-radius: 6px;
+      color: #fff;
+      font-size: 0.85em;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    #menuScreen select:hover {
+      background: rgba(255, 255, 255, 0.12);
+      border-color: rgba(255, 255, 255, 0.3);
+    }
+
+    #menuScreen select option {
+      background: #16213e;
+      color: #fff;
+    }
+
+    #menuScreen .btn-row {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 10px;
     }
 
     #menuScreen button {
-      display: block;
-      width: 100%;
-      padding: 18px;
-      margin-bottom: 15px;
+      flex: 1;
+      padding: 12px;
       border: none;
-      border-radius: 10px;
-      font-size: 1.2em;
-      font-weight: bold;
+      border-radius: 8px;
+      font-size: 0.9em;
+      font-weight: 600;
       cursor: pointer;
       transition: transform 0.1s, box-shadow 0.2s;
     }
 
     #menuScreen button:hover {
-      transform: scale(1.03);
+      transform: scale(1.02);
+    }
+
+    #btnInstructions {
+      width: 100%;
+      background: linear-gradient(135deg, #2d6a4f, #1b4332);
+      color: #fff;
+      box-shadow: 0 4px 15px rgba(45, 106, 79, 0.4);
+      margin-bottom: 12px;
     }
 
     #btnSolo {
@@ -82,10 +183,19 @@
       box-shadow: 0 4px 15px rgba(15, 52, 96, 0.4);
     }
 
-    #btnInstructions {
-      background: linear-gradient(135deg, #2d6a4f, #1b4332);
-      color: #fff;
-      box-shadow: 0 4px 15px rgba(45, 106, 79, 0.4);
+    #menuScreen .privacy-link {
+      display: block;
+      margin-top: 12px;
+      font-size: 0.7em;
+      color: rgba(255, 255, 255, 0.5);
+      text-decoration: none;
+      cursor: pointer;
+      transition: color 0.2s;
+    }
+
+    #menuScreen .privacy-link:hover {
+      color: rgba(255, 255, 255, 0.8);
+      text-decoration: underline;
     }
 
     /* Instructions overlay */
@@ -227,22 +337,33 @@
 
     /* Quiz Settings */
     #quizSettings {
-      margin: 20px 0 5px 0;
-      text-align: left;
+      margin-bottom: 12px;
     }
 
     #quizSettings h3 {
-      font-size: 1em;
-      margin-bottom: 10px;
-      color: rgba(255, 255, 255, 0.7);
+      font-size: 0.75em;
+      font-weight: 600;
+      margin-bottom: 0;
+      padding: 10px 12px;
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 8px;
+      color: #a8c5e6;
       text-align: center;
       cursor: pointer;
       user-select: none;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      transition: all 0.2s;
+    }
+
+    #quizSettings h3:hover {
+      background: rgba(255, 255, 255, 0.08);
     }
 
     #quizSettings h3::after {
       content: ' ▸';
-      font-size: 0.8em;
+      font-size: 0.9em;
+      margin-left: 8px;
     }
 
     #quizSettings h3.open::after {
@@ -251,6 +372,11 @@
 
     #quizSliders {
       display: none;
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 0 0 8px 8px;
+      padding: 12px;
+      margin-top: -8px;
+      padding-top: 15px;
     }
 
     #quizSliders.visible {
@@ -261,24 +387,30 @@
       display: flex;
       align-items: center;
       margin-bottom: 8px;
-      font-size: 0.85em;
+      gap: 8px;
+      font-size: 0.75em;
     }
 
     .slider-row label {
-      width: 120px;
+      width: 85px;
       flex-shrink: 0;
+      color: rgba(255, 255, 255, 0.9);
+      font-weight: 500;
     }
 
     .slider-row input[type="range"] {
       flex: 1;
-      margin: 0 8px;
-      accent-color: #e94560;
+      margin: 0;
+      accent-color: #6496ff;
+      cursor: pointer;
     }
 
     .slider-row .pct {
-      width: 32px;
+      width: 35px;
       text-align: right;
-      font-weight: bold;
+      font-weight: 600;
+      color: #6496ff;
+      font-size: 0.9em;
     }
 
     /* Onboarding Modal */
@@ -465,47 +597,91 @@
       box-shadow: 0 4px 12px rgba(45, 106, 79, 0.6);
       transform: scale(1.05);
     }
+
+    /* Splash Screen */
+    #splashScreen {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 9999;
+      transition: opacity 0.5s ease-out;
+    }
+
+    #splashScreen.fade-out {
+      opacity: 0;
+    }
+
+    #splashScreen img {
+      max-width: 90%;
+      max-height: 90%;
+      object-fit: contain;
+    }
   </style>
 </head>
 
 <body>
+  <!-- Splash Screen -->
+  <div id="splashScreen">
+    <img src="images/VerseBattles-logo.png" alt="VerseBattles Logo">
+  </div>
+
   <div id="menuScreen">
-    <h1>VerseBattles: Demon Chase</h1>
+    <div class="logo-container">
+      <img src="images/VerseBattles-logo.png" alt="VerseBattles: Demon Chase">
+    </div>
 
-    <!-- Monster Difficulty Selector for Solo -->
-    <div id="soloSettings" style="margin-bottom: 20px;">
-      <label style="display: block; margin-bottom: 10px; font-weight: bold; font-size: 14px;">Solo Game
-        Difficulty:</label>
-      <div style="display: flex; gap: 8px; margin-bottom: 15px;">
-        <button id="soloEasy" class="solo-difficulty-btn" data-preset="easy" onclick="setSoloDifficulty('easy')"
-          style="flex: 1; padding: 8px; background: rgba(255,255,255,0.1); border: 2px solid rgba(255,255,255,0.2); border-radius: 6px; color: white; cursor: pointer; font-size: 12px;">Easy
-          Monsters</button>
-        <button id="soloNormal" class="solo-difficulty-btn active" data-preset="normal"
-          onclick="setSoloDifficulty('normal')"
-          style="flex: 1; padding: 8px; background: rgba(100,150,255,0.3); border: 2px solid rgba(100,150,255,0.5); border-radius: 6px; color: white; cursor: pointer; font-size: 12px;">Normal</button>
-        <button id="soloHard" class="solo-difficulty-btn" data-preset="hard" onclick="setSoloDifficulty('hard')"
-          style="flex: 1; padding: 8px; background: rgba(255,255,255,0.1); border: 2px solid rgba(255,255,255,0.2); border-radius: 6px; color: white; cursor: pointer; font-size: 12px;">Hard
-          Monsters</button>
+    <!-- How to Play Button (under logo) -->
+    <button id="btnInstructions">How to Play</button>
+
+    <!-- Monster Difficulty and Game Speed (side by side) -->
+    <div class="settings-row">
+      <div class="settings-section">
+        <h3>Monster Difficulty</h3>
+        <div class="radio-group">
+          <div class="radio-option">
+            <input type="radio" id="diffEasy" name="difficulty" value="easy">
+            <label for="diffEasy">Easy</label>
+          </div>
+          <div class="radio-option">
+            <input type="radio" id="diffNormal" name="difficulty" value="normal" checked>
+            <label for="diffNormal">Normal</label>
+          </div>
+          <div class="radio-option">
+            <input type="radio" id="diffHard" name="difficulty" value="hard">
+            <label for="diffHard">Hard</label>
+          </div>
+        </div>
+      </div>
+
+      <div class="settings-section">
+        <h3>Game Speed</h3>
+        <div class="radio-group">
+          <div class="radio-option">
+            <input type="radio" id="speedSlow" name="gameSpeed" value="slow">
+            <label for="speedSlow">Slow</label>
+          </div>
+          <div class="radio-option">
+            <input type="radio" id="speedNormal" name="gameSpeed" value="normal" checked>
+            <label for="speedNormal">Normal</label>
+          </div>
+          <div class="radio-option">
+            <input type="radio" id="speedFast" name="gameSpeed" value="fast">
+            <label for="speedFast">Fast</label>
+          </div>
+        </div>
       </div>
     </div>
 
-    <!-- Game Speed Selector for Solo -->
-    <div id="speedSettings" style="margin-bottom: 20px;">
-      <label style="display: block; margin-bottom: 10px; font-weight: bold; font-size: 14px;">Game Speed:</label>
-      <div style="display: flex; gap: 8px; margin-bottom: 15px;">
-        <button id="speedSlow" class="speed-btn" data-speed="slow" onclick="setGameSpeed('slow')"
-          style="flex: 1; padding: 8px; background: rgba(255,255,255,0.1); border: 2px solid rgba(255,255,255,0.2); border-radius: 6px; color: white; cursor: pointer; font-size: 12px;">Slow</button>
-        <button id="speedNormal" class="speed-btn active" data-speed="normal" onclick="setGameSpeed('normal')"
-          style="flex: 1; padding: 8px; background: rgba(100,150,255,0.3); border: 2px solid rgba(100,150,255,0.5); border-radius: 6px; color: white; cursor: pointer; font-size: 12px;">Normal</button>
-        <button id="speedFast" class="speed-btn" data-speed="fast" onclick="setGameSpeed('fast')"
-          style="flex: 1; padding: 8px; background: rgba(255,255,255,0.1); border: 2px solid rgba(255,255,255,0.2); border-radius: 6px; color: white; cursor: pointer; font-size: 12px;">Fast</button>
-      </div>
-    </div>
-
-    <!-- Map Style -->
-    <div style="margin-bottom: 20px;">
-      <label for="mapStyleSelect" style="display: block; margin-bottom: 5px;">Map Style:</label>
-      <select id="mapStyleSelect" style="padding: 5px; width: 100%; max-width: 200px;">
+    <!-- Map Style Section -->
+    <div class="settings-section">
+      <h3>Map Style</h3>
+      <select id="mapStyleSelect">
         <option value="classic" selected>Classic Dungeon</option>
         <option value="narrow">Narrow Paths</option>
         <option value="labyrinth">Complex Labyrinth</option>
@@ -514,10 +690,11 @@
       </select>
     </div>
 
-    <button id="btnSolo">Start Solo Game</button>
-    <button id="btnMultiplayer">Join Multiplayer</button>
-    <button id="btnInstructions">How to Play</button>
-    <button id="btnPrivacy" style="font-size: 12px; padding: 6px 12px; margin-top: 10px; opacity: 0.8;">Privacy Policy</button>
+    <!-- Start Buttons (side by side) -->
+    <div class="btn-row">
+      <button id="btnSolo">Start Solo Game</button>
+      <button id="btnMultiplayer">Join Multiplayer</button>
+    </div>
 
     <div id="quizSettings">
       <h3 id="quizSettingsToggle">Quiz Settings</h3>
@@ -544,6 +721,9 @@
         </div>
       </div>
     </div>
+
+    <!-- Privacy Policy Link -->
+    <a href="#" class="privacy-link" id="privacyLink">Privacy Policy</a>
   </div>
 
   <div id="instructionsOverlay">
@@ -706,7 +886,7 @@
       }
     }
   </script>
-  <script src="game.js?v=2.07"></script>
+  <script src="game.js?v=2.10"></script>
   <script>
     // Override startSoloGame to include mapStyle
     const originalStartSoloGame = window.startSoloGame; // There isn't one globally exposed like this usually, let's check how button is bound. 
@@ -930,10 +1110,11 @@
     // Privacy Policy Modal
     (function () {
       const privacyModal = document.getElementById('privacyModal');
-      const btnPrivacy = document.getElementById('btnPrivacy');
+      const privacyLink = document.getElementById('privacyLink');
       const btnClosePrivacy = document.getElementById('btnClosePrivacy');
 
-      btnPrivacy.addEventListener('click', function () {
+      privacyLink.addEventListener('click', function (e) {
+        e.preventDefault();
         privacyModal.classList.add('open');
       });
 
@@ -947,6 +1128,15 @@
           privacyModal.classList.remove('open');
         }
       });
+
+      // Splash Screen - fade out after 2 seconds
+      setTimeout(function() {
+        const splash = document.getElementById('splashScreen');
+        splash.classList.add('fade-out');
+        setTimeout(function() {
+          splash.style.display = 'none';
+        }, 500); // Remove from DOM after fade completes
+      }, 2000);
     })();
   </script>
 </body>

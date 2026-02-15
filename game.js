@@ -449,11 +449,15 @@ function startGame(mode, roomId) {
 
     init().then(() => {
         if (mode === 'solo') {
-            // Get solo game settings (difficulty + quiz balance + speed)
-            const soloDifficulty = window.soloDifficulty || 'normal';
-            const gameSpeed = window.selectedGameSpeed || 'normal';
+            // Get solo game settings from radio buttons
+            const difficultyRadio = document.querySelector('input[name="difficulty"]:checked');
+            const speedRadio = document.querySelector('input[name="gameSpeed"]:checked');
+
+            const soloDifficulty = difficultyRadio ? difficultyRadio.value : 'normal';
+            const gameSpeed = speedRadio ? speedRadio.value : 'normal';
             const mapStyle = document.getElementById('mapStyleSelect') ? document.getElementById('mapStyleSelect').value : 'classic';
             const quizSettings = getQuizSettingsFromSliders();
+
             network.sendStartSoloGame(soloDifficulty, quizSettings, gameSpeed, mapStyle);
         } else if (mode === 'join' && roomId) {
             network.sendJoinGame(roomId);
