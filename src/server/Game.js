@@ -401,6 +401,14 @@ class Game {
                 player.ammo = (player.ammo || 0) + Constants.AMMO_REWARD;
             }
         });
+
+        // Handle verse test passed (Award Health)
+        socket.on('verseTestPassed', () => {
+            const player = this.gameState.players[socket.playerCode];
+            if (player && player.state === 'alive') {
+                player.health = Math.min(player.health + Constants.VERSE_TEST_HEALTH_REWARD, player.maxHealth);
+            }
+        });
     }
 
     update() {

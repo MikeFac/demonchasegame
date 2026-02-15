@@ -257,6 +257,15 @@ class Network {
     }
 
     /**
+     * Send verse test passed event (to award health on server)
+     */
+    sendVerseTestPassed() {
+        if (this.socket) {
+            this.socket.emit('verseTestPassed');
+        }
+    }
+
+    /**
      * Notify server of collectible collection
      * @param {string} collectibleId
      */

@@ -616,13 +616,13 @@
   <script src="src/shared/Constants.js"></script>
   <script src="src/shared/LevelConfig.js"></script>
   <script src="src/shared/WallGrid.js"></script>
-  <script src="src/client/UILayout.js"></script>
+  <script src="src/client/UILayout.js?v=2.07"></script>
   <script src="src/client/MusicManager.js"></script>
   <script src="src/client/SoundEffects.js"></script>
   <script src="src/client/VerseSongService.js"></script>
-  <script src="src/client/Renderer.js"></script>
-  <script src="src/client/InputHandler.js"></script>
-  <script src="src/client/Network.js"></script>
+  <script src="src/client/Renderer.js?v=2.07"></script>
+  <script src="src/client/InputHandler.js?v=2.07"></script>
+  <script src="src/client/Network.js?v=2.07"></script>
   <script src="src/client/ReviewMode.js"></script>
   <script src="src/client/QuizManager.js"></script>
   <script src="src/client/VerseTestScreen.js"></script>
@@ -706,7 +706,7 @@
       }
     }
   </script>
-  <script src="game.js?v=2.06"></script>
+  <script src="game.js?v=2.07"></script>
   <script>
     // Override startSoloGame to include mapStyle
     const originalStartSoloGame = window.startSoloGame; // There isn't one globally exposed like this usually, let's check how button is bound. 
@@ -733,11 +733,16 @@
           `
         },
         {
-          title: 'Movement & Combat',
+          title: 'Movement',
           content: `
             <h3>Moving</h3>
             <p><span class="highlight">Tap or click</span> anywhere in the game area to move your character there. Your character walks toward the target automatically.</p>
             <p>You move through dungeon rooms connected by corridors. Walls block your path — find the openings!</p>
+          `
+        },
+        {
+          title: 'Combat',
+          content: `
             <h3>Melee Combat</h3>
             <p>When you get close to a demon, combat starts automatically. You and the demon exchange blows every 0.7 seconds.</p>
             <ul>
@@ -764,18 +769,23 @@
           `
         },
         {
-          title: 'Items & Collectibles',
+          title: 'Items - Part 1',
           content: `
             <h3>Healing Points</h3>
             <p>Green crosses appear in the dungeon. Walk over them to <span class="highlight">restore 25 health</span>. Up to 2 exist at a time.</p>
             <h3>Shield of Faith</h3>
             <p>A golden diamond appears once per level. Walk over it to collect it into your inventory.</p>
             <ul>
-              <li>Tap the <span class="key">i</span> button (top-right) to open your inventory</li>
+              <li>Tap the <span class="key">i</span> button (top-left) to open your inventory</li>
               <li>Tap <span class="highlight">Use</span> to activate the shield</li>
               <li>While active (10 seconds), you take <span class="highlight">zero damage</span> from demons</li>
               <li>A golden glow surrounds your character and a timer shows remaining time</li>
             </ul>
+          `
+        },
+        {
+          title: 'Items - Part 2',
+          content: `
             <h3>Armor of God</h3>
             <p>Collect pieces of the Armor of God as they appear in the dungeon:</p>
             <ul>
@@ -788,7 +798,7 @@
           `
         },
         {
-          title: 'Levels & Progression',
+          title: 'Player Progression',
           content: `
             <h3>Levelling Up</h3>
             <p>Killing demons earns <span class="highlight">10 XP</span> each. As you gain XP, your player level increases:</p>
@@ -796,7 +806,11 @@
               <li>Higher level = more max health</li>
               <li>Full health restore on level up</li>
             </ul>
-            <h3>Game Levels</h3>
+          `
+        },
+        {
+          title: 'Game Levels',
+          content: `
             <p>There are <span class="highlight">5 game levels</span>. Beat 60% of the monsters to advance:</p>
             <ul>
               <li><span class="highlight">Level 1 (Stone Dungeon):</span> Fear & Ignorance — slow, weak</li>
@@ -818,14 +832,19 @@
               <li>Save your Shield of Faith for tough fights with multiple chasers</li>
               <li>Shoot from range to soften up enemies before going into melee</li>
               <li>Watch your Ammo counter — keep answering quizzes to stay stocked</li>
-              <li>Use the <span class="highlight">Review</span> button to study verses you got wrong</li>
+              <li>Use the <span class="highlight">Menu</span> to study verses you got wrong</li>
             </ul>
-            <h3>Demon Types & Abilities</h3>
+          `
+        },
+        {
+          title: 'Demon Abilities',
+          content: `
+            <h3>Demon Types</h3>
             <ul>
               <li><span class="highlight">Chasers</span> — follow you relentlessly</li>
               <li><span class="highlight">Wanderers</span> — walk randomly, but still hurt if you get close</li>
             </ul>
-            <p>Watch out for <span class="highlight">demon special abilities</span> in later levels:</p>
+            <h3>Special Abilities (Later Levels)</h3>
             <ul>
               <li><span class="highlight">Freezing Aura</span> — slows your movement when nearby</li>
               <li><span class="highlight">Pride Armor</span> — reduces damage taken until broken</li>

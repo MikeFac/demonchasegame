@@ -474,6 +474,9 @@ function getQuizSettingsFromSliders() {
     return settings;
 }
 
+// Track verses already passed in verse test (reset each game session)
+let passedVerseTests = new Set();
+
 // Launch verse test with rewards on completion
 function launchVerseTest(text, ref, difficulty) {
     if (VerseTestScreen.isActive()) return;
@@ -488,25 +491,25 @@ function launchVerseTest(text, ref, difficulty) {
         verseTestShieldActive = false;
 
         if (passed) {
-            // Enable shooting (same as answering a quiz correctly)
-            isAnswerCorrect = true;
+            // Only award health if this verse hasn't been passed before
+            if (!passedVerseTests.has(ref)) {
+                passedVerseTests.add(ref);
+                network.sendVerseTestPassed();
 
-            // Award ammo
-            player.ammo = (player.ammo || 0) + Constants.VERSE_TEST_AMMO_REWARD;
-
-            // Award health (capped at max)
-            player.health = Math.min(player.health + Constants.VERSE_TEST_HEALTH_REWARD, player.maxHealth);
-
-            // Award XP via server
-            network.sendQuizCorrect();
-
-            // Flash message
-            flashMessages.push({
-                text: `Verse Test Passed! +${Constants.VERSE_TEST_AMMO_REWARD} Spirit +${Constants.VERSE_TEST_HEALTH_REWARD} HP`,
-                color: '#44ff44',
-                startTime: Date.now(),
-                duration: 2500
-            });
+                flashMessages.push({
+                    text: `Verse Test Passed! +${Constants.VERSE_TEST_HEALTH_REWARD} HP`,
+                    color: '#44ff44',
+                    startTime: Date.now(),
+                    duration: 2500
+                });
+            } else {
+                flashMessages.push({
+                    text: 'Verse Test Passed! (already completed)',
+                    color: '#44ff44',
+                    startTime: Date.now(),
+                    duration: 2500
+                });
+            }
         } else {
             console.log('Verse test failed — no penalty');
         }
@@ -1038,6 +1041,7 @@ async function init() {
         repeatEnabled = false;
         repeatTimeout = null;
         hasPlayed = false;
+        passedVerseTests = new Set();
 
         currentReviewMode = 'quality'; // Possible values: 'incorrect', 'quality'
         gameMode = 'game';
@@ -1198,6 +1202,23 @@ async function init() {
                     return true;
                 }
 
+                // Check verse test button click (floating "T" icon in bottom-right area)
+                const vtb = UILayout.verseTestButton;
+                const vtBtnX = UILayout.getVerseTestButtonX(canvas.width);
+                const vtBtnY = UILayout.getVerseTestButtonY(canvas.height);
+                const vtBtnSize = vtb.size;
+
+                if (x >= vtBtnX && x <= vtBtnX + vtBtnSize &&
+                    y >= vtBtnY && y <= vtBtnY + vtBtnSize) {
+                    // Trigger verse test (same as menu → Verse Test)
+                    const verse = organizedVerses[vQuality] && organizedVerses[vQuality][currentVerseIndex];
+                    if (verse) {
+                        const testDifficulty = Math.min(5 + player.level, 15);
+                        launchVerseTest(verse.Text, verse.Reference, testDifficulty);
+                    }
+                    return true;
+                }
+
                 // Check inventory panel clicks when open
                 if (inventoryOpen) {
                     const ip = UILayout.inventoryPanel;
@@ -1312,6 +1333,14 @@ async function init() {
                 showToast('💡 TIP: Answer quizzes correctly to deal damage!', 4000);
             }
         }, 1000); // Show 1 second after game starts
+
+        // Show hint about learning verses in menu (8 seconds after game starts)
+        setTimeout(() => {
+            if (isInOnboardingWindow() && !localStorage.getItem('hasSeenVerseHint')) {
+                showToast('📖 Go to Menu to learn verses!', 5000);
+                localStorage.setItem('hasSeenVerseHint', 'true');
+            }
+        }, 8000);
 
         // Set up onboarding modal dismiss handler
         const onboardingModal = document.getElementById('onboardingModal');

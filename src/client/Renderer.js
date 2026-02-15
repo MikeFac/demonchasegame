@@ -79,6 +79,9 @@ class Renderer {
         // Draw Inventory HUD (button, panel, active buff timers)
         this.drawInventoryHUD(inventoryState || { inventory: {}, activeBuffs: {}, inventoryOpen: false });
 
+        // Draw Verse Test Button (floating "T" icon)
+        this.drawVerseTestButton();
+
         // Draw Level/Game Messages
         this.drawMessages(uiState);
 
@@ -1171,6 +1174,27 @@ class Renderer {
                 });
             }
         }
+    }
+
+    drawVerseTestButton() {
+        const vtb = UILayout.verseTestButton;
+        const btnX = UILayout.getVerseTestButtonX(this.canvas.width);
+        const btnY = UILayout.getVerseTestButtonY(this.canvas.height);
+        const btnSize = vtb.size;
+
+        // Button background (semi-transparent)
+        this.ctx.fillStyle = 'rgba(42, 42, 42, 0.6)';  // 60% opacity
+        this.ctx.fillRect(btnX, btnY, btnSize, btnSize);
+        this.ctx.strokeStyle = 'rgba(74, 144, 226, 0.7)';  // 70% opacity blue
+        this.ctx.lineWidth = 2;
+        this.ctx.strokeRect(btnX, btnY, btnSize, btnSize);
+
+        // "T" icon
+        this.ctx.fillStyle = 'rgba(74, 144, 226, 0.9)';  // 90% opacity blue
+        this.ctx.font = 'bold 18px Arial';
+        this.ctx.textAlign = 'center';
+        this.ctx.fillText('T', btnX + btnSize / 2, btnY + 20);
+        this.ctx.textAlign = 'left';
     }
 
     drawBullets(bullets, camera) {

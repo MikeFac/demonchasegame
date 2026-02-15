@@ -61,14 +61,21 @@ const UILayout = (function () {
 
         // Inventory button (floating "i" icon) - moved to LEFT side under top bars
         inventoryButton: {
-            leftOffset: 7,
+            leftOffset: 20,  // Moved more to the right for better mobile click detection
             topOffset: QUALITY_LINE_HEIGHT + BUTTON_HEIGHT + 5,
+            size: 28
+        },
+
+        // Verse Test button (floating "T" icon) - RIGHT side, positioned above quiz area
+        verseTestButton: {
+            rightOffset: 7,
+            bottomOffset: 50,  // Increased from 30 to position fully in playable area
             size: 28
         },
 
         // Inventory panel (expandedHeight set dynamically by Renderer)
         inventoryPanel: {
-            leftOffset: 7,
+            leftOffset: 20,  // Updated to match new inventoryButton position
             topOffset: QUALITY_LINE_HEIGHT + BUTTON_HEIGHT + 38,
             width: 170,
             height: 200,
@@ -105,6 +112,14 @@ const UILayout = (function () {
 
         getInventoryPanelX() {
             return this.inventoryPanel.leftOffset;
+        },
+
+        getVerseTestButtonX(canvasWidth) {
+            return canvasWidth - this.verseTestButton.rightOffset - this.verseTestButton.size;
+        },
+
+        getVerseTestButtonY(canvasHeight) {
+            return canvasHeight - this.verseTestButton.bottomOffset - this.verseTestButton.size;
         },
 
         getQuizButtonY(canvasHeight) {
