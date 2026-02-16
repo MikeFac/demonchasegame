@@ -216,11 +216,11 @@ class Game {
         const playerCount = Object.keys(this.gameState.players).length;
         if (playerCount === 1 && this.gameState.monsters.length === 0) {
             const currentLevel = this.gameState.gameLevel || 1;
-            const initialMonsterCount = Math.ceil(this.levelData[currentLevel].maxMonsters * 0.25);
+            const initialMonsterCount = Math.ceil(this.levelData[currentLevel].maxMonsters * 0.1);
             console.log(`First player joined - spawning ${initialMonsterCount} initial monsters for level ${currentLevel}`);
 
-            // Spawn first monster at medium distance (400-700px)
-            this.monsterManager.spawnMonsterAtDistance(400, 700, true);
+            // Spawn first monster at close range (200-350px)
+            this.monsterManager.spawnMonsterAtDistance(200, 350, true);
 
             // Spawn remaining initial monsters anywhere valid
             for (let i = 1; i < initialMonsterCount; i++) {

@@ -191,6 +191,7 @@ class Renderer {
             { id: 'playPause', label: isPlaying ? '⏸ Stop' : '▶ Start' },
             { id: 'nextSong', label: '⏭ Next Song' },
             { id: 'goals', label: '🎯 Goals' },
+            { id: 'verseCotD', label: '📿 Verse of the Day' },
             { id: 'verseTest', label: '✏️ Verse Test' },
             { id: 'toggleTestShield', label: testShieldOn ? '🛡️ Test Shield: ON' : '🛡️ Test Shield: OFF' },
             { id: 'leave', label: '🚪 Leave Game', color: '#ff4444' }

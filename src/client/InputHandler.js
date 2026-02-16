@@ -85,6 +85,16 @@ class InputHandler {
             return;
         }
 
+        // Handle VOTD modes
+        if (typeof gameMode !== 'undefined' && gameMode === 'votd') {
+            if (typeof votdMode !== 'undefined' && votdMode === 'learning' && typeof VotdLearningMode !== 'undefined') {
+                VotdLearningMode.handleClick(clickedX, clickedY);
+            } else if (typeof votdMode !== 'undefined' && votdMode === 'test' && typeof VotdTestMode !== 'undefined') {
+                VotdTestMode.handleClick(clickedX, clickedY);
+            }
+            return;
+        }
+
         // Game mode clicks
         this._handleGameModeClick(clickedX, clickedY);
     }

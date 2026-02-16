@@ -227,6 +227,10 @@ let verseTestShieldActive = false;
 // Goals overlay state
 let goalsOverlayVisible = false;
 
+// VOTD (Verse of the Day) state
+let votdMode = null; // 'learning' | 'test' | null
+let votdAutoLaunchHandled = false; // Track if we've already handled votdAutoLaunch
+
 // Flash messages for achievements
 let flashMessages = [];  // Array of { text, color, startTime, duration }
 
@@ -1170,6 +1174,16 @@ async function init() {
                     console.log('Next song:', state.tracks[nextIndex].name);
                 } else if (itemId === 'goals') {
                     goalsOverlayVisible = true;
+                } else if (itemId === 'verseCotD') {
+                    // Launch Verse of the Day
+                    VersOfTheDayManager.clearExpiredBonus(); // Check if bonus expired
+                    if (window.VotdLearningMode) {
+                        gameMode = 'votd';
+                        votdMode = 'learning';
+                        VotdLearningMode.start(VersOfTheDayManager.getTodayVerse());
+                    } else {
+                        console.error('VotdLearningMode not available');
+                    }
                 } else if (itemId === 'verseTest') {
                     // Launch verse test with current verse (with rewards)
                     const verse = organizedVerses[vQuality][currentVerseIndex];
@@ -1396,6 +1410,18 @@ function gameLoop() {
         if (clientWallGrid.collides(player.x, player.y, player.width, player.height)) {
             console.error(`[WallSpawn] STUCK: Player is inside a wall at (${player.x.toFixed(1)}, ${player.y.toFixed(1)}) w=${player.width} h=${player.height} frozen=${movementFrozen} level=${gameState.gameLevel}`);
         }
+    }
+
+    // Handle VOTD rendering
+    if (gameMode === 'votd') {
+        if (votdMode === 'learning' && window.VotdLearningMode) {
+            VotdLearningMode.render();
+        } else if (votdMode === 'test' && window.VotdTestMode) {
+            VotdTestMode.render(elapsedTime / 1000);
+        }
+        lastUpdateTime = currentTime; // Keep time in sync so game resumes correctly
+        requestAnimationFrame(gameLoop);
+        return;
     }
 
     if (gameMode === 'game') {
@@ -2059,6 +2085,25 @@ function updateGameState(newGameState) {
     if (!isGameLoaded) {
         isGameLoaded = true;
         console.log("Game loaded");
+    }
+
+    // Check for VOTD auto-launch
+    if (!votdAutoLaunchHandled && localStorage.getItem('votdAutoLaunch') === 'true') {
+        console.log('VOTD flag found, checking modules...');
+        console.log('VotdLearningMode:', typeof VotdLearningMode);
+        console.log('VersOfTheDayManager:', typeof VersOfTheDayManager);
+        if (typeof VotdLearningMode !== 'undefined' && typeof VersOfTheDayManager !== 'undefined') {
+            votdAutoLaunchHandled = true;
+            localStorage.removeItem('votdAutoLaunch');
+            gameMode = 'votd';
+            votdMode = 'learning';
+            const verse = VersOfTheDayManager.getTodayVerse();
+            console.log('Got verse:', verse?.Reference);
+            VotdLearningMode.start(verse);
+            console.log('✓ Auto-launched VOTD Learning Mode');
+        } else {
+            console.log('Modules not ready yet');
+        }
     }
 
     // Update spawnsLeft
