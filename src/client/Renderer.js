@@ -176,7 +176,7 @@ class Renderer {
         const isPlaying = musicState.isPlaying;
 
         const testShieldOn = menuState.verseTestShielded || false;
-        const itemCount = 7;
+        const itemCount = 8;
 
         // Panel background
         this.ctx.fillStyle = 'rgba(0, 0, 0, 0.9)';
