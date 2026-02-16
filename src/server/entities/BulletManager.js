@@ -75,10 +75,13 @@ class BulletManager {
             }
             if (!bullet.active) continue;
 
-            // Check collision with monsters (Sword buff: 2x damage + pierce)
+            // Check collision with monsters (Sword buff: 2x damage + pierce, VOTD bonus: 1.2x)
             const player = gameState.players ? gameState.players[bullet.playerCode] : null;
             const hasSword = player && player.activeBuffs && player.activeBuffs.sword && player.activeBuffs.sword.active;
-            const damage = hasSword ? Constants.BULLET_DAMAGE * Constants.SWORD_DAMAGE_MULTIPLIER : Constants.BULLET_DAMAGE;
+            let damage = hasSword ? Constants.BULLET_DAMAGE * Constants.SWORD_DAMAGE_MULTIPLIER : Constants.BULLET_DAMAGE;
+            if (player && player.votdDamageBonus) {
+                damage = Math.ceil(damage * Constants.VOTD_DAMAGE_MULTIPLIER);
+            }
             const maxHits = hasSword ? Constants.SWORD_PIERCE_COUNT : 1;
 
             if (!bullet.hitCount) bullet.hitCount = 0;

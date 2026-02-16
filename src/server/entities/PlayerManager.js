@@ -68,6 +68,7 @@ class PlayerManager {
             xp: 0,
             level: 1,
             ammo: 0, // Must earn ammo by answering quizzes correctly
+            votdDamageBonus: false, // True when player completes VOTD test
             state: 'alive',        // 'alive' | 'ghost' | 'disconnected'
             canAttack: true,
             username: socket.username || null

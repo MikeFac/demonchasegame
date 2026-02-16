@@ -34,6 +34,18 @@
         refEl.textContent = verse.Reference;
         textEl.textContent = verse.Text;
 
+        // Show streak info
+        const streakEl = document.getElementById('votdStreak');
+        if (streakEl) {
+            const streak = VersOfTheDayManager.getStreak();
+            if (streak > 0) {
+                streakEl.textContent = '\uD83D\uDD25 ' + streak + ' day streak!';
+            } else {
+                streakEl.textContent = 'Start your streak!';
+                streakEl.style.color = '#aaa';
+            }
+        }
+
         // Show modal
         modal.style.display = 'flex';
         console.log('VOTD modal displayed');

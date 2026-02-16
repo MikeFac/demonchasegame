@@ -89,7 +89,7 @@
     }
 
     /**
-     * Record that user earned bonus for today
+     * Record that user earned bonus for today and update streak
      */
     function earnBonus() {
         const today = getToday();
@@ -98,7 +98,71 @@
             earned: true
         };
         localStorage.setItem('votdBonus', JSON.stringify(bonusData));
+        updateStreak(today);
         console.log('✓ VOTD Bonus earned for ' + today);
+    }
+
+    /**
+     * Update streak data based on completion date
+     */
+    function updateStreak(today) {
+        const streakData = getStreakData();
+
+        if (streakData.lastDate === today) {
+            return; // Already counted today
+        }
+
+        const yesterday = getDateString(new Date(new Date().getTime() - 86400000));
+
+        if (streakData.lastDate === yesterday) {
+            streakData.count += 1; // Streak continues
+        } else {
+            streakData.count = 1; // Streak broken or first time
+        }
+
+        streakData.lastDate = today;
+        localStorage.setItem('votdStreak', JSON.stringify(streakData));
+        console.log('✓ VOTD Streak updated: ' + streakData.count + ' days');
+    }
+
+    /**
+     * Get a date as YYYY-MM-DD from a Date object
+     */
+    function getDateString(date) {
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+    }
+
+    /**
+     * Get full streak data from localStorage
+     */
+    function getStreakData() {
+        try {
+            const stored = localStorage.getItem('votdStreak');
+            if (stored) {
+                return JSON.parse(stored);
+            }
+        } catch (e) {
+            console.error('Error reading streak data:', e);
+        }
+        return { lastDate: null, count: 0 };
+    }
+
+    /**
+     * Get current streak count (0 if broken or never started)
+     */
+    function getStreak() {
+        const data = getStreakData();
+        const today = getToday();
+        const yesterday = getDateString(new Date(new Date().getTime() - 86400000));
+
+        // Streak is only valid if last completion was today or yesterday
+        if (data.lastDate === today || data.lastDate === yesterday) {
+            return data.count;
+        }
+        return 0;
     }
 
     /**
@@ -155,6 +219,8 @@
         getBonusMultiplier: getBonusMultiplier,
         earnBonus: earnBonus,
         isBonusActive: isBonusActive,
-        clearExpiredBonus: clearExpiredBonus
+        clearExpiredBonus: clearExpiredBonus,
+        getStreak: getStreak,
+        getStreakData: getStreakData
     };
 })();

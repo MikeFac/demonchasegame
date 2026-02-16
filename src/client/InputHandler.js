@@ -218,8 +218,22 @@ class InputHandler {
                 return;
             }
 
-            // Verse Test button area (fifth item)
-            const verseTestY = panelY + padding + (itemH + padding / 2) * 4;
+            // Verse of the Day button area (fifth item)
+            const verseCotDY = panelY + padding + (itemH + padding / 2) * 4;
+            if (
+                clickedX >= panelX + padding &&
+                clickedX <= panelX + mp.width - padding &&
+                clickedY >= verseCotDY &&
+                clickedY <= verseCotDY + itemH
+            ) {
+                if (this.callbacks.onMenuItemClick) {
+                    this.callbacks.onMenuItemClick('verseCotD');
+                }
+                return;
+            }
+
+            // Verse Test button area (sixth item)
+            const verseTestY = panelY + padding + (itemH + padding / 2) * 5;
             if (
                 clickedX >= panelX + padding &&
                 clickedX <= panelX + mp.width - padding &&
@@ -232,8 +246,8 @@ class InputHandler {
                 return;
             }
 
-            // Toggle Test Shield button area (sixth item)
-            const toggleShieldY = panelY + padding + (itemH + padding / 2) * 5;
+            // Toggle Test Shield button area (seventh item)
+            const toggleShieldY = panelY + padding + (itemH + padding / 2) * 6;
             if (
                 clickedX >= panelX + padding &&
                 clickedX <= panelX + mp.width - padding &&
@@ -246,8 +260,8 @@ class InputHandler {
                 return;
             }
 
-            // Leave Game button area (seventh item)
-            const leaveY = panelY + padding + (itemH + padding / 2) * 6;
+            // Leave Game button area (eighth item)
+            const leaveY = panelY + padding + (itemH + padding / 2) * 7;
             if (
                 clickedX >= panelX + padding &&
                 clickedX <= panelX + mp.width - padding &&
@@ -261,7 +275,7 @@ class InputHandler {
             }
 
             // Click outside menu items but inside panel - just close menu
-            const itemCount = 7;
+            const itemCount = 8;
             if (
                 clickedX >= panelX &&
                 clickedX <= panelX + mp.width &&

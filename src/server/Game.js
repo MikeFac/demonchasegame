@@ -402,6 +402,15 @@ class Game {
             }
         });
 
+        // Handle VOTD bonus earned (damage multiplier)
+        socket.on('votdBonusEarned', () => {
+            const player = this.gameState.players[socket.playerCode];
+            if (player) {
+                player.votdDamageBonus = true;
+                console.log(`Player ${socket.playerCode} earned VOTD damage bonus`);
+            }
+        });
+
         // Handle verse test passed (Award Health)
         socket.on('verseTestPassed', () => {
             const player = this.gameState.players[socket.playerCode];

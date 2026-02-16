@@ -296,6 +296,17 @@
         c.font = 'bold 22px Arial';
         c.fillText('Well done!', cw / 2, ch / 2 + 40);
 
+        // Show streak count
+        if (typeof VersOfTheDayManager !== 'undefined') {
+            const streak = VersOfTheDayManager.getStreak();
+            if (streak > 0) {
+                c.fillStyle = '#ffd700';
+                c.font = 'bold 18px Arial';
+                const streakText = streak === 1 ? '1 day streak!' : streak + ' day streak!';
+                c.fillText('\uD83D\uDD25 ' + streakText, cw / 2, ch / 2 + 70);
+            }
+        }
+
         c.fillStyle = '#fff';
         c.font = '14px Arial';
         c.fillText('Returning to game...', cw / 2, ch / 2 + 100);
@@ -423,6 +434,12 @@
         if (typeof VersOfTheDayManager !== 'undefined') {
             VersOfTheDayManager.earnBonus();
         }
+
+        // Notify server of damage bonus
+        if (typeof network !== 'undefined' && network.sendVotdBonusEarned) {
+            network.sendVotdBonusEarned();
+        }
+
         console.log('VOTD Test completed successfully!');
     }
 

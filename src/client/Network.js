@@ -266,6 +266,15 @@ class Network {
     }
 
     /**
+     * Notify server that player earned VOTD damage bonus
+     */
+    sendVotdBonusEarned() {
+        if (this.socket) {
+            this.socket.emit('votdBonusEarned');
+        }
+    }
+
+    /**
      * Notify server of collectible collection
      * @param {string} collectibleId
      */

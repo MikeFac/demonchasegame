@@ -15,6 +15,15 @@ node server.js          # Starts on http://localhost:3500
 
 No npm start script configured. No linter configured.
 
+## ⚠️ CRITICAL: Server Restart After Code Changes
+
+**ALWAYS restart the server immediately after making changes to:**
+- `index.html` (HTML structure, modals, script tags)
+- Any client-side JavaScript files in `src/client/`
+- Version numbers in script tags (cache-busting)
+
+**DO NOT tell the user to refresh the browser without restarting the server first.** The user should only need to refresh AFTER the server has been restarted. Restart the server automatically and immediately after changes.
+
 ## Testing
 
 Tests are ad-hoc scripts, not a test framework:

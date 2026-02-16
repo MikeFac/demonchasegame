@@ -48,6 +48,9 @@ const Constants = {
     SWORD_DAMAGE_MULTIPLIER: 2,
     SWORD_PIERCE_COUNT: 2,
 
+    // Verse of the Day Bonus
+    VOTD_DAMAGE_MULTIPLIER: 1.2,        // +20% damage
+
     // Belt of Truth
     BELT_REVEAL_COUNT: 1,               // Remove 1 wrong answer
 

@@ -214,7 +214,16 @@ class Renderer {
     drawHUD(player, gameState) {
         this.ctx.fillStyle = 'white';
         this.ctx.font = '14px Arial';
-        this.ctx.fillText(`Health: ${player.health}  XP: ${player.xp}  Level: ${player.level}  Ammo: ${player.ammo || 0}`, 7, this.QUALITY_LINE_HEIGHT - 7);
+        const statsText = `Health: ${player.health}  XP: ${player.xp}  Level: ${player.level}  Ammo: ${player.ammo || 0}`;
+        this.ctx.fillText(statsText, 7, this.QUALITY_LINE_HEIGHT - 7);
+
+        // VOTD damage bonus indicator (subtle fire icon after stats)
+        if (player.votdDamageBonus) {
+            const statsWidth = this.ctx.measureText(statsText).width;
+            this.ctx.fillStyle = '#ffd700';
+            this.ctx.font = '12px Arial';
+            this.ctx.fillText('\uD83D\uDD25', statsWidth + 12, this.QUALITY_LINE_HEIGHT - 7);
+        }
 
         // Game Level
         this.ctx.fillStyle = 'yellow';
