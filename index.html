@@ -167,7 +167,7 @@
       background: linear-gradient(135deg, #2d6a4f, #1b4332);
       color: #fff;
       box-shadow: 0 4px 15px rgba(45, 106, 79, 0.4);
-      margin-bottom: 12px;
+      margin-bottom: 0;
     }
 
     #btnSolo {
@@ -622,6 +622,12 @@
       max-height: 90%;
       object-fit: contain;
     }
+
+    /* Options Screen Logo state */
+    .logo-small {
+      max-width: 80px !important;
+      transition: all 0.3s ease;
+    }
   </style>
 </head>
 
@@ -636,69 +642,77 @@
       <img src="images/VerseBattles-logo.png" alt="VerseBattles: Demon Chase">
     </div>
 
-    <!-- How to Play Button (under logo) -->
-    <button id="btnInstructions">How to Play</button>
+    <!-- Main Menu Buttons (New Layout) -->
+    <div class="main-menu-buttons">
+      <button id="btnSolo" class="primary-btn" style="margin-bottom: 15px; width: 100%;">Start Solo Game</button>
+      
+      <button id="btnMultiplayer" class="secondary-btn" style="margin-bottom: 15px; width: 100%;">Multiplayer Game</button>
 
-    <!-- Monster Difficulty and Game Speed (side by side) -->
-    <div class="settings-row">
-      <div class="settings-section">
-        <h3>Monster Difficulty</h3>
-        <div class="radio-group">
-          <div class="radio-option">
-            <input type="radio" id="diffEasy" name="difficulty" value="easy">
-            <label for="diffEasy">Easy</label>
+      <div class="btn-row-split" style="display: flex; gap: 15px;">
+        <button id="btnInstructions" style="flex: 1;">How to Play</button>
+        <button id="btnSettings" class="secondary-btn" style="flex: 1;">Options ▾</button>
+      </div>
+    </div>
+
+    <!-- Hidden Settings Container (All Options) -->
+    <div id="settingsContainer" style="display: none; margin-top: 20px; text-align: left; background: rgba(0,0,0,0.2); padding: 15px; border-radius: 10px;">
+      
+      <!-- Section: Game Settings -->
+      <h4 style="color: #a8c5e6; margin-bottom: 10px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 5px;">Game Settings</h4>
+      
+      <div class="settings-row">
+        <div class="settings-section">
+          <h3>Difficulty</h3>
+          <div class="radio-group">
+            <div class="radio-option">
+              <input type="radio" id="diffEasy" name="difficulty" value="easy" checked>
+              <label for="diffEasy">Easy</label>
+            </div>
+            <div class="radio-option">
+              <input type="radio" id="diffNormal" name="difficulty" value="normal">
+              <label for="diffNormal">Normal</label>
+            </div>
+            <div class="radio-option">
+              <input type="radio" id="diffHard" name="difficulty" value="hard">
+              <label for="diffHard">Hard</label>
+            </div>
           </div>
-          <div class="radio-option">
-            <input type="radio" id="diffNormal" name="difficulty" value="normal" checked>
-            <label for="diffNormal">Normal</label>
-          </div>
-          <div class="radio-option">
-            <input type="radio" id="diffHard" name="difficulty" value="hard">
-            <label for="diffHard">Hard</label>
+        </div>
+
+        <div class="settings-section">
+          <h3>Speed</h3>
+          <div class="radio-group">
+            <div class="radio-option">
+              <input type="radio" id="speedSlow" name="gameSpeed" value="slow">
+              <label for="speedSlow">Slow</label>
+            </div>
+            <div class="radio-option">
+              <input type="radio" id="speedNormal" name="gameSpeed" value="normal" checked>
+              <label for="speedNormal">Normal</label>
+            </div>
+            <div class="radio-option">
+              <input type="radio" id="speedFast" name="gameSpeed" value="fast">
+              <label for="speedFast">Fast</label>
+            </div>
           </div>
         </div>
       </div>
 
       <div class="settings-section">
-        <h3>Game Speed</h3>
-        <div class="radio-group">
-          <div class="radio-option">
-            <input type="radio" id="speedSlow" name="gameSpeed" value="slow">
-            <label for="speedSlow">Slow</label>
-          </div>
-          <div class="radio-option">
-            <input type="radio" id="speedNormal" name="gameSpeed" value="normal" checked>
-            <label for="speedNormal">Normal</label>
-          </div>
-          <div class="radio-option">
-            <input type="radio" id="speedFast" name="gameSpeed" value="fast">
-            <label for="speedFast">Fast</label>
-          </div>
-        </div>
+        <h3>Map Style</h3>
+        <select id="mapStyleSelect">
+          <option value="classic" selected>Classic Dungeon</option>
+          <option value="narrow">Narrow Paths</option>
+          <option value="labyrinth">Complex Labyrinth</option>
+          <option value="open">Open Plains</option>
+          <option value="city">Grid City</option>
+        </select>
       </div>
-    </div>
 
-    <!-- Map Style Section -->
-    <div class="settings-section">
-      <h3>Map Style</h3>
-      <select id="mapStyleSelect">
-        <option value="classic" selected>Classic Dungeon</option>
-        <option value="narrow">Narrow Paths</option>
-        <option value="labyrinth">Complex Labyrinth</option>
-        <option value="open">Open Plains</option>
-        <option value="city">Grid City</option>
-      </select>
-    </div>
+      <!-- Section: Quiz Configuration -->
+      <h4 style="color: #a8c5e6; margin: 15px 0 10px 0; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 5px;">Quiz Configuration</h4>
 
-    <!-- Start Buttons (side by side) -->
-    <div class="btn-row">
-      <button id="btnSolo">Start Solo Game</button>
-      <button id="btnMultiplayer">Join Multiplayer</button>
-    </div>
-
-    <div id="quizSettings">
-      <h3 id="quizSettingsToggle">Quiz Settings</h3>
-      <div id="quizSliders">
+      <div id="quizSliders" style="display: block;"> <!-- Always visible inside Options -->
         <div class="slider-row">
           <label>First Letter</label>
           <input type="range" min="0" max="100" step="5" value="30" data-mode="firstLetter">
@@ -723,7 +737,9 @@
     </div>
 
     <!-- Privacy Policy Link -->
-    <a href="#" class="privacy-link" id="privacyLink">Privacy Policy</a>
+    <div style="margin-top: 20px;">
+        <a href="#" class="privacy-link" id="privacyLink">Privacy Policy</a>
+    </div>
   </div>
 
   <div id="instructionsOverlay">
@@ -838,16 +854,12 @@
     // Quiz mode settings (read by QuizManager)
     var quizSettings = { firstLetter: 30, missingWord: 30, categoryMatch: 25, trueFalse: 15 };
 
-    // Slider UI logic
-    (function () {
-      const toggle = document.getElementById('quizSettingsToggle');
-      const panel = document.getElementById('quizSliders');
-      toggle.addEventListener('click', function () {
-        toggle.classList.toggle('open');
-        panel.classList.toggle('visible');
-      });
 
+    // Slider UI logic (ensures percentages add up to 100)
+    (function () {
+      const panel = document.getElementById('quizSliders');
       const sliders = panel.querySelectorAll('input[type="range"]');
+
       sliders.forEach(function (slider) {
         slider.addEventListener('input', function () {
           const changedMode = slider.dataset.mode;

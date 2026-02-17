@@ -13,6 +13,13 @@
             return;
         }
 
+        // Check if game is already running (First Time User Experience)
+        const canvas = document.getElementById('gameCanvas');
+        if (canvas && canvas.style.display === 'block') {
+            console.log('Game is running (FTUE), suppressing VOTD overlay');
+            return;
+        }
+
         const verse = VersOfTheDayManager.getTodayVerse();
         if (!verse) {
             console.error('No verse returned from VersOfTheDayManager');

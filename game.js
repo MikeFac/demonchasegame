@@ -525,6 +525,7 @@ function launchVerseTest(text, ref, difficulty) {
 }
 
 // Wait for the DOM content to load
+// Wait for the DOM content to load
 document.addEventListener('DOMContentLoaded', function () {
     canvas = document.getElementById('gameCanvas');
     if (!canvas) {
@@ -537,20 +538,78 @@ document.addEventListener('DOMContentLoaded', function () {
     const roomId = urlParams.get('room');
     const mode = urlParams.get('mode');
 
+    // Check for first-time visit
+    const hasVisited = localStorage.getItem('hasVisited');
+
     if (roomId) {
         // Coming from lobby redirect — skip menu, join game
         startGame('join', roomId);
     } else if (mode === 'solo') {
         // Lobby "Practice (Solo)" shortcut — skip menu
         startGame('solo');
+    } else if (!hasVisited) {
+        // === FIRST TIME USER EXPERIENCE ===
+        console.log("First time user detected! Jumping straight into game.");
+        
+        // Mark as visited so next time they see the menu
+        localStorage.setItem('hasVisited', 'true');
+
+        // Force Easy settings for first run
+        const diffEasy = document.getElementById('diffEasy');
+        if (diffEasy) diffEasy.checked = true;
+        
+        const speedNormal = document.getElementById('speedNormal');
+        if (speedNormal) speedNormal.checked = true;
+
+        // Start game immediately
+        startGame('solo');
     } else {
-        // Show menu, wait for button click
+        // === RETURNING USER ===
+        // Show menu, wait for button click (standard flow)
         document.getElementById('btnSolo').addEventListener('click', () => {
             startGame('solo');
         });
         document.getElementById('btnMultiplayer').addEventListener('click', () => {
             window.location.href = '/lobby';
         });
+
+        // Settings Toggle
+        const btnSettings = document.getElementById('btnSettings');
+        const settingsContainer = document.getElementById('settingsContainer');
+        const btnSolo = document.getElementById('btnSolo');
+        const btnMultiplayer = document.getElementById('btnMultiplayer');
+        const btnInstructions = document.getElementById('btnInstructions');
+        const logoImg = document.querySelector('#menuScreen .logo-container img');
+        
+        if (btnSettings && settingsContainer) {
+            btnSettings.addEventListener('click', () => {
+                if (settingsContainer.style.display === 'none') {
+                    // Open Options
+                    settingsContainer.style.display = 'block';
+                    btnSettings.textContent = 'Back';
+                    
+                    // Hide main menu items
+                    if (btnSolo) btnSolo.style.display = 'none';
+                    if (btnMultiplayer) btnMultiplayer.style.display = 'none';
+                    if (btnInstructions) btnInstructions.style.display = 'none';
+                    
+                    // Shrink logo
+                    if (logoImg) logoImg.classList.add('logo-small');
+                } else {
+                    // Close Options (Back to Main Menu)
+                    settingsContainer.style.display = 'none';
+                    btnSettings.textContent = 'Options ▾';
+                    
+                    // Show main menu items
+                    if (btnSolo) btnSolo.style.display = 'block'; // Or inline-block/whatever default was, but block is likely fine for full width
+                    if (btnMultiplayer) btnMultiplayer.style.display = 'block';
+                    if (btnInstructions) btnInstructions.style.display = 'block'; // This might need to be 'block' or empty string to revert to CSS
+                    
+                    // Restore logo
+                    if (logoImg) logoImg.classList.remove('logo-small');
+                }
+            });
+        }
     }
 });
 
