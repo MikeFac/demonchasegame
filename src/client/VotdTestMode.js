@@ -8,7 +8,8 @@
     let currentWordIdx = 0; // Which hidden word we're testing now
     let correctLetters = '';
     let currentAnswer = null; // Selected letter for current word
-    let testState = 'answering'; // 'answering' | 'success'
+    let testState = 'answering'; // 'answering' | 'success' | 'failed'
+    let failedStartTime = 0;
     let successStartTime = 0;
     let confettiParticles = [];
     let cachedOptions = []; // Cached letter options per hidden word
@@ -387,6 +388,11 @@
             if ((Date.now() - successStartTime) / 1000 > 3) {
                 exitTestMode();
             }
+        } else if (testState === 'failed') {
+            drawFailed();
+            if ((Date.now() - failedStartTime) / 1000 > 3) {
+                exitTestMode();
+            }
         }
     }
 
@@ -420,8 +426,11 @@
             }
             // Otherwise render next word (options already cached)
         } else {
-            // Wrong — reset answer
+            // Wrong — fail immediately
             currentAnswer = null;
+            testState = 'failed';
+            failedStartTime = Date.now();
+            playBuzzer();
         }
     }
 
@@ -441,6 +450,63 @@
         }
 
         console.log('VOTD Test completed successfully!');
+    }
+
+    function drawFailed() {
+        const c = getCtx();
+        if (!c) return;
+
+        const cw = getCanvasWidth();
+        const ch = getCanvasHeight();
+
+        c.clearRect(0, 0, cw, ch);
+        c.fillStyle = '#1a1a2e';
+        c.fillRect(0, 0, cw, ch);
+
+        // INCORRECT header
+        c.fillStyle = '#ff4444';
+        c.font = 'bold 28px Arial';
+        c.textAlign = 'center';
+        c.fillText('INCORRECT', cw / 2, 50);
+
+        // Reference
+        c.fillStyle = '#aaa';
+        c.font = '14px Arial';
+        c.fillText(currentVerse.Reference, cw / 2, 80);
+
+        // Full verse text
+        c.fillStyle = '#fff';
+        c.font = 'bold 16px Arial';
+        c.textAlign = 'left';
+        drawWrappedText(currentVerse.Text, 20, 120, cw - 40, 28);
+
+        // Countdown hint
+        const elapsed = (Date.now() - failedStartTime) / 1000;
+        const remaining = Math.max(0, Math.ceil(3 - elapsed));
+        c.fillStyle = '#888';
+        c.font = '13px Arial';
+        c.textAlign = 'center';
+        c.fillText('Returning in ' + remaining + 's...', cw / 2, ch - 30);
+    }
+
+    function playBuzzer() {
+        try {
+            const AudioContext = window.AudioContext || window.webkitAudioContext;
+            if (!AudioContext) return;
+            const actx = new AudioContext();
+            const osc = actx.createOscillator();
+            const gain = actx.createGain();
+            osc.connect(gain);
+            gain.connect(actx.destination);
+            osc.type = 'square';
+            osc.frequency.setValueAtTime(150, actx.currentTime);
+            gain.gain.setValueAtTime(0.2, actx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, actx.currentTime + 0.3);
+            osc.start(actx.currentTime);
+            osc.stop(actx.currentTime + 0.3);
+        } catch (e) {
+            // Ignore audio errors
+        }
     }
 
     function exitTestMode() {

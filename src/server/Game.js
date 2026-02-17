@@ -216,7 +216,7 @@ class Game {
         const playerCount = Object.keys(this.gameState.players).length;
         if (playerCount === 1 && this.gameState.monsters.length === 0) {
             const currentLevel = this.gameState.gameLevel || 1;
-            const initialMonsterCount = Math.ceil(this.levelData[currentLevel].maxMonsters * 0.1);
+            const initialMonsterCount = Math.ceil(this.levelData[currentLevel].maxMonsters * 0.2);
             console.log(`First player joined - spawning ${initialMonsterCount} initial monsters for level ${currentLevel}`);
 
             // Spawn first monster at close range (200-350px)
