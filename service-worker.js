@@ -1,4 +1,4 @@
-var CACHE_NAME = 'versebattles-v1';
+var CACHE_NAME = 'versebattles-v2';
 
 // Core assets to cache (no audio — too large for mobile storage)
 var CORE_ASSETS = [

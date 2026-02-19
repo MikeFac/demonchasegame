@@ -408,6 +408,91 @@ function showToast(message, duration = 3500) {
 }
 
 /**
+ * Show quick-start overlay for FTUE (auto-dismisses after 4 seconds)
+ * @returns {Promise} Resolves when overlay is dismissed
+ */
+function showQuickStartOverlay() {
+    return new Promise((resolve) => {
+        const overlay = document.getElementById('quickStartOverlay');
+        const countdownEl = document.getElementById('quickStartCountdown');
+        const dismissBtn = document.getElementById('quickStartDismiss');
+        
+        if (!overlay) {
+            resolve();
+            return;
+        }
+        
+        overlay.style.display = 'flex';
+        let seconds = 4;
+        
+        const countdownInterval = setInterval(() => {
+            seconds--;
+            if (countdownEl) countdownEl.textContent = seconds;
+            if (seconds <= 0) {
+                clearInterval(countdownInterval);
+                overlay.style.display = 'none';
+                resolve();
+            }
+        }, 1000);
+        
+        if (dismissBtn) {
+            dismissBtn.addEventListener('click', () => {
+                clearInterval(countdownInterval);
+                overlay.style.display = 'none';
+                resolve();
+            }, { once: true });
+        }
+        
+        // Allow click on overlay background to dismiss
+        overlay.addEventListener('click', (e) => {
+            if (e.target === overlay) {
+                clearInterval(countdownInterval);
+                overlay.style.display = 'none';
+                resolve();
+            }
+        }, { once: true });
+    });
+}
+
+/**
+ * Update UI elements for offline mode
+ * Hides multiplayer button, checks offline toggle, shows toast
+ */
+function updateUIForOfflineMode() {
+    const btnMultiplayer = document.getElementById('btnMultiplayer');
+    if (btnMultiplayer) {
+        btnMultiplayer.style.display = 'none';
+    }
+    
+    const offlineToggle = document.getElementById('offlineModeToggle');
+    if (offlineToggle) {
+        offlineToggle.checked = true;
+        offlineToggle.disabled = true;
+    }
+    
+    showToast('📡 Offline Mode — No server connection', 3000);
+}
+
+/**
+ * Set offline mode and persist preference
+ * @param {boolean} enabled 
+ */
+function setOfflineMode(enabled) {
+    offlineMode = enabled;
+    localStorage.setItem('offlinePreferred', enabled.toString());
+    
+    if (enabled) {
+        updateUIForOfflineMode();
+    } else {
+        const btnMultiplayer = document.getElementById('btnMultiplayer');
+        if (btnMultiplayer) btnMultiplayer.style.display = 'block';
+        
+        const offlineToggle = document.getElementById('offlineModeToggle');
+        if (offlineToggle) offlineToggle.disabled = false;
+    }
+}
+
+/**
  * Check if player is in onboarding window (level 1, within 5 min)
  */
 function isInOnboardingWindow() {
@@ -574,6 +659,12 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // Check for first-time visit
     const hasVisited = localStorage.getItem('hasVisited');
+    
+    // Check for persisted offline preference
+    const persistedOffline = localStorage.getItem('offlinePreferred') === 'true';
+    if (persistedOffline) {
+        offlineMode = true;
+    }
 
     if (roomId) {
         // Coming from lobby redirect — skip menu, join game
@@ -583,10 +674,14 @@ document.addEventListener('DOMContentLoaded', function () {
         startGame('solo');
     } else if (!hasVisited) {
         // === FIRST TIME USER EXPERIENCE ===
-        console.log("First time user detected! Jumping straight into game.");
+        console.log("First time user detected! Starting in offline mode.");
         
         // Mark as visited so next time they see the menu
         localStorage.setItem('hasVisited', 'true');
+
+        // Force offline mode for first-time users
+        offlineMode = true;
+        localStorage.setItem('offlinePreferred', 'true');
 
         // Force Easy settings for first run
         const diffEasy = document.getElementById('diffEasy');
@@ -595,10 +690,21 @@ document.addEventListener('DOMContentLoaded', function () {
         const speedNormal = document.getElementById('speedNormal');
         if (speedNormal) speedNormal.checked = true;
 
-        // Start game immediately
-        startGame('solo');
+        // Create LocalNetwork for offline play
+        network = new LocalNetwork();
+
+        // Show quick-start overlay, then start game
+        showQuickStartOverlay().then(() => {
+            startGame('solo');
+        });
     } else {
         // === RETURNING USER ===
+        // Check if offline (no internet) and apply offline mode
+        if (!navigator.onLine || persistedOffline) {
+            offlineMode = true;
+            updateUIForOfflineMode();
+        }
+        
         // Show menu, wait for button click (standard flow)
         document.getElementById('btnSolo').addEventListener('click', () => {
             startGame('solo');
@@ -1066,11 +1172,19 @@ async function init() {
         };
 
         // Connect to server with callbacks already set
-        try {
-            await network.connect(networkCallbacks);
-            console.log('Connected to game server');
-        } catch (error) {
-            console.error('Failed to connect:', error);
+        // Skip connection if already in offline mode
+        if (!offlineMode) {
+            try {
+                await network.connect(networkCallbacks);
+                console.log('Connected to game server');
+            } catch (error) {
+                console.warn('Connection failed, switching to offline mode:', error.message);
+                // Auto-switch to offline mode
+                offlineMode = true;
+                network = new LocalNetwork();
+                network.setCallbacks(networkCallbacks);
+                updateUIForOfflineMode();
+            }
         }
 
         // Load other images
