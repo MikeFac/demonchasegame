@@ -283,6 +283,10 @@
             if (!incorrectAnswerReferences.includes(currentReference)) {
                 incorrectAnswerReferences.push(currentReference);
             }
+
+            if (typeof window.onQuizWrongAnswer === 'function') {
+                window.onQuizWrongAnswer(currentQuiz.mode, currentReference);
+            }
         }
     }
 

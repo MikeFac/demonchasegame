@@ -475,6 +475,8 @@ function setOfflineMode(enabled) {
     offlineMode = enabled;
     localStorage.setItem('offlinePreferred', enabled.toString());
     
+    if (window.Analytics) Analytics.trackOfflineToggle(enabled);
+    
     const offlineToggle = document.getElementById('offlineModeToggle');
     if (offlineToggle) {
         offlineToggle.checked = enabled;
@@ -539,16 +541,11 @@ function setLevelData(gameState) {
 }
 
 function startGame(mode, roomId) {
-    // Track game start in Google Analytics
-    if (typeof gtag !== 'undefined') {
-        gtag('event', 'game_start', {
-            game_mode: mode,
-            offline: offlineMode,
-            timestamp: new Date().toISOString()
-        });
+    if (window.Analytics) {
+        Analytics.trackGameStart(mode, offlineMode);
+        Analytics.startSession(offlineMode);
     }
 
-    // Check offline mode toggle - update offlineMode based on checkbox state
     const offlineToggle = document.getElementById('offlineModeToggle');
     if (offlineToggle && mode === 'solo') {
         offlineMode = offlineToggle.checked;
@@ -701,9 +698,11 @@ document.addEventListener('DOMContentLoaded', function () {
         
         // Show menu, wait for button click (standard flow)
         document.getElementById('btnSolo').addEventListener('click', () => {
+            if (window.Analytics) Analytics.trackMenuClick('solo');
             startGame('solo');
         });
         document.getElementById('btnMultiplayer').addEventListener('click', () => {
+            if (window.Analytics) Analytics.trackMenuClick('multiplayer');
             if (!navigator.onLine) {
                 showToast('Multiplayer Game requires internet connection', 3000);
                 return;
@@ -778,15 +777,10 @@ function initializeVerseCounter() {
 
 // Callback for QuizManager to notify of correct answers
 window.onQuizCorrectAnswer = function (quizMode, verseReference) {
-    // Track correct answer in Google Analytics
-    if (typeof gtag !== 'undefined') {
-        gtag('event', 'quiz_correct', {
-            quiz_mode: quizMode,
-            verse_reference: verseReference
-        });
+    if (window.Analytics) {
+        Analytics.trackQuizCorrect(quizMode, verseReference);
     }
 
-    // ===== SOUND: Play ding on correct answer =====
     if (window.SoundEffects) {
         SoundEffects.playDing();
     }
@@ -794,7 +788,7 @@ window.onQuizCorrectAnswer = function (quizMode, verseReference) {
     // ===== FIRST 60 SECONDS: Show "POWERED UP!" on first correct answer =====
     if (!firstGameTips.firstCorrectAnswer && isInOnboardingWindow()) {
         firstGameTips.firstCorrectAnswer = true;
-        // Show big centered message
+        if (window.Analytics) Analytics.trackFtueTip('first_correct_answer');
         flashMessages.push({
             text: '⚡ POWERED UP! ⚡',
             color: '#FFD700',
@@ -810,6 +804,7 @@ window.onQuizCorrectAnswer = function (quizMode, verseReference) {
     // ===== ONBOARDING: Detect first ammo earned =====
     if (!firstGameTips.ammoEarned && isInOnboardingWindow()) {
         firstGameTips.ammoEarned = true;
+        if (window.Analytics) Analytics.trackFtueTip('ammo_earned');
         showToast('💡 Earn ammo by answering quizzes correctly');
     }
 
@@ -869,6 +864,12 @@ window.onQuizCorrectAnswer = function (quizMode, verseReference) {
     }
 };
 
+window.onQuizWrongAnswer = function (quizMode, verseReference) {
+    if (window.Analytics) {
+        Analytics.trackQuizWrong(quizMode, verseReference);
+    }
+};
+
 async function init() {
     return new Promise(async (resolve) => {
         isGameLoaded = false;
@@ -916,17 +917,14 @@ async function init() {
                 };
             },
             onMonsterKilled: ({ monsterId, x, y }) => {
-                // Track monster kill in Google Analytics
-                if (typeof gtag !== 'undefined') {
-                    gtag('event', 'monster_killed', {
-                        level: gameState.gameLevel
-                    });
+                if (window.Analytics) {
+                    Analytics.trackMonsterKilled(gameState.gameLevel);
+                    Analytics.updateHeartbeat(gameState.gameLevel, (gameState.monstersKilled || 0) + 1);
                 }
 
-                // ===== FIRST 60 SECONDS: Show "FIRST BLOOD!" on first kill =====
                 if (!firstGameTips.firstKill && isInOnboardingWindow()) {
                     firstGameTips.firstKill = true;
-                    // Epic first kill sound
+                    if (window.Analytics) Analytics.trackFtueTip('first_kill');
                     if (window.SoundEffects) {
                         SoundEffects.playFirstKill();
                     }
@@ -949,6 +947,7 @@ async function init() {
                 // ===== ONBOARDING: Detect first monster killed =====
                 if (!firstGameTips.monsterKilled && isInOnboardingWindow()) {
                     firstGameTips.monsterKilled = true;
+                    if (window.Analytics) Analytics.trackFtueTip('monster_killed_tip');
                     showToast('💡 Killing demons earns XP and increases your level');
                 }
 
@@ -1076,12 +1075,9 @@ async function init() {
                 console.log('Received walls:', clientWalls.length, 'tiles');
             },
             onLevelAdvancing: (data) => {
-                // Track level completion in Google Analytics
-                if (typeof gtag !== 'undefined') {
-                    gtag('event', 'level_complete', {
-                        level: gameState.gameLevel,
-                        kills: gameState.monstersKilled || 0
-                    });
+                if (window.Analytics) {
+                    Analytics.trackLevelComplete(gameState.gameLevel, gameState.monstersKilled || 0);
+                    Analytics.updateHeartbeat(gameState.gameLevel, gameState.monstersKilled || 0);
                 }
 
                 console.log('Level advancing! Countdown:', data.countdown);
@@ -2025,6 +2021,7 @@ function gameLoop() {
                         // ===== ONBOARDING: Show modal on first damage taken =====
                         if (!firstGameTips.demonAppeared && isInOnboardingWindow() && damage > 0) {
                             firstGameTips.demonAppeared = true;
+                            if (window.Analytics) Analytics.trackFtueTip('first_damage');
                             showOnboardingModal(
                                 'A demon is attacking!',
                                 'Tap the quiz answer below to fight back.'
@@ -2074,12 +2071,25 @@ function gameLoop() {
                             console.log('Helmet of Salvation auto-revive! HP:', player.health);
                         } else if (player.health <= 0 && !gameOverModalVisible) {
                             if (isSoloGame) {
-                                // Solo: show game over modal (existing behavior)
                                 gameOver.play();
                                 gameOverFlag = true;
                                 gameOverModalVisible = true;
 
-                                // Calculate final stats
+                                if (window.Analytics) {
+                                    Analytics.trackPlayerDeath(
+                                        gameState.gameLevel || 1,
+                                        player.xp || 0,
+                                        gameState.monstersKilled || 0,
+                                        monsters.length
+                                    );
+                                    Analytics.endSession({
+                                        level: gameState.gameLevel || 1,
+                                        kills: gameState.monstersKilled || 0,
+                                        xp: player.xp || 0,
+                                        death_cause: 'monster_damage'
+                                    });
+                                }
+
                                 const sessionDuration = Math.floor((Date.now() - sessionStartTime) / 1000);
                                 finalStats = {
                                     level: gameState.gameLevel || 1,
@@ -2159,13 +2169,14 @@ function gameLoop() {
                 }
                 window._collectedHealingPoints.add(healingPoint.id);
 
-                // ===== ONBOARDING: Detect healing point collection =====
                 if (!firstGameTips.healingCollected && isInOnboardingWindow()) {
                     firstGameTips.healingCollected = true;
+                    if (window.Analytics) Analytics.trackFtueTip('healing_collected');
                     showToast('💡 Walk over green crosses to restore health');
                 }
 
-                // Heal the player
+                if (window.Analytics) Analytics.trackItemCollected('healing');
+
                 network.sendCollectHealingPoint(healingPoint.id);
                 healingRecharge.play(); // Play the attack sound effect
             }
@@ -2183,6 +2194,8 @@ function gameLoop() {
                     return; // Already collected this item, skip
                 }
                 window._collectedItems.add(item.id);
+
+                if (window.Analytics) Analytics.trackItemCollected(item.type);
 
                 inventory[item.type]++;
                 network.sendCollectCollectible(item.id);
@@ -2453,6 +2466,9 @@ function updatePlayerLevel(xp) {
     // Play level up sound if level increased
     if (player.level > previousLevel) {
         levelUpSound.play();
+        if (window.Analytics) {
+            Analytics.trackPlayerLevelUp(player.level);
+        }
     }
 }
 

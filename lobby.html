@@ -5,6 +5,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Demon Chase - Lobby</title>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-673VQ9VE50"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'G-673VQ9VE50');
+    </script>
     <style>
         * {
             margin: 0;
@@ -423,6 +430,61 @@
 
     <script src="/socket.io/socket.io.js"></script>
     <script>
+    (function () {
+        let sessionStartTime = null;
+
+        function track(eventName, params) {
+            if (typeof gtag !== 'undefined') {
+                gtag('event', eventName, params || {});
+            }
+        }
+
+        function trackLobbyEnter() {
+            sessionStartTime = performance.now();
+            track('lobby_enter', {});
+            
+            var lastVisit = localStorage.getItem('lastVisitDate');
+            var today = new Date().toISOString().split('T')[0];
+            if (lastVisit && lastVisit !== today) {
+                var lastDate = new Date(lastVisit);
+                var todayDate = new Date(today);
+                var daysSince = Math.round((todayDate - lastDate) / (1000 * 60 * 60 * 24));
+                track('return_visit', { days_since_last: daysSince });
+            }
+            localStorage.setItem('lastVisitDate', today);
+        }
+
+        function trackRoomCreated(difficulty, quizSettings) {
+            track('room_created', {
+                difficulty: difficulty,
+                quiz_first_letter: quizSettings.firstLetter,
+                quiz_missing_word: quizSettings.missingWord,
+                quiz_category_match: quizSettings.categoryMatch,
+                quiz_true_false: quizSettings.trueFalse
+            });
+        }
+
+        function trackRoomJoined(playerCount) {
+            track('room_joined', { player_count: playerCount });
+        }
+
+        function trackRoomLeave() {
+            if (sessionStartTime) {
+                var duration = Math.round((performance.now() - sessionStartTime) / 1000);
+                track('room_leave', { duration_sec: duration });
+            }
+        }
+
+        window.LobbyAnalytics = {
+            track: track,
+            trackLobbyEnter: trackLobbyEnter,
+            trackRoomCreated: trackRoomCreated,
+            trackRoomJoined: trackRoomJoined,
+            trackRoomLeave: trackRoomLeave
+        };
+    })();
+    </script>
+    <script>
         // State
         let socket = null;
         let sessionToken = localStorage.getItem('sessionToken');
@@ -480,6 +542,7 @@
                 if (data.success) {
                     currentUser = data.user;
                     connectSocket();
+                    if (window.LobbyAnalytics) LobbyAnalytics.trackLobbyEnter();
                 } else {
                     localStorage.removeItem('sessionToken');
                     sessionToken = null;
@@ -701,6 +764,7 @@
                     isReady = false;
                     showScreen('roomScreen');
                     renderRoom();
+                    if (window.LobbyAnalytics) LobbyAnalytics.trackRoomCreated(selectedPreset, quizSettings);
                 } else {
                     alert(result.error);
                 }
@@ -714,6 +778,7 @@
                     isReady = false;
                     showScreen('roomScreen');
                     renderRoom();
+                    if (window.LobbyAnalytics) LobbyAnalytics.trackRoomJoined(result.room.players.length);
                 } else {
                     alert(result.error);
                 }
@@ -721,9 +786,9 @@
         }
 
         function joinInProgressGame(roomId) {
-            // Join an in-progress game directly (skip lobby room screen)
             socket.emit('joinRoom', roomId, (result) => {
                 if (result.success) {
+                    if (window.LobbyAnalytics) LobbyAnalytics.trackRoomJoined(result.room.players.length);
                     window.location.href = `/?room=${roomId}`;
                 } else {
                     alert(result.error);
@@ -732,6 +797,7 @@
         }
 
         function leaveRoom() {
+            if (window.LobbyAnalytics) LobbyAnalytics.trackRoomLeave();
             socket.emit('leaveRoom', currentRoom.id, () => {
                 currentRoom = null;
                 showLobby();

@@ -21,6 +21,13 @@
 
         currentReviewVerseIndex = 0;
         repeatEnabled = false;
+
+        if (window.Analytics) {
+            var verseCount = incorrectAnswerReferences.length > 0 
+                ? incorrectAnswerReferences.length 
+                : (organizedVerses[vQuality] ? organizedVerses[vQuality].length : 0);
+            Analytics.trackReviewModeUsed(verseCount);
+        }
     }
 
     function restoreGameState() {
