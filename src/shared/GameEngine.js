@@ -76,8 +76,8 @@
                 monstersToKill: this.levelData[1].monstersToKill || 10
             };
 
-            if (this.gameConfig.gameSpeed) {
-                this.gameState.speedMultiplier = this.gameConfig.gameSpeed;
+            if (this.gameConfig.speedMultiplier) {
+                this.gameState.speedMultiplier = this.gameConfig.speedMultiplier;
             }
 
             // Entity Managers
