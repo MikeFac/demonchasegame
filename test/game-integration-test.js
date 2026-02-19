@@ -147,9 +147,10 @@ setTimeout(() => {
                     console.log('   Debug info:');
                     console.log(`   - Monster chaser: ${finalMonster.chaser}`);
                     console.log(`   - Game level: ${game.gameState.gameLevel}`);
-                    console.log(`   - Level data exists: ${!!game.levelData[game.gameState.gameLevel]}`);
-                    if (game.levelData[game.gameState.gameLevel]) {
-                        console.log(`   - Monster speed from config: ${game.levelData[game.gameState.gameLevel].monsterSpeed}`);
+                    var levelData = game.engine ? game.engine.levelData : game.levelData;
+                    console.log(`   - Level data exists: ${!!(levelData && levelData[game.gameState.gameLevel])}`);
+                    if (levelData && levelData[game.gameState.gameLevel]) {
+                        console.log(`   - Monster speed from config: ${levelData[game.gameState.gameLevel].monsterSpeed}`);
                     }
                     console.log(`   - Update broadcasts: ${mockIO.updateCount}`);
                     

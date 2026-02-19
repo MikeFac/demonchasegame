@@ -377,5 +377,5 @@ class Network {
     }
 }
 
-// Create global instance
-const network = new Network();
+// Create global instance (let allows replacement with LocalNetwork for offline mode)
+let network = new Network();

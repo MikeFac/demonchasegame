@@ -6,6 +6,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>VerseBattles: Demon Chase</title>
   <link rel="icon" type="image/x-icon" href="/favicon.ico">
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#16213e">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <!-- Google Analytics 4 -->
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-673VQ9VE50"></script>
   <script>
@@ -645,6 +649,10 @@
     <!-- Main Menu Buttons (New Layout) -->
     <div class="main-menu-buttons">
       <button id="btnSolo" class="primary-btn" style="margin-bottom: 15px; width: 100%;">Start Solo Game</button>
+      <label id="offlineModeLabel" style="display: block; text-align: center; margin-bottom: 10px; color: #a8c5e6; cursor: pointer; font-size: 14px;">
+        <input type="checkbox" id="offlineModeToggle" style="margin-right: 6px; cursor: pointer;">
+        Offline Mode <span style="color: #7a9bb5; font-size: 12px;">(no server needed)</span>
+      </label>
       
       <button id="btnMultiplayer" class="secondary-btn" style="margin-bottom: 15px; width: 100%;">Multiplayer Game</button>
 
@@ -820,6 +828,20 @@
   <!-- Toast Notification Container -->
   <div id="toastContainer"></div>
 
+  <!-- Quick Start Overlay (FTUE) -->
+  <div id="quickStartOverlay" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 200; justify-content: center; align-items: center;">
+    <div id="quickStartPanel" style="background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%); border-radius: 15px; padding: 30px; max-width: 350px; width: 90%; text-align: center; color: #fff; border: 2px solid #e94560;">
+      <h2 style="margin-bottom: 20px; color: #e94560;">🎮 How to Play</h2>
+      <div style="text-align: left; line-height: 1.8; margin-bottom: 20px;">
+        <p>📍 <strong>Click</strong> to move your character</p>
+        <p>✝️ <strong>Answer quizzes</strong> to earn ammo and attack</p>
+        <p>👹 <strong>Defeat demons</strong> by answering correctly!</p>
+      </div>
+      <div id="quickStartTimer" style="color: #aaa; font-size: 0.9em;">Starting in <span id="quickStartCountdown">4</span>...</div>
+      <button id="quickStartDismiss" style="margin-top: 15px; padding: 10px 30px; background: #e94560; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold;">Start Now</button>
+    </div>
+  </div>
+
   <canvas id="gameCanvas" width="800" height="600"></canvas>
 
   <script src="bible-verses.js"></script>
@@ -832,6 +854,26 @@
   <script src="src/shared/Constants.js?v=2.1"></script>
   <script src="src/shared/LevelConfig.js"></script>
   <script src="src/shared/WallGrid.js"></script>
+  <!-- Shared modules for offline mode -->
+  <script src="src/shared/utils.js"></script>
+  <script src="src/shared/Physics.js"></script>
+  <script src="src/shared/GameConfig.js"></script>
+  <script src="src/shared/map-generators/ClassicMaze.js"></script>
+  <script src="src/shared/map-generators/NarrowPaths.js"></script>
+  <script src="src/shared/map-generators/ComplexLabyrinth.js"></script>
+  <script src="src/shared/map-generators/OpenPlains.js"></script>
+  <script src="src/shared/map-generators/GridCity.js"></script>
+  <script src="src/shared/map-generators/index.js"></script>
+  <script src="src/shared/entities/CollectibleManager.js"></script>
+  <script src="src/shared/entities/MonsterMovement.js"></script>
+  <script src="src/shared/entities/MonsterManager.js"></script>
+  <script src="src/shared/entities/PlayerManager.js"></script>
+  <script src="src/shared/entities/BulletManager.js"></script>
+  <script src="src/shared/GameInputHandler.js"></script>
+  <script src="src/shared/GameLifecycle.js"></script>
+  <script src="src/shared/GamePlayerHandler.js"></script>
+  <script src="src/shared/GameEngine.js"></script>
+  <script src="src/client/LocalNetwork.js"></script>
   <script src="src/client/UILayout.js?v=2.07"></script>
   <script src="src/client/MusicManager.js"></script>
   <script src="src/client/SoundEffects.js"></script>
@@ -904,6 +946,28 @@
       });
     })();
 
+    // Offline mode toggle persistence
+    (function () {
+      const offlineToggle = document.getElementById('offlineModeToggle');
+      if (offlineToggle) {
+        // Restore persisted preference
+        const persisted = localStorage.getItem('offlinePreferred');
+        if (persisted === 'true') {
+          offlineToggle.checked = true;
+        }
+        
+        // Listen for changes
+        offlineToggle.addEventListener('change', function () {
+          localStorage.setItem('offlinePreferred', offlineToggle.checked.toString());
+          // Also hide/show multiplayer button based on offline mode
+          const btnMultiplayer = document.getElementById('btnMultiplayer');
+          if (btnMultiplayer) {
+            btnMultiplayer.style.display = offlineToggle.checked ? 'none' : 'block';
+          }
+        });
+      }
+    })();
+
     // Game speed selection
     var selectedGameSpeed = 'normal';
     function setGameSpeed(speed) {
@@ -923,6 +987,16 @@
     }
   </script>
   <script src="game.js?v=2.14"></script>
+  <script>
+    // Register service worker for PWA offline support
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/service-worker.js').then(function(reg) {
+        console.log('Service Worker registered (scope: ' + reg.scope + ')');
+      }).catch(function(err) {
+        console.warn('Service Worker registration failed:', err);
+      });
+    }
+  </script>
   <script>
     // Override startSoloGame to include mapStyle
     const originalStartSoloGame = window.startSoloGame; // There isn't one globally exposed like this usually, let's check how button is bound. 
@@ -1136,11 +1210,9 @@
         if (e.target === overlay) close();
       });
 
-      // Auto-open for first-time visitors, pulse for returning players
-      if (!localStorage.getItem('hasSeenTutorial')) {
-        open();
-        btnInstructions.classList.add('pulse');
-      }
+      // Pulse the How to Play button to indicate it's available
+      // (Don't auto-open - FTUE has its own quick-start overlay)
+      btnInstructions.classList.add('pulse');
     })();
 
     // Privacy Policy Modal
