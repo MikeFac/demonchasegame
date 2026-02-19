@@ -199,6 +199,22 @@
         }
 
         update() {
+            // Debug: check player positions
+            var playerCodes = Object.keys(this.gameState.players);
+            for (var i = 0; i < playerCodes.length; i++) {
+                var p = this.gameState.players[playerCodes[i]];
+                if (p && (p.x === null || p.y === null || isNaN(p.x) || isNaN(p.y))) {
+                    console.log('[GameEngine.update] WARNING: player ' + playerCodes[i] + ' has invalid position: x=' + p.x + ', y=' + p.y);
+                }
+            }
+            
+            // Debug: check monster positions BEFORE update
+            if (this.gameState.monsters.length > 0 && (!this._lastPreLog || Date.now() - this._lastPreLog > 2000)) {
+                var m = this.gameState.monsters[0];
+                console.log('[GameEngine.update PRE] First monster: id=' + m.id + ', x=' + m.x + ', y=' + m.y + ' (isNaN=' + isNaN(m.x) + ')');
+                this._lastPreLog = Date.now();
+            }
+            
             this.monsterManager.updateMonsters();
             this.bulletManager.update(this.gameState);
             this._checkGracePeriods();
@@ -213,10 +229,10 @@
                 }
             }
 
-            // Debug: log first monster position before broadcast
+            // Debug: log first monster position after update
             if (this.gameState.monsters.length > 0 && (!this._lastLogTime || Date.now() - this._lastLogTime > 2000)) {
                 var m = this.gameState.monsters[0];
-                console.log('[GameEngine.update] Broadcasting gameState. First monster: id=' + m.id + ', x=' + m.x + ', y=' + m.y);
+                console.log('[GameEngine.update POST] First monster: id=' + m.id + ', x=' + m.x + ', y=' + m.y + ' (isNaN=' + isNaN(m.x) + ')');
                 this._lastLogTime = Date.now();
             }
 
