@@ -1,4 +1,6 @@
-# Deploy to Staging: dcgame.4you.tel
+# Initial Server Setup
+
+One-time setup for a new server. For ongoing deployments, see `deploying-updates.md`.
 
 **Server**: `109.123.227.158`
 **Domain**: `dcgame.4you.tel`

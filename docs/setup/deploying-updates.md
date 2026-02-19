@@ -1,17 +1,31 @@
-# Deploying Updates to Staging
+# Deploying Updates
+
+Ongoing deployment of code changes and music files. For initial server setup, see `initial-server-setup.md`.
 
 **Server**: `109.123.227.158`
 **User**: `root` -> `dcgame`
 **Directory**: `/var/www/dcgame.4you.tel`
 
-## Prerequisite
+---
+
+## Quick Deploy (Code Only)
+
+```bash
+ssh root@109.123.227.158 "su - dcgame -c 'cd /var/www/dcgame.4you.tel && git pull' && kill \$(pgrep -f 'node /var/www/dcgame.4you.tel/server.js')"
+```
+
+---
+
+## Code Deployment
+
+### Prerequisite
 Ensure your local changes are committed and pushed to the `master` branch on GitHub.
 
 ```bash
 git push origin master
 ```
 
-## Deployment Steps
+### Step-by-Step
 
 1.  **SSH into the server as root**:
     ```bash
@@ -35,10 +49,14 @@ git push origin master
 
 5.  **Restart the application**:
     ```bash
-    pm2 restart dcgame-staging
+    kill $(pgrep -f 'node /var/www/dcgame.4you.tel/server.js')
     ```
+    
+    The server auto-restarts via system process manager.
 
-## Syncing Audio Files (Songs)
+---
+
+## Music Deployment
 
 Audio files are **not stored in git** (`public/audio/` is in `.gitignore`).
 After generating new songs locally, sync them to staging separately.
@@ -87,15 +105,10 @@ ssh root@109.123.227.158 bash -c '
 
 ### 4. Restart the app
 ```bash
-ssh root@109.123.227.158 "su - dcgame -c 'pm2 restart dcgame-staging'"
+ssh root@109.123.227.158 "kill \$(pgrep -f 'node /var/www/dcgame.4you.tel/server.js')"
 ```
+
+---
 
 ## Verification
 Visit [https://dcgame.4you.tel](https://dcgame.4you.tel) to confirm the changes are live.
-
-## Quick Command (Code Only — No Songs)
-Deploy code changes only (songs require the SCP steps above):
-
-```bash
-ssh root@109.123.227.158 "su - dcgame -c 'cd /var/www/dcgame.4you.tel && git pull && pm2 restart dcgame-staging'"
-```
