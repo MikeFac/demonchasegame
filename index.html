@@ -650,8 +650,8 @@
     <div class="main-menu-buttons">
       <button id="btnSolo" class="primary-btn" style="margin-bottom: 15px; width: 100%;">Start Solo Game</button>
       <label id="offlineModeLabel" style="display: block; text-align: center; margin-bottom: 10px; color: #a8c5e6; cursor: pointer; font-size: 14px;">
-        <input type="checkbox" id="offlineModeToggle" style="margin-right: 6px; cursor: pointer;">
-        Offline Mode <span style="color: #7a9bb5; font-size: 12px;">(no server needed)</span>
+        <input type="checkbox" id="offlineModeToggle" checked style="margin-right: 6px; cursor: pointer;">
+        Offline <span style="color: #7a9bb5; font-size: 12px;">(uncheck for online multiplayer)</span>
       </label>
       
       <button id="btnMultiplayer" class="secondary-btn" style="margin-bottom: 15px; width: 100%;">Multiplayer Game</button>
@@ -950,20 +950,15 @@
     (function () {
       const offlineToggle = document.getElementById('offlineModeToggle');
       if (offlineToggle) {
-        // Restore persisted preference
+        // Restore persisted preference (default to checked/offline)
         const persisted = localStorage.getItem('offlinePreferred');
-        if (persisted === 'true') {
-          offlineToggle.checked = true;
+        if (persisted === 'false') {
+          offlineToggle.checked = false;
         }
         
         // Listen for changes
         offlineToggle.addEventListener('change', function () {
           localStorage.setItem('offlinePreferred', offlineToggle.checked.toString());
-          // Also hide/show multiplayer button based on offline mode
-          const btnMultiplayer = document.getElementById('btnMultiplayer');
-          if (btnMultiplayer) {
-            btnMultiplayer.style.display = offlineToggle.checked ? 'none' : 'block';
-          }
         });
       }
     })();

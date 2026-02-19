@@ -459,15 +459,9 @@ function showQuickStartOverlay() {
  * Hides multiplayer button, checks offline toggle, shows toast
  */
 function updateUIForOfflineMode() {
-    const btnMultiplayer = document.getElementById('btnMultiplayer');
-    if (btnMultiplayer) {
-        btnMultiplayer.style.display = 'none';
-    }
-    
     const offlineToggle = document.getElementById('offlineModeToggle');
     if (offlineToggle) {
         offlineToggle.checked = true;
-        // Don't disable - user should be able to toggle back to online
     }
     
     showToast('📡 Offline Mode — No server connection', 3000);
@@ -481,14 +475,13 @@ function setOfflineMode(enabled) {
     offlineMode = enabled;
     localStorage.setItem('offlinePreferred', enabled.toString());
     
+    const offlineToggle = document.getElementById('offlineModeToggle');
+    if (offlineToggle) {
+        offlineToggle.checked = enabled;
+    }
+    
     if (enabled) {
-        updateUIForOfflineMode();
-    } else {
-        const btnMultiplayer = document.getElementById('btnMultiplayer');
-        if (btnMultiplayer) btnMultiplayer.style.display = 'block';
-        
-        const offlineToggle = document.getElementById('offlineModeToggle');
-        if (offlineToggle) offlineToggle.disabled = false;
+        showToast('📡 Offline Mode — No server connection', 3000);
     }
 }
 
@@ -711,6 +704,10 @@ document.addEventListener('DOMContentLoaded', function () {
             startGame('solo');
         });
         document.getElementById('btnMultiplayer').addEventListener('click', () => {
+            if (!navigator.onLine) {
+                showToast('Multiplayer Game requires internet connection', 3000);
+                return;
+            }
             window.location.href = '/lobby';
         });
 
