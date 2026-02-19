@@ -37,6 +37,28 @@ let isGameLoaded = false;
 // [WallSpawn] Periodic wall-collision diagnostic (check every ~1s, not every frame)
 let _wallSpawnCheckTimer = 0;
 
+// Offline mode flag
+let offlineMode = false;
+
+// Pause offline game when tab is hidden (prevents timers running in background)
+document.addEventListener('visibilitychange', function () {
+    if (!offlineMode || !network || !network.engine) return;
+    if (document.hidden) {
+        network.engine.stop();
+        console.log('Offline game paused (tab hidden)');
+    } else {
+        network.engine.start();
+        console.log('Offline game resumed (tab visible)');
+    }
+});
+
+// Warn before closing tab during offline game (no save/resume yet)
+window.addEventListener('beforeunload', function (e) {
+    if (offlineMode && network && network.engine && network.engine.shouldRun) {
+        e.preventDefault();
+    }
+});
+
 // Solo game difficulty selection
 let soloDifficulty = 'normal';
 
@@ -443,8 +465,20 @@ function startGame(mode, roomId) {
     if (typeof gtag !== 'undefined') {
         gtag('event', 'game_start', {
             game_mode: mode,
+            offline: offlineMode,
             timestamp: new Date().toISOString()
         });
+    }
+
+    // Check offline mode toggle
+    const offlineToggle = document.getElementById('offlineModeToggle');
+    if (offlineToggle && offlineToggle.checked && mode === 'solo') {
+        offlineMode = true;
+    }
+
+    // In offline mode, replace the global network with a LocalNetwork
+    if (offlineMode && mode === 'solo') {
+        network = new LocalNetwork();
     }
 
     const menuScreen = document.getElementById('menuScreen');

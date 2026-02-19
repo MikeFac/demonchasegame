@@ -1,3 +1,4 @@
+(function () {
 var ClassicMaze, NarrowPaths, ComplexLabyrinth, OpenPlains, GridCity;
 
 if (typeof module !== 'undefined' && module.exports) {
@@ -43,5 +44,6 @@ var MapGeneratorsExports = {
 if (typeof module !== 'undefined' && module.exports) {
     module.exports = MapGeneratorsExports;
 } else {
-    window.MapGenerators = MapGeneratorsExports;
+    window.MapGeneratorFactory = MapGeneratorsExports;
 }
+})();

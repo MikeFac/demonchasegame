@@ -1,3 +1,4 @@
+(function () {
 var Constants, LevelConfig;
 if (typeof module !== 'undefined' && module.exports) {
     Constants = require('./Constants');
@@ -161,3 +162,4 @@ if (typeof module !== 'undefined' && module.exports) {
 } else {
   window.GameConfig = GameConfigExports;
 }
+})();

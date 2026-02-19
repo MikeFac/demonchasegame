@@ -1,3 +1,4 @@
+(function () {
 var Constants;
 if (typeof module !== 'undefined' && module.exports) {
     Constants = require('../Constants');
@@ -175,3 +176,4 @@ if (typeof module !== 'undefined' && module.exports) {
 } else {
     window.ComplexLabyrinth = generateMaze;
 }
+})();
