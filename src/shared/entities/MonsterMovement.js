@@ -20,13 +20,6 @@
 
             for (var i = 0; i < monsters.length; i++) {
                 var monster = monsters[i];
-                
-                // Check for NaN/null positions at start of update
-                if (monster.x === null || monster.y === null || isNaN(monster.x) || isNaN(monster.y)) {
-                    console.log('[MonsterMovement.updateAll] WARNING: monster ' + monster.id + ' has invalid position: x=' + monster.x + ', y=' + monster.y);
-                    continue; // Skip this monster
-                }
-                
                 var speed = MonsterMovement._applySlowAura(monster, baseSpeed, gameState);
                 MonsterMovement._moveMonster(monster, speed, gameState, wallGrid);
                 MonsterMovement._updateHealthBar(monster);
@@ -93,21 +86,7 @@
 
         _moveChaser: function (monster, speed, gameState, wallGrid) {
             var nearest = Physics.findNearestPlayer(monster, gameState);
-            if (!nearest) {
-                console.log('[MonsterMovement._moveChaser] No nearest player found for monster ' + monster.id);
-                return;
-            }
-            
-            // Check for invalid positions
-            if (isNaN(monster.x) || isNaN(monster.y)) {
-                console.log('[MonsterMovement._moveChaser] WARNING: monster ' + monster.id + ' has NaN position before move: x=' + monster.x + ', y=' + monster.y);
-                return;
-            }
-            if (isNaN(nearest.x) || isNaN(nearest.y)) {
-                console.log('[MonsterMovement._moveChaser] WARNING: nearest player has NaN position: x=' + nearest.x + ', y=' + nearest.y);
-                return;
-            }
-            
+            if (!nearest) return;
             var dx = nearest.x - monster.x;
             var dy = nearest.y - monster.y;
             var moveAngle = Math.atan2(dy, dx);
@@ -123,12 +102,6 @@
         },
 
         _moveWalker: function (monster, speed, gameState, wallGrid) {
-            // Check for invalid positions
-            if (isNaN(monster.x) || isNaN(monster.y)) {
-                console.log('[MonsterMovement._moveWalker] WARNING: monster ' + monster.id + ' has NaN position before move: x=' + monster.x + ', y=' + monster.y);
-                return;
-            }
-            
             if (monster.walkingDistance === undefined) {
                 monster.walkingDistance = Math.random() * (Constants.MAX_WALK_DISTANCE - Constants.MIN_WALK_DISTANCE) + Constants.MIN_WALK_DISTANCE;
                 monster.angle = Math.random() * 2 * Math.PI;
@@ -158,9 +131,6 @@
         },
 
         _updateHealthBar: function (monster) {
-            if (monster.x === null || monster.y === null) {
-                console.log('[MonsterMovement._updateHealthBar] WARNING: monster ' + monster.id + ' has null position');
-            }
             monster.healthBar.x = monster.x - monster.width / 2;
             monster.healthBar.y = monster.y - monster.height / 2 - 10;
             monster.healthBar.width = (monster.health / monster.maxHealth) * monster.width;

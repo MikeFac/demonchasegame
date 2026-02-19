@@ -879,12 +879,6 @@ async function init() {
         // Define callbacks first
         const networkCallbacks = {
             onGameStateUpdate: (newGameState) => {
-                // Debug: log first monster position on receive
-                if (newGameState.monsters && newGameState.monsters.length > 0 && (!window._lastClientLog || Date.now() - window._lastClientLog > 2000)) {
-                    const m = newGameState.monsters[0];
-                    console.log('[onGameStateUpdate] Received first monster: id=' + m.id + ', x=' + m.x + ', y=' + m.y);
-                    window._lastClientLog = Date.now();
-                }
                 updateGameState(newGameState);
             },
             onPlayerCode: (code) => {

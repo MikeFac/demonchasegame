@@ -16,15 +16,8 @@ class Game {
 
         // Create room-scoped emitter for GameEngine broadcasts
         const roomName = roomId ? `room:${roomId}` : null;
-        const self = this;
         const emitter = {
             emit: (event, data) => {
-                // Debug: log first monster position before broadcast
-                if (event === 'gameStateUpdate' && data.monsters && data.monsters.length > 0 && (!self._lastEmitLog || Date.now() - self._lastEmitLog > 2000)) {
-                    const m = data.monsters[0];
-                    console.log('[Server.Game emitter] Broadcasting gameState. First monster: id=' + m.id + ', x=' + m.x + ', y=' + m.y);
-                    self._lastEmitLog = Date.now();
-                }
                 if (roomName) {
                     io.to(roomName).emit(event, data);
                 } else {
