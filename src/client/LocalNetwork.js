@@ -105,6 +105,14 @@ class LocalNetwork {
         // Add the local player
         this.playerCode = this.engine.addPlayer(this._playerId, 'Player');
 
+        // Emit playerCode and playerNumber to client (normally done by server)
+        if (this.callbacks.onPlayerCode) {
+            this.callbacks.onPlayerCode(this.playerCode);
+        }
+        if (this.callbacks.onPlayerNumber) {
+            this.callbacks.onPlayerNumber(1);
+        }
+
         // Start the game loop
         this.engine.start();
     }

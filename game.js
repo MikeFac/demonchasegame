@@ -1185,6 +1185,10 @@ async function init() {
                 network.setCallbacks(networkCallbacks);
                 updateUIForOfflineMode();
             }
+        } else {
+            // Already in offline mode - set callbacks on LocalNetwork
+            network.setCallbacks(networkCallbacks);
+            console.log('LocalNetwork callbacks set (offline mode)');
         }
 
         // Load other images
