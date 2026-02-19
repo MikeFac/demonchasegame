@@ -44,17 +44,30 @@
             if (gameState.monsters.length >= levelData[gameState.gameLevel].maxMonsters) return;
 
             var playerCodes = Object.keys(gameState.players);
-            if (playerCodes.length === 0) return;
+            if (playerCodes.length === 0) {
+                console.log('[MonsterManager] spawnMonsterAtDistance: No players in gameState');
+                return;
+            }
+
+            // Debug: log player positions
+            console.log('[MonsterManager] Player positions:');
+            playerCodes.forEach(function(code) {
+                var p = gameState.players[code];
+                console.log('  Player ' + code + ': x=' + p.x + ', y=' + p.y);
+            });
 
             var validPositions = this._findSpawnPositions(playerCodes, minDistance, maxDistance);
+            console.log('[MonsterManager] Found ' + validPositions.length + ' valid positions');
 
             if (validPositions.length === 0) {
-                console.log('No valid positions found in distance range ' + minDistance + '-' + maxDistance + ', using fallback');
+                console.log('[MonsterManager] No valid positions found in distance range ' + minDistance + '-' + maxDistance + ', using fallback');
                 this.spawnMonster();
                 return;
             }
 
             var chosen = validPositions[Math.floor(Math.random() * validPositions.length)];
+            console.log('[MonsterManager] Chosen position: x=' + chosen.x + ', y=' + chosen.y);
+            
             var chaser = isFirst ? true : Math.random() < 0.5;
             console.log(isFirst ? 'Spawning FIRST CHASER monster' : (chaser ? 'Spawning CHASER monster' : 'Spawning RANDOM WALKER monster'));
 
@@ -62,7 +75,7 @@
             var monster = this._createMonster(chosen.x, chosen.y, chaser, baseHealth, 1.0);
 
             gameState.monsters.push(monster);
-            console.log('Monster spawned. Total monsters:', gameState.monsters.length);
+            console.log('Monster spawned at (' + monster.x + ', ' + monster.y + '). Total monsters:', gameState.monsters.length);
         }
 
         spawnMonster() {
@@ -112,15 +125,22 @@
         _findSpawnPositions(playerCodes, minDistance, maxDistance) {
             var gameState = this.gameState;
             var validPositions = [];
+            var wallGrid = this.wallGrid;
+
+            console.log('[MonsterManager._findSpawnPositions] wallGrid:', wallGrid ? 'exists' : 'null');
 
             for (var testX = 50; testX < Constants.WORLD_WIDTH - 50; testX += 50) {
                 for (var testY = 50; testY < Constants.WORLD_HEIGHT - 50; testY += 50) {
-                    if (Physics.isOverlapping(testX, testY, Constants.MONSTER_WIDTH, Constants.MONSTER_HEIGHT, gameState, null, this.wallGrid)) continue;
+                    if (Physics.isOverlapping(testX, testY, Constants.MONSTER_WIDTH, Constants.MONSTER_HEIGHT, gameState, null, wallGrid)) continue;
 
                     var inRange = false;
                     for (var ci = 0; ci < playerCodes.length; ci++) {
                         var p = gameState.players[playerCodes[ci]];
                         if (!p) continue;
+                        if (p.x === undefined || p.y === undefined || p.x === null || p.y === null) {
+                            console.log('[MonsterManager._findSpawnPositions] Player ' + playerCodes[ci] + ' has invalid position: x=' + p.x + ', y=' + p.y);
+                            continue;
+                        }
                         var dx = testX - p.x;
                         var dy = testY - p.y;
                         var distSq = dx * dx + dy * dy;

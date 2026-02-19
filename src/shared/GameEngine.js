@@ -59,6 +59,7 @@
 
             // Generate dungeon maze
             this._generateMaze(this.gameConfig.mapStyle || 'classic');
+            console.log('[GameEngine] Maze generated. spawnX=' + this.spawnX + ', spawnY=' + this.spawnY + ', wallGrid=' + (this.wallGrid ? 'exists' : 'null'));
 
             // Initial Game State
             this.gameState = {
