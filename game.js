@@ -467,7 +467,7 @@ function updateUIForOfflineMode() {
     const offlineToggle = document.getElementById('offlineModeToggle');
     if (offlineToggle) {
         offlineToggle.checked = true;
-        offlineToggle.disabled = true;
+        // Don't disable - user should be able to toggle back to online
     }
     
     showToast('📡 Offline Mode — No server connection', 3000);
@@ -555,10 +555,11 @@ function startGame(mode, roomId) {
         });
     }
 
-    // Check offline mode toggle
+    // Check offline mode toggle - update offlineMode based on checkbox state
     const offlineToggle = document.getElementById('offlineModeToggle');
-    if (offlineToggle && offlineToggle.checked && mode === 'solo') {
-        offlineMode = true;
+    if (offlineToggle && mode === 'solo') {
+        offlineMode = offlineToggle.checked;
+        localStorage.setItem('offlinePreferred', offlineMode.toString());
     }
 
     // In offline mode, replace the global network with a LocalNetwork
