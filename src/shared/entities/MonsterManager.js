@@ -168,6 +168,8 @@
             if (!demonType) demonType = this._randomDemonType();
             var finalHealth = Math.round(baseHealth * this.healthMultiplier * (hpMult || 1.0));
 
+            console.log('[MonsterManager._createMonster] Creating monster at (' + x + ', ' + y + ')');
+
             var monster = {
                 id: generateId(4),
                 x: x, y: y,
@@ -199,6 +201,7 @@
                 monster.specialAbilities.armorPlating = { active: true, hits: 3 };
             }
 
+            console.log('[MonsterManager._createMonster] Created monster: id=' + monster.id + ', x=' + monster.x + ', y=' + monster.y);
             return monster;
         }
 

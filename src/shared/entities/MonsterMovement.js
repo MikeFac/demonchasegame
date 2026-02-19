@@ -131,6 +131,9 @@
         },
 
         _updateHealthBar: function (monster) {
+            if (monster.x === null || monster.y === null) {
+                console.log('[MonsterMovement._updateHealthBar] WARNING: monster ' + monster.id + ' has null position');
+            }
             monster.healthBar.x = monster.x - monster.width / 2;
             monster.healthBar.y = monster.y - monster.height / 2 - 10;
             monster.healthBar.width = (monster.health / monster.maxHealth) * monster.width;

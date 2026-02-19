@@ -213,6 +213,13 @@
                 }
             }
 
+            // Debug: log first monster position before broadcast
+            if (this.gameState.monsters.length > 0 && (!this._lastLogTime || Date.now() - this._lastLogTime > 2000)) {
+                var m = this.gameState.monsters[0];
+                console.log('[GameEngine.update] Broadcasting gameState. First monster: id=' + m.id + ', x=' + m.x + ', y=' + m.y);
+                this._lastLogTime = Date.now();
+            }
+
             this.emitter.emit('gameStateUpdate', this.gameState);
         }
 
