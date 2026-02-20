@@ -336,8 +336,8 @@ class InputHandler {
             const rightPadding = qo.rightPadding || 7;
 
             const letterButtons = currentQuiz.letterOptions || [];
-            const letterBtnSize = 24;
-            const letterBtnSpacing = 3;
+            const letterBtnSize = 26;
+            const letterBtnSpacing = 4;
             const lettersPerRow = 3;
             const letterStartX = this.canvas.width - rightPadding - (lettersPerRow * letterBtnSize + (lettersPerRow - 1) * letterBtnSpacing);
             const letterRow1Y = buttonY;

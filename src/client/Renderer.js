@@ -1242,16 +1242,19 @@ class Renderer {
     }
 
     displayBibleVerse(verseText, verseReference, quiz) {
+        if (quiz && quiz.mode === 'cloze') {
+            this.displayClozeOptions(quiz);
+            return;
+        }
+
         const leftPadding = 14;
         const rightPadding = 7;
         const maxWidth = this.canvas.width - leftPadding - rightPadding;
         const maxLines = 5;
         const lineHeight = 21;
 
-        // Set font before measuring
         this.ctx.font = '14px Arial';
 
-        // Word-wrap based on actual pixel width
         let lines = [];
         let words = verseText.split(' ');
         let currentLine = '';
@@ -1261,7 +1264,6 @@ class Renderer {
             const metrics = this.ctx.measureText(testLine);
 
             if (metrics.width > maxWidth && currentLine.length > 0) {
-                // Line would be too long, push current line and start new one
                 lines.push(currentLine);
                 currentLine = words[i];
             } else {
@@ -1269,67 +1271,54 @@ class Renderer {
             }
         }
 
-        // Push the last line
         if (currentLine.length > 0) {
             lines.push(currentLine);
         }
 
-        // Limit to max lines
         lines = lines.slice(0, maxLines);
 
-        // Draw verse lines
         for (let i = 0; i < lines.length; i++) {
             const y = this.canvas.height - 112 + i * lineHeight;
             this.ctx.fillStyle = 'black';
             this.ctx.fillText(lines[i], leftPadding, y);
         }
 
-        // Draw verse reference
         this.ctx.fillStyle = 'black';
         this.ctx.fillText(verseReference, leftPadding, this.canvas.height - 112 + lines.length * lineHeight);
 
         if (quiz) {
-            if (quiz.mode === 'cloze') {
-                this.displayClozeOptions(quiz);
-            } else {
-                this.displayQuizOptions(quiz);
-            }
+            this.displayQuizOptions(quiz);
         }
     }
 
-    displayClozeOptions(quiz) {
+    displayClozeOptions(quiz, verseLineCount) {
         const qo = UILayout.quizOptions;
         const buttonY = UILayout.getQuizButtonY(this.canvas.height);
         const optionStartX = qo.startX;
         const rightPadding = qo.rightPadding || 7;
 
-        this.ctx.fillStyle = 'black';
-        this.ctx.font = '10px Arial';
         this.ctx.textAlign = 'left';
         this.ctx.textBaseline = 'top';
 
-        // Get display text with revealed words filled in
         const displayText = (typeof QuizManager !== 'undefined' && QuizManager.getClozeDisplayText) 
             ? QuizManager.getClozeDisplayText(quiz) 
             : quiz.promptText;
 
-        // Draw the text with blanks/revealed words
-        this.ctx.fillStyle = 'black';
-        this.ctx.font = '10px Arial';
+        this.ctx.fillStyle = '#333';
+        this.ctx.font = 'bold 14px Arial';
         
-        // Word wrap the display text
         const maxWidth = this.canvas.width - optionStartX - rightPadding - 120;
         const lines = this.wrapText(displayText, maxWidth);
+        
         let textY = buttonY;
         for (let i = 0; i < lines.length && i < 2; i++) {
             this.ctx.fillText(lines[i], optionStartX, textY);
-            textY += 12;
+            textY += 16;
         }
 
-        // Draw progress dots on second line
-        const dotY = buttonY + 14;
-        const dotRadius = 4;
-        const dotSpacing = 12;
+        const dotY = buttonY + (lines.length > 1 ? 32 : 16);
+        const dotRadius = 5;
+        const dotSpacing = 14;
         const dotStartX = optionStartX;
         
         for (let i = 0; i < quiz.answers.length; i++) {
@@ -1349,23 +1338,22 @@ class Renderer {
             this.ctx.stroke();
         }
 
-        // If complete or showing answer
         if (quiz.isComplete || quiz.showFullAnswer) {
             this.ctx.fillStyle = quiz.isComplete ? '#4CAF50' : '#f44336';
-            this.ctx.font = 'bold 10px Arial';
+            this.ctx.font = 'bold 14px Arial';
             
             if (quiz.isComplete) {
-                this.ctx.fillText('Correct!', optionStartX, buttonY + qo.height + 4);
+                this.ctx.fillText('✓ Correct!', optionStartX, buttonY + qo.height + 4);
             } else {
-                this.ctx.fillText('Answer: ' + quiz.answers.join(' '), optionStartX, buttonY + qo.height + 4);
+                this.ctx.fillText('✗ Answer: ' + quiz.answers.join(' '), optionStartX, buttonY + qo.height + 4);
             }
+            this.ctx.textAlign = 'left';
             return;
         }
 
-        // Draw letter buttons (2 rows of 3)
         const letterButtons = quiz.letterOptions || [];
-        const letterBtnSize = 24;
-        const letterBtnSpacing = 3;
+        const letterBtnSize = 26;
+        const letterBtnSpacing = 4;
         const lettersPerRow = 3;
         const letterStartX = this.canvas.width - rightPadding - (lettersPerRow * letterBtnSize + (lettersPerRow - 1) * letterBtnSpacing);
         const letterRow1Y = buttonY;
@@ -1381,12 +1369,12 @@ class Renderer {
             this.ctx.fillStyle = '#e0e0e0';
             this.ctx.fillRect(btnX, btnY, letterBtnSize, letterBtnSize);
 
-            this.ctx.strokeStyle = '#333';
-            this.ctx.lineWidth = 1;
+            this.ctx.strokeStyle = '#666';
+            this.ctx.lineWidth = 2;
             this.ctx.strokeRect(btnX, btnY, letterBtnSize, letterBtnSize);
 
             this.ctx.fillStyle = 'black';
-            this.ctx.font = 'bold 12px Arial';
+            this.ctx.font = 'bold 14px Arial';
             this.ctx.textAlign = 'center';
             this.ctx.textBaseline = 'middle';
             this.ctx.fillText(letter, btnX + letterBtnSize / 2, btnY + letterBtnSize / 2);
@@ -1427,25 +1415,20 @@ class Renderer {
         const buttonY = UILayout.getQuizButtonY(this.canvas.height);
         const optionCount = quiz.options.length;
 
-        // Button sizing: true/false=70px, missing word=65px, others=49px
         let buttonWidth;
         if (optionCount === 2) {
-            buttonWidth = 70;  // True/false
+            buttonWidth = 70;
         } else if (optionCount === 4) {
-            buttonWidth = 65;  // Missing word (needs wider for long words)
+            buttonWidth = 65;
         } else {
-            buttonWidth = qo.width;  // Default
+            buttonWidth = qo.width;
         }
 
-        // Calculate total width needed for buttons
         const totalButtonWidth = optionCount * buttonWidth + (optionCount - 1) * buttonSpacing;
-
-        // Calculate max width for question label (allow 2 lines)
         const maxLabelWidth = this.canvas.width - optionStartX - rightPadding - totalButtonWidth - 14;
 
-        // Draw question label with wrapping to 2 lines if needed
         this.ctx.fillStyle = 'black';
-        this.ctx.font = '11px Arial';
+        this.ctx.font = 'bold 13px Arial';
 
         const labelText = quiz.questionLabel;
         const labelTextWidth = this.ctx.measureText(labelText).width;
@@ -1455,7 +1438,6 @@ class Renderer {
         let labelWidth = labelTextWidth;
 
         if (labelTextWidth > maxLabelWidth) {
-            // Need to wrap to 2 lines
             const words = labelText.split(' ');
             let currentLine = '';
 
@@ -1464,7 +1446,6 @@ class Renderer {
                 const testWidth = this.ctx.measureText(testLine).width;
 
                 if (testWidth > maxLabelWidth && currentLine.length > 0) {
-                    // Start second line
                     line1 = currentLine;
                     currentLine = words[i];
                 } else {
@@ -1478,16 +1459,13 @@ class Renderer {
                 this.ctx.measureText(line2).width
             );
 
-            // Draw two lines
-            this.ctx.fillText(line1, optionStartX, buttonY + 4);
-            this.ctx.fillText(line2, optionStartX, buttonY + 16);
+            this.ctx.fillText(line1, optionStartX, buttonY + 2);
+            this.ctx.fillText(line2, optionStartX, buttonY + 18);
         } else {
-            // Single line
-            this.ctx.fillText(labelText, optionStartX, buttonY + 16);
+            this.ctx.fillText(labelText, optionStartX, buttonY + 10);
             labelWidth = labelTextWidth;
         }
 
-        // Draw option buttons
         for (let i = 0; i < optionCount; i++) {
             const buttonX = optionStartX + labelWidth + 14 + i * (buttonWidth + buttonSpacing);
 
@@ -1495,11 +1473,10 @@ class Renderer {
             this.ctx.fillRect(buttonX, buttonY, buttonWidth, buttonHeight);
 
             this.ctx.fillStyle = 'black';
-            this.ctx.font = '11px Arial';
-            // Center text in button
+            this.ctx.font = '12px Arial';
             const optText = quiz.options[i].text;
             const optTextWidth = this.ctx.measureText(optText).width;
-            this.ctx.fillText(optText, buttonX + (buttonWidth - optTextWidth) / 2, buttonY + 15);
+            this.ctx.fillText(optText, buttonX + (buttonWidth - optTextWidth) / 2, buttonY + 14);
         }
     }
 
