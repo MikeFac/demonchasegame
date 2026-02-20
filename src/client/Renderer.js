@@ -1289,8 +1289,109 @@ class Renderer {
         this.ctx.fillText(verseReference, leftPadding, this.canvas.height - 112 + lines.length * lineHeight);
 
         if (quiz) {
-            this.displayQuizOptions(quiz);
+            if (quiz.mode === 'cloze') {
+                this.displayClozeOptions(quiz);
+            } else {
+                this.displayQuizOptions(quiz);
+            }
         }
+    }
+
+    displayClozeOptions(quiz) {
+        const qo = UILayout.quizOptions;
+        const buttonY = UILayout.getQuizButtonY(this.canvas.height);
+        const optionStartX = qo.startX;
+        const rightPadding = qo.rightPadding || 7;
+
+        this.ctx.fillStyle = 'black';
+        this.ctx.font = '10px Arial';
+        this.ctx.textAlign = 'left';
+        this.ctx.textBaseline = 'top';
+
+        // Draw progress: "Word 1 of 3"
+        const progressText = 'Word ' + (quiz.currentWordIndex + 1) + ' of ' + quiz.answers.length + ':';
+        this.ctx.fillText(progressText, optionStartX, buttonY);
+
+        // Draw progress dots
+        const dotY = buttonY + 14;
+        const dotRadius = 4;
+        const dotSpacing = 12;
+        for (let i = 0; i < quiz.answers.length; i++) {
+            const dotX = optionStartX + i * dotSpacing;
+            this.ctx.beginPath();
+            this.ctx.arc(dotX + dotRadius, dotY + dotRadius, dotRadius, 0, Math.PI * 2);
+            if (i < quiz.revealedWords.length) {
+                this.ctx.fillStyle = '#4CAF50';
+            } else if (i === quiz.currentWordIndex) {
+                this.ctx.fillStyle = '#2196F3';
+            } else {
+                this.ctx.fillStyle = '#ccc';
+            }
+            this.ctx.fill();
+            this.ctx.strokeStyle = '#333';
+            this.ctx.lineWidth = 1;
+            this.ctx.stroke();
+        }
+
+        // Draw revealed words so far
+        if (quiz.revealedWords.length > 0) {
+            this.ctx.fillStyle = '#4CAF50';
+            this.ctx.font = 'bold 10px Arial';
+            const revealedText = quiz.revealedWords.join(' ');
+            const revealedX = optionStartX + quiz.answers.length * dotSpacing + 10;
+            this.ctx.fillText(revealedText, revealedX, buttonY + 2);
+        }
+
+        // If complete or showing answer
+        if (quiz.isComplete || quiz.showFullAnswer) {
+            // Show completion message or full answer
+            this.ctx.fillStyle = quiz.isComplete ? '#4CAF50' : '#f44336';
+            this.ctx.font = 'bold 11px Arial';
+            
+            if (quiz.isComplete) {
+                this.ctx.fillText('Correct!', optionStartX, buttonY + qo.height + 4);
+            } else {
+                this.ctx.fillText('Answer: ' + quiz.answers.join(' '), optionStartX, buttonY + qo.height + 4);
+            }
+            return;
+        }
+
+        // Draw letter buttons (2 rows of 3)
+        const letterButtons = quiz.letterOptions || [];
+        const letterBtnSize = 28;
+        const letterBtnSpacing = 4;
+        const lettersPerRow = 3;
+        const letterStartX = this.canvas.width - rightPadding - (lettersPerRow * letterBtnSize + (lettersPerRow - 1) * letterBtnSpacing);
+        const letterRow1Y = buttonY;
+        const letterRow2Y = buttonY + letterBtnSize + letterBtnSpacing;
+
+        for (let i = 0; i < letterButtons.length; i++) {
+            const letter = letterButtons[i];
+            const row = Math.floor(i / lettersPerRow);
+            const col = i % lettersPerRow;
+            const btnX = letterStartX + col * (letterBtnSize + letterBtnSpacing);
+            const btnY = row === 0 ? letterRow1Y : letterRow2Y;
+
+            // Button background
+            this.ctx.fillStyle = '#e0e0e0';
+            this.ctx.fillRect(btnX, btnY, letterBtnSize, letterBtnSize);
+
+            // Button border
+            this.ctx.strokeStyle = '#333';
+            this.ctx.lineWidth = 1;
+            this.ctx.strokeRect(btnX, btnY, letterBtnSize, letterBtnSize);
+
+            // Letter text
+            this.ctx.fillStyle = 'black';
+            this.ctx.font = 'bold 14px Arial';
+            this.ctx.textAlign = 'center';
+            this.ctx.textBaseline = 'middle';
+            this.ctx.fillText(letter, btnX + letterBtnSize / 2, btnY + letterBtnSize / 2);
+        }
+
+        // Reset text alignment
+        this.ctx.textAlign = 'left';
+        this.ctx.textBaseline = 'top';
     }
 
     displayQuizOptions(quiz) {

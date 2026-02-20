@@ -811,22 +811,27 @@
       <div id="quizSliders" style="display: block;"> <!-- Always visible inside Options -->
         <div class="slider-row">
           <label>First Letter</label>
-          <input type="range" min="0" max="100" step="5" value="30" data-mode="firstLetter">
-          <span class="pct">30%</span>
+          <input type="range" min="0" max="100" step="5" value="25" data-mode="firstLetter">
+          <span class="pct">25%</span>
         </div>
         <div class="slider-row">
           <label>Missing Word</label>
-          <input type="range" min="0" max="100" step="5" value="30" data-mode="missingWord">
-          <span class="pct">30%</span>
+          <input type="range" min="0" max="100" step="5" value="25" data-mode="missingWord">
+          <span class="pct">25%</span>
         </div>
         <div class="slider-row">
           <label>Category Match</label>
-          <input type="range" min="0" max="100" step="5" value="25" data-mode="categoryMatch">
-          <span class="pct">25%</span>
+          <input type="range" min="0" max="100" step="5" value="20" data-mode="categoryMatch">
+          <span class="pct">20%</span>
         </div>
         <div class="slider-row">
           <label>True / False</label>
           <input type="range" min="0" max="100" step="5" value="15" data-mode="trueFalse">
+          <span class="pct">15%</span>
+        </div>
+        <div class="slider-row">
+          <label>Cloze (Fill Blanks)</label>
+          <input type="range" min="0" max="100" step="5" value="15" data-mode="cloze">
           <span class="pct">15%</span>
         </div>
       </div>
@@ -990,7 +995,7 @@
   <!-- Shared modules for offline mode -->
   <script src="src/shared/utils.js"></script>
   <script src="src/shared/Physics.js"></script>
-  <script src="src/shared/GameConfig.js"></script>
+  <script src="src/shared/GameConfig.js?v=2.1"></script>
   <script src="src/shared/map-generators/ClassicMaze.js"></script>
   <script src="src/shared/map-generators/NarrowPaths.js"></script>
   <script src="src/shared/map-generators/ComplexLabyrinth.js"></script>
@@ -1011,11 +1016,11 @@
   <script src="src/client/MusicManager.js"></script>
   <script src="src/client/SoundEffects.js"></script>
   <script src="src/client/VerseSongService.js"></script>
-  <script src="src/client/Renderer.js?v=2.11"></script>
-  <script src="src/client/InputHandler.js?v=2.09"></script>
+  <script src="src/client/Renderer.js?v=2.12"></script>
+  <script src="src/client/InputHandler.js?v=2.10"></script>
   <script src="src/client/Network.js?v=2.08"></script>
   <script src="src/client/ReviewMode.js"></script>
-  <script src="src/client/QuizManager.js"></script>
+  <script src="src/client/QuizManager.js?v=2.1"></script>
   <script src="src/client/VerseTestScreen.js"></script>
   <script src="src/client/VersOfTheDayManager.js?v=2.2"></script>
   <script src="src/client/VotdLearningMode.js?v=2.2"></script>
@@ -1028,7 +1033,7 @@
     var gameCategory = urlParams.get('category') || '';
 
     // Quiz mode settings (read by QuizManager)
-    var quizSettings = { firstLetter: 30, missingWord: 30, categoryMatch: 25, trueFalse: 15 };
+    var quizSettings = { firstLetter: 25, missingWord: 25, categoryMatch: 20, trueFalse: 15, cloze: 15 };
 
 
     // Slider UI logic (ensures percentages add up to 100)
@@ -1392,21 +1397,21 @@
     // Handle bfcache - show menu when navigating back
     window.addEventListener('pageshow', function(event) {
       if (event.persisted) {
-        const splash = document.getElementById('splashScreen');
-        const menuScreen = document.getElementById('menuScreen');
+        var splash = document.getElementById('splashScreen');
+        var menuScreen = document.getElementById('menuScreen');
+        var canvas = document.getElementById('gameCanvas');
         splash.style.display = 'none';
-        if (menuScreen) menuScreen.style.display = 'block';
+        if (menuScreen) menuScreen.style.display = '';
+        if (canvas) canvas.style.display = 'none';
       }
     });
 
     // Splash Screen - fade out after 2 seconds
     setTimeout(function() {
-      const splash = document.getElementById('splashScreen');
-      const menuScreen = document.getElementById('menuScreen');
+      var splash = document.getElementById('splashScreen');
       splash.classList.add('fade-out');
       setTimeout(function() {
         splash.style.display = 'none';
-        if (menuScreen) menuScreen.style.display = 'block';
       }, 500);
     }, 2000);
   </script>

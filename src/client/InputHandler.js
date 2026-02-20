@@ -327,6 +327,43 @@ class InputHandler {
             }
         }
 
+        // Check cloze letter buttons (must come before regular quiz options check)
+        if (typeof currentQuiz !== 'undefined' && currentQuiz && currentQuiz.mode === 'cloze' && 
+            currentQuiz.letterOptions && !currentQuiz.isComplete && !currentQuiz.showFullAnswer) {
+            
+            const qo = UILayout.quizOptions;
+            const buttonY = UILayout.getQuizButtonY(this.canvas.height);
+            const rightPadding = qo.rightPadding || 7;
+
+            const letterButtons = currentQuiz.letterOptions || [];
+            const letterBtnSize = 28;
+            const letterBtnSpacing = 4;
+            const lettersPerRow = 3;
+            const letterStartX = this.canvas.width - rightPadding - (lettersPerRow * letterBtnSize + (lettersPerRow - 1) * letterBtnSpacing);
+            const letterRow1Y = buttonY;
+            const letterRow2Y = buttonY + letterBtnSize + letterBtnSpacing;
+
+            for (let i = 0; i < letterButtons.length; i++) {
+                const letter = letterButtons[i];
+                const row = Math.floor(i / lettersPerRow);
+                const col = i % lettersPerRow;
+                const btnX = letterStartX + col * (letterBtnSize + letterBtnSpacing);
+                const btnY = row === 0 ? letterRow1Y : letterRow2Y;
+
+                if (
+                    clickedX >= btnX &&
+                    clickedX <= btnX + letterBtnSize &&
+                    clickedY >= btnY &&
+                    clickedY <= btnY + letterBtnSize
+                ) {
+                    if (typeof QuizManager !== 'undefined' && QuizManager.handleClozeLetterSelect) {
+                        QuizManager.handleClozeLetterSelect(letter);
+                    }
+                    return;
+                }
+            }
+        }
+
         // Check quiz option buttons (reads from currentQuiz global)
         if (typeof currentQuiz !== 'undefined' && currentQuiz && currentQuiz.options && typeof ctx !== 'undefined') {
             const qo = UILayout.quizOptions;

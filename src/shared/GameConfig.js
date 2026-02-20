@@ -10,25 +10,26 @@ if (typeof module !== 'undefined' && module.exports) {
 
 // Default quiz balance (used as starting point in UI, independent of monster difficulty)
 const DEFAULT_QUIZ_SETTINGS = {
-  firstLetter: 30,
-  missingWord: 30,
-  categoryMatch: 25,
-  trueFalse: 15
+  firstLetter: 25,
+  missingWord: 25,
+  categoryMatch: 20,
+  trueFalse: 15,
+  cloze: 15
 };
 
 // Quick-select quiz balance presets (separate from monster difficulty presets)
 const QUIZ_BALANCE_PRESETS = {
   easy: {
     name: 'Easy Quizzes',
-    settings: { firstLetter: 5, missingWord: 15, categoryMatch: 30, trueFalse: 50 }
+    settings: { firstLetter: 5, missingWord: 15, categoryMatch: 30, trueFalse: 40, cloze: 10 }
   },
   balanced: {
     name: 'Balanced',
-    settings: { firstLetter: 30, missingWord: 30, categoryMatch: 25, trueFalse: 15 }
+    settings: { firstLetter: 25, missingWord: 25, categoryMatch: 20, trueFalse: 15, cloze: 15 }
   },
   hard: {
     name: 'Hard Quizzes',
-    settings: { firstLetter: 50, missingWord: 25, categoryMatch: 10, trueFalse: 15 }
+    settings: { firstLetter: 40, missingWord: 20, categoryMatch: 10, trueFalse: 10, cloze: 20 }
   }
 };
 
@@ -73,11 +74,11 @@ const PRESETS = {
 };
 
 /**
- * Validate quiz settings: all 4 keys present, all non-negative integers, sum to 100
+ * Validate quiz settings: all 5 keys present, all non-negative integers, sum to 100
  */
 function validateQuizSettings(qs) {
   if (!qs || typeof qs !== 'object') return false;
-  const keys = ['firstLetter', 'missingWord', 'categoryMatch', 'trueFalse'];
+  const keys = ['firstLetter', 'missingWord', 'categoryMatch', 'trueFalse', 'cloze'];
   for (const k of keys) {
     if (typeof qs[k] !== 'number' || qs[k] < 0 || !Number.isInteger(qs[k])) return false;
   }

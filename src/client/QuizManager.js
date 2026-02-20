@@ -24,7 +24,7 @@
     // Uses quizSettings (global from index.html) to pick a mode via cumulative probability
     function selectMode() {
         const settings = (typeof quizSettings !== 'undefined') ? quizSettings
-            : { firstLetter: 30, missingWord: 30, categoryMatch: 25, trueFalse: 15 };
+            : { firstLetter: 25, missingWord: 25, categoryMatch: 20, trueFalse: 15, cloze: 15 };
 
         const roll = Math.floor(Math.random() * 100);
         let cumulative = 0;
@@ -38,7 +38,13 @@
         cumulative += settings.categoryMatch;
         if (roll < cumulative) return 'category_match';
 
-        return 'true_false';
+        cumulative += settings.trueFalse;
+        if (roll < cumulative) return 'true_false';
+
+        cumulative += settings.cloze;
+        if (roll < cumulative) return 'cloze';
+
+        return 'first_letter';
     }
 
     // --- Quiz Generators ---
@@ -197,6 +203,205 @@
         };
     }
 
+    // 5. Cloze mode (progressive fill-in-the-blank)
+    const CLOZE_DISTRACTORS = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'R', 'S', 'T', 'U', 'V', 'W', 'Y'];
+    const CLOZE_STOP_WORDS = ['that', 'this', 'with', 'from', 'have', 'been', 'their', 'would', 'could', 'which', 'about', 'after', 'before', 'being', 'into', 'through', 'during', 'between', 'under', 'other', 'these', 'those', 'your', 'will', 'shall', 'when', 'where', 'what', 'there', 'then', 'than', 'them', 'they', 'some', 'such', 'only', 'also', 'just', 'even', 'more', 'most', 'very', 'much', 'many', 'first', 'last', 'long', 'great', 'little', 'own', 'good', 'made', 'time', 'said', 'like', 'back', 'each', 'make', 'take', 'come', 'came', 'over', 'upon', 'every', 'both', 'does', 'done', 'down', 'again', 'away', 'here', 'still', 'well', 'were', 'thought', 'called', 'should'];
+
+    function generateClozeLetterOptions(correctWord) {
+        const correctLetter = correctWord.charAt(0).toUpperCase();
+        const options = [correctLetter];
+        
+        const availableDistractors = CLOZE_DISTRACTORS.filter(function(l) {
+            return l !== correctLetter;
+        });
+        
+        // Shuffle distractors
+        for (let i = availableDistractors.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [availableDistractors[i], availableDistractors[j]] = [availableDistractors[j], availableDistractors[i]];
+        }
+        
+        // Add 5 distractors
+        for (let i = 0; i < 5 && i < availableDistractors.length; i++) {
+            options.push(availableDistractors[i]);
+        }
+        
+        // Shuffle final options
+        return options.sort(function() { return Math.random() - 0.5; });
+    }
+
+    function autoGenerateCloze(text) {
+        const words = text.split(/\s+/);
+        const candidates = [];
+        
+        for (let i = 0; i < words.length; i++) {
+            const word = words[i].replace(/[.,!?;:'"()-]/g, '');
+            const lowerWord = word.toLowerCase();
+            
+            if (word.length >= 4 && 
+                !CLOZE_STOP_WORDS.includes(lowerWord) &&
+                /^[a-zA-Z]+$/.test(word)) {
+                candidates.push({ word: word, index: i });
+            }
+        }
+        
+        if (candidates.length < 2) {
+            return null;
+        }
+        
+        // Shuffle and pick 2
+        for (let i = candidates.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [candidates[i], candidates[j]] = [candidates[j], candidates[i]];
+        }
+        
+        const selected = candidates.slice(0, 2);
+        selected.sort(function(a, b) { return a.index - b.index; });
+        
+        // Create question with blanks
+        let questionParts = [];
+        let lastIdx = 0;
+        for (let i = 0; i < selected.length; i++) {
+            const wordData = selected[i];
+            const wordsUpTo = words.slice(lastIdx, wordData.index);
+            questionParts.push(wordsUpTo.join(' '));
+            questionParts.push('_____');
+            lastIdx = wordData.index + 1;
+        }
+        questionParts.push(words.slice(lastIdx).join(' '));
+        
+        return {
+            question: questionParts.join(' ').trim(),
+            answers: selected.map(function(s) { return s.word; })
+        };
+    }
+
+    function generateClozeQuiz(verse) {
+        let qd = verse.quizData && verse.quizData.cloze;
+        
+        // Auto-generate if not present
+        if (!qd || !qd.question || !qd.answers || qd.answers.length === 0) {
+            const generated = autoGenerateCloze(verse.Text);
+            if (!generated) {
+                return generateMissingWordQuiz(verse);
+            }
+            qd = generated;
+        }
+
+        const firstWord = qd.answers[0];
+        const letterOptions = generateClozeLetterOptions(firstWord);
+
+        return {
+            mode: 'cloze',
+            promptText: qd.question,
+            questionLabel: 'Fill in the blanks (pick first letter):',
+            answers: qd.answers,
+            verseId: verse.Id,
+            currentWordIndex: 0,
+            revealedWords: [],
+            letterOptions: letterOptions,
+            showFullAnswer: false,
+            isComplete: false,
+            verseText: verse.Text,
+            verseReference: verse.Reference
+        };
+    }
+
+    function handleClozeLetterSelect(selectedLetter) {
+        if (!currentQuiz || currentQuiz.mode !== 'cloze') return;
+        if (currentQuiz.isComplete || currentQuiz.showFullAnswer) return;
+
+        const currentWordIndex = currentQuiz.currentWordIndex;
+        const correctWord = currentQuiz.answers[currentWordIndex];
+        const correctLetter = correctWord.charAt(0).toUpperCase();
+        const isCorrect = selectedLetter === correctLetter;
+
+        if (isCorrect) {
+            // Play correct sound
+            if (typeof levelUpSound !== 'undefined') {
+                levelUpSound.currentTime = 0;
+                levelUpSound.play().catch(function() {});
+            }
+            
+            currentQuiz.revealedWords.push(correctWord);
+            currentQuiz.currentWordIndex++;
+            
+            if (currentQuiz.currentWordIndex >= currentQuiz.answers.length) {
+                // All words complete - success!
+                currentQuiz.isComplete = true;
+                onClozeComplete(true);
+            } else {
+                // Move to next word
+                const nextWord = currentQuiz.answers[currentQuiz.currentWordIndex];
+                currentQuiz.letterOptions = generateClozeLetterOptions(nextWord);
+            }
+        } else {
+            // Wrong answer - show correct answer and fail
+            // Play wrong sound
+            if (typeof playerHit !== 'undefined') {
+                playerHit.currentTime = 0;
+                playerHit.play().catch(function() {});
+            }
+            
+            currentQuiz.showFullAnswer = true;
+            currentQuiz.revealedWords = currentQuiz.answers.slice();
+            onClozeComplete(false);
+        }
+    }
+
+    function onClozeComplete(success) {
+        const verseEntry = organizedVerses[vQuality] && organizedVerses[vQuality][currentVerseIndex];
+        const currentReference = verseEntry ? verseEntry.Reference : '';
+
+        if (success) {
+            isAnswerCorrect = true;
+            qualityIndex[vQuality] = (qualityIndex[vQuality] + 1) % organizedVerses[vQuality].length;
+            qualityTotal[vQuality] = qualityTotal[vQuality] + 1;
+            console.log(vQuality + " total correct is: " + qualityTotal[vQuality]);
+
+            // Auto-rotate quality every 3 correct answers
+            if (qualityTotal[vQuality] % 3 === 0) {
+                const availableQualities = Object.keys(organizedVerses).filter(function(q) {
+                    return q !== vQuality && organizedVerses[q] && organizedVerses[q].length > 0;
+                });
+                if (availableQualities.length > 0) {
+                    vQuality = availableQualities[Math.floor(Math.random() * availableQualities.length)];
+                    currentVerseIndex = qualityIndex[vQuality] || 0;
+                    console.log('✨ Quality rotated to: ' + vQuality);
+                }
+            }
+
+            player.ammo = (player.ammo || 0) + Constants.AMMO_REWARD;
+            network.sendQuizCorrect();
+
+            const correctVerse = organizedVerses[vQuality] && organizedVerses[vQuality][currentVerseIndex];
+            answerFullVerse = correctVerse ? correctVerse.Text : '';
+            setAnswerResultTimeout(3000);
+
+            if (typeof window.MusicManager !== 'undefined' && window.MusicManager.recordVerseLearned) {
+                window.MusicManager.recordVerseLearned(currentReference, true);
+            }
+
+            if (typeof window.onQuizCorrectAnswer === 'function') {
+                window.onQuizCorrectAnswer('cloze', currentReference);
+            }
+        } else {
+            isAnswerCorrect = false;
+            qualityIndex[vQuality] = (qualityIndex[vQuality] + 1) % organizedVerses[vQuality].length;
+            const wrongVerse = organizedVerses[vQuality] && organizedVerses[vQuality][currentVerseIndex];
+            answerFullVerse = wrongVerse ? wrongVerse.Text : '';
+            setAnswerResultTimeout(4000);
+
+            if (!incorrectAnswerReferences.includes(currentReference)) {
+                incorrectAnswerReferences.push(currentReference);
+            }
+
+            if (typeof window.onQuizWrongAnswer === 'function') {
+                window.onQuizWrongAnswer('cloze', currentReference);
+            }
+        }
+    }
+
     // --- Quiz Generation Entry Point ---
     function generateQuizForVerse(verse) {
         const mode = selectMode();
@@ -206,12 +411,13 @@
             case 'missing_word': quiz = generateMissingWordQuiz(verse); break;
             case 'category_match': quiz = generateCategoryMatchQuiz(verse); break;
             case 'true_false': quiz = generateTrueFalseQuiz(verse); break;
+            case 'cloze': quiz = generateClozeQuiz(verse); break;
             case 'first_letter':
             default: quiz = generateFirstLetterQuiz(verse); break;
         }
 
-        // Belt of Truth: auto-remove one wrong answer if belt available
-        if (quiz && typeof inventory !== 'undefined' && inventory.belt > 0 && quiz.options.length >= 3) {
+        // Belt of Truth: auto-remove one wrong answer if belt available (not for cloze)
+        if (quiz && quiz.mode !== 'cloze' && typeof inventory !== 'undefined' && inventory.belt > 0 && quiz.options && quiz.options.length >= 3) {
             const wrongOptions = quiz.options.filter(opt => !opt.isCorrect);
             if (wrongOptions.length > 0) {
                 const removeIdx = quiz.options.indexOf(wrongOptions[Math.floor(Math.random() * wrongOptions.length)]);
@@ -231,6 +437,9 @@
 
     function handleQuizAnswer(selectedOption) {
         if (!currentQuiz) return;
+        
+        // Cloze quizzes have their own handler
+        if (currentQuiz.mode === 'cloze') return;
 
         const isCorrect = selectedOption.isCorrect;
         const verseEntry = organizedVerses[vQuality] && organizedVerses[vQuality][currentVerseIndex];
@@ -364,6 +573,7 @@
         pickQualityVerse,
         pickRandomVerse,
         handleQuizAnswer,
+        handleClozeLetterSelect,
         createQualityButtons
     };
 })();
