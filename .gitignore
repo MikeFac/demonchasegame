@@ -23,6 +23,7 @@ Thumbs.db
 # Claude/AI tools
 .claude/
 .worktrees/
+archived/
 
 # Test/debug artifacts
 .playwright-cli/
