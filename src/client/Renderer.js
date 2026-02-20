@@ -1294,8 +1294,9 @@ class Renderer {
     displayClozeOptions(quiz, verseLineCount) {
         const qo = UILayout.quizOptions;
         const buttonY = UILayout.getQuizButtonY(this.canvas.height);
-        const optionStartX = qo.startX;
+        const leftPadding = qo.startX;
         const rightPadding = qo.rightPadding || 7;
+        const canvasWidth = this.canvas.width;
 
         this.ctx.textAlign = 'left';
         this.ctx.textBaseline = 'top';
@@ -1307,24 +1308,26 @@ class Renderer {
         this.ctx.fillStyle = '#333';
         this.ctx.font = 'bold 14px Arial';
         
-        const maxWidth = this.canvas.width - optionStartX - rightPadding - 120;
-        const lines = this.wrapText(displayText, maxWidth);
+        const maxTextWidth = canvasWidth - leftPadding - rightPadding;
+        const lines = this.wrapText(displayText, maxTextWidth);
         
         let textY = buttonY;
-        for (let i = 0; i < lines.length && i < 2; i++) {
-            this.ctx.fillText(lines[i], optionStartX, textY);
-            textY += 16;
+        const lineHeight = 18;
+        const maxLines = 2;
+        
+        for (let i = 0; i < lines.length && i < maxLines; i++) {
+            this.ctx.fillText(lines[i], leftPadding, textY);
+            textY += lineHeight;
         }
 
-        const dotY = buttonY + (lines.length > 1 ? 32 : 16);
+        const dotsY = buttonY + (lines.length > maxLines ? maxLines : lines.length) * lineHeight + 4;
         const dotRadius = 5;
-        const dotSpacing = 14;
-        const dotStartX = optionStartX;
+        const dotSpacing = 16;
         
         for (let i = 0; i < quiz.answers.length; i++) {
-            const dotX = dotStartX + i * dotSpacing;
+            const dotX = leftPadding + i * dotSpacing;
             this.ctx.beginPath();
-            this.ctx.arc(dotX + dotRadius, dotY + dotRadius, dotRadius, 0, Math.PI * 2);
+            this.ctx.arc(dotX + dotRadius, dotsY + dotRadius, dotRadius, 0, Math.PI * 2);
             if (i < quiz.revealedWords.length) {
                 this.ctx.fillStyle = '#4CAF50';
             } else if (i === quiz.currentWordIndex && !quiz.isComplete && !quiz.showFullAnswer) {
@@ -1341,43 +1344,42 @@ class Renderer {
         if (quiz.isComplete || quiz.showFullAnswer) {
             this.ctx.fillStyle = quiz.isComplete ? '#4CAF50' : '#f44336';
             this.ctx.font = 'bold 14px Arial';
+            const resultY = dotsY + dotRadius * 2 + 8;
             
             if (quiz.isComplete) {
-                this.ctx.fillText('✓ Correct!', optionStartX, buttonY + qo.height + 4);
+                this.ctx.fillText('✓ Correct!', leftPadding, resultY);
             } else {
-                this.ctx.fillText('✗ Answer: ' + quiz.answers.join(' '), optionStartX, buttonY + qo.height + 4);
+                this.ctx.fillText('✗ Answer: ' + quiz.answers.join(', '), leftPadding, resultY);
             }
             this.ctx.textAlign = 'left';
             return;
         }
 
         const letterButtons = quiz.letterOptions || [];
-        const letterBtnSize = 26;
-        const letterBtnSpacing = 4;
-        const lettersPerRow = 3;
-        const letterStartX = this.canvas.width - rightPadding - (lettersPerRow * letterBtnSize + (lettersPerRow - 1) * letterBtnSpacing);
-        const letterRow1Y = buttonY;
-        const letterRow2Y = buttonY + letterBtnSize + letterBtnSpacing;
+        const letterBtnWidth = 50;
+        const letterBtnHeight = 28;
+        const letterBtnSpacing = 6;
+        const totalButtonsWidth = letterButtons.length * letterBtnWidth + (letterButtons.length - 1) * letterBtnSpacing;
+        const letterStartX = (canvasWidth - totalButtonsWidth) / 2;
+        const letterY = dotsY + dotRadius * 2 + 8;
 
+        this.ctx.font = 'bold 16px Arial';
+        
         for (let i = 0; i < letterButtons.length; i++) {
             const letter = letterButtons[i];
-            const row = Math.floor(i / lettersPerRow);
-            const col = i % lettersPerRow;
-            const btnX = letterStartX + col * (letterBtnSize + letterBtnSpacing);
-            const btnY = row === 0 ? letterRow1Y : letterRow2Y;
+            const btnX = letterStartX + i * (letterBtnWidth + letterBtnSpacing);
 
-            this.ctx.fillStyle = '#e0e0e0';
-            this.ctx.fillRect(btnX, btnY, letterBtnSize, letterBtnSize);
+            this.ctx.fillStyle = '#e8e8e8';
+            this.ctx.fillRect(btnX, letterY, letterBtnWidth, letterBtnHeight);
 
             this.ctx.strokeStyle = '#666';
             this.ctx.lineWidth = 2;
-            this.ctx.strokeRect(btnX, btnY, letterBtnSize, letterBtnSize);
+            this.ctx.strokeRect(btnX, letterY, letterBtnWidth, letterBtnHeight);
 
-            this.ctx.fillStyle = 'black';
-            this.ctx.font = 'bold 14px Arial';
+            this.ctx.fillStyle = '#333';
             this.ctx.textAlign = 'center';
             this.ctx.textBaseline = 'middle';
-            this.ctx.fillText(letter, btnX + letterBtnSize / 2, btnY + letterBtnSize / 2);
+            this.ctx.fillText(letter, btnX + letterBtnWidth / 2, letterY + letterBtnHeight / 2);
         }
 
         this.ctx.textAlign = 'left';

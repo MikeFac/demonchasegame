@@ -333,28 +333,30 @@ class InputHandler {
             
             const qo = UILayout.quizOptions;
             const buttonY = UILayout.getQuizButtonY(this.canvas.height);
+            const leftPadding = qo.startX;
             const rightPadding = qo.rightPadding || 7;
+            const canvasWidth = this.canvas.width;
 
             const letterButtons = currentQuiz.letterOptions || [];
-            const letterBtnSize = 26;
-            const letterBtnSpacing = 4;
-            const lettersPerRow = 3;
-            const letterStartX = this.canvas.width - rightPadding - (lettersPerRow * letterBtnSize + (lettersPerRow - 1) * letterBtnSpacing);
-            const letterRow1Y = buttonY;
-            const letterRow2Y = buttonY + letterBtnSize + letterBtnSpacing;
+            const letterBtnWidth = 50;
+            const letterBtnHeight = 28;
+            const letterBtnSpacing = 6;
+            const totalButtonsWidth = letterButtons.length * letterBtnWidth + (letterButtons.length - 1) * letterBtnSpacing;
+            const letterStartX = (canvasWidth - totalButtonsWidth) / 2;
+            
+            const lineHeight = 18;
+            const dotsHeight = 5 * 2 + 4;
+            const letterY = buttonY + lineHeight * 2 + dotsHeight + 8;
 
             for (let i = 0; i < letterButtons.length; i++) {
                 const letter = letterButtons[i];
-                const row = Math.floor(i / lettersPerRow);
-                const col = i % lettersPerRow;
-                const btnX = letterStartX + col * (letterBtnSize + letterBtnSpacing);
-                const btnY = row === 0 ? letterRow1Y : letterRow2Y;
+                const btnX = letterStartX + i * (letterBtnWidth + letterBtnSpacing);
 
                 if (
                     clickedX >= btnX &&
-                    clickedX <= btnX + letterBtnSize &&
-                    clickedY >= btnY &&
-                    clickedY <= btnY + letterBtnSize
+                    clickedX <= btnX + letterBtnWidth &&
+                    clickedY >= letterY &&
+                    clickedY <= letterY + letterBtnHeight
                 ) {
                     if (typeof QuizManager !== 'undefined' && QuizManager.handleClozeLetterSelect) {
                         QuizManager.handleClozeLetterSelect(letter);

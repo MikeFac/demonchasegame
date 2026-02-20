@@ -719,6 +719,7 @@ document.addEventListener('DOMContentLoaded', function () {
         const btnSolo = document.getElementById('btnSolo');
         const btnMultiplayer = document.getElementById('btnMultiplayer');
         const btnInstructions = document.getElementById('btnInstructions');
+        const offlineModeLabel = document.getElementById('offlineModeLabel');
         const logoImg = document.querySelector('#menuScreen .logo-container img');
         
         if (btnSettings && settingsContainer) {
@@ -732,6 +733,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     if (btnSolo) btnSolo.style.display = 'none';
                     if (btnMultiplayer) btnMultiplayer.style.display = 'none';
                     if (btnInstructions) btnInstructions.style.display = 'none';
+                    if (offlineModeLabel) offlineModeLabel.style.display = 'none';
                     
                     // Shrink logo
                     if (logoImg) logoImg.classList.add('logo-small');
@@ -741,9 +743,10 @@ document.addEventListener('DOMContentLoaded', function () {
                     btnSettings.textContent = 'Options ▾';
                     
                     // Show main menu items
-                    if (btnSolo) btnSolo.style.display = 'block'; // Or inline-block/whatever default was, but block is likely fine for full width
+                    if (btnSolo) btnSolo.style.display = 'block';
                     if (btnMultiplayer) btnMultiplayer.style.display = 'block';
-                    if (btnInstructions) btnInstructions.style.display = 'block'; // This might need to be 'block' or empty string to revert to CSS
+                    if (btnInstructions) btnInstructions.style.display = 'block';
+                    if (offlineModeLabel) offlineModeLabel.style.display = 'block';
                     
                     // Restore logo
                     if (logoImg) logoImg.classList.remove('logo-small');
