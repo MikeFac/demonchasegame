@@ -23,35 +23,14 @@ Thumbs.db
 # Claude/AI tools
 .claude/
 .worktrees/
-archived/
 
 # Test/debug artifacts
 .playwright-cli/
-*.bak.js
-*.bak
-check-verse-errors.js
-debug-music.js
-test-mongodb.js
-test_quiz.js
 
-# Temp/debug files
-menu-check
-game-state.png
-how to revert.txt
-restart-server.sh
-songs-export.json
+# Temp files
 *.csv
 .~lock*
-
-# Old PHP files (no longer used)
-database.php
-get_verses.php
-index.php
-loadVerses.html
+.nvmrc
 
 # Generated audio files (deployed separately)
 public/audio/
-
-# MCP servers config
-mcp_servers.json
-.nvmrc
