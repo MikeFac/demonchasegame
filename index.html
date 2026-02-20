@@ -602,6 +602,94 @@
       transform: scale(1.05);
     }
 
+    /* Licensing Modal */
+    #licensingModal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.85);
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+    }
+
+    #licensingModal.open {
+      display: flex;
+    }
+
+    #licensingModalContent {
+      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+      color: #fff;
+      padding: 30px;
+      border-radius: 12px;
+      max-width: 500px;
+      width: 90%;
+      max-height: 85vh;
+      overflow-y: auto;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+      font-family: 'Segoe UI', sans-serif;
+    }
+
+    #licensingModalContent h2 {
+      margin-top: 0;
+      margin-bottom: 15px;
+      text-align: center;
+    }
+
+    #licensingModalContent h3 {
+      color: #a8c5e6;
+      margin-top: 18px;
+      margin-bottom: 8px;
+      font-size: 1em;
+    }
+
+    #licensingModalContent p {
+      margin-bottom: 10px;
+      line-height: 1.5;
+      font-size: 0.9em;
+    }
+
+    #licensingModalContent ul {
+      margin-left: 20px;
+      margin-bottom: 10px;
+    }
+
+    #licensingModalContent li {
+      margin-bottom: 4px;
+      line-height: 1.4;
+      font-size: 0.9em;
+    }
+
+    #licensingModalContent a {
+      color: #6cb5ff;
+      text-decoration: none;
+    }
+
+    #licensingModalContent a:hover {
+      text-decoration: underline;
+    }
+
+    #btnCloseLicensing {
+      background: linear-gradient(135deg, #2d6a4f, #1b4332);
+      color: #fff;
+      border: none;
+      padding: 12px 20px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 1em;
+      margin-top: 20px;
+      width: 100%;
+      transition: all 0.3s ease;
+    }
+
+    #btnCloseLicensing:hover {
+      box-shadow: 0 4px 12px rgba(45, 106, 79, 0.6);
+      transform: scale(1.02);
+    }
+
     /* Splash Screen */
     #splashScreen {
       position: fixed;
@@ -747,6 +835,8 @@
     <!-- Privacy Policy Link -->
     <div style="margin-top: 20px;">
         <a href="#" class="privacy-link" id="privacyLink">Privacy Policy</a>
+        <span style="color: rgba(255,255,255,0.3); margin: 0 8px;">|</span>
+        <a href="#" class="privacy-link" id="licensingLink">Licensing & Contributing</a>
     </div>
   </div>
 
@@ -822,6 +912,49 @@
       <p style="font-size: 0.9em; opacity: 0.8; margin-top: 30px;">Last updated: February 2026</p>
 
       <button id="btnClosePrivacy">Close</button>
+    </div>
+  </div>
+
+  <!-- Licensing Modal -->
+  <div id="licensingModal">
+    <div id="licensingModalContent">
+      <h2>Licensing & Contributing</h2>
+
+      <h3>Open Source (AGPL v3)</h3>
+      <p>This game is free to use, modify, and share under the <strong>GNU AGPL v3</strong> license.</p>
+      <ul>
+        <li>✅ Free for personal, educational, and non-profit use</li>
+        <li>✅ Self-host your own instance</li>
+        <li>✅ Create translations and custom content</li>
+        <li>✅ Modify and improve the code</li>
+        <li>⚠️ Modifications must be shared if you host publicly</li>
+      </ul>
+
+      <h3>Commercial Use</h3>
+      <p>Commercial use requires a separate license. This includes:</p>
+      <ul>
+        <li>Charging for access to the game</li>
+        <li>Using it as part of paid educational programs</li>
+        <li>Keeping modifications proprietary</li>
+        <li>Rebranding or white-labeling</li>
+      </ul>
+      <p><strong>Contact:</strong> <a href="mailto:michaelfackerell@gmail.com">michaelfackerell@gmail.com</a></p>
+
+      <h3>Your Rights</h3>
+      <ul>
+        <li>🏛️ <strong>Self-host:</strong> Run your own server independently</li>
+        <li>🌍 <strong>Translate:</strong> Create your own language files</li>
+        <li>📝 <strong>Custom content:</strong> Add your own verses/quiz content</li>
+        <li>🔒 <strong>No reporting:</strong> AGPL requires source sharing, not server data</li>
+      </ul>
+
+      <h3>Contributing</h3>
+      <p>Contributions welcome! See CONTRIBUTING.md in the repository.</p>
+      <p style="font-size: 0.85em; opacity: 0.8;">Contributors sign a CLA (Contributor License Agreement) ensuring the project can be dual-licensed.</p>
+
+      <p style="font-size: 0.85em; opacity: 0.8; margin-top: 15px;">"VerseBattles" is a trademark of Michael Fackerell.</p>
+
+      <button id="btnCloseLicensing">Close</button>
     </div>
   </div>
 
@@ -1232,8 +1365,31 @@
           privacyModal.classList.remove('open');
         }
       });
+    })();
 
-      // Splash Screen - fade out after 2 seconds
+    // Licensing Modal
+    (function () {
+      const licensingModal = document.getElementById('licensingModal');
+      const licensingLink = document.getElementById('licensingLink');
+      const btnCloseLicensing = document.getElementById('btnCloseLicensing');
+
+      licensingLink.addEventListener('click', function (e) {
+        e.preventDefault();
+        licensingModal.classList.add('open');
+      });
+
+      btnCloseLicensing.addEventListener('click', function () {
+        licensingModal.classList.remove('open');
+      });
+
+      licensingModal.addEventListener('click', function (e) {
+        if (e.target === licensingModal) {
+          licensingModal.classList.remove('open');
+        }
+      });
+    })();
+
+    // Splash Screen - fade out after 2 seconds
       setTimeout(function() {
         const splash = document.getElementById('splashScreen');
         splash.classList.add('fade-out');
