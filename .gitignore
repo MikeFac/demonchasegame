@@ -1,9 +1,12 @@
 # Dependencies
 node_modules/
+package-lock.json
 
 # Logs
 *.log
 nohup.out
+server.log
+song-generation.log
 
 # OS files
 .DS_Store
@@ -17,5 +20,37 @@ Thumbs.db
 .env
 .env.local
 
-# Generated audio files (deployed via SCP)
+# Claude/AI tools
+.claude/
+.worktrees/
+
+# Test/debug artifacts
+.playwright-cli/
+*.bak.js
+*.bak
+check-verse-errors.js
+debug-music.js
+test-mongodb.js
+test_quiz.js
+
+# Temp/debug files
+menu-check
+game-state.png
+how to revert.txt
+restart-server.sh
+songs-export.json
+*.csv
+.~lock*
+
+# Old PHP files (no longer used)
+database.php
+get_verses.php
+index.php
+loadVerses.html
+
+# Generated audio files (deployed separately)
 public/audio/
+
+# MCP servers config
+mcp_servers.json
+.nvmrc
