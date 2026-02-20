@@ -903,7 +903,7 @@ async function init() {
                 console.log(`Received player number: ${playerNumber}`);
                 // Always load player1 sprite sheet, then tint for other players
                 const baseImg = new Image();
-                baseImg.src = `${scriptDirectory}/player1-sprite96.png`;
+                baseImg.src = `${scriptDirectory}/images/player1-sprite96.png`;
                 baseImg.onload = function () {
                     const spriteNumber = ((playerNumber - 1) % 4) + 1;
                     const tint = PLAYER_TINTS[spriteNumber];
@@ -1188,12 +1188,12 @@ async function init() {
         // Load other images
         try {
             // Load other player sprite (tinted grey from player1 base)
-            const otherBase = await loadImage(`${scriptDirectory}/player1-sprite96.png`);
+            const otherBase = await loadImage(`${scriptDirectory}/images/player1-sprite96.png`);
             otherPlayerImg = createTintedSprite(otherBase, OTHER_PLAYER_TINT);
             console.log('Other player sprite ready (grey tint)');
 
             // Load healing point image
-            healingPointImg = await loadImage(`${scriptDirectory}/healing_point.png`);
+            healingPointImg = await loadImage(`${scriptDirectory}/images/healing_point.png`);
             console.log('Healing point image loaded successfully');
 
             // Load particle burst sprite sheet
@@ -1287,7 +1287,7 @@ async function init() {
         updateButtonsTimer = setInterval(QuizManager.createQualityButtons, 22000);
 
         healingPointImg = new Image();
-        healingPointImg.src = `${scriptDirectory}/healing_point.png`;
+        healingPointImg.src = `${scriptDirectory}/images/healing_point.png`;
         healingPointImg.onload = function () {
             console.log('Healing point image loaded');
         };
@@ -1297,7 +1297,7 @@ async function init() {
 
         // Load shield image
         shieldImg = new Image();
-        shieldImg.src = `${scriptDirectory}/shield_of_faith.png`;
+        shieldImg.src = `${scriptDirectory}/images/shield_of_faith.png`;
         shieldImg.onload = function () {
             console.log('Shield of Faith image loaded');
         };
@@ -1330,7 +1330,7 @@ async function init() {
             console.error('Error loading demon images:', error);
         }
         explosionImg = new Image();
-        explosionImg.src = `${scriptDirectory}/explosion2.png`;
+        explosionImg.src = `${scriptDirectory}/images/effects/explosion2.png`;
         explosionImg.onload = function () {
             console.log('Explosion image loaded');
         };
