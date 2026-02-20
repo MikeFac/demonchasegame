@@ -756,42 +756,16 @@
       <!-- Section: Game Settings -->
       <h4 style="color: #a8c5e6; margin-bottom: 10px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 5px;">Game Settings</h4>
       
-      <div class="settings-row">
-        <div class="settings-section">
-          <h3>Difficulty</h3>
-          <div class="radio-group">
-            <div class="radio-option">
-              <input type="radio" id="diffEasy" name="difficulty" value="easy" checked>
-              <label for="diffEasy">Easy</label>
-            </div>
-            <div class="radio-option">
-              <input type="radio" id="diffNormal" name="difficulty" value="normal">
-              <label for="diffNormal">Normal</label>
-            </div>
-            <div class="radio-option">
-              <input type="radio" id="diffHard" name="difficulty" value="hard">
-              <label for="diffHard">Hard</label>
-            </div>
-          </div>
-        </div>
+      <div class="slider-row">
+        <label>Difficulty</label>
+        <input type="range" id="difficultySlider" min="0" max="100" step="50" value="0">
+        <span class="pct" id="difficultyLabel">Easy</span>
+      </div>
 
-        <div class="settings-section">
-          <h3>Speed</h3>
-          <div class="radio-group">
-            <div class="radio-option">
-              <input type="radio" id="speedSlow" name="gameSpeed" value="slow">
-              <label for="speedSlow">Slow</label>
-            </div>
-            <div class="radio-option">
-              <input type="radio" id="speedNormal" name="gameSpeed" value="normal" checked>
-              <label for="speedNormal">Normal</label>
-            </div>
-            <div class="radio-option">
-              <input type="radio" id="speedFast" name="gameSpeed" value="fast">
-              <label for="speedFast">Fast</label>
-            </div>
-          </div>
-        </div>
+      <div class="slider-row">
+        <label>Speed</label>
+        <input type="range" id="speedSlider" min="0" max="100" step="50" value="50">
+        <span class="pct" id="speedLabel">Normal</span>
       </div>
 
       <div class="settings-section">
@@ -1016,11 +990,11 @@
   <script src="src/client/MusicManager.js"></script>
   <script src="src/client/SoundEffects.js"></script>
   <script src="src/client/VerseSongService.js"></script>
-  <script src="src/client/Renderer.js?v=2.12"></script>
-  <script src="src/client/InputHandler.js?v=2.10"></script>
+  <script src="src/client/Renderer.js?v=2.13"></script>
+  <script src="src/client/InputHandler.js?v=2.11"></script>
   <script src="src/client/Network.js?v=2.08"></script>
   <script src="src/client/ReviewMode.js"></script>
-  <script src="src/client/QuizManager.js?v=2.1"></script>
+  <script src="src/client/QuizManager.js?v=2.2"></script>
   <script src="src/client/VerseTestScreen.js"></script>
   <script src="src/client/VersOfTheDayManager.js?v=2.2"></script>
   <script src="src/client/VotdLearningMode.js?v=2.2"></script>
@@ -1035,6 +1009,45 @@
     // Quiz mode settings (read by QuizManager)
     var quizSettings = { firstLetter: 25, missingWord: 25, categoryMatch: 20, trueFalse: 15, cloze: 15 };
 
+    // Difficulty slider handler
+    (function () {
+      const diffSlider = document.getElementById('difficultySlider');
+      const diffLabel = document.getElementById('difficultyLabel');
+      if (diffSlider && diffLabel) {
+        function updateDiffLabel() {
+          const val = parseInt(diffSlider.value, 10);
+          if (val < 25) {
+            diffLabel.textContent = 'Easy';
+          } else if (val > 75) {
+            diffLabel.textContent = 'Hard';
+          } else {
+            diffLabel.textContent = 'Normal';
+          }
+        }
+        diffSlider.addEventListener('input', updateDiffLabel);
+        updateDiffLabel();
+      }
+    })();
+
+    // Speed slider handler
+    (function () {
+      const speedSlider = document.getElementById('speedSlider');
+      const speedLabel = document.getElementById('speedLabel');
+      if (speedSlider && speedLabel) {
+        function updateSpeedLabel() {
+          const val = parseInt(speedSlider.value, 10);
+          if (val < 25) {
+            speedLabel.textContent = 'Slow';
+          } else if (val > 75) {
+            speedLabel.textContent = 'Fast';
+          } else {
+            speedLabel.textContent = 'Normal';
+          }
+        }
+        speedSlider.addEventListener('input', updateSpeedLabel);
+        updateSpeedLabel();
+      }
+    })();
 
     // Slider UI logic (ensures percentages add up to 100)
     (function () {
@@ -1120,7 +1133,7 @@
       }
     }
   </script>
-  <script src="game.js?v=2.14"></script>
+  <script src="game.js?v=2.15"></script>
   <script>
     // Register service worker for PWA offline support
     if ('serviceWorker' in navigator) {

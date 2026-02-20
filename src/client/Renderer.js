@@ -1308,21 +1308,37 @@ class Renderer {
         this.ctx.textAlign = 'left';
         this.ctx.textBaseline = 'top';
 
-        // Draw progress: "Word 1 of 3"
-        const progressText = 'Word ' + (quiz.currentWordIndex + 1) + ' of ' + quiz.answers.length + ':';
-        this.ctx.fillText(progressText, optionStartX, buttonY);
+        // Get display text with revealed words filled in
+        const displayText = (typeof QuizManager !== 'undefined' && QuizManager.getClozeDisplayText) 
+            ? QuizManager.getClozeDisplayText(quiz) 
+            : quiz.promptText;
 
-        // Draw progress dots
+        // Draw the text with blanks/revealed words
+        this.ctx.fillStyle = 'black';
+        this.ctx.font = '10px Arial';
+        
+        // Word wrap the display text
+        const maxWidth = this.canvas.width - optionStartX - rightPadding - 120;
+        const lines = this.wrapText(displayText, maxWidth);
+        let textY = buttonY;
+        for (let i = 0; i < lines.length && i < 2; i++) {
+            this.ctx.fillText(lines[i], optionStartX, textY);
+            textY += 12;
+        }
+
+        // Draw progress dots on second line
         const dotY = buttonY + 14;
         const dotRadius = 4;
         const dotSpacing = 12;
+        const dotStartX = optionStartX;
+        
         for (let i = 0; i < quiz.answers.length; i++) {
-            const dotX = optionStartX + i * dotSpacing;
+            const dotX = dotStartX + i * dotSpacing;
             this.ctx.beginPath();
             this.ctx.arc(dotX + dotRadius, dotY + dotRadius, dotRadius, 0, Math.PI * 2);
             if (i < quiz.revealedWords.length) {
                 this.ctx.fillStyle = '#4CAF50';
-            } else if (i === quiz.currentWordIndex) {
+            } else if (i === quiz.currentWordIndex && !quiz.isComplete && !quiz.showFullAnswer) {
                 this.ctx.fillStyle = '#2196F3';
             } else {
                 this.ctx.fillStyle = '#ccc';
@@ -1333,20 +1349,10 @@ class Renderer {
             this.ctx.stroke();
         }
 
-        // Draw revealed words so far
-        if (quiz.revealedWords.length > 0) {
-            this.ctx.fillStyle = '#4CAF50';
-            this.ctx.font = 'bold 10px Arial';
-            const revealedText = quiz.revealedWords.join(' ');
-            const revealedX = optionStartX + quiz.answers.length * dotSpacing + 10;
-            this.ctx.fillText(revealedText, revealedX, buttonY + 2);
-        }
-
         // If complete or showing answer
         if (quiz.isComplete || quiz.showFullAnswer) {
-            // Show completion message or full answer
             this.ctx.fillStyle = quiz.isComplete ? '#4CAF50' : '#f44336';
-            this.ctx.font = 'bold 11px Arial';
+            this.ctx.font = 'bold 10px Arial';
             
             if (quiz.isComplete) {
                 this.ctx.fillText('Correct!', optionStartX, buttonY + qo.height + 4);
@@ -1358,8 +1364,8 @@ class Renderer {
 
         // Draw letter buttons (2 rows of 3)
         const letterButtons = quiz.letterOptions || [];
-        const letterBtnSize = 28;
-        const letterBtnSpacing = 4;
+        const letterBtnSize = 24;
+        const letterBtnSpacing = 3;
         const lettersPerRow = 3;
         const letterStartX = this.canvas.width - rightPadding - (lettersPerRow * letterBtnSize + (lettersPerRow - 1) * letterBtnSpacing);
         const letterRow1Y = buttonY;
@@ -1372,26 +1378,44 @@ class Renderer {
             const btnX = letterStartX + col * (letterBtnSize + letterBtnSpacing);
             const btnY = row === 0 ? letterRow1Y : letterRow2Y;
 
-            // Button background
             this.ctx.fillStyle = '#e0e0e0';
             this.ctx.fillRect(btnX, btnY, letterBtnSize, letterBtnSize);
 
-            // Button border
             this.ctx.strokeStyle = '#333';
             this.ctx.lineWidth = 1;
             this.ctx.strokeRect(btnX, btnY, letterBtnSize, letterBtnSize);
 
-            // Letter text
             this.ctx.fillStyle = 'black';
-            this.ctx.font = 'bold 14px Arial';
+            this.ctx.font = 'bold 12px Arial';
             this.ctx.textAlign = 'center';
             this.ctx.textBaseline = 'middle';
             this.ctx.fillText(letter, btnX + letterBtnSize / 2, btnY + letterBtnSize / 2);
         }
 
-        // Reset text alignment
         this.ctx.textAlign = 'left';
         this.ctx.textBaseline = 'top';
+    }
+
+    wrapText(text, maxWidth) {
+        const words = text.split(' ');
+        const lines = [];
+        let currentLine = '';
+
+        for (let i = 0; i < words.length; i++) {
+            const testLine = currentLine ? currentLine + ' ' + words[i] : words[i];
+            const metrics = this.ctx.measureText(testLine);
+            
+            if (metrics.width > maxWidth && currentLine) {
+                lines.push(currentLine);
+                currentLine = words[i];
+            } else {
+                currentLine = testLine;
+            }
+        }
+        if (currentLine) {
+            lines.push(currentLine);
+        }
+        return lines;
     }
 
     displayQuizOptions(quiz) {

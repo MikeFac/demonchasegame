@@ -207,6 +207,27 @@
     const CLOZE_DISTRACTORS = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'R', 'S', 'T', 'U', 'V', 'W', 'Y'];
     const CLOZE_STOP_WORDS = ['that', 'this', 'with', 'from', 'have', 'been', 'their', 'would', 'could', 'which', 'about', 'after', 'before', 'being', 'into', 'through', 'during', 'between', 'under', 'other', 'these', 'those', 'your', 'will', 'shall', 'when', 'where', 'what', 'there', 'then', 'than', 'them', 'they', 'some', 'such', 'only', 'also', 'just', 'even', 'more', 'most', 'very', 'much', 'many', 'first', 'last', 'long', 'great', 'little', 'own', 'good', 'made', 'time', 'said', 'like', 'back', 'each', 'make', 'take', 'come', 'came', 'over', 'upon', 'every', 'both', 'does', 'done', 'down', 'again', 'away', 'here', 'still', 'well', 'were', 'thought', 'called', 'should'];
 
+    function playClozeBeep(success) {
+        try {
+            const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            const oscillator = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+            
+            oscillator.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+            
+            oscillator.type = 'sine';
+            oscillator.frequency.value = success ? 880 : 220;
+            gainNode.gain.value = 0.1;
+            
+            oscillator.start();
+            gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + (success ? 0.15 : 0.3));
+            oscillator.stop(audioCtx.currentTime + (success ? 0.15 : 0.3));
+        } catch (e) {
+            // Audio not supported
+        }
+    }
+
     function generateClozeLetterOptions(correctWord) {
         const correctLetter = correctWord.charAt(0).toUpperCase();
         const options = [correctLetter];
@@ -294,7 +315,7 @@
         return {
             mode: 'cloze',
             promptText: qd.question,
-            questionLabel: 'Fill in the blanks (pick first letter):',
+            questionLabel: 'Fill in the blanks:',
             answers: qd.answers,
             verseId: verse.Id,
             currentWordIndex: 0,
@@ -307,6 +328,28 @@
         };
     }
 
+    function getClozeDisplayText(quiz) {
+        if (!quiz || quiz.mode !== 'cloze') return '';
+        
+        let text = quiz.promptText;
+        const blanks = text.split('_____');
+        
+        if (blanks.length <= 1) return text;
+        
+        let result = blanks[0];
+        for (let i = 0; i < quiz.answers.length; i++) {
+            if (i < quiz.revealedWords.length) {
+                result += quiz.revealedWords[i];
+            } else {
+                result += '_____';
+            }
+            if (i + 1 < blanks.length) {
+                result += blanks[i + 1];
+            }
+        }
+        return result;
+    }
+
     function handleClozeLetterSelect(selectedLetter) {
         if (!currentQuiz || currentQuiz.mode !== 'cloze') return;
         if (currentQuiz.isComplete || currentQuiz.showFullAnswer) return;
@@ -317,31 +360,20 @@
         const isCorrect = selectedLetter === correctLetter;
 
         if (isCorrect) {
-            // Play correct sound
-            if (typeof levelUpSound !== 'undefined') {
-                levelUpSound.currentTime = 0;
-                levelUpSound.play().catch(function() {});
-            }
+            playClozeBeep(true);
             
             currentQuiz.revealedWords.push(correctWord);
             currentQuiz.currentWordIndex++;
             
             if (currentQuiz.currentWordIndex >= currentQuiz.answers.length) {
-                // All words complete - success!
                 currentQuiz.isComplete = true;
                 onClozeComplete(true);
             } else {
-                // Move to next word
                 const nextWord = currentQuiz.answers[currentQuiz.currentWordIndex];
                 currentQuiz.letterOptions = generateClozeLetterOptions(nextWord);
             }
         } else {
-            // Wrong answer - show correct answer and fail
-            // Play wrong sound
-            if (typeof playerHit !== 'undefined') {
-                playerHit.currentTime = 0;
-                playerHit.play().catch(function() {});
-            }
+            playClozeBeep(false);
             
             currentQuiz.showFullAnswer = true;
             currentQuiz.revealedWords = currentQuiz.answers.slice();
@@ -574,6 +606,7 @@
         pickRandomVerse,
         handleQuizAnswer,
         handleClozeLetterSelect,
+        getClozeDisplayText,
         createQualityButtons
     };
 })();

@@ -563,12 +563,15 @@ function startGame(mode, roomId) {
 
     init().then(() => {
         if (mode === 'solo') {
-            // Get solo game settings from radio buttons
-            const difficultyRadio = document.querySelector('input[name="difficulty"]:checked');
-            const speedRadio = document.querySelector('input[name="gameSpeed"]:checked');
+            // Get solo game settings from sliders
+            const difficultySlider = document.getElementById('difficultySlider');
+            const speedSlider = document.getElementById('speedSlider');
 
-            const soloDifficulty = difficultyRadio ? difficultyRadio.value : 'normal';
-            const gameSpeed = speedRadio ? speedRadio.value : 'normal';
+            const diffValue = difficultySlider ? parseInt(difficultySlider.value, 10) : 50;
+            const speedValue = speedSlider ? parseInt(speedSlider.value, 10) : 50;
+
+            const soloDifficulty = diffValue < 25 ? 'easy' : (diffValue > 75 ? 'hard' : 'normal');
+            const gameSpeed = speedValue < 25 ? 'slow' : (speedValue > 75 ? 'fast' : 'normal');
             const mapStyle = document.getElementById('mapStyleSelect') ? document.getElementById('mapStyleSelect').value : 'classic';
             const quizSettings = getQuizSettingsFromSliders();
 
@@ -675,11 +678,11 @@ document.addEventListener('DOMContentLoaded', function () {
         localStorage.setItem('offlinePreferred', 'true');
 
         // Force Easy settings for first run
-        const diffEasy = document.getElementById('diffEasy');
-        if (diffEasy) diffEasy.checked = true;
+        const difficultySlider = document.getElementById('difficultySlider');
+        if (difficultySlider) difficultySlider.value = 0;
         
-        const speedNormal = document.getElementById('speedNormal');
-        if (speedNormal) speedNormal.checked = true;
+        const speedSlider = document.getElementById('speedSlider');
+        if (speedSlider) speedSlider.value = 50;
 
         // Create LocalNetwork for offline play
         network = new LocalNetwork();
