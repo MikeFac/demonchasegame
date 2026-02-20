@@ -1389,15 +1389,26 @@
       });
     })();
 
-    // Splash Screen - fade out after 2 seconds
-      setTimeout(function() {
+    // Handle bfcache - show menu when navigating back
+    window.addEventListener('pageshow', function(event) {
+      if (event.persisted) {
         const splash = document.getElementById('splashScreen');
-        splash.classList.add('fade-out');
-        setTimeout(function() {
-          splash.style.display = 'none';
-        }, 500); // Remove from DOM after fade completes
-      }, 2000);
-    })();
+        const menuScreen = document.getElementById('menuScreen');
+        splash.style.display = 'none';
+        if (menuScreen) menuScreen.style.display = 'block';
+      }
+    });
+
+    // Splash Screen - fade out after 2 seconds
+    setTimeout(function() {
+      const splash = document.getElementById('splashScreen');
+      const menuScreen = document.getElementById('menuScreen');
+      splash.classList.add('fade-out');
+      setTimeout(function() {
+        splash.style.display = 'none';
+        if (menuScreen) menuScreen.style.display = 'block';
+      }, 500);
+    }, 2000);
   </script>
 </body>
 
