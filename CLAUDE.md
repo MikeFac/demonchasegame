@@ -10,10 +10,13 @@ Demon Chase Game — a multiplayer Bible verse quiz game with top-down dungeon c
 
 ```bash
 npm install
-node server.js          # Starts on http://localhost:3500
+./restart-server.sh     # Starts/restarts on http://localhost:3500 (preferred)
+node server.js          # Alternative: starts fresh server
 ```
 
 No npm start script configured. No linter configured.
+
+**IMPORTANT**: Always use `./restart-server.sh` to restart the server. Do not manually kill node processes.
 
 ## ⚠️ CRITICAL: Server Restart After Code Changes
 

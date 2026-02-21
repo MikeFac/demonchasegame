@@ -413,10 +413,11 @@ class InputHandler {
                 buttonWidth = qo.width;  // Default
             }
 
-            ctx.font = '11px Arial'; // Must match Renderer.displayQuizOptions font
+            ctx.font = 'bold 16px Arial'; // Must match Renderer.displayQuizOptions font for label
             const labelText = currentQuiz.questionLabel || '';
             const labelTextWidth = ctx.measureText(labelText).width;
             const maxLabelWidth = this.canvas.width - optionStartX - (qo.rightPadding || 7) - (optionCount * buttonWidth + (optionCount - 1) * buttonSpacing) - 14;
+
 
             // Calculate label width (accounting for possible 2-line wrapping)
             let labelWidth = labelTextWidth;
@@ -447,6 +448,7 @@ class InputHandler {
 
             for (let i = 0; i < optionCount; i++) {
                 const buttonX = optionStartX + labelWidth + 14 + i * (buttonWidth + buttonSpacing);
+
 
                 if (
                     clickedX >= buttonX &&

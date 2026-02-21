@@ -37,24 +37,19 @@
 
     .config-header {
       text-align: center;
-      margin-bottom: 20px;
+      margin-bottom: 10px;
     }
 
     .config-header h1 {
-      font-size: 1.3em;
-      margin-bottom: 4px;
-    }
-
-    .config-header p {
-      font-size: 0.8em;
-      color: #a8c5e6;
+      font-size: 1.2em;
+      margin-bottom: 0;
     }
 
     /* Tab Navigation */
     .tab-nav {
       display: flex;
       gap: 4px;
-      margin-bottom: 16px;
+      margin-bottom: 10px;
       background: rgba(0, 0, 0, 0.2);
       border-radius: 8px;
       padding: 4px;
@@ -95,14 +90,14 @@
     .config-section {
       background: rgba(255, 255, 255, 0.05);
       border-radius: 8px;
-      padding: 14px;
-      margin-bottom: 12px;
+      padding: 10px;
+      margin-bottom: 10px;
     }
 
     .config-section h3 {
-      font-size: 0.75em;
+      font-size: 0.7em;
       font-weight: 600;
-      margin-bottom: 10px;
+      margin-bottom: 8px;
       color: #a8c5e6;
       text-transform: uppercase;
       letter-spacing: 0.5px;
@@ -113,7 +108,7 @@
       display: flex;
       align-items: center;
       justify-content: space-between;
-      margin-bottom: 10px;
+      margin-bottom: 6px;
     }
 
     .slider-row:last-child {
@@ -150,10 +145,10 @@
 
     /* Action Buttons */
     .config-actions {
-      margin-top: 16px;
+      margin-top: 12px;
       display: flex;
       flex-direction: column;
-      gap: 10px;
+      gap: 8px;
     }
 
     .btn-play {
@@ -198,14 +193,92 @@
     .btn-row .btn-secondary {
       flex: 1;
     }
+
+    /* Level Subtabs */
+    .level-subtabs {
+      display: flex;
+      gap: 4px;
+      margin-bottom: 8px;
+    }
+
+    .level-tab {
+      flex: 1;
+      padding: 6px 4px;
+      border: none;
+      border-radius: 6px;
+      background: rgba(0, 0, 0, 0.3);
+      color: #a8c5e6;
+      font-size: 0.75em;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .level-tab:hover {
+      background: rgba(255, 255, 255, 0.1);
+    }
+
+    .level-tab.active {
+      background: rgba(74, 144, 226, 0.4);
+      color: #fff;
+    }
+
+    /* Chip Grid */
+    .chip-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px;
+    }
+
+    .chip {
+      padding: 3px 8px;
+      border-radius: 10px;
+      background: rgba(255, 255, 255, 0.08);
+      color: #a8c5e6;
+      font-size: 0.7em;
+      cursor: pointer;
+      transition: all 0.15s;
+      border: 1px solid transparent;
+    }
+
+    .chip:hover {
+      background: rgba(255, 255, 255, 0.15);
+    }
+
+    .chip.selected {
+      background: rgba(74, 144, 226, 0.4);
+      color: #fff;
+      border-color: #4a90e2;
+    }
+
+    .hint {
+      font-weight: 400;
+      opacity: 0.6;
+    }
+
+    /* Number inputs */
+    input[type="number"] {
+      width: 60px;
+      padding: 4px 8px;
+      border-radius: 4px;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      background: rgba(0, 0, 0, 0.3);
+      color: #fff;
+      font-size: 0.85em;
+      text-align: center;
+    }
+
+    input[type="number"]:focus {
+      outline: none;
+      border-color: #4a90e2;
+    }
   </style>
 </head>
 
 <body>
   <div class="config-container">
     <div class="config-header">
-      <h1>Custom Game</h1>
-      <p>Configure your game settings</p>
+      <h1>Configure Custom Game Settings</h1>
     </div>
 
     <!-- Tab Navigation -->
@@ -285,10 +358,43 @@
       </div>
     </div>
 
-    <!-- Levels Tab (Phase 4) -->
+    <!-- Levels Tab -->
     <div id="tab-levels" class="tab-content">
-      <div class="config-section">
-        <p class="placeholder-msg">Level configuration coming soon.<br>Customize monsters, qualities, and spawn counts per level.</p>
+      <div class="level-subtabs">
+        <button class="level-tab active" data-level="1">Lv 1</button>
+        <button class="level-tab" data-level="2">Lv 2</button>
+        <button class="level-tab" data-level="3">Lv 3</button>
+        <button class="level-tab" data-level="4">Lv 4</button>
+        <button class="level-tab" data-level="5">Lv 5</button>
+      </div>
+
+      <div id="level-config-container">
+        <div class="config-section">
+          <h3>Qualities</h3>
+          <div class="chip-grid" id="qualities-grid"></div>
+        </div>
+
+        <div class="config-section">
+          <h3>Monsters</h3>
+          <div class="chip-grid" id="monsters-grid"></div>
+        </div>
+
+        <div class="config-section">
+          <h3>Spawn Settings</h3>
+          <div class="slider-row">
+            <span class="slider-label">Kill to Advance</span>
+            <input type="number" id="monstersToKill" min="5" max="100" value="15">
+          </div>
+          <div class="slider-row">
+            <span class="slider-label">Max Monsters</span>
+            <input type="number" id="maxMonstersLevel" min="10" max="80" value="25">
+          </div>
+          <div class="slider-row">
+            <span class="slider-label">Spawn Rate (sec)</span>
+            <input type="range" id="spawnRateLevel" min="2" max="30" step="1" value="20">
+            <span class="slider-value" id="spawnRateLevelVal">20s</span>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -419,15 +525,25 @@
     }
 
     function buildConfig() {
+      saveCurrentLevelConfig();
       var config = ConfigEncoder.getDefault();
       sliderIds.forEach(function (id) {
         config.balance[id] = parseFloat(document.getElementById(id).value);
       });
-      // Include quiz distribution settings
       config.quizSettings = {};
       quizSliderIds.forEach(function (id) {
         config.quizSettings[quizSliderModes[id]] = parseInt(document.getElementById(id).value, 10);
       });
+      config.levels = [];
+      for (var i = 1; i <= 5; i++) {
+        config.levels.push({
+          qualities: levelConfigs[i].qualities.slice(),
+          monsters: levelConfigs[i].monsters.slice(),
+          monstersToKill: levelConfigs[i].monstersToKill,
+          maxMonsters: levelConfigs[i].maxMonsters,
+          spawnRate: levelConfigs[i].spawnRate
+        });
+      }
       return config;
     }
 
@@ -454,6 +570,104 @@
     document.getElementById('btnBack').addEventListener('click', function () {
       window.location.href = '/';
     });
+
+    // ========== LEVELS TAB ==========
+
+    var ALL_QUALITIES = [
+      'Faith', 'Courage', 'Knowledge', 'Love', 'Wisdom', 'Healing',
+      'Forgiveness', 'Good News', 'Focus', 'Endurance', 'Hope', 'Prophecy',
+      'Power', 'Identity'
+    ];
+
+    var ALL_MONSTERS = [
+      'Fear', 'Ignorance', 'Blindness', 'Doubt', 'Confusion', 'Strife',
+      'Infirmity', 'Poverty', 'Shame', 'Deception', 'Condemnation', 'Unbelief',
+      'Depression', 'Despair', 'Pride', 'Temptation', 'Swarm'
+    ];
+
+    var DEFAULT_LEVELS = {
+      1: { qualities: ['Faith', 'Courage', 'Knowledge'], monsters: ['Fear', 'Ignorance', 'Blindness', 'Doubt', 'Confusion'], monstersToKill: 15, maxMonsters: 25, spawnRate: 20 },
+      2: { qualities: ['Love', 'Wisdom', 'Healing'], monsters: ['Strife', 'Confusion', 'Infirmity', 'Poverty', 'Shame', 'Deception', 'Fear'], monstersToKill: 23, maxMonsters: 30, spawnRate: 7 },
+      3: { qualities: ['Forgiveness', 'Good News', 'Focus'], monsters: ['Condemnation', 'Unbelief', 'Depression', 'Doubt', 'Despair', 'Pride', 'Strife'], monstersToKill: 30, maxMonsters: 35, spawnRate: 6 },
+      4: { qualities: ['Endurance', 'Hope', 'Prophecy'], monsters: ['Despair', 'Deception', 'Temptation', 'Swarm', 'Unbelief', 'Condemnation'], monstersToKill: 38, maxMonsters: 40, spawnRate: 5 },
+      5: { qualities: ['Power', 'Identity', 'Good News'], monsters: ['Pride', 'Doubt', 'Fear', 'Condemnation', 'Unbelief', 'Swarm', 'Temptation', 'Poverty'], monstersToKill: 45, maxMonsters: 50, spawnRate: 4 }
+    };
+
+    var currentLevel = 1;
+    var levelConfigs = JSON.parse(JSON.stringify(DEFAULT_LEVELS));
+
+    function renderChipGrid(containerId, allItems, selectedItems, maxSelect, onChange, minSelect) {
+      minSelect = minSelect || 0;
+      var container = document.getElementById(containerId);
+      container.innerHTML = '';
+      allItems.forEach(function (item) {
+        var chip = document.createElement('span');
+        chip.className = 'chip' + (selectedItems.indexOf(item) >= 0 ? ' selected' : '');
+        chip.textContent = item;
+        chip.addEventListener('click', function () {
+          var idx = selectedItems.indexOf(item);
+          if (idx >= 0) {
+            if (selectedItems.length <= minSelect) return; // Enforce minimum
+            selectedItems.splice(idx, 1);
+            chip.classList.remove('selected');
+          } else if (selectedItems.length < maxSelect) {
+            selectedItems.push(item);
+            chip.classList.add('selected');
+          }
+          if (onChange) onChange();
+        });
+        container.appendChild(chip);
+      });
+    }
+
+    function populateLevelUI(level) {
+      var cfg = levelConfigs[level];
+      renderChipGrid('qualities-grid', ALL_QUALITIES, cfg.qualities, Infinity, null, 1);
+      renderChipGrid('monsters-grid', ALL_MONSTERS, cfg.monsters, Infinity);
+      document.getElementById('monstersToKill').value = cfg.monstersToKill;
+      document.getElementById('maxMonstersLevel').value = cfg.maxMonsters;
+      document.getElementById('spawnRateLevel').value = cfg.spawnRate;
+      document.getElementById('spawnRateLevelVal').textContent = cfg.spawnRate + 's';
+    }
+
+    function saveCurrentLevelConfig() {
+      levelConfigs[currentLevel].monstersToKill = parseInt(document.getElementById('monstersToKill').value, 10) || 15;
+      levelConfigs[currentLevel].maxMonsters = parseInt(document.getElementById('maxMonstersLevel').value, 10) || 25;
+      levelConfigs[currentLevel].spawnRate = parseInt(document.getElementById('spawnRateLevel').value, 10) || 20;
+    }
+
+    document.querySelectorAll('.level-tab').forEach(function (tab) {
+      tab.addEventListener('click', function () {
+        saveCurrentLevelConfig();
+        currentLevel = parseInt(tab.dataset.level, 10);
+        document.querySelectorAll('.level-tab').forEach(function (t) { t.classList.remove('active'); });
+        tab.classList.add('active');
+        populateLevelUI(currentLevel);
+      });
+    });
+
+    document.getElementById('spawnRateLevel').addEventListener('input', function () {
+      document.getElementById('spawnRateLevelVal').textContent = this.value + 's';
+    });
+
+    document.getElementById('monstersToKill').addEventListener('change', saveCurrentLevelConfig);
+    document.getElementById('maxMonstersLevel').addEventListener('change', saveCurrentLevelConfig);
+
+    populateLevelUI(1);
+
+    // Load levels from URL config if present
+    if (existingConfig && existingConfig.levels) {
+      existingConfig.levels.forEach(function (lvl, idx) {
+        if (lvl && levelConfigs[idx + 1]) {
+          if (lvl.qualities && lvl.qualities.length > 0) levelConfigs[idx + 1].qualities = lvl.qualities;
+          if (lvl.monsters && lvl.monsters.length > 0) levelConfigs[idx + 1].monsters = lvl.monsters;
+          if (lvl.monstersToKill) levelConfigs[idx + 1].monstersToKill = lvl.monstersToKill;
+          if (lvl.maxMonsters) levelConfigs[idx + 1].maxMonsters = lvl.maxMonsters;
+          if (lvl.spawnRate) levelConfigs[idx + 1].spawnRate = lvl.spawnRate;
+        }
+      });
+      populateLevelUI(currentLevel);
+    }
   </script>
 </body>
 
