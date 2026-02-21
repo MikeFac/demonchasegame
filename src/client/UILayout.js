@@ -41,12 +41,21 @@ const UILayout = (function () {
             padding: 8
         },
 
-        // Quality buttons
-        qualityButtons: {
-            spacing: 7,
-            y: 5,
-            rightMargin: 7,
-            horizontalOffset: 8
+        // Category indicator (tappable text in top bar, replaces old quality buttons)
+        categoryIndicator: {
+            x: 7,
+            y: 2,
+            height: 20,
+            maxWidth: 250  // max tap target width
+        },
+
+        // Category picker popup (full list of categories)
+        categoryPicker: {
+            width: 280,
+            itemHeight: 32,
+            padding: 10,
+            columns: 2,
+            itemSpacing: 6
         },
 
         // Quiz option buttons
@@ -102,8 +111,12 @@ const UILayout = (function () {
         },
 
 
-        getQualityButtonStartX(canvasWidth, buttonCount) {
-            return canvasWidth - (buttonCount * (BUTTON_WIDTH + this.qualityButtons.spacing)) - this.qualityButtons.rightMargin + this.qualityButtons.horizontalOffset;
+        getCategoryPickerX(canvasWidth) {
+            return (canvasWidth - this.categoryPicker.width) / 2;
+        },
+
+        getCategoryPickerY(canvasHeight) {
+            return Math.max(30, (canvasHeight - 300) / 2);
         },
 
         getInventoryButtonX() {

@@ -185,8 +185,7 @@ let lastAttackTime = 0; // Keep track of the last attack time
 let lastUpdateTime = 0;
 const UPDATE_INTERVAL = 100; // Update player data every 100 milliseconds (adjust as needed)
 
-let qualityButtons = [];
-let updateButtonsTimer = null;
+let categoryPickerOpen = false;
 let levelCompleted = false;
 let levelAdvanceCountdown = 0;
 let levelAdvanceTimer = null;
@@ -1286,12 +1285,6 @@ async function init() {
             QuizManager.pickQualityVerse();
         }, VERSECHANGETIME);
 
-        // Create quality buttons
-        QuizManager.createQualityButtons();
-
-        // Set up the timer to update quality buttons every 22 seconds
-        updateButtonsTimer = setInterval(QuizManager.createQualityButtons, 22000);
-
         healingPointImg = new Image();
         healingPointImg.src = `${scriptDirectory}/images/healing_point.png`;
         healingPointImg.onload = function () {
@@ -1354,9 +1347,16 @@ async function init() {
 
         // Set up InputHandler callbacks
         inputHandler.setCallbacks({
-            onQualityButtonClick: (qualityText) => {
-                vQuality = qualityText;
+            onCategoryIndicatorClick: () => {
+                categoryPickerOpen = !categoryPickerOpen;
+            },
+            onCategorySelect: (category) => {
+                vQuality = category;
+                categoryPickerOpen = false;
                 QuizManager.pickQualityVerse();
+            },
+            onCategoryPickerClose: () => {
+                categoryPickerOpen = false;
             },
             onQuizOptionClick: (selectedOption) => {
                 QuizManager.handleQuizAnswer(selectedOption);
@@ -1638,7 +1638,8 @@ function gameLoop() {
     if (gameMode === 'game') {
         const uiState = {
             vQuality,
-            qualityButtons,
+            categoryPickerOpen,
+            allCategories: QUALITIES,
             gameOverFlag,
             isAnswerCorrect,
             levelCompleted,

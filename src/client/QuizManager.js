@@ -578,27 +578,6 @@
         }
     }
 
-    function createQualityButtons() {
-        qualityButtons = [];
-        const buttonColors = ['green', 'blue', 'purple'];
-
-        const buttonQualities = Array.from(new Set(QUALITIES.sort(() => Math.random() - 0.5).slice(0, 3)));
-
-        const buttonStartX = UILayout.getQualityButtonStartX(canvas.width, buttonQualities.length);
-        for (let i = 0; i < buttonQualities.length; i++) {
-            const buttonX = buttonStartX + i * (BUTTON_WIDTH + 7);
-            const buttonY = 5;
-            qualityButtons.push({
-                x: buttonX,
-                y: buttonY,
-                width: BUTTON_WIDTH,
-                height: BUTTON_HEIGHT,
-                text: buttonQualities[i],
-                color: buttonColors[i]
-            });
-        }
-    }
-
     // Public interface
     window.QuizManager = {
         organizeByCategory2,
@@ -606,7 +585,6 @@
         pickRandomVerse,
         handleQuizAnswer,
         handleClozeLetterSelect,
-        getClozeDisplayText,
-        createQualityButtons
+        getClozeDisplayText
     };
 })();

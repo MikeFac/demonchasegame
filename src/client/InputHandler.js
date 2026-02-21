@@ -16,7 +16,9 @@ class InputHandler {
 
         // Click processing callbacks
         this.callbacks = {
-            onQualityButtonClick: null,
+            onCategoryIndicatorClick: null,
+            onCategorySelect: null,
+            onCategoryPickerClose: null,
             onQuizOptionClick: null,
             onReviewButtonClick: null,
             onReviewModeClick: null,
@@ -288,41 +290,71 @@ class InputHandler {
                 return;
             }
         }
-        // Check quality buttons (passed from game.js)
-        if (typeof qualityButtons !== 'undefined') {
-            let clickedOnButton = false;
-            qualityButtons.forEach(button => {
-                if (
-                    clickedX >= button.x &&
-                    clickedX <= button.x + BUTTON_WIDTH &&
-                    clickedY >= button.y &&
-                    clickedY <= button.y + BUTTON_HEIGHT
-                ) {
-                    clickedOnButton = true;
-                    if (this.callbacks.onQualityButtonClick) {
-                        this.callbacks.onQualityButtonClick(button.text);
+        // Check category picker (if open, it's a modal overlay — consume all clicks)
+        if (typeof categoryPickerOpen !== 'undefined' && categoryPickerOpen) {
+            const cp = UILayout.categoryPicker;
+            const panelX = UILayout.getCategoryPickerX(this.canvas.width);
+            const panelY = UILayout.getCategoryPickerY(this.canvas.height);
+            const categories = (typeof QUALITIES !== 'undefined') ? QUALITIES : [];
+            const cols = cp.columns;
+            const rows = Math.ceil(categories.length / cols);
+            const colWidth = (cp.width - cp.padding * 2 - cp.itemSpacing * (cols - 1)) / cols;
+            const panelH = cp.padding + rows * (cp.itemHeight + cp.itemSpacing) + cp.padding + 30;
+
+            // Check if click is inside a category item
+            let clickedCategory = false;
+            for (let idx = 0; idx < categories.length; idx++) {
+                const col = idx % cols;
+                const row = Math.floor(idx / cols);
+                const itemX = panelX + cp.padding + col * (colWidth + cp.itemSpacing);
+                const itemY = panelY + 30 + cp.padding + row * (cp.itemHeight + cp.itemSpacing);
+
+                if (clickedX >= itemX && clickedX <= itemX + colWidth &&
+                    clickedY >= itemY && clickedY <= itemY + cp.itemHeight) {
+                    if (this.callbacks.onCategorySelect) {
+                        this.callbacks.onCategorySelect(categories[idx]);
                     }
+                    clickedCategory = true;
+                    break;
                 }
-            });
+            }
 
-            // Update movement target only if not clicking a UI element
-            if (!clickedOnButton) {
-                const playableTop = QUALITY_LINE_HEIGHT + BUTTON_HEIGHT;
-                const playableBottom = this.canvas.height - ANSWER_SECTION_HEIGHT - 14;
+            // Any click (inside or outside panel) closes the picker
+            if (!clickedCategory && this.callbacks.onCategoryPickerClose) {
+                this.callbacks.onCategoryPickerClose();
+            }
+            return;
+        }
 
-                if (clickedY > playableTop && clickedY < playableBottom) {
-                    // Check if external handler wants to process this click first (e.g., shooting)
-                    let handled = false;
-                    if (this.callbacks.onGameClick) {
-                        handled = this.callbacks.onGameClick(clickedX, clickedY);
-                    }
+        // Check category indicator tap (top bar)
+        {
+            const ci = UILayout.categoryIndicator;
+            if (clickedX >= ci.x && clickedX <= ci.x + ci.maxWidth &&
+                clickedY >= ci.y && clickedY <= ci.y + ci.height) {
+                if (this.callbacks.onCategoryIndicatorClick) {
+                    this.callbacks.onCategoryIndicatorClick();
+                }
+                return;
+            }
+        }
 
-                    // Only update movement target if not handled
-                    if (!handled) {
-                        // Convert screen coords to world coords at click time
-                        this.worldTargetX = clickedX + this.camera.x;
-                        this.worldTargetY = clickedY + this.camera.y;
-                    }
+        // Update movement target for playable area clicks
+        {
+            const playableTop = QUALITY_LINE_HEIGHT + BUTTON_HEIGHT;
+            const playableBottom = this.canvas.height - ANSWER_SECTION_HEIGHT - 14;
+
+            if (clickedY > playableTop && clickedY < playableBottom) {
+                // Check if external handler wants to process this click first (e.g., shooting)
+                let handled = false;
+                if (this.callbacks.onGameClick) {
+                    handled = this.callbacks.onGameClick(clickedX, clickedY);
+                }
+
+                // Only update movement target if not handled
+                if (!handled) {
+                    // Convert screen coords to world coords at click time
+                    this.worldTargetX = clickedX + this.camera.x;
+                    this.worldTargetY = clickedY + this.camera.y;
                 }
             }
         }

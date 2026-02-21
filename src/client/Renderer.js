@@ -105,31 +105,26 @@ class Renderer {
         if (uiState.goalsOverlayVisible) {
             this.drawGoalsPanel(uiState);
         }
+
+        // Draw category picker on top of everything
+        this.drawCategoryPicker(uiState);
     }
 
     drawTopBar(uiState) {
-        const { vQuality, qualityButtons, menuState } = uiState;
+        const { vQuality, menuState } = uiState;
 
-        // Quality Line
+        // Quality Line background
         this.ctx.fillStyle = 'black';
         this.ctx.fillRect(0, 0, this.canvas.width, this.QUALITY_LINE_HEIGHT);
-        this.ctx.fillStyle = 'white';
-        this.ctx.font = '14px Arial';
-        this.ctx.fillText(`Learn: ${vQuality}`, 7, 22);
 
-        // Quality Buttons (drawn first so hamburger appears on top if overlapping)
-        const buttonStartX = UILayout.getQualityButtonStartX(this.canvas.width, qualityButtons.length);
-        qualityButtons.forEach((button, index) => {
-            const buttonX = buttonStartX + index * (this.BUTTON_WIDTH + 7);
-            this.ctx.fillStyle = button.color;
-            this.ctx.fillRect(buttonX, 5, this.BUTTON_WIDTH, this.BUTTON_HEIGHT);
+        // Category indicator (tappable)
+        const ci = UILayout.categoryIndicator;
+        this.ctx.fillStyle = '#ffffff';
+        this.ctx.font = 'bold 16px Arial';
+        const labelText = `${vQuality} ▼`;
+        this.ctx.fillText(labelText, ci.x, ci.y + 16);
 
-            this.ctx.fillStyle = 'white';
-            this.ctx.font = 'bold 11px Arial';
-            this.ctx.fillText(button.text, buttonX + this.BUTTON_PADDING, 5 + this.BUTTON_HEIGHT - this.BUTTON_PADDING);
-        });
-
-        // Hamburger Menu Button (drawn last in top bar so it's on top)
+        // Hamburger Menu Button
         this.drawHamburgerButton(menuState);
     }
 
@@ -208,6 +203,67 @@ class Renderer {
             this.ctx.fillStyle = item.color || '#fff';
             this.ctx.font = '12px Arial';
             this.ctx.fillText(item.label, panelX + padding * 2, itemY + itemH / 2 + 4);
+        });
+    }
+
+    drawCategoryPicker(uiState) {
+        if (!uiState.categoryPickerOpen) return;
+
+        const categories = uiState.allCategories || [];
+        const currentCategory = uiState.vQuality;
+        const cp = UILayout.categoryPicker;
+        const padding = cp.padding;
+        const itemH = cp.itemHeight;
+        const cols = cp.columns;
+        const itemSpacing = cp.itemSpacing;
+
+        const rows = Math.ceil(categories.length / cols);
+        const colWidth = (cp.width - padding * 2 - itemSpacing * (cols - 1)) / cols;
+        const panelH = padding + rows * (itemH + itemSpacing) + padding + 30; // +30 for title
+
+        const panelX = UILayout.getCategoryPickerX(this.canvas.width);
+        const panelY = UILayout.getCategoryPickerY(this.canvas.height);
+
+        // Overlay
+        this.ctx.fillStyle = 'rgba(0, 0, 0, 0.6)';
+        this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+
+        // Panel background
+        this.ctx.fillStyle = 'rgba(20, 20, 30, 0.95)';
+        this.ctx.fillRect(panelX, panelY, cp.width, panelH);
+        this.ctx.strokeStyle = '#4a90e2';
+        this.ctx.lineWidth = 2;
+        this.ctx.strokeRect(panelX, panelY, cp.width, panelH);
+
+        // Title
+        this.ctx.fillStyle = '#ffffff';
+        this.ctx.font = 'bold 16px Arial';
+        this.ctx.textAlign = 'center';
+        this.ctx.fillText('Select Category', panelX + cp.width / 2, panelY + 22);
+        this.ctx.textAlign = 'left';
+
+        // Category items in 2-column grid
+        categories.forEach((cat, idx) => {
+            const col = idx % cols;
+            const row = Math.floor(idx / cols);
+            const itemX = panelX + padding + col * (colWidth + itemSpacing);
+            const itemY = panelY + 30 + padding + row * (itemH + itemSpacing);
+            const isActive = cat === currentCategory;
+
+            // Item background
+            this.ctx.fillStyle = isActive ? 'rgba(74, 144, 226, 0.4)' : 'rgba(255, 255, 255, 0.08)';
+            this.ctx.fillRect(itemX, itemY, colWidth, itemH);
+
+            if (isActive) {
+                this.ctx.strokeStyle = '#4a90e2';
+                this.ctx.lineWidth = 2;
+                this.ctx.strokeRect(itemX, itemY, colWidth, itemH);
+            }
+
+            // Item text
+            this.ctx.fillStyle = isActive ? '#4a90e2' : '#ffffff';
+            this.ctx.font = isActive ? 'bold 13px Arial' : '13px Arial';
+            this.ctx.fillText(cat, itemX + 8, itemY + itemH / 2 + 4);
         });
     }
 
