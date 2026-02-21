@@ -82,11 +82,11 @@
 
                 ctx.font = '20px Arial';
                 ctx.fillStyle = 'black';
-                ctx.fillText(`Learn: ${verseDetails.category}`, 10, canvas.height - 90);
+                ctx.fillText(t('review.learn', tCategory(verseDetails.category)), 10, canvas.height - 90);
 
                 ctx.font = '20px Arial';
                 ctx.fillStyle = 'black';
-                ctx.fillText(`Reference: ${verseReference}`, 10, canvas.height - 120);
+                ctx.fillText(t('review.reference', verseReference), 10, canvas.height - 120);
 
                 if (!isAudioPlaying && !repeatEnabled) {
                     startVerseAudio(verseReference);
@@ -141,9 +141,9 @@
 
         ctx.font = '20px Arial';
         ctx.fillStyle = 'black';
-        ctx.fillText('Previous', prevButtonX + 10, buttonY + 25);
-        ctx.fillText('Repeat', repeatButtonX + 20, buttonY + 25);
-        ctx.fillText('Next', nextButtonX + 25, buttonY + 25);
+        ctx.fillText(t('review.previous'), prevButtonX + 10, buttonY + 25);
+        ctx.fillText(t('review.repeat'), repeatButtonX + 20, buttonY + 25);
+        ctx.fillText(t('review.next'), nextButtonX + 25, buttonY + 25);
     }
 
     function handleReviewClick(event) {
@@ -365,7 +365,7 @@
         ctx.font = '14px Arial';
         ctx.fillStyle = 'black';
         ctx.fillText(vQuality, qualityButtonX + 10, buttonY + 20);
-        ctx.fillText('Game', gameButtonX + 20, buttonY + 20);
+        ctx.fillText(t('review.game'), gameButtonX + 20, buttonY + 20);
     }
 
     function getCurrentVerseReference() {

@@ -897,6 +897,18 @@ document.addEventListener('DOMContentLoaded', function () {
                 }
             });
         }
+
+        // Language selector
+        const languageSelect = document.getElementById('languageSelect');
+        if (languageSelect) {
+            // Set current language
+            languageSelect.value = I18n.getLang();
+            languageSelect.addEventListener('change', () => {
+                const newLang = languageSelect.value;
+                localStorage.setItem('lang', newLang);
+                window.location.reload();
+            });
+        }
     }
 });
 

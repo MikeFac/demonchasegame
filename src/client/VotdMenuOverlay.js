@@ -46,9 +46,9 @@
         if (streakEl) {
             const streak = VersOfTheDayManager.getStreak();
             if (streak > 0) {
-                streakEl.textContent = '\uD83D\uDD25 ' + streak + ' day streak!';
+                streakEl.textContent = t('votd.dayStreak', streak);
             } else {
-                streakEl.textContent = 'Start your streak!';
+                streakEl.textContent = t('votd.startYourStreak');
                 streakEl.style.color = '#aaa';
             }
         }

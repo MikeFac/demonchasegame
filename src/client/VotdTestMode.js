@@ -201,12 +201,12 @@
         c.fillStyle = '#ffd700';
         c.font = 'bold 22px Arial';
         c.textAlign = 'center';
-        c.fillText('Test Your Memory', cw / 2, 35);
+        c.fillText(t('votd.testYourMemory'), cw / 2, 35);
 
         // Progress
         c.fillStyle = '#aaa';
         c.font = '13px Arial';
-        c.fillText(`${currentVerse.Reference}  —  Word ${currentWordIdx + 1} of ${hiddenWordCount}`, cw / 2, 55);
+        c.fillText(`${currentVerse.Reference}  \u2014  ${t('votd.wordOf', currentWordIdx + 1, hiddenWordCount)}`, cw / 2, 55);
 
         // Verse with blanks (revealed words in green)
         c.font = 'bold 15px Arial';
@@ -223,11 +223,11 @@
         c.fillStyle = '#ffd700';
         c.font = 'bold 16px Arial';
         c.textAlign = 'center';
-        c.fillText(`What letter does the missing word start with?`, cw / 2, promptY);
+        c.fillText(t('votd.whatLetter'), cw / 2, promptY);
 
         c.fillStyle = '#888';
         c.font = '13px Arial';
-        c.fillText(`(Hint: ${word.length} letters)`, cw / 2, promptY + 22);
+        c.fillText(t('votd.hintLetters', word.length), cw / 2, promptY + 22);
 
         // Letter buttons from cached options
         const opts = cachedOptions[currentWordIdx];
@@ -291,11 +291,11 @@
         c.fillStyle = '#ffd700';
         c.font = 'bold 28px Arial';
         c.textAlign = 'center';
-        c.fillText('Verse Complete!', cw / 2, ch / 2 - 40);
+        c.fillText(t('votd.verseComplete'), cw / 2, ch / 2 - 40);
 
         c.fillStyle = '#4CAF50';
         c.font = 'bold 22px Arial';
-        c.fillText('Well done!', cw / 2, ch / 2 + 40);
+        c.fillText(t('votd.wellDone'), cw / 2, ch / 2 + 40);
 
         // Show streak count
         if (typeof VersOfTheDayManager !== 'undefined') {
@@ -310,7 +310,7 @@
 
         c.fillStyle = '#fff';
         c.font = '14px Arial';
-        c.fillText('Returning to game...', cw / 2, ch / 2 + 100);
+        c.fillText(t('votd.returningToGame'), cw / 2, ch / 2 + 100);
     }
 
     function playFanfare() {
@@ -467,7 +467,7 @@
         c.fillStyle = '#ff4444';
         c.font = 'bold 28px Arial';
         c.textAlign = 'center';
-        c.fillText('INCORRECT', cw / 2, 50);
+        c.fillText(t('votd.votdIncorrect'), cw / 2, 50);
 
         // Reference
         c.fillStyle = '#aaa';
@@ -486,7 +486,7 @@
         c.fillStyle = '#888';
         c.font = '13px Arial';
         c.textAlign = 'center';
-        c.fillText('Returning in ' + remaining + 's...', cw / 2, ch - 30);
+        c.fillText(t('votd.returningIn', remaining), cw / 2, ch - 30);
     }
 
     function playBuzzer() {

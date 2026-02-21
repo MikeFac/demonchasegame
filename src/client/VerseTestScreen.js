@@ -427,13 +427,13 @@ const VerseTestScreen = (function() {
                 ctx.fillStyle = '#44ff44';
                 ctx.font = 'bold 36px Arial';
                 ctx.textAlign = 'center';
-                ctx.fillText('Correct!', canvasWidth / 2, canvasHeight / 2 - 40);
+                ctx.fillText(t('verseTest.correct'), canvasWidth / 2, canvasHeight / 2 - 40);
             } else {
                 // Red "Wrong!"
                 ctx.fillStyle = '#ff4444';
                 ctx.font = 'bold 36px Arial';
                 ctx.textAlign = 'center';
-                ctx.fillText('Wrong!', canvasWidth / 2, canvasHeight / 2 - 40);
+                ctx.fillText(t('verseTest.wrong'), canvasWidth / 2, canvasHeight / 2 - 40);
             }
 
             // Show the full verse
@@ -471,7 +471,7 @@ const VerseTestScreen = (function() {
             // Tap to dismiss hint
             ctx.fillStyle = '#888888';
             ctx.font = '11px Arial';
-            ctx.fillText('Tap to continue', canvasWidth / 2, canvasHeight - 30);
+            ctx.fillText(t('ui.tapToContinue'), canvasWidth / 2, canvasHeight - 30);
 
             ctx.textAlign = 'left';
         }

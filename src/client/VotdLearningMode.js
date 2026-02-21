@@ -149,7 +149,7 @@
         c.fillStyle = '#ffd700';
         c.font = 'bold 24px Arial';
         c.textAlign = 'center';
-        c.fillText('Verse of the Day', CANVAS_WIDTH / 2, 40);
+        c.fillText(t('votd.verseOfTheDay'), CANVAS_WIDTH / 2, 40);
 
         c.fillStyle = '#aaa';
         c.font = '14px Arial';
@@ -170,7 +170,7 @@
         c.fillStyle = '#fff';
         c.font = '16px Arial';
         c.textAlign = 'center';
-        c.fillText(isAudioPlaying ? 'Playing...' : 'Play Audio', audioX + 60, audioY + 28);
+        c.fillText(isAudioPlaying ? t('votd.playing') : t('votd.playAudio'), audioX + 60, audioY + 28);
         hitRects.push({ name: 'audio', x: audioX, y: audioY, w: 120, h: 40 });
 
         // Start Learning button
@@ -179,7 +179,7 @@
         c.fillStyle = '#4CAF50';
         c.fillRect(startX, startY, 140, 40);
         c.fillStyle = '#fff';
-        c.fillText('Start Learning', startX + 70, startY + 28);
+        c.fillText(t('votd.startLearning'), startX + 70, startY + 28);
         hitRects.push({ name: 'startLearning', x: startX, y: startY, w: 140, h: 40 });
 
         c.textAlign = 'left';
@@ -201,7 +201,7 @@
         c.fillStyle = '#ffd700';
         c.font = 'bold 20px Arial';
         c.textAlign = 'center';
-        c.fillText(`Learning (${wordsHidden}/${maxWordsHidden} hidden)`, CANVAS_WIDTH / 2, 30);
+        c.fillText(t('votd.learning', wordsHidden, maxWordsHidden), CANVAS_WIDTH / 2, 30);
 
         // Reference
         c.fillStyle = '#aaa';
@@ -218,7 +218,7 @@
         c.fillStyle = '#888';
         c.font = '13px Arial';
         c.textAlign = 'center';
-        c.fillText('Read the verse aloud, filling in the blanks from memory.', CANVAS_WIDTH / 2, CANVAS_HEIGHT - 130);
+        c.fillText(t('votd.readAloud'), CANVAS_WIDTH / 2, CANVAS_HEIGHT - 130);
 
         hitRects = [];
 
@@ -228,7 +228,7 @@
         c.fillRect(raX, 5, 100, 28);
         c.fillStyle = '#fff';
         c.font = '12px Arial';
-        c.fillText('Replay Audio', raX + 50, 24);
+        c.fillText(t('votd.replayAudio'), raX + 50, 24);
         hitRects.push({ name: 'audio', x: raX, y: 5, w: 100, h: 28 });
 
         // Bottom buttons
@@ -244,7 +244,7 @@
             c.fillStyle = '#fff';
             c.font = 'bold 14px Arial';
             c.textAlign = 'center';
-            c.fillText('Hide Word', hwX + hwW / 2, btnY + 27);
+            c.fillText(t('votd.hideWord'), hwX + hwW / 2, btnY + 27);
             hitRects.push({ name: 'hideWord', x: hwX, y: btnY, w: hwW, h: btnH });
         }
 
@@ -256,7 +256,7 @@
         c.fillStyle = '#fff';
         c.font = 'bold 14px Arial';
         c.textAlign = 'center';
-        c.fillText('Test Now', tnX + tnW / 2, btnY + 27);
+        c.fillText(t('votd.testNow'), tnX + tnW / 2, btnY + 27);
         hitRects.push({ name: 'testNow', x: tnX, y: btnY, w: tnW, h: btnH });
 
         c.textAlign = 'left';

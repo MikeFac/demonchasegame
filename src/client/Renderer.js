@@ -22,7 +22,7 @@ class Renderer {
         this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
         this.ctx.fillStyle = 'white';
         this.ctx.font = '24px Arial';
-        this.ctx.fillText('Loading...', this.canvas.width / 2 - 50, this.canvas.height / 2);
+        this.ctx.fillText(t('ui.loading'), this.canvas.width / 2 - 50, this.canvas.height / 2);
     }
 
     drawGame(gameState, player, playerCode, monsters, healingPoints, camera, uiState, inventoryState, walls, screenShake = { x: 0, y: 0 }, damageNumbers = [], deathParticles = [], mouseX = null, mouseY = null) {
@@ -164,7 +164,7 @@ class Renderer {
         this.ctx.fillStyle = '#1a1a2e';
         this.ctx.font = 'bold 11px Arial';
         this.ctx.textAlign = 'center';
-        this.ctx.fillText('📖 LEARN VERSES HERE!', btnX + btnW / 2, btnY + 14);
+        this.ctx.fillText(t('ui.learnVersesHere'), btnX + btnW / 2, btnY + 14);
         this.ctx.textAlign = 'left';
     }
 
@@ -222,14 +222,14 @@ class Renderer {
 
         // Menu items
         const items = [
-            { id: 'review', label: '📖 Review' },
-            { id: 'playPause', label: isPlaying ? '⏸ Stop' : '▶ Start' },
-            { id: 'nextSong', label: '⏭ Next Song' },
-            { id: 'goals', label: '🎯 Goals' },
-            { id: 'verseCotD', label: '📿 Verse of the Day' },
-            { id: 'verseTest', label: '✏️ Verse Test' },
-            { id: 'toggleTestShield', label: testShieldOn ? '🛡️ Test Shield: ON' : '🛡️ Test Shield: OFF' },
-            { id: 'leave', label: '🚪 Leave Game', color: '#ff4444' }
+            { id: 'review', label: t('menu.review') },
+            { id: 'playPause', label: isPlaying ? t('menu.stop') : t('menu.start') },
+            { id: 'nextSong', label: t('menu.nextSong') },
+            { id: 'goals', label: t('menu.goals') },
+            { id: 'verseCotD', label: t('menu.verseCotD') },
+            { id: 'verseTest', label: t('menu.verseTest') },
+            { id: 'toggleTestShield', label: testShieldOn ? t('menu.testShieldOn') : t('menu.testShieldOff') },
+            { id: 'leave', label: t('menu.leaveGame'), color: '#ff4444' }
         ];
 
         items.forEach((item, index) => {
@@ -279,7 +279,7 @@ class Renderer {
         this.ctx.fillStyle = '#ffffff';
         this.ctx.font = 'bold 16px Arial';
         this.ctx.textAlign = 'center';
-        this.ctx.fillText('Select Category', panelX + cp.width / 2, panelY + 22);
+        this.ctx.fillText(t('ui.selectCategory'), panelX + cp.width / 2, panelY + 22);
         this.ctx.textAlign = 'left';
 
         // Category items in 2-column grid
@@ -310,7 +310,7 @@ class Renderer {
     drawHUD(player, gameState) {
         this.ctx.fillStyle = 'white';
         this.ctx.font = '14px Arial';
-        const statsText = `Health: ${player.health}  XP: ${player.xp}  Level: ${player.level}  Ammo: ${player.ammo || 0}`;
+        const statsText = t('ui.statsLine', player.health, player.xp, player.level, player.ammo || 0);
         this.ctx.fillText(statsText, 7, this.QUALITY_LINE_HEIGHT - 7);
 
         // VOTD damage bonus indicator (subtle fire icon after stats)
@@ -336,11 +336,11 @@ class Renderer {
         if (dailyChallengeCompleted) {
             this.ctx.fillStyle = '#00ff00';  // Green for completed
             this.ctx.font = 'bold 14px Arial';
-            this.ctx.fillText('✓ Daily Challenge Complete!', x, y);
+            this.ctx.fillText(t('ui.dailyChallengeComplete'), x, y);
         } else {
             this.ctx.fillStyle = '#ffffff';
             this.ctx.font = '14px Arial';
-            this.ctx.fillText(`Daily: ${dailyChallengeProgress}/${dailyChallengeGoal} (First Letter)`, x, y);
+            this.ctx.fillText(t('ui.dailyChallengeProgress', dailyChallengeProgress, dailyChallengeGoal), x, y);
         }
     }
 
@@ -350,7 +350,7 @@ class Renderer {
 
         this.ctx.fillStyle = '#ffff00';  // Yellow
         this.ctx.font = '14px Arial';
-        this.ctx.fillText(`Verses Learned: ${versesLearned} / ${totalVerses}`, x, y);
+        this.ctx.fillText(t('ui.versesLearnedProgress', versesLearned, totalVerses), x, y);
 
         // Progress bar
         const barX = x;
@@ -405,13 +405,13 @@ class Renderer {
         ctx.textAlign = 'center';
         if (isVictory) {
             ctx.fillStyle = '#00ff00';
-            ctx.fillText('VICTORY!', canvas.width / 2, modalY + 45);
+            ctx.fillText(t('ui.victory'), canvas.width / 2, modalY + 45);
         } else if (isDefeat) {
             ctx.fillStyle = '#ff4444';
-            ctx.fillText('ALL DEFEATED', canvas.width / 2, modalY + 45);
+            ctx.fillText(t('ui.allDefeated'), canvas.width / 2, modalY + 45);
         } else {
             ctx.fillStyle = '#ff0000';
-            ctx.fillText('GAME OVER', canvas.width / 2, modalY + 45);
+            ctx.fillText(t('ui.gameOverTitle'), canvas.width / 2, modalY + 45);
         }
 
         // Final Stats
@@ -423,16 +423,16 @@ class Renderer {
         let statsY = modalY + 80;
         const lineHeight = 24;
 
-        ctx.fillText(`Level Reached: ${finalStats.level}`, statsX, statsY);
+        ctx.fillText(t('stats.levelReached', finalStats.level), statsX, statsY);
         statsY += lineHeight;
-        ctx.fillText(`Monsters Killed: ${finalStats.monstersKilled}`, statsX, statsY);
+        ctx.fillText(t('stats.monstersKilled', finalStats.monstersKilled), statsX, statsY);
         statsY += lineHeight;
-        ctx.fillText(`Verses Learned: ${finalStats.versesLearned}`, statsX, statsY);
+        ctx.fillText(t('stats.versesLearned', finalStats.versesLearned), statsX, statsY);
         statsY += lineHeight;
 
         const minutes = Math.floor(finalStats.timePlayed / 60);
         const seconds = finalStats.timePlayed % 60;
-        ctx.fillText(`Time Played: ${minutes}m ${seconds}s`, statsX, statsY);
+        ctx.fillText(t('stats.timePlayed', minutes, seconds), statsX, statsY);
         statsY += lineHeight;
 
         // Player leaderboard (multiplayer only)
@@ -441,7 +441,7 @@ class Renderer {
             ctx.fillStyle = '#aaaaaa';
             ctx.font = 'bold 14px Arial';
             ctx.textAlign = 'center';
-            ctx.fillText('— Players —', canvas.width / 2, statsY);
+            ctx.fillText(t('ui.players'), canvas.width / 2, statsY);
             statsY += 20;
 
             ctx.font = '13px Arial';
@@ -479,7 +479,7 @@ class Renderer {
         ctx.fillStyle = '#ffffff';
         ctx.font = 'bold 16px Arial';
         ctx.textAlign = 'center';
-        ctx.fillText(isMultiplayer ? 'Return to Lobby' : 'Try Again', canvas.width / 2, buttonY + 26);
+        ctx.fillText(isMultiplayer ? t('ui.returnToLobby') : t('ui.tryAgain'), canvas.width / 2, buttonY + 26);
     }
 
     drawMessages(uiState) {
@@ -488,18 +488,18 @@ class Renderer {
         if (gameOverFlag) {
             this.ctx.fillStyle = 'green';
             this.ctx.font = '29px Arial';
-            this.ctx.fillText('G A M E   O V E R', this.canvas.width / 2 - 140, this.canvas.height / 2);
+            this.ctx.fillText(t('ui.gameOver'), this.canvas.width / 2 - 140, this.canvas.height / 2);
             return;
         }
 
         if (isAnswerCorrect === true) {
             this.ctx.fillStyle = 'green';
             this.ctx.font = '17px Arial';
-            this.ctx.fillText('Correct!', this.canvas.width / 2 - 35, this.canvas.height / 2);
+            this.ctx.fillText(t('ui.correct'), this.canvas.width / 2 - 35, this.canvas.height / 2);
         } else if (isAnswerCorrect === false) {
             this.ctx.fillStyle = 'red';
             this.ctx.font = '17px Arial';
-            this.ctx.fillText('Incorrect!', this.canvas.width / 2 - 35, this.canvas.height / 2);
+            this.ctx.fillText(t('ui.incorrect'), this.canvas.width / 2 - 35, this.canvas.height / 2);
         }
 
         if (levelCompleted && levelAdvanceCountdown > 0) {
@@ -510,11 +510,11 @@ class Renderer {
             this.ctx.fillStyle = '#00ff00';
             this.ctx.font = 'bold 26px Arial';
             this.ctx.textAlign = 'center';
-            this.ctx.fillText('Level Complete!', this.canvas.width / 2, this.canvas.height / 2 - 15);
+            this.ctx.fillText(t('ui.levelComplete'), this.canvas.width / 2, this.canvas.height / 2 - 15);
 
             this.ctx.fillStyle = '#ffffff';
             this.ctx.font = '20px Arial';
-            this.ctx.fillText('Next level in ' + levelAdvanceCountdown + 's...', this.canvas.width / 2, this.canvas.height / 2 + 15);
+            this.ctx.fillText(t('ui.nextLevelIn', levelAdvanceCountdown), this.canvas.width / 2, this.canvas.height / 2 + 15);
             this.ctx.textAlign = 'left';
         }
     }
@@ -538,7 +538,7 @@ class Renderer {
         this.ctx.fillStyle = '#88ccff';
         this.ctx.font = 'bold 14px Arial';
         this.ctx.textAlign = 'center';
-        this.ctx.fillText('⚡ LOADING NEW MAZE - MOVEMENT PAUSED ⚡', this.canvas.width / 2, indicatorY);
+        this.ctx.fillText(t('ui.movementPaused'), this.canvas.width / 2, indicatorY);
         this.ctx.textAlign = 'left';
     }
 
@@ -656,7 +656,7 @@ class Renderer {
                 this.ctx.fillStyle = 'rgba(200, 200, 255, 0.8)';
                 this.ctx.font = 'bold 10px Arial';
                 this.ctx.textAlign = 'center';
-                this.ctx.fillText('GHOST', screenX, screenY - playerData.height / 2 - 18);
+                this.ctx.fillText(t('ui.ghost'), screenX, screenY - playerData.height / 2 - 18);
                 // Name below ghost label
                 const displayName = isCurrentPlayer ? 'You' : (playerData.username || 'Player');
                 this.ctx.fillStyle = 'rgba(200, 200, 255, 0.6)';
@@ -669,7 +669,7 @@ class Renderer {
                 this.ctx.fillStyle = 'rgba(255, 170, 0, 0.8)';
                 this.ctx.font = 'bold 9px Arial';
                 this.ctx.textAlign = 'center';
-                this.ctx.fillText('OFFLINE', screenX, screenY - playerData.height / 2 - 18);
+                this.ctx.fillText(t('ui.offline'), screenX, screenY - playerData.height / 2 - 18);
                 const displayName = playerData.username || 'Player';
                 this.ctx.fillStyle = 'rgba(255, 170, 0, 0.6)';
                 this.ctx.fillText(displayName, screenX, screenY - playerData.height / 2 - 30);
@@ -1182,7 +1182,7 @@ class Renderer {
             sword: '#FFD700', shield: '#FFD700', breastplate: '#CD7F32', sandals: '#87CEEB'
         };
         const buffNames = {
-            sword: 'SWORD', shield: 'SHIELD', breastplate: 'ARMOR', sandals: 'SPEED'
+            sword: t('buffs.sword'), shield: t('buffs.shield'), breastplate: t('buffs.breastplate'), sandals: t('buffs.sandals')
         };
         let timerY = btnY + btnSize + 4;
         for (const type in buffs) {
@@ -1220,20 +1220,20 @@ class Renderer {
             // Title
             this.ctx.fillStyle = 'gold';
             this.ctx.font = 'bold 12px Arial';
-            this.ctx.fillText('Armor of God', panelX + 8, panelY + 16);
+            this.ctx.fillText(t('ui.armorOfGod'), panelX + 8, panelY + 16);
 
             if (visibleItems.length === 0) {
                 this.ctx.fillStyle = '#888';
                 this.ctx.font = '11px Arial';
-                this.ctx.fillText('Empty', panelX + 8, panelY + 38);
+                this.ctx.fillText(t('ui.empty'), panelX + 8, panelY + 38);
             } else {
                 const itemColors = {
                     sword: '#FFD700', belt: '#DAA520', helmet: '#C0C0C0',
                     breastplate: '#CD7F32', sandals: '#87CEEB', shield: '#FFD700'
                 };
                 const shortNames = {
-                    sword: 'Sword', belt: 'Belt', helmet: 'Helmet',
-                    breastplate: 'Breastplate', sandals: 'Sandals', shield: 'Shield'
+                    sword: t('items.sword'), belt: t('items.belt'), helmet: t('items.helmet'),
+                    breastplate: t('items.breastplate'), sandals: t('items.sandals'), shield: t('items.shield')
                 };
                 const activatable = ['sword', 'breastplate', 'sandals', 'shield'];
 
@@ -1263,19 +1263,19 @@ class Renderer {
                             this.ctx.fillRect(useBtnX, rowY, useBtnW, useBtnH);
                             this.ctx.fillStyle = '#aaa';
                             this.ctx.font = '10px Arial';
-                            this.ctx.fillText('Active', useBtnX + 3, rowY + 15);
+                            this.ctx.fillText(t('ui.active'), useBtnX + 3, rowY + 15);
                         } else {
                             this.ctx.fillStyle = '#228B22';
                             this.ctx.fillRect(useBtnX, rowY, useBtnW, useBtnH);
                             this.ctx.fillStyle = 'white';
                             this.ctx.font = 'bold 11px Arial';
-                            this.ctx.fillText('Use', useBtnX + 8, rowY + 15);
+                            this.ctx.fillText(t('ui.use'), useBtnX + 8, rowY + 15);
                         }
                     } else {
                         // Belt/Helmet: auto-use label
                         this.ctx.fillStyle = '#888';
                         this.ctx.font = '10px Arial';
-                        this.ctx.fillText('(auto)', panelX + panelW - 45, rowY + 14);
+                        this.ctx.fillText(t('ui.auto'), panelX + panelW - 45, rowY + 14);
                     }
                 });
             }
@@ -1624,7 +1624,7 @@ class Renderer {
 
             if (distance < Math.max(monster.width / 2, monster.height / 2) + 10) {
                 // Render tooltip
-                const tooltipText = `${monster.demonType} HP: ${monster.health}/${monster.maxHealth}`;
+                const tooltipText = `${tDemon(monster.demonType)} HP: ${monster.health}/${monster.maxHealth}`;
 
                 this.ctx.save();
                 this.ctx.font = 'bold 12px Arial';

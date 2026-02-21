@@ -1,0 +1,220 @@
+{
+  "meta": {
+    "language": "English",
+    "code": "en",
+    "direction": "ltr"
+  },
+
+  "ui": {
+    "loading": "Loading...",
+    "correct": "Correct!",
+    "incorrect": "Incorrect!",
+    "gameOver": "G A M E   O V E R",
+    "victory": "VICTORY!",
+    "allDefeated": "ALL DEFEATED",
+    "gameOverTitle": "GAME OVER",
+    "levelComplete": "Level Complete!",
+    "nextLevelIn": "Next level in {0}s...",
+    "health": "Health",
+    "xp": "XP",
+    "level": "Level",
+    "ammo": "Ammo",
+    "statsLine": "Health: {0}  XP: {1}  Level: {2}  Ammo: {3}",
+    "tryAgain": "Try Again",
+    "returnToLobby": "Return to Lobby",
+    "learnVersesHere": "📖 LEARN VERSES HERE!",
+    "selectCategory": "Select Category",
+    "movementPaused": "⚡ LOADING NEW MAZE - MOVEMENT PAUSED ⚡",
+    "ghost": "GHOST",
+    "offline": "OFFLINE",
+    "you": "You",
+    "player": "Player",
+    "players": "— Players —",
+    "empty": "Empty",
+    "armorOfGod": "Armor of God",
+    "use": "Use",
+    "active": "Active",
+    "auto": "(auto)",
+    "tapToContinue": "Tap to continue",
+    "dailyChallengeComplete": "✓ Daily Challenge Complete!",
+    "dailyChallengeProgress": "Daily: {0}/{1} (First Letter)",
+    "versesLearnedProgress": "Verses Learned: {0} / {1}",
+    "hpDisplay": "HP: {0}/{1}"
+  },
+
+  "stats": {
+    "levelReached": "Level Reached: {0}",
+    "monstersKilled": "Monsters Killed: {0}",
+    "versesLearned": "Verses Learned: {0}",
+    "timePlayed": "Time Played: {0}m {1}s"
+  },
+
+  "menu": {
+    "review": "📖 Review",
+    "start": "▶ Start",
+    "stop": "⏸ Stop",
+    "nextSong": "⏭ Next Song",
+    "goals": "🎯 Goals",
+    "verseCotD": "📿 Verse of the Day",
+    "verseTest": "✏️ Verse Test",
+    "testShieldOn": "🛡️ Test Shield: ON",
+    "testShieldOff": "🛡️ Test Shield: OFF",
+    "leaveGame": "🚪 Leave Game",
+    "options": "Options",
+    "back": "Back",
+    "howToPlay": "How to Play",
+    "startSoloGame": "Start Solo Game",
+    "language": "🌐 Language"
+  },
+
+  "review": {
+    "previous": "Previous",
+    "repeat": "Repeat",
+    "next": "Next",
+    "game": "Game",
+    "reference": "Reference: {0}",
+    "learn": "Learn: {0}"
+  },
+
+  "votd": {
+    "verseOfTheDay": "Verse of the Day",
+    "startYourStreak": "Start your streak!",
+    "dayStreak": "🔥 {0} day streak!",
+    "learnNow": "Learn Now",
+    "later": "Later",
+    "damageBonus": "Learn today's verse to earn a +20% damage bonus!",
+    "playAudio": "Play Audio",
+    "playing": "Playing...",
+    "startLearning": "Start Learning",
+    "learning": "Learning ({0}/{1} hidden)",
+    "readAloud": "Read the verse aloud, filling in the blanks from memory.",
+    "replayAudio": "Replay Audio",
+    "hideWord": "Hide Word",
+    "testNow": "Test Now",
+    "testYourMemory": "Test Your Memory",
+    "wordOf": "Word {0} of {1}",
+    "whatLetter": "What letter does the missing word start with?",
+    "hintLetters": "(Hint: {0} letters)",
+    "verseComplete": "Verse Complete!",
+    "wellDone": "Well done!",
+    "returningToGame": "Returning to game...",
+    "returningIn": "Returning in {0}s...",
+    "votdIncorrect": "INCORRECT",
+    "votdModalTitle": "📿 Verse of the Day"
+  },
+
+  "verseTest": {
+    "correct": "Correct!",
+    "wrong": "Wrong!"
+  },
+
+  "buffs": {
+    "sword": "SWORD",
+    "shield": "SHIELD",
+    "breastplate": "ARMOR",
+    "sandals": "SPEED"
+  },
+
+  "items": {
+    "sword": "Sword",
+    "belt": "Belt",
+    "helmet": "Helmet",
+    "breastplate": "Breastplate",
+    "sandals": "Sandals",
+    "shield": "Shield"
+  },
+
+  "demons": {
+    "Fear": "Fear",
+    "Doubt": "Doubt",
+    "Ignorance": "Ignorance",
+    "Blindness": "Blindness",
+    "Confusion": "Confusion",
+    "Strife": "Strife",
+    "Infirmity": "Infirmity",
+    "Poverty": "Poverty",
+    "Shame": "Shame",
+    "Deception": "Deception",
+    "Condemnation": "Condemnation",
+    "Unbelief": "Unbelief",
+    "Depression": "Depression",
+    "Despair": "Despair",
+    "Pride": "Pride",
+    "Temptation": "Temptation",
+    "Swarm": "Swarm"
+  },
+
+  "categories": {
+    "Faith": "Faith",
+    "Courage": "Courage",
+    "Love": "Love",
+    "Knowledge": "Knowledge",
+    "Wisdom": "Wisdom",
+    "Healing": "Healing",
+    "Forgiveness": "Forgiveness",
+    "Good News": "Good News",
+    "Focus": "Focus",
+    "Endurance": "Endurance",
+    "Hope": "Hope",
+    "Prophecy": "Prophecy",
+    "Power": "Power",
+    "Identity": "Identity"
+  },
+
+  "tutorial": {
+    "pages": [
+      {
+        "title": "Welcome",
+        "content": "<h3>What is VerseBattles: Demon Chase?</h3><p>VerseBattles: Demon Chase is an action game where you fight spiritual enemies by learning Bible verses. Demons chase you through dungeon rooms.</p><p>Your weapon? <span class=\"highlight\">The Word of God.</span> Answer verse quizzes correctly to power up your attacks and defeat the demons.</p><h3>Pro Tip: Learn the Verses First!</h3><p>The secret to winning is <span class=\"highlight\">knowing your verses</span>. Use the golden <span class=\"highlight\">\"Learn Verses Here!\"</span> button to study and meditate on the verses before battle. The more you know God's Word, the more powerful you become!</p>"
+      },
+      {
+        "title": "Goal & Movement",
+        "content": "<h3>Goal</h3><p>Defeat enough monsters in each level to advance. There are <span class=\"highlight\">5 levels</span>, each harder than the last. Choose from 5 map styles: Classic Dungeon, Narrow Paths, Complex Labyrinth, Open Plains, and Grid City.</p><h3>Moving</h3><p><span class=\"highlight\">Tap or click</span> anywhere in the game area to move your character there. Your character walks toward the target automatically.</p><p>You move through dungeon rooms connected by corridors. Walls block your path — find the openings!</p>"
+      },
+      {
+        "title": "Combat",
+        "content": "<h3>Melee Combat</h3><p>When you get close to a demon, combat starts automatically. You and the demon exchange blows every 0.7 seconds.</p><ul><li>You only deal damage if your <span class=\"highlight\">last quiz answer was correct</span></li><li>The demon always hits back (unless you have a shield)</li><li>Each demon type has different max damage</li></ul><h3>Shooting</h3><p><span class=\"highlight\">Tap on a demon</span> to fire a projectile at it. Each shot costs 1 Ammo. Earn more ammo by answering quizzes correctly (+5 per correct answer).</p>"
+      },
+      {
+        "title": "Bible Verse Quizzes",
+        "content": "<h3>How Quizzes Work</h3><p>A Bible verse is always shown at the bottom of the screen with some words blanked out. Tap the button showing the <span class=\"highlight\">correct first letters</span> of the missing words.</p><h3>Why It Matters</h3><ul><li><span class=\"highlight\">Correct answer:</span> Your melee attacks deal damage, and you earn +5 Ammo</li><li><span class=\"highlight\">Wrong answer:</span> Your attacks do nothing until you get the next one right</li></ul><h3>Verse Categories</h3><p>Verses are grouped by categories like Faith, Courage, and Love. <span class=\"highlight\">Tap the category name</span> at the top of the screen to open the category picker and choose which verses you want to study.</p>"
+      },
+      {
+        "title": "Items - Part 1",
+        "content": "<h3>Healing Points</h3><p>Green crosses appear in the dungeon. Walk over them to <span class=\"highlight\">restore 25 health</span>. Up to 2 exist at a time.</p><h3>Shield of Faith</h3><p>A golden diamond appears once per level. Walk over it to collect it into your inventory.</p><ul><li>Tap the <span class=\"key\">i</span> button (top-left) to open your inventory</li><li>Tap <span class=\"highlight\">Use</span> to activate the shield</li><li>While active (10 seconds), you take <span class=\"highlight\">zero damage</span> from demons</li><li>A golden glow surrounds your character and a timer shows remaining time</li></ul>"
+      },
+      {
+        "title": "Items - Part 2",
+        "content": "<h3>Armor of God</h3><p>Collect pieces of the Armor of God as they appear in the dungeon:</p><ul><li><span class=\"highlight\">Sword of the Spirit</span> — increased melee damage</li><li><span class=\"highlight\">Belt of Truth</span> — bonus protection</li><li><span class=\"highlight\">Helmet of Salvation</span> — extra health</li><li><span class=\"highlight\">Breastplate of Righteousness</span> — damage reduction</li><li><span class=\"highlight\">Sandals of Peace</span> — movement speed boost</li></ul>"
+      },
+      {
+        "title": "Player Progression",
+        "content": "<h3>Levelling Up</h3><p>Killing demons earns <span class=\"highlight\">10 XP</span> each. As you gain XP, your player level increases:</p><ul><li>Higher level = more max health</li><li>Full health restore on level up</li></ul>"
+      },
+      {
+        "title": "Game Levels",
+        "content": "<p>There are <span class=\"highlight\">5 game levels</span>. Beat 60% of the monsters to advance:</p><ul><li><span class=\"highlight\">Level 1 (Stone Dungeon):</span> Fear & Ignorance — slow, weak</li><li><span class=\"highlight\">Level 2 (Earth Dungeon):</span> Strife, Confusion & Infirmity — faster, hit harder</li><li><span class=\"highlight\">Level 3 (Crystal Dungeon):</span> Condemnation, Unbelief, Depression & Doubt — fast, dangerous</li><li><span class=\"highlight\">Level 4 (Shadow Dungeon):</span> Pride, Spirit of Slumber & Jezebel — stronger with special abilities</li><li><span class=\"highlight\">Level 5 (Inferno Dungeon):</span> All demon types — the ultimate challenge with scaling HP</li></ul><p>Each level generates a new dungeon layout with a different colour theme.</p>"
+      },
+      {
+        "title": "Tips",
+        "content": "<h3>Top Tips</h3><ul><li><span class=\"highlight\">Learn your verses first!</span> Tap the golden \"Learn Verses Here!\" button to study and meditate on verses — knowing them well is the key to winning consistently</li><li><span class=\"highlight\">Answer the quiz first</span> before engaging a demon — otherwise your attacks do nothing</li><li>Use corridors to your advantage — demons can get stuck on walls</li><li>Save your Shield of Faith for tough fights with multiple chasers</li><li>Shoot from range to soften up enemies before going into melee</li><li>Watch your Ammo counter — keep answering quizzes to stay stocked</li></ul>"
+      },
+      {
+        "title": "Demon Abilities",
+        "content": "<h3>Demon Types</h3><ul><li><span class=\"highlight\">Chasers</span> — follow you relentlessly</li><li><span class=\"highlight\">Wanderers</span> — walk randomly, but still hurt if you get close</li></ul><h3>Special Abilities (Later Levels)</h3><ul><li><span class=\"highlight\">Freezing Aura</span> — slows your movement when nearby</li><li><span class=\"highlight\">Pride Armor</span> — reduces damage taken until broken</li><li><span class=\"highlight\">Spirit Drain</span> — steals your Ammo on hit</li><li><span class=\"highlight\">Strife Dash</span> — charges at you with a burst of speed</li></ul><p>Good luck, and may the Word be your sword!</p>"
+      }
+    ]
+  },
+
+  "quickStart": {
+    "title": "🎮 How to Play",
+    "items": [
+      "📖 <strong>Learn verses first</strong> — use \"Learn Verses Here!\" to study",
+      "📍 <strong>Click</strong> to move your character",
+      "✝️ <strong>Answer quizzes</strong> to earn ammo and attack",
+      "👹 <strong>Defeat demons</strong> by answering correctly!"
+    ],
+    "startingIn": "Starting in {0}...",
+    "startNow": "Start Now"
+  }
+}
