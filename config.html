@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>VerseBattles: Custom Game Config</title>
+  <title data-i18n="config.pageTitle">VerseBattles: Custom Game Config</title>
   <link rel="icon" type="image/x-icon" href="/favicon.ico">
   <meta name="theme-color" content="#16213e">
   <style>
@@ -366,80 +366,80 @@
 <body>
   <div class="config-container">
     <div class="config-header">
-      <h1>Configure Custom Game Settings</h1>
+      <h1 data-i18n="config.pageTitle">Configure Custom Game Settings</h1>
     </div>
 
     <!-- Tab Navigation -->
     <div class="tab-nav">
-      <button class="tab-btn active" data-tab="balance">Balance</button>
-      <button class="tab-btn" data-tab="levels">Levels</button>
-      <button class="tab-btn" data-tab="content">Content</button>
+      <button class="tab-btn active" data-tab="balance" data-i18n="config.tabBalance">Balance</button>
+      <button class="tab-btn" data-tab="levels" data-i18n="config.tabLevels">Levels</button>
+      <button class="tab-btn" data-tab="content" data-i18n="config.tabContent">Content</button>
     </div>
 
     <!-- Balance Tab -->
     <div id="tab-balance" class="tab-content active">
       <div class="config-section">
-        <h3>Monster Difficulty</h3>
+        <h3 data-i18n="lobby.create.monsterDifficulty">Monster Difficulty</h3>
         <div class="slider-row">
-          <span class="slider-label">Health</span>
+          <span class="slider-label" data-i18n="config.monsterHealth">Health</span>
           <input type="range" id="monsterHealth" min="0.7" max="2.0" step="0.1" value="1.0">
           <span class="slider-value" id="monsterHealthVal">1.0x</span>
         </div>
         <div class="slider-row">
-          <span class="slider-label">Damage</span>
+          <span class="slider-label" data-i18n="config.monsterDamage">Damage</span>
           <input type="range" id="monsterDamage" min="0.7" max="2.0" step="0.1" value="1.0">
           <span class="slider-value" id="monsterDamageVal">1.0x</span>
         </div>
         <div class="slider-row">
-          <span class="slider-label">Speed</span>
+          <span class="slider-label" data-i18n="config.monsterSpeed">Speed</span>
           <input type="range" id="monsterSpeed" min="0.7" max="2.0" step="0.1" value="1.0">
           <span class="slider-value" id="monsterSpeedVal">1.0x</span>
         </div>
       </div>
 
       <div class="config-section">
-        <h3>Spawning</h3>
+        <h3 data-i18n="config.spawning">Spawning</h3>
         <div class="slider-row">
-          <span class="slider-label">Spawn Rate</span>
+          <span class="slider-label" data-i18n="config.spawnRate">Spawn Rate</span>
           <input type="range" id="spawnRate" min="0.5" max="2.0" step="0.1" value="1.0">
           <span class="slider-value" id="spawnRateVal">1.0x</span>
         </div>
         <div class="slider-row">
-          <span class="slider-label">Max Monsters</span>
+          <span class="slider-label" data-i18n="config.maxMonsters">Max Monsters</span>
           <input type="range" id="maxMonsters" min="0.5" max="2.0" step="0.1" value="1.0">
           <span class="slider-value" id="maxMonstersVal">1.0x</span>
         </div>
         <div class="slider-row">
-          <span class="slider-label">Healing Freq.</span>
+          <span class="slider-label" data-i18n="config.healingFreq">Healing Freq.</span>
           <input type="range" id="healingFrequency" min="0.5" max="2.0" step="0.1" value="1.0">
           <span class="slider-value" id="healingFrequencyVal">1.0x</span>
         </div>
       </div>
 
       <div class="config-section">
-        <h3>Quiz Distribution <span id="quizTotalLabel" style="float: right; font-size: 0.9em; color: #4a90e2;">Total: 100%</span></h3>
+        <h3 data-i18n="config.quizConfiguration">Quiz Distribution <span id="quizTotalLabel" style="float: right; font-size: 0.9em; color: #4a90e2;">Total: 100%</span></h3>
         <div class="slider-row">
-          <span class="slider-label">First Letter</span>
+          <span class="slider-label" data-i18n="config.firstLetter">First Letter</span>
           <input type="range" id="qFirstLetter" min="0" max="100" step="5" value="25" data-mode="firstLetter">
           <span class="slider-value" id="qFirstLetterVal">25%</span>
         </div>
         <div class="slider-row">
-          <span class="slider-label">Missing Word</span>
+          <span class="slider-label" data-i18n="config.missingWord">Missing Word</span>
           <input type="range" id="qMissingWord" min="0" max="100" step="5" value="25" data-mode="missingWord">
           <span class="slider-value" id="qMissingWordVal">25%</span>
         </div>
         <div class="slider-row">
-          <span class="slider-label">Category Match</span>
+          <span class="slider-label" data-i18n="config.categoryMatch">Category Match</span>
           <input type="range" id="qCategoryMatch" min="0" max="100" step="5" value="20" data-mode="categoryMatch">
           <span class="slider-value" id="qCategoryMatchVal">20%</span>
         </div>
         <div class="slider-row">
-          <span class="slider-label">True / False</span>
+          <span class="slider-label" data-i18n="config.trueFalse">True / False</span>
           <input type="range" id="qTrueFalse" min="0" max="100" step="5" value="15" data-mode="trueFalse">
           <span class="slider-value" id="qTrueFalseVal">15%</span>
         </div>
         <div class="slider-row">
-          <span class="slider-label">Cloze (Fill Blanks)</span>
+          <span class="slider-label" data-i18n="config.cloze">Cloze (Fill Blanks)</span>
           <input type="range" id="qCloze" min="0" max="100" step="5" value="15" data-mode="cloze">
           <span class="slider-value" id="qClozeVal">15%</span>
         </div>
@@ -449,36 +449,36 @@
     <!-- Levels Tab -->
     <div id="tab-levels" class="tab-content">
       <div class="level-subtabs">
-        <button class="level-tab active" data-level="1">Lv 1</button>
-        <button class="level-tab" data-level="2">Lv 2</button>
-        <button class="level-tab" data-level="3">Lv 3</button>
-        <button class="level-tab" data-level="4">Lv 4</button>
-        <button class="level-tab" data-level="5">Lv 5</button>
+        <button class="level-tab active" data-level="1" data-i18n="ui.levelShort" data-i18n-args="1">Lv 1</button>
+        <button class="level-tab" data-level="2" data-i18n="ui.levelShort" data-i18n-args="2">Lv 2</button>
+        <button class="level-tab" data-level="3" data-i18n="ui.levelShort" data-i18n-args="3">Lv 3</button>
+        <button class="level-tab" data-level="4" data-i18n="ui.levelShort" data-i18n-args="4">Lv 4</button>
+        <button class="level-tab" data-level="5" data-i18n="ui.levelShort" data-i18n-args="5">Lv 5</button>
       </div>
 
       <div id="level-config-container">
         <div class="config-section">
-          <h3>Qualities</h3>
+          <h3 data-i18n="config.qualities">Qualities</h3>
           <div class="chip-grid" id="qualities-grid"></div>
         </div>
 
         <div class="config-section">
-          <h3>Monsters</h3>
+          <h3 data-i18n="config.monsters">Monsters</h3>
           <div class="chip-grid" id="monsters-grid"></div>
         </div>
 
         <div class="config-section">
-          <h3>Spawn Settings</h3>
+          <h3 data-i18n="config.spawnSettings">Spawn Settings</h3>
           <div class="slider-row">
-            <span class="slider-label">Kill to Advance</span>
+            <span class="slider-label" data-i18n="config.killToAdvance">Kill to Advance</span>
             <input type="number" id="monstersToKill" min="5" max="100" value="15">
           </div>
           <div class="slider-row">
-            <span class="slider-label">Max Monsters</span>
+            <span class="slider-label" data-i18n="config.maxMonsters">Max Monsters</span>
             <input type="number" id="maxMonstersLevel" min="10" max="80" value="25">
           </div>
           <div class="slider-row">
-            <span class="slider-label">Spawn Rate (sec)</span>
+            <span class="slider-label" data-i18n="config.spawnRateSec">Spawn Rate (sec)</span>
             <input type="range" id="spawnRateLevel" min="2" max="30" step="1" value="20">
             <span class="slider-value" id="spawnRateLevelVal">20s</span>
           </div>
@@ -486,49 +486,54 @@
       </div>
     </div>
 
-    <!-- Content Tab (Phase 5) -->
+    <!-- Content Tab -->
     <div id="tab-content" class="tab-content">
       <div class="config-section">
-        <h3>Upload Verses</h3>
+        <h3 data-i18n="config.uploadVerses">Upload Verses</h3>
         <div class="content-upload-area" id="uploadArea">
-          <p>Click to upload CSV or JSON</p>
-          <span class="upload-hint">Columns: Reference, Text, Category</span>
+          <p data-i18n="config.uploadPrompt">Click to upload CSV or JSON</p>
+          <span class="upload-hint" data-i18n="config.uploadHint">Columns: Reference, Text, Category</span>
           <input type="file" id="contentFileInput" accept=".csv,.json">
         </div>
       </div>
 
       <div class="config-section">
-        <h3>Or Paste JSON</h3>
-        <textarea class="content-paste" id="contentPasteArea" placeholder='[{"Reference":"John 3:16","Text":"For God so loved...","Category":"Love"}]'></textarea>
+        <h3 data-i18n="config.orPasteJson">Or Paste JSON</h3>
+        <textarea class="content-paste" id="contentPasteArea" data-i18n-placeholder="config.pastePlaceholder" placeholder='[{"Reference":"John 3:16","Text":"For God so loved...","Category":"Love"}]'></textarea>
         <div class="content-btn-row">
-          <button class="btn-secondary" id="btnLoadPaste">Load Pasted Data</button>
+          <button class="btn-secondary" id="btnLoadPaste" data-i18n="config.loadPaste">Load Pasted Data</button>
         </div>
       </div>
 
       <div class="config-section">
-        <h3>Preview</h3>
+        <h3 data-i18n="config.preview">Preview</h3>
         <div id="contentPreview">
-          <p class="placeholder-msg">No custom verses loaded.<br>Using default Bible verses.</p>
+          <p class="placeholder-msg" data-i18n="config.noCustomVerses">No custom verses loaded.<br>Using default Bible verses.</p>
         </div>
         <div class="content-stats" id="contentStats" style="display:none;"></div>
         <div class="content-btn-row" id="contentActions" style="display:none;">
-          <button class="btn-secondary" id="btnLoadDefaults">Use Default Verses</button>
-          <button class="btn-secondary" id="btnClearContent">Clear Custom</button>
-          <button class="btn-secondary" id="btnDownloadJson">Download JSON</button>
+          <button class="btn-secondary" id="btnLoadDefaults" data-i18n="config.useDefaultVerses">Use Default Verses</button>
+          <button class="btn-secondary" id="btnClearContent" data-i18n="config.clearCustom">Clear Custom</button>
+          <button class="btn-secondary" id="btnDownloadJson" data-i18n="config.downloadJson">Download JSON</button>
         </div>
       </div>
     </div>
 
     <!-- Action Buttons -->
     <div class="config-actions">
-      <button class="btn-play" id="btnPlayConfig">Play with These Settings</button>
+      <button class="btn-play" id="btnPlayConfig" data-i18n="config.playWithSettings">Play with These Settings</button>
       <div class="btn-row">
-        <button class="btn-secondary" id="btnCopyLink">Copy Share Link</button>
-        <button class="btn-secondary" id="btnBack">Back to Menu</button>
+        <button class="btn-secondary" id="btnCopyLink" data-i18n="config.copyShareLink">Copy Share Link</button>
+        <button class="btn-secondary" id="btnBack" data-i18n="config.backToMenu">Back to Menu</button>
       </div>
     </div>
   </div>
 
+  <script src="src/client/i18n.js"></script>
+  <script>
+    I18n.loadSync();
+    I18n.updateDOM();
+  </script>
   <script src="libs/lz-string.min.js"></script>
   <script src="src/client/ConfigEncoder.js"></script>
   <script>
@@ -565,7 +570,7 @@
         total += val;
       });
       var totalLabel = document.getElementById('quizTotalLabel');
-      totalLabel.textContent = 'Total: ' + total + '%';
+      totalLabel.textContent = t('config.quizTotal', total);
       totalLabel.style.color = (total === 100) ? '#4a90e2' : '#e94560';
     }
 
@@ -681,7 +686,7 @@
       navigator.clipboard.writeText(url).then(function () {
         var btn = document.getElementById('btnCopyLink');
         var original = btn.textContent;
-        btn.textContent = 'Copied!';
+        btn.textContent = t('config.copied');
         setTimeout(function () { btn.textContent = original; }, 1500);
       });
     });
@@ -716,14 +721,14 @@
     var currentLevel = 1;
     var levelConfigs = JSON.parse(JSON.stringify(DEFAULT_LEVELS));
 
-    function renderChipGrid(containerId, allItems, selectedItems, maxSelect, onChange, minSelect) {
+    function renderChipGrid(containerId, allItems, selectedItems, maxSelect, onChange, minSelect, displayGetter) {
       minSelect = minSelect || 0;
       var container = document.getElementById(containerId);
       container.innerHTML = '';
       allItems.forEach(function (item) {
         var chip = document.createElement('span');
         chip.className = 'chip' + (selectedItems.indexOf(item) >= 0 ? ' selected' : '');
-        chip.textContent = item;
+        chip.textContent = displayGetter ? displayGetter(item) : item;
         chip.addEventListener('click', function () {
           var idx = selectedItems.indexOf(item);
           if (idx >= 0) {
@@ -742,8 +747,8 @@
 
     function populateLevelUI(level) {
       var cfg = levelConfigs[level];
-      renderChipGrid('qualities-grid', ALL_QUALITIES, cfg.qualities, Infinity, null, 1);
-      renderChipGrid('monsters-grid', ALL_MONSTERS, cfg.monsters, Infinity);
+      renderChipGrid('qualities-grid', ALL_QUALITIES, cfg.qualities, Infinity, null, 1, function(i) { return I18n.tCategory(i); });
+      renderChipGrid('monsters-grid', ALL_MONSTERS, cfg.monsters, Infinity, null, 1, function(i) { return I18n.tDemon(i); });
       document.getElementById('monstersToKill').value = cfg.monstersToKill;
       document.getElementById('maxMonstersLevel').value = cfg.maxMonsters;
       document.getElementById('spawnRateLevel').value = cfg.spawnRate;
@@ -767,7 +772,7 @@
     });
 
     document.getElementById('spawnRateLevel').addEventListener('input', function () {
-      document.getElementById('spawnRateLevelVal').textContent = this.value + 's';
+      document.getElementById('spawnRateLevelVal').textContent = this.value + 's'; // 's' is short for seconds, generally fine across locales or use t('ui.secondsShort')
     });
 
     document.getElementById('monstersToKill').addEventListener('change', saveCurrentLevelConfig);

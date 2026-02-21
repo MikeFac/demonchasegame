@@ -158,6 +158,46 @@ const I18n = (function () {
         return _strings.quickStart || {};
     }
 
+    /**
+     * Update all DOM elements with [data-i18n] or [data-i18n-placeholder] attributes.
+     */
+    function updateDOM() {
+        if (!_loaded) {
+            console.warn('i18n: attempt to update DOM before strings were loaded');
+            return;
+        }
+
+        // 1. Handle elements with text content translations
+        document.querySelectorAll('[data-i18n]').forEach(el => {
+            const key = el.getAttribute('data-i18n');
+            const argsStr = el.getAttribute('data-i18n-args');
+            let args = [];
+            if (argsStr) {
+                args = argsStr.split(',').map(s => s.trim());
+            }
+
+            const translation = t(key, ...args);
+            if (translation !== key) {
+                if (el.tagName === 'OPTION') {
+                    el.text = translation;
+                } else if (el.tagName === 'INPUT' && (el.type === 'button' || el.type === 'submit')) {
+                    el.value = translation;
+                } else {
+                    el.textContent = translation;
+                }
+            }
+        });
+
+        // 2. Handle elements with placeholder translations
+        document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+            const key = el.getAttribute('data-i18n-placeholder');
+            const translation = t(key);
+            if (translation !== key) {
+                el.placeholder = translation;
+            }
+        });
+    }
+
     /** Get the current language code */
     function getLang() {
         return _lang;
@@ -176,6 +216,7 @@ const I18n = (function () {
         tCategory,
         getTutorialPages,
         getQuickStart,
+        updateDOM,
         getLang,
         isLoaded
     };

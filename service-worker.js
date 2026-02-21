@@ -1,4 +1,4 @@
-var CACHE_NAME = 'versebattles-v2';
+var CACHE_NAME = 'versebattles-v3';
 
 // Core assets to cache (no audio — too large for mobile storage)
 var CORE_ASSETS = [
@@ -6,6 +6,10 @@ var CORE_ASSETS = [
     '/index.html',
     '/game.js',
     '/bible-verses.js',
+    '/bible-verses-es.js',
+    '/public/locales/en.json',
+    '/public/locales/es.json',
+    '/src/client/i18n.js',
     '/manifest.json',
     // Shared modules
     '/src/shared/Constants.js',

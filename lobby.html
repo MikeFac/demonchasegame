@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Demon Chase - Lobby</title>
+    <title data-i18n="lobby.title">Demon Chase - Lobby</title>
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-673VQ9VE50"></script>
     <script>
         window.dataLayer = window.dataLayer || [];
@@ -311,110 +311,108 @@
         <!-- Login Screen -->
         <div id="loginScreen" class="panel">
             <div class="logo">⚔️</div>
-            <h1>Demon Chase</h1>
+            <h1 data-i18n="lobby.login.header">Demon Chase</h1>
             <div id="loginError" class="error hidden"></div>
-            <input type="text" id="usernameInput" placeholder="Enter your username" maxlength="20">
-            <button class="btn-primary" onclick="register()">Play Online</button>
-            <button class="btn-secondary" onclick="playSolo()">Practice (Solo)</button>
+            <input type="text" id="usernameInput" data-i18n-placeholder="lobby.login.usernamePlaceholder" placeholder="Enter your username" maxlength="20">
+            <button class="btn-primary" onclick="register()" data-i18n="lobby.login.playOnline">Play Online</button>
+            <button class="btn-secondary" onclick="playSolo()" data-i18n="lobby.login.practiceSolo">Practice (Solo)</button>
         </div>
 
         <!-- Lobby Screen -->
         <div id="lobbyScreen" class="panel hidden">
-            <h2 style="margin-bottom: 20px;">🎮 Game Rooms</h2>
+            <h2 style="margin-bottom: 20px;" data-i18n="lobby.rooms.header">🎮 Game Rooms</h2>
             <p id="welcomeMsg" class="welcome-msg"></p>
 
             <div class="room-list" id="roomList">
                 <!-- Rooms will be populated here -->
             </div>
 
-            <button class="btn-primary" onclick="quickPlay()">⚡ Quick Play</button>
-            <button class="btn-secondary" onclick="showCreateRoom()">+ Create Room</button>
+            <button class="btn-primary" onclick="quickPlay()" data-i18n="lobby.rooms.quickPlay">⚡ Quick Play</button>
+            <button class="btn-secondary" onclick="showCreateRoom()" data-i18n="lobby.rooms.createRoom">+ Create Room</button>
             <div class="divider">or</div>
-            <button class="btn-secondary" onclick="logout()">Logout</button>
+            <button class="btn-secondary" onclick="logout()" data-i18n="lobby.rooms.logout">Logout</button>
         </div>
 
         <!-- Create Room Screen -->
         <div id="createRoomScreen" class="panel hidden">
-            <h2 style="margin-bottom: 20px;">Create Room</h2>
-            <input type="text" id="roomNameInput" placeholder="Room name (optional)">
+            <h2 style="margin-bottom: 20px;" data-i18n="lobby.create.header">Create Room</h2>
+            <input type="text" id="roomNameInput" data-i18n-placeholder="lobby.create.roomNamePlaceholder" placeholder="Room name (optional)">
 
             <div style="margin: 20px 0;">
-                <label style="display: block; margin-bottom: 10px; font-weight: bold;">Map Style:</label>
+                <label style="display: block; margin-bottom: 10px; font-weight: bold;" data-i18n="lobby.create.mapStyle">Map Style:</label>
                 <select id="mapStyleInput"
                     style="width: 100%; padding: 15px; border-radius: 10px; border: none; font-size: 1.1em; background: rgba(255, 255, 255, 0.9);">
-                    <option value="classic">Classic Dungeon</option>
-                    <option value="narrow">Narrow Paths</option>
-                    <option value="labyrinth">Complex Labyrinth</option>
-                    <option value="open">Open Plains</option>
-                    <option value="city">Grid City</option>
+                    <option value="classic" data-i18n="mapStyles.classic">Classic Dungeon</option>
+                    <option value="narrow" data-i18n="mapStyles.narrow">Narrow Paths</option>
+                    <option value="labyrinth" data-i18n="mapStyles.labyrinth">Complex Labyrinth</option>
+                    <option value="open" data-i18n="mapStyles.open">Open Plains</option>
+                    <option value="city" data-i18n="mapStyles.city">Grid City</option>
                 </select>
             </div>
 
             <div style="margin: 20px 0;">
-                <label style="display: block; margin-bottom: 10px; font-weight: bold;">Monster Difficulty:</label>
+                <label style="display: block; margin-bottom: 10px; font-weight: bold;" data-i18n="lobby.create.monsterDifficulty">Monster Difficulty:</label>
                 <div class="difficulty-selector">
                     <button class="preset-btn" data-preset="easy" onclick="selectPreset('easy')">
-                        <div style="font-weight: bold; margin-bottom: 5px;">Easy</div>
-                        <div style="font-size: 0.85em; opacity: 0.8;">Weaker monsters</div>
+                        <div style="font-weight: bold; margin-bottom: 5px;" data-i18n="config.difficultyEasy">Easy</div>
+                        <div style="font-size: 0.85em; opacity: 0.8;" data-i18n="config.difficultyEasyDesc">Weaker monsters</div>
                     </button>
                     <button class="preset-btn active" data-preset="normal" onclick="selectPreset('normal')">
-                        <div style="font-weight: bold; margin-bottom: 5px;">Normal</div>
-                        <div style="font-size: 0.85em; opacity: 0.8;">Balanced combat</div>
+                        <div style="font-weight: bold; margin-bottom: 5px;" data-i18n="config.difficultyMedium">Normal</div>
+                        <div style="font-size: 0.85em; opacity: 0.8;" data-i18n="config.difficultyNormalDesc">Balanced combat</div>
                     </button>
                     <button class="preset-btn" data-preset="hard" onclick="selectPreset('hard')">
-                        <div style="font-weight: bold; margin-bottom: 5px;">Hard</div>
-                        <div style="font-size: 0.85em; opacity: 0.8;">Intense combat</div>
+                        <div style="font-weight: bold; margin-bottom: 5px;" data-i18n="config.difficultyHard">Hard</div>
+                        <div style="font-size: 0.85em; opacity: 0.8;" data-i18n="config.difficultyHardDesc">Intense combat</div>
                     </button>
                 </div>
             </div>
 
             <div style="margin: 20px 0;">
-                <label style="display: block; margin-bottom: 10px; font-weight: bold;">Quiz Balance:</label>
+                <label style="display: block; margin-bottom: 10px; font-weight: bold;" data-i18n="lobby.create.quizBalance">Quiz Balance:</label>
                 <div class="quiz-slider-group">
                     <div class="slider-item">
-                        <label>First Letter <span style="opacity:0.6">(Hard)</span></label>
+                        <label><span data-i18n="config.firstLetter">First Letter</span> <span style="opacity:0.6" data-i18n="config.difficultyHard">(Hard)</span></label>
                         <input type="range" min="0" max="100" value="30" step="5" data-mode="firstLetter"
                             class="quiz-slider">
                         <span class="pct">30%</span>
                     </div>
                     <div class="slider-item">
-                        <label>Missing Word <span style="opacity:0.6">(Medium)</span></label>
+                        <label><span data-i18n="config.missingWord">Missing Word</span> <span style="opacity:0.6" data-i18n="config.difficultyMedium">(Medium)</span></label>
                         <input type="range" min="0" max="100" value="30" step="5" data-mode="missingWord"
                             class="quiz-slider">
                         <span class="pct">30%</span>
                     </div>
                     <div class="slider-item">
-                        <label>Category Match <span style="opacity:0.6">(Easy)</span></label>
+                        <label><span data-i18n="config.categoryMatch">Category Match</span> <span style="opacity:0.6" data-i18n="config.difficultyEasy">(Easy)</span></label>
                         <input type="range" min="0" max="100" value="25" step="5" data-mode="categoryMatch"
                             class="quiz-slider">
                         <span class="pct">25%</span>
                     </div>
                     <div class="slider-item">
-                        <label>True / False <span style="opacity:0.6">(Easiest)</span></label>
+                        <label><span data-i18n="config.trueFalse">True / False</span> <span style="opacity:0.6">(Easiest)</span></label>
                         <input type="range" min="0" max="100" value="15" step="5" data-mode="trueFalse"
                             class="quiz-slider">
                         <span class="pct">15%</span>
                     </div>
                 </div>
                 <div class="quiz-preset-btns">
-                    <button class="btn-quiz-preset" data-qpreset="easy" onclick="applyQuizPreset('easy')">Easy
-                        Quizzes</button>
+                    <button class="btn-quiz-preset" data-qpreset="easy" onclick="applyQuizPreset('easy')" data-i18n="config.quizPresetEasy">Easy Quizzes</button>
                     <button class="btn-quiz-preset active" data-qpreset="balanced"
-                        onclick="applyQuizPreset('balanced')">Balanced</button>
-                    <button class="btn-quiz-preset" data-qpreset="hard" onclick="applyQuizPreset('hard')">Hard
-                        Quizzes</button>
+                        onclick="applyQuizPreset('balanced')" data-i18n="config.quizPresetBalanced">Balanced</button>
+                    <button class="btn-quiz-preset" data-qpreset="hard" onclick="applyQuizPreset('hard')" data-i18n="config.quizPresetHard">Hard Quizzes</button>
                 </div>
             </div>
 
-            <button class="btn-success" onclick="createRoom()">Create & Join</button>
-            <button class="btn-secondary" onclick="showLobby()">← Back</button>
+            <button class="btn-success" onclick="createRoom()" data-i18n="lobby.create.createAndJoin">Create & Join</button>
+            <button class="btn-secondary" onclick="showLobby()" data-i18n="lobby.create.back">← Back</button>
         </div>
 
         <!-- Room Screen -->
         <div id="roomScreen" class="panel hidden">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-                <h2 id="roomTitle">Room</h2>
-                <button class="btn-danger" style="width: auto; padding: 8px 15px;" onclick="leaveRoom()">Leave</button>
+                <h2 id="roomTitle" data-i18n="lobby.room.header">Room</h2>
+                <button class="btn-danger" style="width: auto; padding: 8px 15px;" onclick="leaveRoom()" data-i18n="lobby.room.leave">Leave</button>
             </div>
 
             <div id="roomSettings" style="font-size: 0.85em; opacity: 0.8; margin-bottom: 15px;"></div>
@@ -423,11 +421,16 @@
                 <!-- Players will be populated here -->
             </div>
 
-            <button id="readyBtn" class="btn-secondary" onclick="toggleReady()">Ready Up</button>
-            <button id="startBtn" class="btn-success hidden" onclick="startGame()">Start Game</button>
+            <button id="readyBtn" class="btn-secondary" onclick="toggleReady()" data-i18n="lobby.room.readyUp">Ready Up</button>
+            <button id="startBtn" class="btn-success hidden" onclick="startGame()" data-i18n="lobby.room.startGame">Start Game</button>
         </div>
     </div>
 
+    <script src="src/client/i18n.js"></script>
+    <script>
+        I18n.loadSync();
+        I18n.updateDOM();
+    </script>
     <script src="/socket.io/socket.io.js"></script>
     <script>
     (function () {
@@ -505,7 +508,7 @@
         async function register() {
             const username = document.getElementById('usernameInput').value.trim();
             if (!username) {
-                showError('loginError', 'Please enter a username');
+                showError('loginError', t('lobby.login.errorUsername'));
                 return;
             }
 
@@ -526,7 +529,7 @@
                     showError('loginError', data.error);
                 }
             } catch (err) {
-                showError('loginError', 'Connection error');
+                showError('loginError', t('lobby.login.errorConnection'));
             }
         }
 
@@ -561,7 +564,11 @@
         }
 
         function playSolo() {
-            window.location.href = '/';
+            let soloUrl = '/?solo=true';
+            if (localStorage.getItem('lang') === 'es') {
+                soloUrl += '&lang=es';
+            }
+            window.location.href = soloUrl;
         }
 
         // ==================== Socket ====================
@@ -615,19 +622,21 @@
         function renderRoomList(rooms) {
             const container = document.getElementById('roomList');
             if (rooms.length === 0) {
-                container.innerHTML = '<p style="text-align: center; opacity: 0.6;">No rooms available. Create one!</p>';
+                container.innerHTML = `<p style="text-align: center; opacity: 0.6;">${t('lobby.rooms.noRooms')}</p>`;
                 return;
             }
 
             container.innerHTML = rooms.map(room => {
                 const isPlaying = room.status === 'playing';
-                const badge = isPlaying ? '<span style="color:#ffaa00;font-size:11px;margin-left:6px;">[IN PROGRESS]</span>' : '';
+                const badge = isPlaying ? `<span style="color:#ffaa00;font-size:11px;margin-left:6px;">${t('lobby.rooms.inProgress')}</span>` : '';
                 const clickAction = isPlaying ? `joinInProgressGame('${room.id}')` : `joinRoom('${room.id}')`;
+                const difficulty = t(`config.difficulty${room.settings.preset.charAt(0).toUpperCase() + room.settings.preset.slice(1)}`);
+                const category = room.settings.category ? tCategory(room.settings.category) : t('ui.selectCategory');
                 return `
                 <div class="room-item" onclick="${clickAction}">
                     <div class="room-info">
                         <h3>📦 ${room.name}${badge}</h3>
-                        <span>${room.settings.presetDisplay || 'Normal'} • ${room.settings.category || 'All Categories'}</span>
+                        <span>${difficulty} • ${category}</span>
                     </div>
                     <div class="player-count">${room.playerCount}/${room.maxPlayers}</div>
                 </div>

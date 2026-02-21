@@ -4,7 +4,6 @@
     "code": "en",
     "direction": "ltr"
   },
-
   "ui": {
     "loading": "Loading...",
     "correct": "Correct!",
@@ -39,16 +38,17 @@
     "dailyChallengeComplete": "✓ Daily Challenge Complete!",
     "dailyChallengeProgress": "Daily: {0}/{1} (First Letter)",
     "versesLearnedProgress": "Verses Learned: {0} / {1}",
-    "hpDisplay": "HP: {0}/{1}"
+    "hpDisplay": "HP: {0}/{1}",
+    "levelShort": "Lv {0}",
+    "on": "ON",
+    "off": "OFF"
   },
-
   "stats": {
     "levelReached": "Level Reached: {0}",
     "monstersKilled": "Monsters Killed: {0}",
     "versesLearned": "Verses Learned: {0}",
     "timePlayed": "Time Played: {0}m {1}s"
   },
-
   "menu": {
     "review": "📖 Review",
     "start": "▶ Start",
@@ -64,9 +64,10 @@
     "back": "Back",
     "howToPlay": "How to Play",
     "startSoloGame": "Start Solo Game",
-    "language": "🌐 Language"
+    "language": "🌐 Language",
+    "customGame": "⚙️ Custom Game",
+    "multiplayerGame": "Multiplayer Game"
   },
-
   "review": {
     "previous": "Previous",
     "repeat": "Repeat",
@@ -75,7 +76,6 @@
     "reference": "Reference: {0}",
     "learn": "Learn: {0}"
   },
-
   "votd": {
     "verseOfTheDay": "Verse of the Day",
     "startYourStreak": "Start your streak!",
@@ -102,19 +102,16 @@
     "votdIncorrect": "INCORRECT",
     "votdModalTitle": "📿 Verse of the Day"
   },
-
   "verseTest": {
     "correct": "Correct!",
     "wrong": "Wrong!"
   },
-
   "buffs": {
     "sword": "SWORD",
     "shield": "SHIELD",
     "breastplate": "ARMOR",
     "sandals": "SPEED"
   },
-
   "items": {
     "sword": "Sword",
     "belt": "Belt",
@@ -123,7 +120,6 @@
     "sandals": "Sandals",
     "shield": "Shield"
   },
-
   "demons": {
     "Fear": "Fear",
     "Doubt": "Doubt",
@@ -143,7 +139,6 @@
     "Temptation": "Temptation",
     "Swarm": "Swarm"
   },
-
   "categories": {
     "Faith": "Faith",
     "Courage": "Courage",
@@ -160,7 +155,113 @@
     "Power": "Power",
     "Identity": "Identity"
   },
-
+  "lobby": {
+    "title": "Demon Chase - Lobby",
+    "login": {
+      "header": "Demon Chase",
+      "usernamePlaceholder": "Enter your username",
+      "playOnline": "Play Online",
+      "practiceSolo": "Practice (Solo)",
+      "errorUsername": "Please enter a username",
+      "errorConnection": "Connection error"
+    },
+    "rooms": {
+      "header": "🎮 Game Rooms",
+      "noRooms": "No rooms available. Create one!",
+      "quickPlay": "⚡ Quick Play",
+      "createRoom": "+ Create Room",
+      "logout": "Logout",
+      "inProgress": "[IN PROGRESS]"
+    },
+    "create": {
+      "header": "Create Room",
+      "roomNamePlaceholder": "Room name (optional)",
+      "mapStyle": "Map Style:",
+      "monsterDifficulty": "Monster Difficulty:",
+      "quizBalance": "Quiz Balance:",
+      "quizPresetEasy": "Easy Quizzes",
+      "quizPresetBalanced": "Balanced",
+      "quizPresetHard": "Hard Quizzes",
+      "createAndJoin": "Create & Join",
+      "back": "← Back"
+    },
+    "room": {
+      "header": "Room",
+      "leave": "Leave",
+      "readyUp": "Ready Up",
+      "notReady": "Not Ready",
+      "startGame": "Start Game"
+    }
+  },
+  "config": {
+    "gameSettings": "Game Settings",
+    "difficulty": "Difficulty",
+    "speed": "Speed",
+    "mapStyle": "Map Style",
+    "quizConfiguration": "Quiz Configuration",
+    "offlineMode": "Offline mode",
+    "privacyPolicy": "Privacy Policy",
+    "licensing": "Licensing & Contributing",
+    "difficultyEasy": "Easy",
+    "difficultyMedium": "Medium",
+    "difficultyHard": "Hard",
+    "speedSlow": "Slow",
+    "speedNormal": "Normal",
+    "speedFast": "Fast",
+    "languageHeader": "🌐 Language",
+    "comingSoon": "More languages coming soon!",
+    "difficultyEasyDesc": "Weaker monsters",
+    "difficultyNormalDesc": "Balanced combat",
+    "difficultyHardDesc": "Intense combat",
+    "quizPresetEasy": "Easy Quizzes",
+    "quizPresetBalanced": "Balanced",
+    "quizPresetHard": "Hard Quizzes",
+    "pageTitle": "Configure Custom Game Settings",
+    "tabBalance": "Balance",
+    "tabLevels": "Levels",
+    "tabContent": "Content",
+    "monsterHealth": "Health",
+    "monsterDamage": "Damage",
+    "monsterSpeed": "Speed",
+    "spawning": "Spawning",
+    "spawnRate": "Spawn Rate",
+    "maxMonsters": "Max Monsters",
+    "healingFreq": "Healing Freq.",
+    "quizTotal": "Total: {0}%",
+    "qualities": "Qualities",
+    "monsters": "Monsters",
+    "spawnSettings": "Spawn Settings",
+    "killToAdvance": "Kill to Advance",
+    "spawnRateSec": "Spawn Rate (sec)",
+    "uploadVerses": "Upload Verses",
+    "uploadPrompt": "Click to upload CSV or JSON",
+    "uploadHint": "Columns: Reference, Text, Category",
+    "orPasteJson": "Or Paste JSON",
+    "pastePlaceholder": "[{\"Reference\":\"John 3:16\",\"Text\":\"For God so loved...\",\"Category\":\"Love\"}]",
+    "loadPaste": "Load Pasted Data",
+    "preview": "Preview",
+    "noCustomVerses": "No custom verses loaded.<br>Using default Bible verses.",
+    "useDefaultVerses": "Use Default Verses",
+    "clearCustom": "Clear Custom",
+    "downloadJson": "Download JSON",
+    "playWithSettings": "Play with These Settings",
+    "copyShareLink": "Copy Share Link",
+    "backToMenu": "Back to Menu",
+    "copied": "Copied!",
+    "firstLetter": "First Letter",
+    "missingWord": "Missing Word",
+    "categoryMatch": "Category Match",
+    "trueFalse": "True / False",
+    "cloze": "Cloze (Fill Blanks)",
+    "clozeDesc": "Fill in the blanks"
+  },
+  "mapStyles": {
+    "classic": "Classic Dungeon",
+    "narrow": "Narrow Paths",
+    "labyrinth": "Complex Labyrinth",
+    "open": "Open Plains",
+    "city": "Grid City"
+  },
   "tutorial": {
     "pages": [
       {
@@ -205,7 +306,6 @@
       }
     ]
   },
-
   "quickStart": {
     "title": "🎮 How to Play",
     "items": [
