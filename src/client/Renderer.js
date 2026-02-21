@@ -121,7 +121,8 @@ class Renderer {
         const ci = UILayout.categoryIndicator;
         this.ctx.fillStyle = '#ffffff';
         this.ctx.font = 'bold 16px Arial';
-        const labelText = `${vQuality} ▼`;
+        const displayQuality = (typeof tCategory === 'function') ? tCategory(vQuality) : vQuality;
+        const labelText = `${displayQuality} ▼`;
         this.ctx.fillText(labelText, ci.x, ci.y + 16);
 
         // Learn Verses button (center of top bar)
@@ -303,7 +304,8 @@ class Renderer {
             // Item text
             this.ctx.fillStyle = isActive ? '#4a90e2' : '#ffffff';
             this.ctx.font = isActive ? 'bold 13px Arial' : '13px Arial';
-            this.ctx.fillText(cat, itemX + 8, itemY + itemH / 2 + 4);
+            const displayName = (typeof tCategory === 'function') ? tCategory(cat) : cat;
+            this.ctx.fillText(displayName, itemX + 8, itemY + itemH / 2 + 4);
         });
     }
 

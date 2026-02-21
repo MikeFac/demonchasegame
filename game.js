@@ -867,7 +867,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 if (settingsContainer.style.display === 'none') {
                     // Open Options
                     settingsContainer.style.display = 'block';
-                    btnSettings.textContent = 'Back';
+                    btnSettings.textContent = t('menu.back');
                     
                     // Hide main menu items
                     if (btnSolo) btnSolo.style.display = 'none';
@@ -882,7 +882,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 } else {
                     // Close Options (Back to Main Menu)
                     settingsContainer.style.display = 'none';
-                    btnSettings.textContent = 'Options ▾';
+                    btnSettings.textContent = t('menu.options') + ' ▾';
                     
                     // Show main menu items
                     if (btnSolo) btnSolo.style.display = 'block';
@@ -1402,9 +1402,14 @@ async function init() {
             }
             // otherwise load it locally
         } else {
-            QUALITIES = ALL_QUALITIES;
             verses = loadSelectedVerses();
             organizedVerses = organizeByCategory(verses);
+            // Filter ALL_QUALITIES to only categories present in the loaded verses
+            const availableCats = Object.keys(organizedVerses);
+            ALL_QUALITIES = ALL_QUALITIES.filter(q => availableCats.includes(q));
+            // Add any categories in verse data that weren't in the hardcoded list
+            availableCats.forEach(c => { if (!ALL_QUALITIES.includes(c)) ALL_QUALITIES.push(c); });
+            QUALITIES = ALL_QUALITIES;
         }
 
         // Apply level 1 qualities from custom config (if present)

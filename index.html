@@ -764,21 +764,21 @@
 
     <!-- Main Menu Buttons (New Layout) -->
     <div class="main-menu-buttons">
-      <button id="btnLearnVerses">📖 LEARN VERSES HERE!</button>
-      <button id="btnSolo" class="primary-btn" style="margin-bottom: 15px; width: 100%;">Start Solo Game</button>
+      <button id="btnLearnVerses" data-i18n="ui.learnVersesHere">📖 LEARN VERSES HERE!</button>
+      <button id="btnSolo" class="primary-btn" style="margin-bottom: 15px; width: 100%;" data-i18n="menu.startSoloGame">Start Solo Game</button>
 
-      <button id="btnCustomGame" class="secondary-btn" style="margin-bottom: 15px; width: 100%;">⚙️ Custom Game</button>
+      <button id="btnCustomGame" class="secondary-btn" style="margin-bottom: 15px; width: 100%;" data-i18n="menu.customGame">⚙️ Custom Game</button>
 
-      <button id="btnMultiplayer" class="secondary-btn" style="margin-bottom: 15px; width: 100%;">Multiplayer Game</button>
+      <button id="btnMultiplayer" class="secondary-btn" style="margin-bottom: 15px; width: 100%;" data-i18n="menu.multiplayerGame">Multiplayer Game</button>
 
       <div class="btn-row-split" style="display: flex; gap: 15px;">
-        <button id="btnInstructions" style="flex: 1;">How to Play</button>
-        <button id="btnSettings" class="secondary-btn" style="flex: 1;">Options ▾</button>
+        <button id="btnInstructions" style="flex: 1;" data-i18n="menu.howToPlay">How to Play</button>
+        <button id="btnSettings" class="secondary-btn" style="flex: 1;" data-i18n="menu.options">Options ▾</button>
       </div>
 
       <label id="offlineModeLabel" style="display: block; text-align: center; margin-top: 15px; color: #a8c5e6; cursor: pointer; font-size: 13px;">
         <input type="checkbox" id="offlineModeToggle" checked style="margin-right: 6px; cursor: pointer;">
-        Offline mode
+        <span data-i18n="config.offlineMode">Offline mode</span>
       </label>
     </div>
 
@@ -786,83 +786,100 @@
     <div id="settingsContainer" style="display: none; margin-top: 20px; text-align: left; background: rgba(0,0,0,0.2); padding: 15px; border-radius: 10px;">
       
       <!-- Section: Game Settings -->
-      <h4 style="color: #a8c5e6; margin-bottom: 10px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 5px;">Game Settings</h4>
+      <h4 style="color: #a8c5e6; margin-bottom: 10px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 5px;" data-i18n="config.gameSettings">Game Settings</h4>
       
       <div class="slider-row">
-        <label>Difficulty</label>
+        <label data-i18n="config.difficulty">Difficulty</label>
         <input type="range" id="difficultySlider" min="0" max="100" step="50" value="0">
-        <span class="pct" id="difficultyLabel">Easy</span>
+        <span class="pct" id="difficultyLabel"></span>
       </div>
 
       <div class="slider-row">
-        <label>Speed</label>
+        <label data-i18n="config.speed">Speed</label>
         <input type="range" id="speedSlider" min="0" max="100" step="50" value="50">
-        <span class="pct" id="speedLabel">Normal</span>
+        <span class="pct" id="speedLabel"></span>
       </div>
 
       <div class="settings-section">
-        <h3>Map Style</h3>
+        <h3 data-i18n="config.mapStyle">Map Style</h3>
         <select id="mapStyleSelect">
-          <option value="classic" selected>Classic Dungeon</option>
-          <option value="narrow">Narrow Paths</option>
-          <option value="labyrinth">Complex Labyrinth</option>
-          <option value="open">Open Plains</option>
-          <option value="city">Grid City</option>
+          <option value="classic" data-i18n="mapStyles.classic" selected>Classic Dungeon</option>
+          <option value="narrow" data-i18n="mapStyles.narrow">Narrow Paths</option>
+          <option value="labyrinth" data-i18n="mapStyles.labyrinth">Complex Labyrinth</option>
+          <option value="open" data-i18n="mapStyles.open">Open Plains</option>
+          <option value="city" data-i18n="mapStyles.city">Grid City</option>
         </select>
       </div>
 
       <!-- Section: Quiz Configuration -->
-      <h4 style="color: #a8c5e6; margin: 15px 0 10px 0; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 5px;">Quiz Configuration</h4>
+      <h4 style="color: #a8c5e6; margin: 15px 0 10px 0; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 5px;" data-i18n="config.quizConfiguration">Quiz Configuration</h4>
 
       <div id="quizSliders" style="display: block;"> <!-- Always visible inside Options -->
         <div class="slider-row">
-          <label>First Letter</label>
-          <input type="range" min="0" max="100" step="5" value="25" data-mode="firstLetter">
+          <label><span data-i18n="config.firstLetter">First Letter</span> <span style="opacity:0.6" data-i18n="config.difficultyHard">(Hard)</span></label>
+          <input type="range" id="lobby_qFirstLetter" min="0" max="100" value="30" step="5" data-mode="firstLetter">
+          <span class="pct">30%</span>
+        </div>
+        <div class="slider-row">
+          <label><span data-i18n="config.missingWord">Missing Word</span> <span style="opacity:0.6" data-i18n="config.difficultyMedium">(Medium)</span></label>
+          <input type="range" id="lobby_qMissingWord" min="0" max="100" value="30" step="5" data-mode="missingWord">
+          <span class="pct">30%</span>
+        </div>
+        <div class="slider-row">
+          <label><span data-i18n="config.categoryMatch">Category Match</span> <span style="opacity:0.6" data-i18n="config.difficultyEasy">(Easy)</span></label>
+          <input type="range" id="lobby_qCategoryMatch" min="0" max="100" value="25" step="5" data-mode="categoryMatch">
           <span class="pct">25%</span>
         </div>
         <div class="slider-row">
-          <label>Missing Word</label>
-          <input type="range" min="0" max="100" step="5" value="25" data-mode="missingWord">
-          <span class="pct">25%</span>
-        </div>
-        <div class="slider-row">
-          <label>Category Match</label>
-          <input type="range" min="0" max="100" step="5" value="20" data-mode="categoryMatch">
-          <span class="pct">20%</span>
-        </div>
-        <div class="slider-row">
-          <label>True / False</label>
-          <input type="range" min="0" max="100" step="5" value="15" data-mode="trueFalse">
+          <label><span data-i18n="config.trueFalse">True / False</span> <span style="opacity:0.6">(Easiest)</span></label>
+          <input type="range" id="lobby_qTrueFalse" min="0" max="100" value="15" step="5" data-mode="trueFalse">
           <span class="pct">15%</span>
         </div>
         <div class="slider-row">
-          <label>Cloze (Fill Blanks)</label>
-          <input type="range" min="0" max="100" step="5" value="15" data-mode="cloze">
+          <label><span data-i18n="config.cloze">Cloze (Fill Blanks)</span></label>
+          <input type="range" id="lobby_qCloze" min="0" max="100" step="5" value="15" data-mode="cloze">
           <span class="pct">15%</span>
         </div>
       </div>
 
       <!-- Section: Language -->
-      <h4 style="color: #a8c5e6; margin: 15px 0 10px 0; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 5px;">🌐 Language</h4>
+      <h4 style="color: #a8c5e6; margin: 15px 0 10px 0; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 5px;" data-i18n="config.languageHeader">🌐 Language</h4>
       <div class="settings-section">
         <select id="languageSelect" style="width: 100%; padding: 8px; border-radius: 5px; background: #1a1a2e; color: white; border: 1px solid #444; font-size: 14px;">
           <option value="en" selected>English</option>
-          <!-- Future languages -->
-          <!-- <option value="es">Español</option> -->
+          <option value="es">Español</option>
           <!-- <option value="tl">Tagalog</option> -->
         </select>
-        <p style="color: #888; font-size: 11px; margin-top: 5px;">More languages coming soon!</p>
+        <p style="color: #888; font-size: 11px; margin-top: 5px;" data-i18n="config.comingSoon">More languages coming soon!</p>
       </div>
     </div>
 
     <!-- Privacy Policy Link -->
     <div style="margin-top: 20px;">
-        <a href="#" class="privacy-link" id="privacyLink">Privacy Policy</a>
+        <a href="#" class="privacy-link" id="privacyLink" data-i18n="config.privacyPolicy">Privacy Policy</a>
         <span style="color: rgba(255,255,255,0.3); margin: 0 8px;">|</span>
-        <a href="#" class="privacy-link" id="licensingLink">Licensing & Contributing</a>
+        <a href="#" class="privacy-link" id="licensingLink" data-i18n="config.licensing">Licensing & Contributing</a>
     </div>
   </div>
 
+  <!-- Verse of the Day Modal -->
+  <div id="votdModal" class="modal-overlay" style="display: none;">
+    <div class="modal-content">
+      <h2 id="votdModalTitle" data-i18n="votd.votdModalTitle">📿 Verse of the Day</h2>
+      <div id="votdStreak" class="streak-badge" data-i18n="votd.startYourStreak">Start your streak!</div>
+      <div class="verse-display">
+        <p id="votdText" class="verse-text"></p>
+        <p id="votdReference" class="verse-reference"></p>
+      </div>
+      <p class="verse-bonus" data-i18n="votd.damageBonus">Learn today's verse to earn a +20% damage bonus!</p>
+      <div class="modal-buttons">
+        <button id="votdLearnBtn" class="primary-btn" data-i18n="votd.learnNow">Learn Now</button>
+        <button id="votdDismissBtn" class="secondary-btn" data-i18n="votd.later">Later</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Instructions Overlay (How to Play) -->
   <div id="instructionsOverlay">
     <div id="instructionsPanel">
       <h2 id="instructionsTitle"></h2>
@@ -882,21 +899,6 @@
       <h3 id="onboardingModalTitle"></h3>
       <p id="onboardingModalText"></p>
       <div class="dismiss-hint">Tap anywhere or wait to continue...</div>
-    </div>
-  </div>
-
-  <!-- Verse of the Day Modal (Main Menu) -->
-  <div id="votdModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 1000; align-items: center; justify-content: center;">
-    <div id="votdModalContent" style="background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%); border-radius: 12px; padding: 30px; max-width: 500px; width: 90%; color: #fff; border: 2px solid #ffd700; box-shadow: 0 10px 40px rgba(0,0,0,0.7);">
-      <h2 style="color: #ffd700; text-align: center; margin-bottom: 10px;">📿 Verse of the Day</h2>
-      <p id="votdReference" style="text-align: center; color: #aaa; margin-bottom: 20px; font-size: 0.9em;"></p>
-      <p id="votdText" style="font-size: 1.1em; line-height: 1.6; margin-bottom: 30px; text-align: center; font-style: italic;"></p>
-      <p id="votdStreak" style="text-align: center; color: #ffd700; margin-bottom: 10px; font-weight: bold;"></p>
-      <p style="text-align: center; color: #aaa; margin-bottom: 20px;">Learn today's verse to earn a +20% damage bonus!</p>
-      <div style="display: flex; gap: 15px; justify-content: center;">
-        <button id="votdLearnBtn" style="padding: 12px 30px; background: #4CAF50; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 1em;">Learn Now</button>
-        <button id="votdDismissBtn" style="padding: 12px 30px; background: #666; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 1em;">Later</button>
-      </div>
     </div>
   </div>
 
@@ -1002,12 +1004,19 @@
   <canvas id="gameCanvas" width="800" height="600"></canvas>
 
   <script src="src/client/i18n.js"></script>
-  <script>I18n.loadSync();</script>
-  <script src="bible-verses.js"></script>
+  <script>
+    I18n.loadSync();
+    I18n.updateDOM();
+  </script>
+  <script>
+    // Dynamically load the correct bible verses file based on language
+    var _versesFile = (localStorage.getItem('lang') === 'es') ? 'bible-verses-es.js' : 'bible-verses.js';
+    document.write('<script src="' + _versesFile + '"><\/script>');
+  </script>
   <script>
     // Load verses globally for VOTD on main menu
     window.allVerses = loadSelectedVerses();
-    console.log('Loaded verses for VOTD:', window.allVerses.length);
+    console.log('Loaded verses (' + (localStorage.getItem('lang') || 'en') + '):', window.allVerses.length);
   </script>
   <script src="/socket.io/socket.io.js"></script>
   <script src="src/shared/Constants.js?v=2.1"></script>
@@ -1066,11 +1075,11 @@
         function updateDiffLabel() {
           const val = parseInt(diffSlider.value, 10);
           if (val < 25) {
-            diffLabel.textContent = 'Easy';
+            diffLabel.textContent = t('config.difficultyEasy');
           } else if (val > 75) {
-            diffLabel.textContent = 'Hard';
+            diffLabel.textContent = t('config.difficultyHard');
           } else {
-            diffLabel.textContent = 'Normal';
+            diffLabel.textContent = t('config.difficultyMedium');
           }
         }
         diffSlider.addEventListener('input', updateDiffLabel);
@@ -1086,11 +1095,11 @@
         function updateSpeedLabel() {
           const val = parseInt(speedSlider.value, 10);
           if (val < 25) {
-            speedLabel.textContent = 'Slow';
+            speedLabel.textContent = t('config.speedSlow');
           } else if (val > 75) {
-            speedLabel.textContent = 'Fast';
+            speedLabel.textContent = t('config.speedFast');
           } else {
-            speedLabel.textContent = 'Normal';
+            speedLabel.textContent = t('config.speedNormal');
           }
         }
         speedSlider.addEventListener('input', updateSpeedLabel);
@@ -1164,10 +1173,39 @@
       }
     })();
 
+    // Language selection persistence
+    (function () {
+      const languageSelect = document.getElementById('languageSelect');
+      if (languageSelect) {
+        // Restore persisted language preference
+        const persistedLang = localStorage.getItem('lang');
+        if (persistedLang) {
+          languageSelect.value = persistedLang;
+        } else {
+          // Default to English if no preference is found
+          languageSelect.value = 'en';
+        }
+
+        // Listen for changes
+        languageSelect.addEventListener('change', () => {
+          const selected = languageSelect.value;
+          localStorage.setItem('lang', selected);
+          // Force reload to apply language changes
+          window.location.reload();
+        });
+      }
+    })();
+
+    function setDifficulty(diff) {
+      document.getElementById('difficultyLabel').textContent = t('config.difficulty' + diff.charAt(0).toUpperCase() + diff.slice(1));
+    }
+    window.setDifficulty = setDifficulty;
+
     // Game speed selection
     var selectedGameSpeed = 'normal';
     function setGameSpeed(speed) {
       selectedGameSpeed = speed;
+      document.getElementById('speedLabel').textContent = t('config.speed' + speed.charAt(0).toUpperCase() + speed.slice(1));
       // Update button active states
       document.querySelectorAll('.speed-btn').forEach(btn => {
         btn.classList.remove('active');
@@ -1207,6 +1245,15 @@
   <script>
     // Instructions pages
     (function () {
+      const overlay = document.getElementById('instructionsOverlay');
+      const btnInstructions = document.getElementById('btnInstructions');
+
+      // Guard: tutorial overlay elements may not exist on all page variants
+      if (!overlay || !btnInstructions) {
+        console.warn('Tutorial overlay elements not found, skipping tutorial init');
+        return;
+      }
+
       const pages = I18n.getTutorialPages();
       if (pages.length === 0) {
         console.warn('i18n: tutorial pages not loaded, using empty array');
@@ -1214,14 +1261,12 @@
 
       let currentPage = 0;
 
-      const overlay = document.getElementById('instructionsOverlay');
       const titleEl = document.getElementById('instructionsTitle');
       const contentEl = document.getElementById('instructionsContent');
       const indicatorEl = document.getElementById('pageIndicator');
       const btnPrev = document.getElementById('btnPrev');
       const btnNext = document.getElementById('btnNext');
       const btnStartPlaying = document.getElementById('btnStartPlaying');
-      const btnInstructions = document.getElementById('btnInstructions');
 
       function showPage(index) {
         currentPage = index;

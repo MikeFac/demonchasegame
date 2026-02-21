@@ -1,0 +1,327 @@
+{
+  "meta": {
+    "language": "Español",
+    "code": "es",
+    "direction": "ltr"
+  },
+  "ui": {
+    "loading": "Cargando...",
+    "correct": "¡Correcto!",
+    "incorrect": "¡Incorrecto!",
+    "gameOver": "J U E G O   T E R M I N A D O",
+    "victory": "¡VICTORIA!",
+    "allDefeated": "TODOS DERROTADOS",
+    "gameOverTitle": "JUEGO TERMINADO",
+    "levelComplete": "¡Nivel completado!",
+    "nextLevelIn": "Siguiente nivel en {0}s...",
+    "health": "Salud",
+    "xp": "XP",
+    "level": "Nivel",
+    "ammo": "Munición",
+    "statsLine": "Salud: {0}  XP: {1}  Nivel: {2}  Munición: {3}",
+    "tryAgain": "Intentar de nuevo",
+    "returnToLobby": "Volver al Lobby",
+    "learnVersesHere": "📖 ¡APRENDE VERSÍCULOS AQUÍ!",
+    "selectCategory": "Seleccionar categoría",
+    "movementPaused": "⚡ CARGANDO NUEVO LABERINTO - MOVIMIENTO PAUSADO ⚡",
+    "ghost": "FANTASMA",
+    "offline": "DESCONECTADO",
+    "you": "Tú",
+    "player": "Jugador",
+    "players": "— Jugadores —",
+    "empty": "Vacío",
+    "armorOfGod": "Armadura de Dios",
+    "use": "Usar",
+    "active": "Activo",
+    "auto": "(auto)",
+    "tapToContinue": "Pulsa para continuar",
+    "dailyChallengeComplete": "✓ ¡Desafío diario completado!",
+    "dailyChallengeProgress": "Diario: {0}/{1} (Primera Letra)",
+    "versesLearnedProgress": "Versículos aprendidos: {0} / {1}",
+    "hpDisplay": "HP: {0}/{1}",
+    "levelShort": "Nivel {0}",
+    "on": "ACTIVADO",
+    "off": "DESACTIVADO"
+  },
+  "stats": {
+    "levelReached": "Nivel alcanzado: {0}",
+    "monstersKilled": "Monstruos derrotados: {0}",
+    "versesLearned": "Versículos aprendidos: {0}",
+    "timePlayed": "Tiempo jugado: {0}m {1}s"
+  },
+  "menu": {
+    "review": "📖 Repasar",
+    "start": "▶ Iniciar",
+    "stop": "⏸ Detener",
+    "nextSong": "⏭ Siguiente canción",
+    "goals": "🎯 Objetivos",
+    "verseCotD": "📿 Versículo del día",
+    "verseTest": "✏️ Prueba de versículo",
+    "testShieldOn": "🛡️ Escudo de prueba: ACTIVADO",
+    "testShieldOff": "🛡️ Escudo de prueba: DESACTIVADO",
+    "leaveGame": "🚪 Salir del juego",
+    "options": "Opciones",
+    "back": "Atrás",
+    "howToPlay": "Cómo jugar",
+    "startSoloGame": "Juego en solitario",
+    "language": "🌐 Idioma",
+    "customGame": "⚙️ Juego personalizado",
+    "multiplayerGame": "Juego multijugador"
+  },
+  "review": {
+    "previous": "Anterior",
+    "repeat": "Repetir",
+    "next": "Siguiente",
+    "game": "Juego",
+    "reference": "Referencia: {0}",
+    "learn": "Aprender: {0}"
+  },
+  "votd": {
+    "verseOfTheDay": "Versículo del día",
+    "startYourStreak": "¡Comienza tu racha!",
+    "dayStreak": "🔥 ¡Racha de {0} días!",
+    "learnNow": "Aprender ahora",
+    "later": "Más tarde",
+    "damageBonus": "¡Aprende el versículo de hoy para ganar un bono de daño del +20%!",
+    "playAudio": "Reproducir audio",
+    "playing": "Reproduciendo...",
+    "startLearning": "Empezar a aprender",
+    "learning": "Aprendiendo ({0}/{1} ocultos)",
+    "readAloud": "Lee el versículo en voz alta, completando los espacios en blanco de memoria.",
+    "replayAudio": "Volver a reproducir",
+    "hideWord": "Ocultar palabra",
+    "testNow": "Probar ahora",
+    "testYourMemory": "Pon a prueba tu memoria",
+    "wordOf": "Palabra {0} de {1}",
+    "whatLetter": "¿Con qué letra empieza la palabra que falta?",
+    "hintLetters": "(Pista: {0} letras)",
+    "verseComplete": "¡Versículo completado!",
+    "wellDone": "¡Bien hecho!",
+    "returningToGame": "Volviendo al juego...",
+    "returningIn": "Volviendo en {0}s...",
+    "votdIncorrect": "INCORRECTO",
+    "votdModalTitle": "📿 Versículo del día"
+  },
+  "verseTest": {
+    "correct": "¡Correcto!",
+    "wrong": "¡Incorrecto!"
+  },
+  "buffs": {
+    "sword": "ESPADA",
+    "shield": "ESCUDO",
+    "breastplate": "ARMADURA",
+    "sandals": "VELOCIDAD"
+  },
+  "items": {
+    "sword": "Espada",
+    "belt": "Cinturón",
+    "helmet": "Casco",
+    "breastplate": "Coraza",
+    "sandals": "Sandalias",
+    "shield": "Escudo"
+  },
+  "demons": {
+    "Fear": "Miedo",
+    "Doubt": "Duda",
+    "Ignorance": "Ignorancia",
+    "Blindness": "Ceguera",
+    "Confusion": "Confusión",
+    "Strife": "Conflicto",
+    "Infirmity": "Enfermedad",
+    "Poverty": "Pobreza",
+    "Shame": "Vergüenza",
+    "Deception": "Engaño",
+    "Condemnation": "Condenación",
+    "Unbelief": "Incredulidad",
+    "Depression": "Depresión",
+    "Despair": "Desesperación",
+    "Pride": "Orgullo",
+    "Temptation": "Tentación",
+    "Swarm": "Enjambre"
+  },
+  "categories": {
+    "Faith": "Fe",
+    "Courage": "Valentía",
+    "Love": "Amor",
+    "Knowledge": "Conocimiento",
+    "Wisdom": "Sabiduría",
+    "Healing": "Sanidad",
+    "Forgiveness": "Perdón",
+    "Good News": "Buenas Nuevas",
+    "Focus": "Enfoque",
+    "Endurance": "Perseverancia",
+    "Hope": "Esperanza",
+    "Prophecy": "Profecía",
+    "Power": "Poder",
+    "Identity": "Identidad",
+    "Joy": "Gozo",
+    "Deliverance": "Liberación",
+    "Prosperity": "Prosperidad",
+    "Purity": "Pureza",
+    "Humility": "Humildad",
+    "Praise": "Alabanza",
+    "Prayer": "Oración"
+  },
+  "lobby": {
+    "title": "Demon Chase - Lobby",
+    "login": {
+      "header": "Demon Chase",
+      "usernamePlaceholder": "Introduce tu nombre de usuario",
+      "playOnline": "Jugar online",
+      "practiceSolo": "Practicar (Solo)",
+      "errorUsername": "Por favor, introduce un nombre de usuario",
+      "errorConnection": "Error de conexión"
+    },
+    "rooms": {
+      "header": "🎮 Salas de juego",
+      "noRooms": "No hay salas disponibles. ¡Crea una!",
+      "quickPlay": "⚡ Juego rápido",
+      "createRoom": "+ Crear sala",
+      "logout": "Cerrar sesión",
+      "inProgress": "[EN CURSO]"
+    },
+    "create": {
+      "header": "Crear sala",
+      "roomNamePlaceholder": "Nombre de la sala (opcional)",
+      "mapStyle": "Estilo de mapa:",
+      "monsterDifficulty": "Dificultad de monstruos:",
+      "quizBalance": "Equilibrio de preguntas:",
+      "quizPresetEasy": "Preguntas fáciles",
+      "quizPresetBalanced": "Equilibrado",
+      "quizPresetHard": "Preguntas difíciles",
+      "createAndJoin": "Crear y unirse",
+      "back": "← Atrás"
+    },
+    "room": {
+      "header": "Sala",
+      "leave": "Salir",
+      "readyUp": "Listo",
+      "notReady": "No listo",
+      "startGame": "Empezar juego"
+    }
+  },
+  "config": {
+    "gameSettings": "Ajustes del juego",
+    "difficulty": "Dificultad",
+    "speed": "Velocidad",
+    "mapStyle": "Estilo de mapa",
+    "quizConfiguration": "Configuración de preguntas",
+    "offlineMode": "Modo offline",
+    "privacyPolicy": "Política de privacidad",
+    "licensing": "Licencia y contribución",
+    "difficultyEasy": "Fácil",
+    "difficultyMedium": "Medio",
+    "difficultyHard": "Difícil",
+    "speedSlow": "Lento",
+    "speedNormal": "Normal",
+    "speedFast": "Rápido",
+    "languageHeader": "🌐 Idioma",
+    "comingSoon": "¡Más idiomas próximamente!",
+    "difficultyEasyDesc": "Monstruos más débiles",
+    "difficultyNormalDesc": "Combate equilibrado",
+    "difficultyHardDesc": "Combate intenso",
+    "quizPresetEasy": "Preguntas fáciles",
+    "quizPresetBalanced": "Equilibrado",
+    "quizPresetHard": "Preguntas difíciles",
+    "pageTitle": "Configurar ajustes de juego personalizado",
+    "tabBalance": "Equilibrio",
+    "tabLevels": "Niveles",
+    "tabContent": "Contenido",
+    "monsterHealth": "Salud",
+    "monsterDamage": "Daño",
+    "monsterSpeed": "Velocidad",
+    "spawning": "Generación",
+    "spawnRate": "Tasa de generación",
+    "maxMonsters": "Monstruos máx.",
+    "healingFreq": "Frec. curación",
+    "quizTotal": "Total: {0}%",
+    "qualities": "Cualidades",
+    "monsters": "Monstruos",
+    "spawnSettings": "Ajustes de generación",
+    "killToAdvance": "Derrotar para avanzar",
+    "spawnRateSec": "Tasa Gen. (seg)",
+    "uploadVerses": "Subir versículos",
+    "uploadPrompt": "Haz clic para subir CSV o JSON",
+    "uploadHint": "Columnas: Referencia, Texto, Categoría",
+    "orPasteJson": "O pegar JSON",
+    "pastePlaceholder": "[{\"Reference\":\"Juan 3:16\",\"Text\":\"Porque de tal manera amó Dios...\",\"Category\":\"Amor\"}]",
+    "loadPaste": "Cargar datos pegados",
+    "preview": "Previsualización",
+    "noCustomVerses": "No se han cargado versículos personalizados.<br>Usando versículos bíblicos por defecto.",
+    "useDefaultVerses": "Usar versículos por defecto",
+    "clearCustom": "Limpiar personalizados",
+    "downloadJson": "Descargar JSON",
+    "playWithSettings": "Jugar con estos ajustes",
+    "copyShareLink": "Copiar enlace para compartir",
+    "backToMenu": "Volver al menú",
+    "copied": "¡Copiado!",
+    "firstLetter": "Primera letra",
+    "missingWord": "Palabra faltante",
+    "categoryMatch": "Coincidencia de categoría",
+    "trueFalse": "Verdadero / Falso",
+    "cloze": "Cloze (Completar)",
+    "clozeDesc": "Completa los espacios en blanco"
+  },
+  "mapStyles": {
+    "classic": "Mazmorra clásica",
+    "narrow": "Caminos estrechos",
+    "labyrinth": "Laberinto complejo",
+    "open": "Llanuras abiertas",
+    "city": "Ciudad cuadrícula"
+  },
+  "tutorial": {
+    "pages": [
+      {
+        "title": "Bienvenido",
+        "content": "<h3>¿Qué es VerseBattles: Demon Chase?</h3><p>VerseBattles: Demon Chase es un juego de acción en el que luchas contra enemigos espirituales aprendiendo versículos de la Biblia. Los demonios te persiguen a través de las salas de la mazmorra.</p><p>¿Tu arma? <span class=\"highlight\">La Palabra de Dios.</span> Responde correctamente a las preguntas sobre los versículos para potenciar tus ataques y derrotar a los demonios.</p><h3>Consejo profesional: ¡Aprende los versículos primero!</h3><p>El secreto para ganar es <span class=\"highlight\">conocer tus versículos</span>. Usa el botón dorado <span class=\"highlight\">\"¡APRENDE VERSÍCULOS AQUÍ!\"</span> para estudiar y meditar en los versículos antes de la batalla. ¡Cuanto más conozcas la Palabra de Dios, más poderoso serás!</p>"
+      },
+      {
+        "title": "Objetivo y Movimiento",
+        "content": "<h3>Objetivo</h3><p>Derrota a suficientes monstruos en cada nivel para avanzar. Hay <span class=\"highlight\">5 niveles</span>, cada uno más difícil que el anterior. Elige entre 5 estilos de mapa: Mazmorra Clásica, Caminos Estrechos, Laberinto Complejo, Llanuras Abiertas y Ciudad Cuadrícula.</p><h3>Movimiento</h3><p><span class=\"highlight\">Toca o haz clic</span> en cualquier lugar del área de juego para mover a tu personaje allí. Tu personaje caminará hacia el objetivo automáticamente.</p><p>Te moverás a través de salas de mazmorras conectadas por pasillos. Las paredes bloquean tu camino — ¡encuentra las aberturas!</p>"
+      },
+      {
+        "title": "Combate",
+        "content": "<h3>Combate cuerpo a cuerpo</h3><p>Cuando te acercas a un demonio, el combate comienza automáticamente. Tú y el demonio intercambiáis golpes cada 0,7 segundos.</p><ul><li>Solo infliges daño si tu <span class=\"highlight\">última respuesta fue correcta</span></li><li>El demonio siempre devuelve el golpe (a menos que tengas un escudo)</li><li>Cada tipo de demonio tiene un daño máximo diferente</li></ul><h3>Disparar</h3><p><span class=\"highlight\">Toca un demonio</span> para dispararle un proyectil. Cada disparo cuesta 1 de munición. Gana más munición respondiendo correctamente a las preguntas (+5 por respuesta correcta).</p>"
+      },
+      {
+        "title": "Preguntas de versículos bíblicos",
+        "content": "<h3>Cómo funcionan las preguntas</h3><p>Siempre se muestra un versículo bíblico en la parte inferior de la pantalla con algunas palabras en blanco. Toca el botón que muestra las <span class=\"highlight\">primeras letras correctas</span> de las palabras que faltan.</p><h3>Por qué es importante</h3><ul><li><span class=\"highlight\">Respuesta correcta:</span> Tus ataques cuerpo a cuerpo infligen daño y ganas +5 de munición</li><li><span class=\"highlight\">Respuesta incorrecta:</span> Tus ataques no hacen nada hasta que aciertes la siguiente</li></ul><h3>Categorías de versículos</h3><p>Los versículos se agrupan por categorías como Fe, Valentía y Amor. <span class=\"highlight\">Toca el nombre de la categoría</span> en la parte superior de la pantalla para abrir el selector de categorías y elegir qué versículos quieres estudiar.</p>"
+      },
+      {
+        "title": "Objetos - Parte 1",
+        "content": "<h3>Puntos de curación</h3><p>Aparecen cruces verdes en la mazmorra. Pasa sobre ellas para <span class=\"highlight\">restaurar 25 de salud</span>. Pueden existir hasta 2 a la vez.</p><h3>Escudo de la Fe</h3><p>Aparece un diamante dorado una vez por nivel. Recógelo para añadirlo a tu inventario.</p><ul><li>Toca el botón <span class=\"key\">i</span> (arriba a la izquierda) para abrir tu inventario</li><li>Toca <span class=\"highlight\">Usar</span> para activar el escudo</li><li>Mientras esté activo (10 segundos), recibes <span class=\"highlight\">cero daño</span> de los demonios</li><li>Un resplandor dorado rodeará a tu personaje y un temporizador mostrará el tiempo restante</li></ul>"
+      },
+      {
+        "title": "Objetos - Parte 2",
+        "content": "<h3>Armadura de Dios</h3><p>Recoge piezas de la Armadura de Dios a medida que aparecen en la mazmorra:</p><ul><li><span class=\"highlight\">Espada del Espíritu</span> — mayor daño cuerpo a cuerpo</li><li><span class=\"highlight\">Cinturón de la Verdad</span> — protección adicional</li><li><span class=\"highlight\">Casco de la Salvación</span> — salud adicional</li><li><span class=\"highlight\">Coraza de la Justicia</span> — reducción de daño</li><li><span class=\"highlight\">Sandalias de la Paz</span> — aumento de la velocidad de movimiento</li></ul>"
+      },
+      {
+        "title": "Progresión del jugador",
+        "content": "<h3>Subir de nivel</h3><p>Derrotar demonios te otorga <span class=\"highlight\">10 XP</span> cada uno. A medida que ganas XP, el nivel de tu jugador aumenta:</p><ul><li>Mayor nivel = más salud máxima</li><li>Restauración completa de la salud al subir de nivel</li></ul>"
+      },
+      {
+        "title": "Niveles del juego",
+        "content": "<p>Hay <span class=\"highlight\">5 niveles de juego</span>. Derrota al 60% de los monstruos para avanzar:</p><ul><li><span class=\"highlight\">Nivel 1 (Mazmorra de piedra):</span> Miedo e Ignorancia — lentos, débiles</li><li><span class=\"highlight\">Nivel 2 (Mazmorra de tierra):</span> Conflicto, Confusión y Enfermedad — más rápidos, golpean más fuerte</li><li><span class=\"highlight\">Nivel 3 (Mazmorra de cristal):</span> Condenación, Incredulidad, Depresión y Duda — rápidos, peligrosos</li><li><span class=\"highlight\">Nivel 4 (Mazmorra de sombras):</span> Orgullo, Espíritu de letargo y Jezabel — más fuertes con habilidades especiales</li><li><span class=\"highlight\">Nivel 5 (Mazmorra infernal):</span> Todos los tipos de demonios — el desafío definitivo con salud escalable</li></ul><p>Cada nivel genera un nuevo diseño de mazmorra con un tema de color diferente.</p>"
+      },
+      {
+        "title": "Consejos",
+        "content": "<h3>Principales consejos</h3><ul><li><span class=\"highlight\">¡Aprende tus versículos primero!</span> Toca el botón dorado \"¡APRENDE VERSÍCULOS AQUÍ!\" para estudiar y meditar en los versículos; conocerlos bien es la clave para ganar de forma constante</li><li><span class=\"highlight\">Responde a la pregunta primero</span> antes de enfrentarte a un demonio; de lo contrario, tus ataques no servirán de nada</li><li>Usa los pasillos a tu favor — los demonios pueden quedarse atrapados en las paredes</li><li>Reserva tu Escudo de la Fe para combates difíciles con varios perseguidores</li><li>Dispara desde lejos para debilitar a los enemigos antes de entrar en combate cuerpo a cuerpo</li><li>Vigila tu contador de munición — sigue respondiendo preguntas para mantenerte abastecido</li></ul>"
+      },
+      {
+        "title": "Habilidades de los demonios",
+        "content": "<h3>Tipos de demonios</h3><ul><li><span class=\"highlight\">Perseguidores</span> — te siguen sin descanso</li><li><span class=\"highlight\">Errantes</span> — caminan al azar, pero igual te hacen daño si te acercas</li></ul><h3>Habilidades especiales (niveles posteriores)</h3><ul><li><span class=\"highlight\">Aura de congelación</span> — ralentiza tu movimiento cuando estás cerca</li><li><span class=\"highlight\">Armadura de orgullo</span> — reduce el daño recibido hasta que se rompe</li><li><span class=\"highlight\">Drenaje de espíritu</span> — te roba munición al golpearte</li><li><span class=\"highlight\">Carga de conflicto</span> — carga hacia ti con una ráfaga de velocidad</li></ul><p>¡Buena suerte, y que la Palabra sea tu espada!</p>"
+      }
+    ]
+  },
+  "quickStart": {
+    "title": "🎮 Cómo jugar",
+    "items": [
+      "📖 <strong>Aprende los versículos primero</strong> — usa \"¡Aprende versículos aquí!\" para estudiar",
+      "📍 <strong>Pulsa</strong> para mover a tu personaje",
+      "✝️ <strong>Responde preguntas</strong> para ganar munición y atacar",
+      "👹 <strong>Derrota a los demonios</strong> respondiendo correctamente!"
+    ],
+    "startingIn": "Empezando en {0}...",
+    "startNow": "Empezar ahora"
+  }
+}

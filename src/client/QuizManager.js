@@ -285,14 +285,16 @@
         const allOptions = [...qd.distractors.slice(0, 2), qd.correctCategory]
             .sort(() => Math.random() - 0.5);
 
+        const displayCategory = (typeof tCategory === 'function') ? tCategory : function(c) { return c; };
+
         return {
             mode: 'category_match',
             promptText: verse.Text,
             questionLabel: 'Which quality does this verse teach?',
             options: allOptions.map(function (opt) {
-                return { text: opt, isCorrect: opt === qd.correctCategory };
+                return { text: displayCategory(opt), isCorrect: opt === qd.correctCategory };
             }),
-            correctAnswer: qd.correctCategory
+            correctAnswer: displayCategory(qd.correctCategory)
         };
     }
 
@@ -307,6 +309,8 @@
         // 50% chance: show correct info, 50% chance: show false info
         const showCorrect = Math.random() < 0.5;
 
+        const displayCategory = (typeof tCategory === 'function') ? tCategory : function(c) { return c; };
+
         let claim, isTrue;
         // Randomly pick whether to test reference or category
         if (Math.random() < 0.5) {
@@ -317,7 +321,7 @@
         } else {
             // Test category
             const cat = showCorrect ? verse.Category : (qd.falseCategory || verse.Category);
-            claim = 'This verse is about ' + cat;
+            claim = 'This verse is about ' + displayCategory(cat);
             isTrue = showCorrect;
         }
 
