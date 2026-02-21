@@ -571,6 +571,32 @@ function applyConfig(config) {
         const gameConfig = GameConfig.createFromCustomBalance(config.balance, config.quizSettings || null);
         customLevelData = gameConfig.levelData;
         customMonsterHealthMultiplier = gameConfig.monsterHealthMultiplier;
+        
+        // Overlay per-level config from Levels tab (qualities, monsters, spawn settings)
+        if (config.levels && Array.isArray(config.levels)) {
+            config.levels.forEach(function(lvl, idx) {
+                var levelNum = idx + 1;
+                if (lvl && customLevelData[levelNum]) {
+                    if (lvl.qualities && lvl.qualities.length > 0) {
+                        customLevelData[levelNum].qualities = lvl.qualities;
+                    }
+                    if (lvl.monsters && lvl.monsters.length > 0) {
+                        customLevelData[levelNum].monsters = lvl.monsters;
+                    }
+                    if (lvl.monstersToKill) {
+                        customLevelData[levelNum].monstersToKill = lvl.monstersToKill;
+                    }
+                    if (lvl.maxMonsters) {
+                        customLevelData[levelNum].maxMonsters = lvl.maxMonsters;
+                    }
+                    if (lvl.spawnRate) {
+                        // Config stores seconds, game uses milliseconds
+                        customLevelData[levelNum].spawnRate = lvl.spawnRate * 1000;
+                    }
+                }
+            });
+        }
+        
         urlConfig = config;
         console.log('Custom config applied:', gameConfig);
         return true;
@@ -1360,6 +1386,15 @@ async function init() {
             QUALITIES = ALL_QUALITIES;
             verses = loadSelectedVerses();
             organizedVerses = organizeByCategory(verses);
+        }
+
+        // Apply level 1 qualities from custom config (if present)
+        // This must happen after ALL_QUALITIES is populated but before vQuality is picked
+        if (customLevelData && customLevelData[1] && customLevelData[1].qualities && customLevelData[1].qualities.length > 0) {
+            QUALITIES = customLevelData[1].qualities;
+            console.log('Custom level 1 qualities applied:', QUALITIES);
+        } else if (!QUALITIES || QUALITIES.length === 0) {
+            QUALITIES = ALL_QUALITIES;
         }
 
         vQuality = QUALITIES[Math.floor(Math.random() * QUALITIES.length)]; // Initial random quality

@@ -391,9 +391,10 @@
             qualityTotal[vQuality] = qualityTotal[vQuality] + 1;
             console.log(vQuality + " total correct is: " + qualityTotal[vQuality]);
 
-            // Auto-rotate quality every 3 correct answers
+            // Auto-rotate quality every 3 correct answers (restricted to level qualities)
             if (qualityTotal[vQuality] % 3 === 0) {
-                const availableQualities = Object.keys(organizedVerses).filter(function(q) {
+                const levelQualities = (typeof QUALITIES !== 'undefined' && QUALITIES.length > 0) ? QUALITIES : Object.keys(organizedVerses);
+                const availableQualities = levelQualities.filter(function(q) {
                     return q !== vQuality && organizedVerses[q] && organizedVerses[q].length > 0;
                 });
                 if (availableQualities.length > 0) {
@@ -483,10 +484,10 @@
             qualityTotal[vQuality] = qualityTotal[vQuality] + 1;
             console.log(vQuality + " total correct is: " + qualityTotal[vQuality]);
 
-            // Auto-rotate quality every 3 correct answers
+            // Auto-rotate quality every 3 correct answers (restricted to level qualities)
             if (qualityTotal[vQuality] % 3 === 0) {
-                // Pick a new random quality from qualities that have verses available
-                const availableQualities = Object.keys(organizedVerses).filter(q =>
+                const levelQualities = (typeof QUALITIES !== 'undefined' && QUALITIES.length > 0) ? QUALITIES : Object.keys(organizedVerses);
+                const availableQualities = levelQualities.filter(q =>
                     q !== vQuality &&
                     organizedVerses[q] &&
                     organizedVerses[q].length > 0
