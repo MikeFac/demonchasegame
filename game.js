@@ -1531,10 +1531,8 @@ async function init() {
                         duration: 1500
                     });
                 } else if (itemId === 'leave') {
-                    if (confirm('Leave this game? You must rejoin to play again.')) {
-                        network.sendLeaveGame();
-                        window.location.href = isSoloGame ? '/' : '/lobby';
-                    }
+                    network.sendLeaveGame();
+                    window.location.href = isSoloGame ? '/' : '/lobby';
                 }
             },
             onGameClick: (x, y) => {
