@@ -331,22 +331,17 @@ class InputHandler {
         if (typeof currentQuiz !== 'undefined' && currentQuiz && currentQuiz.mode === 'cloze' && 
             currentQuiz.letterOptions && !currentQuiz.isComplete && !currentQuiz.showFullAnswer) {
             
-            const qo = UILayout.quizOptions;
-            const buttonY = UILayout.getQuizButtonY(this.canvas.height);
-            const leftPadding = qo.startX;
-            const rightPadding = qo.rightPadding || 7;
             const canvasWidth = this.canvas.width;
 
+            // Must match letter button layout in Renderer.displayClozeOptions
+            const letterBtnHeight = 24;
+            const letterBtnWidth = 44;
+            const letterBtnSpacing = 5;
+            const letterY = this.canvas.height - letterBtnHeight - 6;
+
             const letterButtons = currentQuiz.letterOptions || [];
-            const letterBtnWidth = 50;
-            const letterBtnHeight = 28;
-            const letterBtnSpacing = 6;
             const totalButtonsWidth = letterButtons.length * letterBtnWidth + (letterButtons.length - 1) * letterBtnSpacing;
             const letterStartX = (canvasWidth - totalButtonsWidth) / 2;
-            
-            const lineHeight = 18;
-            const dotsHeight = 5 * 2 + 4;
-            const letterY = buttonY + lineHeight * 2 + dotsHeight + 8;
 
             for (let i = 0; i < letterButtons.length; i++) {
                 const letter = letterButtons[i];
