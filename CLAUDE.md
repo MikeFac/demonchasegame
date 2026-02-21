@@ -46,24 +46,12 @@ OPENROUTER_API_KEY=sk-... node scripts/generate_ai_quizzes.js --resume     # Ful
 
 ## Deployment
 
-SSH as root first (`ssh root@109.123.227.158`), then `su - dcgame` (dcgame user has no direct SSH access). App dir: `/var/www/dcgame.4you.tel`.
+See `docs/setup/deploying-updates.md` for full instructions.
 
-**To deploy (pull latest code):**
+**Quick deploy:**
 ```bash
-ssh root@109.123.227.158 "su - dcgame -c 'cd /var/www/dcgame.4you.tel && git pull'"
+ssh root@109.123.227.158 "su - dcgame -c 'cd /var/www/dcgame.4you.tel && git pull && pm2 restart dcgame-staging'"
 ```
-
-**To restart the app:**
-```bash
-ssh root@109.123.227.158 "kill \$(pgrep -f 'node /var/www/dcgame.4you.tel/server.js') && sleep 1"
-```
-
-**Or combined (pull + restart):**
-```bash
-ssh root@109.123.227.158 "su - dcgame -c 'cd /var/www/dcgame.4you.tel && git pull' && kill \$(pgrep -f 'node /var/www/dcgame.4you.tel/server.js')"
-```
-
-**Note:** The server runs as a direct Node.js process (not pm2) and auto-restarts via system process manager after being killed.
 
 ## Architecture
 
