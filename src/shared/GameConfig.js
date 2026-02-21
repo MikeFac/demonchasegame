@@ -141,11 +141,43 @@ function createGameConfig(presetName = 'normal', customQuizSettings = null) {
 }
 
 /**
+ * Apply per-level overrides (from Levels tab config) onto levelData.
+ * Mutates levelData in place.
+ * @param {Object} levelData - Level data keyed by level number
+ * @param {Array} levels - Array of per-level overrides (index 0 = level 1)
+ */
+function applyLevelOverrides(levelData, levels) {
+  if (!levels || !Array.isArray(levels)) return;
+  levels.forEach(function(lvl, idx) {
+    var levelNum = idx + 1;
+    if (lvl && levelData[levelNum]) {
+      if (lvl.qualities && lvl.qualities.length > 0) {
+        levelData[levelNum].qualities = lvl.qualities;
+      }
+      if (lvl.monsters && lvl.monsters.length > 0) {
+        levelData[levelNum].monsters = lvl.monsters;
+      }
+      if (lvl.monstersToKill) {
+        levelData[levelNum].monstersToKill = lvl.monstersToKill;
+      }
+      if (lvl.maxMonsters) {
+        levelData[levelNum].maxMonsters = lvl.maxMonsters;
+      }
+      if (lvl.spawnRate) {
+        // Config stores seconds, game uses milliseconds
+        levelData[levelNum].spawnRate = lvl.spawnRate * 1000;
+      }
+    }
+  });
+}
+
+/**
  * Create game config from custom balance multipliers (e.g. from URL config).
  * @param {Object} balance - { monsterHealth, monsterDamage, monsterSpeed, spawnRate, maxMonsters, healingFrequency }
  * @param {Object|null} customQuizSettings - Custom quiz balance, or null for defaults
+ * @param {Array|null} levelOverrides - Per-level overrides (qualities, monsters, spawn settings)
  */
-function createFromCustomBalance(balance, customQuizSettings) {
+function createFromCustomBalance(balance, customQuizSettings, levelOverrides) {
   // Map URL config balance keys to preset multiplier keys
   var m = {
     monsterHealth: balance.monsterHealth || 1.0,
@@ -173,6 +205,11 @@ function createFromCustomBalance(balance, customQuizSettings) {
     ? Object.assign({}, customQuizSettings)
     : Object.assign({}, DEFAULT_QUIZ_SETTINGS);
 
+  // Apply per-level overrides (monsters, qualities, spawn settings from Levels tab)
+  if (levelOverrides) {
+    applyLevelOverrides(levelData, levelOverrides);
+  }
+
   return {
     preset: 'custom',
     presetName: 'Custom',
@@ -193,6 +230,7 @@ var GameConfigExports = {
   DEFAULT_QUIZ_SETTINGS,
   QUIZ_BALANCE_PRESETS,
   validateQuizSettings,
+  applyLevelOverrides,
   createGameConfig,
   createFromCustomBalance,
   getPresetList: () => Object.keys(PRESETS).map(key => ({

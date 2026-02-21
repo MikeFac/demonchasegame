@@ -568,35 +568,10 @@ function applyConfig(config) {
     }
     
     if (typeof GameConfig !== 'undefined' && GameConfig.createFromCustomBalance) {
-        const gameConfig = GameConfig.createFromCustomBalance(config.balance, config.quizSettings || null);
+        const gameConfig = GameConfig.createFromCustomBalance(config.balance, config.quizSettings || null, config.levels || null);
         customLevelData = gameConfig.levelData;
         customMonsterHealthMultiplier = gameConfig.monsterHealthMultiplier;
-        
-        // Overlay per-level config from Levels tab (qualities, monsters, spawn settings)
-        if (config.levels && Array.isArray(config.levels)) {
-            config.levels.forEach(function(lvl, idx) {
-                var levelNum = idx + 1;
-                if (lvl && customLevelData[levelNum]) {
-                    if (lvl.qualities && lvl.qualities.length > 0) {
-                        customLevelData[levelNum].qualities = lvl.qualities;
-                    }
-                    if (lvl.monsters && lvl.monsters.length > 0) {
-                        customLevelData[levelNum].monsters = lvl.monsters;
-                    }
-                    if (lvl.monstersToKill) {
-                        customLevelData[levelNum].monstersToKill = lvl.monstersToKill;
-                    }
-                    if (lvl.maxMonsters) {
-                        customLevelData[levelNum].maxMonsters = lvl.maxMonsters;
-                    }
-                    if (lvl.spawnRate) {
-                        // Config stores seconds, game uses milliseconds
-                        customLevelData[levelNum].spawnRate = lvl.spawnRate * 1000;
-                    }
-                }
-            });
-        }
-        
+
         urlConfig = config;
         console.log('Custom config applied:', gameConfig);
         return true;
@@ -659,12 +634,12 @@ function startGame(mode, roomId) {
         canvas.style.display = 'block';
         
         init().then(() => {
-            // Use custom config settings - pass 'custom' as difficulty
+            // Use custom config settings - pass full urlConfig for level overrides
             const quizSettings = (urlConfigData.quizSettings && typeof urlConfigData.quizSettings === 'object')
                 ? urlConfigData.quizSettings
                 : getQuizSettingsFromSliders();
             const mapStyle = document.getElementById('mapStyleSelect') ? document.getElementById('mapStyleSelect').value : 'classic';
-            network.sendStartSoloGame('custom', quizSettings, 'normal', mapStyle);
+            network.sendStartSoloGame('custom', quizSettings, 'normal', mapStyle, urlConfigData);
             gameLoop();
         }).catch((error) => {
             console.error('Error initializing game:', error);

@@ -62,12 +62,13 @@ class LocalNetwork {
 
     /**
      * Start a local solo game. Creates and starts the GameEngine.
-     * @param {string} difficulty - 'easy', 'normal', or 'hard'
+     * @param {string} difficulty - 'easy', 'normal', or 'hard' (or 'custom')
      * @param {Object} quizSettings - Quiz mode distribution
      * @param {string} gameSpeed - 'slow', 'normal', or 'fast'
      * @param {string} mapStyle - Map generation style
+     * @param {Object} urlConfig - Full URL config with balance/levels overrides (optional)
      */
-    sendStartSoloGame(difficulty, quizSettings, gameSpeed, mapStyle) {
+    sendStartSoloGame(difficulty, quizSettings, gameSpeed, mapStyle, urlConfig) {
         if (difficulty === undefined) difficulty = 'normal';
         if (quizSettings === undefined) quizSettings = null;
         if (gameSpeed === undefined) gameSpeed = 'normal';
@@ -75,10 +76,15 @@ class LocalNetwork {
 
         var self = this;
 
-        // Create game config
-        var config = GameConfig.createGameConfig(difficulty);
-        if (quizSettings) {
-            config.quizSettings = quizSettings;
+        // Create game config — use custom balance if URL config provided
+        var config;
+        if (urlConfig && urlConfig.balance) {
+            config = GameConfig.createFromCustomBalance(urlConfig.balance, quizSettings, urlConfig.levels || null);
+        } else {
+            config = GameConfig.createGameConfig(difficulty);
+            if (quizSettings) {
+                config.quizSettings = quizSettings;
+            }
         }
         if (gameSpeed) {
             config.gameSpeed = gameSpeed === 'fast' ? 1.5 : (gameSpeed === 'slow' ? 0.75 : 1.0);

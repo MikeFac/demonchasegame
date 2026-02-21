@@ -97,7 +97,13 @@ io.on('connection', (socket) => {
     };
     const speedMultiplier = speedMultipliers[gameSpeed] || Constants.SPEED_NORMAL;
 
-    const gameConfig = GameConfig.createGameConfig(difficulty, quizSettings);
+    // Use custom balance if provided (from URL config), otherwise use preset
+    var gameConfig;
+    if (options.balance) {
+      gameConfig = GameConfig.createFromCustomBalance(options.balance, quizSettings, options.levels || null);
+    } else {
+      gameConfig = GameConfig.createGameConfig(difficulty, quizSettings);
+    }
     gameConfig.gameSpeed = gameSpeed;
     gameConfig.speedMultiplier = speedMultiplier;
     gameConfig.mapStyle = options.mapStyle || 'classic';

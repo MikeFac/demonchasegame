@@ -340,9 +340,14 @@ class Network {
      * @param {Object} quizSettings - Quiz mode distribution
      * @param {string} gameSpeed - 'slow', 'normal', or 'fast'
      */
-    sendStartSoloGame(difficulty = 'normal', quizSettings = null, gameSpeed = 'normal', mapStyle = 'classic') {
+    sendStartSoloGame(difficulty = 'normal', quizSettings = null, gameSpeed = 'normal', mapStyle = 'classic', urlConfig = null) {
         if (this.socket) {
-            this.socket.emit('startSoloGame', { difficulty, quizSettings, gameSpeed, mapStyle });
+            var data = { difficulty, quizSettings, gameSpeed, mapStyle };
+            if (urlConfig) {
+                data.balance = urlConfig.balance || null;
+                data.levels = urlConfig.levels || null;
+            }
+            this.socket.emit('startSoloGame', data);
         }
     }
 
