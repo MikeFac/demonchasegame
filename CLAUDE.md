@@ -80,9 +80,9 @@ ssh root@109.123.227.158 "su - dcgame -c 'cd /var/www/dcgame.4you.tel && git pul
 - `src/client/Renderer.js` — Canvas drawing (modular `drawXXX` methods)
 - `src/client/InputHandler.js` — Click handling, screen-to-world coord conversion, movement targets
 - `src/client/Network.js` — Socket.IO client wrapper
-- `src/client/QuizManager.js` — 4 quiz modes (firstLetter, missingWord, categoryMatch, trueFalse), weighted random selection via `quizSettings` sliders
+- `src/client/QuizManager.js` — 5 quiz modes (firstLetter, missingWord, categoryMatch, trueFalse, cloze), weighted random selection via `quizSettings` sliders
 - `src/client/ReviewMode.js` — Verse review/study screen
-- `src/client/UILayout.js` — Centralized UI positioning constants
+- `src/client/UILayout.js` — Centralized UI positioning constants (category indicator, category picker popup, quiz options, inventory, verse test button, hamburger menu)
 
 ### Shared (src/shared/)
 - `Constants.js` — Game constants loaded via `require()` on server and `<script>` tag on client (sets `window.Constants`)
@@ -98,7 +98,9 @@ ssh root@109.123.227.158 "su - dcgame -c 'cd /var/www/dcgame.4you.tel && git pul
 
 **Collectibles**: Server spawns items in gameState arrays, broadcasts via state updates. Client checks proximity and sends collection event. Server removes item. Used for healingPoints and shieldPoints.
 
-**Click handling**: InputHandler checks UI buttons first (quality, quiz), then playable game area. `onGameClick(x,y)` receives screen coords (not world). Playable area starts at y=66px (`QUALITY_LINE_HEIGHT + BUTTON_HEIGHT`).
+**Click handling**: InputHandler checks overlays first (category picker, game-over modal, goals), then top bar elements (hamburger menu, category indicator), then quiz buttons, then playable game area. `onGameClick(x,y)` receives screen coords (not world). Playable area starts at y=66px (`QUALITY_LINE_HEIGHT + BUTTON_HEIGHT`).
+
+**Category system**: Players tap the category name (e.g. "Faith ▼") in the top bar to open a full-screen picker popup listing all available categories in a 2-column grid. The selected category persists until the player changes it. State managed via `categoryPickerOpen` boolean in game.js, rendered by `Renderer.drawCategoryPicker()`, click-handled in `InputHandler._handleGameModeClick()`.
 
 **Room isolation**: Each game (solo or multiplayer) gets its own Game instance. Solo players get room ID `solo-{socketId}`. Broadcasts use `io.to('room:roomId').emit()`.
 
@@ -106,14 +108,14 @@ ssh root@109.123.227.158 "su - dcgame -c 'cd /var/www/dcgame.4you.tel && git pul
 
 **Two-axis difficulty system**: Monster difficulty and quiz balance are **independent**. Room hosts configure both when creating multiplayer rooms:
 - **Monster Difficulty** (Easy/Normal/Hard): Scales monster health, spawn rate, healing frequency via multipliers in `GameConfig.js`. Does NOT affect quiz types.
-- **Quiz Balance** (custom sliders): Controls distribution of 4 quiz modes (First Letter/Missing Word/Category Match/True-False). Must sum to 100%. Quick presets available (Easy Quizzes/Balanced/Hard Quizzes). Stored in `room.settings.quizSettings`, broadcast to all clients via `gameConfig` socket event.
+- **Quiz Balance** (custom sliders): Controls distribution of 5 quiz modes (First Letter/Missing Word/Category Match/True-False/Cloze). Must sum to 100%. Quick presets available (Easy Quizzes/Balanced/Hard Quizzes). Stored in `room.settings.quizSettings`, broadcast to all clients via `gameConfig` socket event.
 - Game.js constructor accepts `gameConfig` parameter containing both (defaults to Normal monsters + Balanced quizzes for solo games).
 - In multiplayer, server is source of truth for quiz settings — client sliders become read-only.
 
 ## Important Gotchas
 
 - **`let`/`const` are NOT on `window`**: Client modules use IIFE pattern. Do NOT access via `window.varName` — the global lexical scope is shared across `<script>` tags, so just use variable names directly.
-- **Canvas is 400px wide** (max 700px height). The HTML canvas element is 800x600 with CSS scaling. UI elements positioned beyond 400px will be off-screen.
+- **Canvas is 400px wide** (max 600px height, or `window.innerHeight - 80` on shorter screens). The HTML canvas element starts at 800x600 but is resized by game.js. UI elements positioned beyond 400px will be off-screen.
 - **`addPlayer()` registers socket handlers** — called 500ms after socket connect (server.js timeout).
 - **Client player dimensions** come from the loaded player image and are preserved during gameState sync — don't overwrite them.
 - **Shield/inventory images may not exist** — always provide fallback rendering.
