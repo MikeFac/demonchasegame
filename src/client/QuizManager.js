@@ -47,6 +47,133 @@
         return 'first_letter';
     }
 
+    // --- Auto-generation helpers for custom verses without quizData ---
+
+    const STOP_WORDS = new Set([
+        'the', 'and', 'for', 'that', 'this', 'with', 'from', 'have', 'been',
+        'their', 'would', 'could', 'which', 'about', 'after', 'before', 'into',
+        'through', 'under', 'these', 'those', 'your', 'will', 'shall', 'when',
+        'where', 'what', 'there', 'then', 'than', 'them', 'they', 'some', 'such',
+        'only', 'also', 'just', 'even', 'more', 'most', 'very', 'much', 'many',
+        'not', 'but', 'all', 'are', 'was', 'were', 'has', 'had', 'his', 'her',
+        'who', 'how', 'its', 'our', 'you', 'him', 'she', 'may', 'can', 'did',
+        'unto', 'upon', 'hath', 'doth', 'art', 'thy', 'thee', 'thou', 'mine',
+        'thine', 'saith', 'said', 'came', 'come', 'gone', 'went', 'made'
+    ]);
+
+    // Common biblical words to use as fallback distractors
+    const BIBLICAL_WORDS = [
+        'righteousness', 'salvation', 'mercy', 'grace', 'truth', 'spirit',
+        'heaven', 'earth', 'glory', 'peace', 'strength', 'light', 'darkness',
+        'faith', 'hope', 'love', 'wisdom', 'power', 'blessed', 'eternal',
+        'covenant', 'promise', 'kingdom', 'temple', 'praise', 'worship'
+    ];
+
+    function getSignificantWords(text) {
+        return text.split(/\s+/)
+            .map(function (w) { return w.replace(/[.,;:!?'"()-]/g, ''); })
+            .filter(function (w) { return w.length >= 5 && !STOP_WORDS.has(w.toLowerCase()); });
+    }
+
+    function autoGenerateMissingWord(verse) {
+        var words = verse.Text.split(/\s+/);
+        var candidates = [];
+
+        for (var i = 0; i < words.length; i++) {
+            var clean = words[i].replace(/[.,;:!?'"()-]/g, '');
+            if (clean.length >= 5 && !STOP_WORDS.has(clean.toLowerCase())) {
+                candidates.push({ word: clean, index: i });
+            }
+        }
+
+        if (candidates.length === 0) return null;
+
+        // Pick a random significant word
+        var picked = candidates[Math.floor(Math.random() * candidates.length)];
+        var question = words.slice();
+        question[picked.index] = '_____';
+
+        // Build distractors from other verses or biblical words
+        var distractors = [];
+        var usedWords = new Set([picked.word.toLowerCase()]);
+
+        // Try to get words from other verses in organizedVerses
+        if (typeof organizedVerses !== 'undefined') {
+            var allCategories = Object.keys(organizedVerses);
+            for (var c = 0; c < allCategories.length && distractors.length < 3; c++) {
+                var catVerses = organizedVerses[allCategories[c]];
+                if (!catVerses) continue;
+                for (var v = 0; v < catVerses.length && distractors.length < 3; v++) {
+                    var sigWords = getSignificantWords(catVerses[v].Text);
+                    for (var w = 0; w < sigWords.length && distractors.length < 3; w++) {
+                        if (!usedWords.has(sigWords[w].toLowerCase())) {
+                            usedWords.add(sigWords[w].toLowerCase());
+                            distractors.push(sigWords[w]);
+                        }
+                    }
+                }
+            }
+        }
+
+        // Fill remaining from biblical words
+        for (var b = 0; b < BIBLICAL_WORDS.length && distractors.length < 3; b++) {
+            if (!usedWords.has(BIBLICAL_WORDS[b])) {
+                distractors.push(BIBLICAL_WORDS[b]);
+            }
+        }
+
+        var options = distractors.slice(0, 3).concat([picked.word]).sort(function () { return Math.random() - 0.5; });
+
+        return {
+            question: question.join(' '),
+            answer: picked.word,
+            options: options
+        };
+    }
+
+    function autoGenerateCategoryMatch(verse) {
+        var allQualities = (typeof ALL_QUALITIES !== 'undefined' && ALL_QUALITIES.length > 0) ? ALL_QUALITIES : [];
+        if (allQualities.length < 2) return null;
+
+        var others = allQualities.filter(function (q) { return q !== verse.Category; });
+        // Shuffle and pick 2
+        for (var i = others.length - 1; i > 0; i--) {
+            var j = Math.floor(Math.random() * (i + 1));
+            var tmp = others[i]; others[i] = others[j]; others[j] = tmp;
+        }
+
+        return {
+            correctCategory: verse.Category,
+            distractors: others.slice(0, 2)
+        };
+    }
+
+    function autoGenerateTrueFalse(verse) {
+        var allQualities = (typeof ALL_QUALITIES !== 'undefined' && ALL_QUALITIES.length > 0) ? ALL_QUALITIES : [];
+        var falseCategory = verse.Category;
+        var others = allQualities.filter(function (q) { return q !== verse.Category; });
+        if (others.length > 0) {
+            falseCategory = others[Math.floor(Math.random() * others.length)];
+        }
+
+        // Generate false reference: same book, different chapter:verse
+        var refParts = verse.Reference.match(/^(.+?)\s+(\d+):(\d+)$/);
+        var falseReference = verse.Reference;
+        if (refParts) {
+            var book = refParts[1];
+            var chapter = parseInt(refParts[2], 10);
+            var verseNum = parseInt(refParts[3], 10);
+            var newChapter = chapter + Math.floor(Math.random() * 3) + 1;
+            var newVerse = Math.max(1, verseNum + Math.floor(Math.random() * 10) - 5);
+            falseReference = book + ' ' + newChapter + ':' + newVerse;
+        }
+
+        return {
+            falseCategory: falseCategory,
+            falseReference: falseReference
+        };
+    }
+
     // --- Quiz Generators ---
 
     // 1. First Letter mode (original logic from processVerse/generateQuiz)
@@ -127,12 +254,13 @@
         return [testVerse, firstLetters, shuffledOptions];
     }
 
-    // 2. Missing Word mode (uses AI-generated quizData.missingWord)
+    // 2. Missing Word mode (uses AI-generated quizData.missingWord or auto-generates)
     function generateMissingWordQuiz(verse) {
-        const qd = verse.quizData && verse.quizData.missingWord;
+        let qd = verse.quizData && verse.quizData.missingWord;
         if (!qd || !qd.answer || !qd.options || !qd.question) {
-            // Fallback to first letter if data missing
-            return generateFirstLetterQuiz(verse);
+            // Auto-generate for custom verses without quizData
+            qd = autoGenerateMissingWord(verse);
+            if (!qd) return generateFirstLetterQuiz(verse);
         }
 
         return {
@@ -146,11 +274,12 @@
         };
     }
 
-    // 3. Category Match mode (uses quizData.categoryMatch with fake ungodly distractors)
+    // 3. Category Match mode (uses quizData.categoryMatch or auto-generates)
     function generateCategoryMatchQuiz(verse) {
-        const qd = verse.quizData && verse.quizData.categoryMatch;
+        let qd = verse.quizData && verse.quizData.categoryMatch;
         if (!qd || !qd.correctCategory || !qd.distractors) {
-            return generateFirstLetterQuiz(verse);
+            qd = autoGenerateCategoryMatch(verse);
+            if (!qd) return generateFirstLetterQuiz(verse);
         }
 
         const allOptions = [...qd.distractors.slice(0, 2), qd.correctCategory]
@@ -167,11 +296,12 @@
         };
     }
 
-    // 4. True/False mode (uses quizData.trueFalse)
+    // 4. True/False mode (uses quizData.trueFalse or auto-generates)
     function generateTrueFalseQuiz(verse) {
-        const qd = verse.quizData && verse.quizData.trueFalse;
+        let qd = verse.quizData && verse.quizData.trueFalse;
         if (!qd) {
-            return generateFirstLetterQuiz(verse);
+            qd = autoGenerateTrueFalse(verse);
+            if (!qd) return generateFirstLetterQuiz(verse);
         }
 
         // 50% chance: show correct info, 50% chance: show false info

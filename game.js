@@ -587,7 +587,8 @@ function setLevelData(gameState) {
     console.log("Number of levels:", numLevels, customLevelData ? "(custom)" : "(default)");
     if (numLevels >= gameState.gameLevel) {
         const levelConfig = activeLevelData[gameState.gameLevel];
-        QUALITIES = levelConfig.qualities;
+        // Filter qualities to only include categories that exist in the content
+        QUALITIES = levelConfig.qualities.filter(function (q) { return ALL_QUALITIES.includes(q); });
         if (QUALITIES.length === 0) {
             QUALITIES = ALL_QUALITIES;
         }
@@ -1346,7 +1347,14 @@ async function init() {
         // this might get replaced in PRD on the server - check
         ALL_QUALITIES = ['Faith', 'Courage', 'Knowledge', 'Love', 'Wisdom', 'Healing', 'Joy', 'Focus', 'Prosperity', 'Purity', 'Humility', 'Forgiveness', 'Hope', 'Praise', 'Prayer', 'Endurance', 'Good News', 'Identity', 'Deliverance', 'Power', 'Prophecy'];
 
-        if (PRD) {
+        // Check for custom content from URL config
+        if (urlConfig && urlConfig.content && urlConfig.content.source === 'custom' && urlConfig.content.verses && urlConfig.content.verses.length > 0) {
+            verses = urlConfig.content.verses;
+            organizedVerses = organizeByCategory(verses);
+            ALL_QUALITIES = Object.keys(organizedVerses);
+            QUALITIES = ALL_QUALITIES;
+            console.log('Custom content loaded:', verses.length, 'verses in categories:', ALL_QUALITIES);
+        } else if (PRD) {
             try {
                 await loadVerses();
                 // Continue with game initialization using organizedVerses
@@ -1356,7 +1364,7 @@ async function init() {
             } catch (error) {
                 console.error('Failed to initialize game:', error);
             }
-            // otherwise load it locally       
+            // otherwise load it locally
         } else {
             QUALITIES = ALL_QUALITIES;
             verses = loadSelectedVerses();

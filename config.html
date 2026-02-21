@@ -272,6 +272,94 @@
       outline: none;
       border-color: #4a90e2;
     }
+
+    /* Content Tab */
+    .content-upload-area {
+      border: 2px dashed rgba(255, 255, 255, 0.2);
+      border-radius: 8px;
+      padding: 15px;
+      text-align: center;
+      cursor: pointer;
+      transition: border-color 0.2s;
+      margin-bottom: 10px;
+    }
+
+    .content-upload-area:hover {
+      border-color: #4a90e2;
+    }
+
+    .content-upload-area input[type="file"] {
+      display: none;
+    }
+
+    .content-upload-area p {
+      color: #a8c5e6;
+      font-size: 0.85em;
+      margin-bottom: 6px;
+    }
+
+    .content-upload-area .upload-hint {
+      color: #666;
+      font-size: 0.75em;
+    }
+
+    textarea.content-paste {
+      width: 100%;
+      min-height: 80px;
+      padding: 8px;
+      border-radius: 6px;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      background: rgba(0, 0, 0, 0.3);
+      color: #fff;
+      font-family: monospace;
+      font-size: 0.8em;
+      resize: vertical;
+    }
+
+    textarea.content-paste:focus {
+      outline: none;
+      border-color: #4a90e2;
+    }
+
+    .content-preview-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.8em;
+    }
+
+    .content-preview-table th,
+    .content-preview-table td {
+      padding: 4px 8px;
+      text-align: left;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .content-preview-table th {
+      color: #a8c5e6;
+      font-weight: 600;
+    }
+
+    .content-stats {
+      font-size: 0.8em;
+      color: #a8c5e6;
+      margin-top: 8px;
+    }
+
+    .content-stats .warning {
+      color: #e94560;
+    }
+
+    .content-btn-row {
+      display: flex;
+      gap: 6px;
+      margin-top: 8px;
+    }
+
+    .content-btn-row .btn-secondary {
+      flex: 1;
+      padding: 8px;
+      font-size: 0.8em;
+    }
   </style>
 </head>
 
@@ -401,7 +489,33 @@
     <!-- Content Tab (Phase 5) -->
     <div id="tab-content" class="tab-content">
       <div class="config-section">
-        <p class="placeholder-msg">Custom content coming soon.<br>Upload your own verses via CSV or JSON.</p>
+        <h3>Upload Verses</h3>
+        <div class="content-upload-area" id="uploadArea">
+          <p>Click to upload CSV or JSON</p>
+          <span class="upload-hint">Columns: Reference, Text, Category</span>
+          <input type="file" id="contentFileInput" accept=".csv,.json">
+        </div>
+      </div>
+
+      <div class="config-section">
+        <h3>Or Paste JSON</h3>
+        <textarea class="content-paste" id="contentPasteArea" placeholder='[{"Reference":"John 3:16","Text":"For God so loved...","Category":"Love"}]'></textarea>
+        <div class="content-btn-row">
+          <button class="btn-secondary" id="btnLoadPaste">Load Pasted Data</button>
+        </div>
+      </div>
+
+      <div class="config-section">
+        <h3>Preview</h3>
+        <div id="contentPreview">
+          <p class="placeholder-msg">No custom verses loaded.<br>Using default Bible verses.</p>
+        </div>
+        <div class="content-stats" id="contentStats" style="display:none;"></div>
+        <div class="content-btn-row" id="contentActions" style="display:none;">
+          <button class="btn-secondary" id="btnLoadDefaults">Use Default Verses</button>
+          <button class="btn-secondary" id="btnClearContent">Clear Custom</button>
+          <button class="btn-secondary" id="btnDownloadJson">Download JSON</button>
+        </div>
       </div>
     </div>
 
@@ -544,6 +658,12 @@
           spawnRate: levelConfigs[i].spawnRate
         });
       }
+      // Content tab
+      if (customContentSource === 'custom' && customVerses.length > 0) {
+        config.content = { source: 'custom', verses: customVerses };
+      } else {
+        config.content = { source: 'default', verses: [] };
+      }
       return config;
     }
 
@@ -667,6 +787,224 @@
         }
       });
       populateLevelUI(currentLevel);
+    }
+
+    // ========== CONTENT TAB ==========
+
+    var customVerses = [];
+    var customContentSource = 'default';
+
+    // CSV parser
+    function parseCSVLine(line) {
+      var values = [];
+      var current = '';
+      var inQuotes = false;
+      for (var i = 0; i < line.length; i++) {
+        var ch = line[i];
+        if (inQuotes) {
+          if (ch === '"') {
+            if (i + 1 < line.length && line[i + 1] === '"') {
+              current += '"';
+              i++;
+            } else {
+              inQuotes = false;
+            }
+          } else {
+            current += ch;
+          }
+        } else {
+          if (ch === '"') {
+            inQuotes = true;
+          } else if (ch === ',') {
+            values.push(current.trim());
+            current = '';
+          } else {
+            current += ch;
+          }
+        }
+      }
+      values.push(current.trim());
+      return values;
+    }
+
+    function parseCSV(text) {
+      var lines = text.trim().split('\n');
+      if (lines.length < 2) return [];
+      var headers = parseCSVLine(lines[0]);
+      var verses = [];
+      for (var i = 1; i < lines.length; i++) {
+        if (!lines[i].trim()) continue;
+        var values = parseCSVLine(lines[i]);
+        if (values.length < headers.length) continue;
+        var row = {};
+        headers.forEach(function (h, idx) { row[h.trim()] = values[idx] || ''; });
+        if (row.Reference && row.Text && row.Category) {
+          verses.push({ Reference: row.Reference, Text: row.Text, Category: row.Category });
+        }
+      }
+      return verses;
+    }
+
+    function loadContentFromText(text, filename) {
+      var verses = [];
+      var ext = filename ? filename.split('.').pop().toLowerCase() : '';
+
+      if (ext === 'json' || text.trim().startsWith('[')) {
+        try {
+          var parsed = JSON.parse(text);
+          if (Array.isArray(parsed)) {
+            verses = parsed.filter(function (v) { return v.Reference && v.Text && v.Category; });
+          }
+        } catch (e) {
+          alert('Invalid JSON: ' + e.message);
+          return;
+        }
+      } else {
+        verses = parseCSV(text);
+      }
+
+      if (verses.length === 0) {
+        alert('No valid verses found. Expected columns: Reference, Text, Category');
+        return;
+      }
+
+      customVerses = verses;
+      customContentSource = 'custom';
+      updateContentPreview();
+      syncCategoriesToLevels();
+    }
+
+    function updateContentPreview() {
+      var preview = document.getElementById('contentPreview');
+      var stats = document.getElementById('contentStats');
+      var actions = document.getElementById('contentActions');
+
+      if (customContentSource === 'default' || customVerses.length === 0) {
+        preview.innerHTML = '<p class="placeholder-msg">No custom verses loaded.<br>Using default Bible verses.</p>';
+        stats.style.display = 'none';
+        actions.style.display = 'none';
+        return;
+      }
+
+      // Build category summary
+      var categories = {};
+      customVerses.forEach(function (v) {
+        categories[v.Category] = (categories[v.Category] || 0) + 1;
+      });
+
+      var html = '<table class="content-preview-table"><tr><th>Category</th><th>Verses</th></tr>';
+      Object.keys(categories).sort().forEach(function (cat) {
+        html += '<tr><td>' + cat + '</td><td>' + categories[cat] + '</td></tr>';
+      });
+      html += '</table>';
+      preview.innerHTML = html;
+
+      // Stats + warnings
+      var totalVerses = customVerses.length;
+      var statsHtml = 'Total: ' + totalVerses + ' verses in ' + Object.keys(categories).length + ' categories';
+
+      // Check encoded size
+      var testConfig = ConfigEncoder.getDefault();
+      testConfig.content = { source: 'custom', verses: customVerses };
+      var encoded = ConfigEncoder.encode(testConfig);
+      var urlSize = encoded.length;
+      if (urlSize > 8000) {
+        statsHtml += '<br><span class="warning">URL size: ~' + Math.round(urlSize / 1024) + 'KB — consider using Download JSON for large sets</span>';
+      }
+      if (totalVerses > 500) {
+        statsHtml += '<br><span class="warning">Large dataset (' + totalVerses + ' verses) — may cause slow URL encoding</span>';
+      }
+
+      stats.innerHTML = statsHtml;
+      stats.style.display = 'block';
+      actions.style.display = 'flex';
+    }
+
+    function syncCategoriesToLevels() {
+      if (customContentSource !== 'custom' || customVerses.length === 0) return;
+
+      // Extract unique categories from custom verses
+      var catSet = {};
+      customVerses.forEach(function (v) { catSet[v.Category] = true; });
+      var customCategories = Object.keys(catSet).sort();
+
+      // Update ALL_QUALITIES to match custom content
+      ALL_QUALITIES = customCategories;
+
+      // Distribute categories across levels (round-robin)
+      for (var lv = 1; lv <= 5; lv++) {
+        var lvQualities = [];
+        for (var i = 0; i < customCategories.length; i++) {
+          if (i % 5 === (lv - 1) || customCategories.length <= 5) {
+            lvQualities.push(customCategories[i]);
+          }
+        }
+        // Ensure at least one quality per level
+        if (lvQualities.length === 0) {
+          lvQualities = customCategories.slice();
+        }
+        levelConfigs[lv].qualities = lvQualities;
+      }
+
+      populateLevelUI(currentLevel);
+    }
+
+    function clearCustomContent() {
+      customVerses = [];
+      customContentSource = 'default';
+      // Restore default qualities
+      ALL_QUALITIES = [
+        'Faith', 'Courage', 'Knowledge', 'Love', 'Wisdom', 'Healing',
+        'Forgiveness', 'Good News', 'Focus', 'Endurance', 'Hope', 'Prophecy',
+        'Power', 'Identity'
+      ];
+      levelConfigs = JSON.parse(JSON.stringify(DEFAULT_LEVELS));
+      populateLevelUI(currentLevel);
+      updateContentPreview();
+    }
+
+    // File upload
+    var uploadArea = document.getElementById('uploadArea');
+    var fileInput = document.getElementById('contentFileInput');
+
+    uploadArea.addEventListener('click', function () { fileInput.click(); });
+    fileInput.addEventListener('change', function () {
+      var file = fileInput.files[0];
+      if (!file) return;
+      var reader = new FileReader();
+      reader.onload = function (e) {
+        loadContentFromText(e.target.result, file.name);
+      };
+      reader.readAsText(file);
+    });
+
+    // Paste area
+    document.getElementById('btnLoadPaste').addEventListener('click', function () {
+      var text = document.getElementById('contentPasteArea').value.trim();
+      if (!text) { alert('Paste JSON or CSV data first'); return; }
+      loadContentFromText(text, 'pasted.json');
+    });
+
+    // Action buttons
+    document.getElementById('btnLoadDefaults').addEventListener('click', clearCustomContent);
+    document.getElementById('btnClearContent').addEventListener('click', clearCustomContent);
+    document.getElementById('btnDownloadJson').addEventListener('click', function () {
+      var json = JSON.stringify(customVerses, null, 2);
+      var blob = new Blob([json], { type: 'application/json' });
+      var url = URL.createObjectURL(blob);
+      var a = document.createElement('a');
+      a.href = url;
+      a.download = 'custom-verses.json';
+      a.click();
+      URL.revokeObjectURL(url);
+    });
+
+    // Load content from URL config if present
+    if (existingConfig && existingConfig.content && existingConfig.content.source === 'custom' && existingConfig.content.verses) {
+      customVerses = existingConfig.content.verses;
+      customContentSource = 'custom';
+      updateContentPreview();
+      syncCategoriesToLevels();
     }
   </script>
 </body>
