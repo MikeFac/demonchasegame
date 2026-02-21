@@ -140,12 +140,61 @@ function createGameConfig(presetName = 'normal', customQuizSettings = null) {
   };
 }
 
+/**
+ * Create game config from custom balance multipliers (e.g. from URL config).
+ * @param {Object} balance - { monsterHealth, monsterDamage, monsterSpeed, spawnRate, maxMonsters, healingFrequency }
+ * @param {Object|null} customQuizSettings - Custom quiz balance, or null for defaults
+ */
+function createFromCustomBalance(balance, customQuizSettings) {
+  // Map URL config balance keys to preset multiplier keys
+  var m = {
+    monsterHealth: balance.monsterHealth || 1.0,
+    monsterDamage: balance.monsterDamage || 1.0,
+    monsterSpeed: balance.monsterSpeed || 1.0,
+    spawnRate: balance.spawnRate || 1.0,
+    maxMonsters: balance.maxMonsters || 1.0,
+    healingSpawnRate: balance.healingFrequency || 1.0
+  };
+
+  var levelData = {};
+  for (var level in LevelConfig.levelData) {
+    if (!LevelConfig.levelData.hasOwnProperty(level)) continue;
+    var data = LevelConfig.levelData[level];
+    levelData[level] = Object.assign({}, data, {
+      monsterDamageFactor: data.monsterDamageFactor * m.monsterDamage,
+      monsterSpeed: Math.round(data.monsterSpeed * m.monsterSpeed),
+      playerSpeed: data.playerSpeed,
+      spawnRate: Math.round(data.spawnRate * m.spawnRate),
+      maxMonsters: Math.round(data.maxMonsters * m.maxMonsters)
+    });
+  }
+
+  var quizSettings = (customQuizSettings && validateQuizSettings(customQuizSettings))
+    ? Object.assign({}, customQuizSettings)
+    : Object.assign({}, DEFAULT_QUIZ_SETTINGS);
+
+  return {
+    preset: 'custom',
+    presetName: 'Custom',
+    description: 'Custom game configuration',
+    constants: Object.assign({}, Constants, {
+      MAX_HEALING_POINTS: Math.round(Constants.MAX_HEALING_POINTS * m.healingSpawnRate),
+      HEALING_SPAWN_INTERVAL: Math.round(30000 * m.healingSpawnRate)
+    }),
+    levelData: levelData,
+    multipliers: m,
+    monsterHealthMultiplier: m.monsterHealth,
+    quizSettings: quizSettings
+  };
+}
+
 var GameConfigExports = {
   PRESETS,
   DEFAULT_QUIZ_SETTINGS,
   QUIZ_BALANCE_PRESETS,
   validateQuizSettings,
   createGameConfig,
+  createFromCustomBalance,
   getPresetList: () => Object.keys(PRESETS).map(key => ({
     id: key,
     name: PRESETS[key].name,

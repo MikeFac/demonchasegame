@@ -194,6 +194,12 @@ let levelAdvanceTimer = null;
 // Level config shared between client and server (loaded via script tag)
 const levelData = LevelConfig.levelData;
 
+// Custom config from URL or localStorage (for solo/offline games only)
+let urlConfig = null;
+let customLevelData = null;
+let customMonsterHealthMultiplier = 1.0;
+const LOCAL_STORAGE_CONFIG_KEY = 'versebattles_custom_config';
+
 let QUALITIES;
 let ALL_QUALITIES;
 // gameCategory variable is taken from index.php?category=Whatever
@@ -513,11 +519,73 @@ async function loadVerses() {
     }
 }
 
+// === Custom Config Loading (from URL or localStorage) ===
+
+function loadUrlConfig() {
+    if (typeof ConfigEncoder === 'undefined') {
+        console.log('ConfigEncoder not available');
+        return null;
+    }
+    
+    const config = ConfigEncoder.getFromURL();
+    if (!config) {
+        console.log('No URL config found');
+        return null;
+    }
+    
+    console.log('Found URL config:', config);
+    return config;
+}
+
+function loadSavedConfig() {
+    try {
+        const saved = localStorage.getItem(LOCAL_STORAGE_CONFIG_KEY);
+        if (saved) {
+            const config = JSON.parse(saved);
+            console.log('Loaded saved config from localStorage:', config);
+            return config;
+        }
+    } catch (e) {
+        console.warn('Failed to load saved config:', e);
+    }
+    return null;
+}
+
+function saveConfig(config) {
+    if (!config) return;
+    try {
+        localStorage.setItem(LOCAL_STORAGE_CONFIG_KEY, JSON.stringify(config));
+        console.log('Config saved to localStorage');
+    } catch (e) {
+        console.warn('Failed to save config:', e);
+    }
+}
+
+function applyConfig(config) {
+    if (!config || !config.balance) {
+        console.log('No valid config to apply');
+        return false;
+    }
+    
+    if (typeof GameConfig !== 'undefined' && GameConfig.createFromCustomBalance) {
+        const gameConfig = GameConfig.createFromCustomBalance(config.balance, config.quizSettings || null);
+        customLevelData = gameConfig.levelData;
+        customMonsterHealthMultiplier = gameConfig.monsterHealthMultiplier;
+        urlConfig = config;
+        console.log('Custom config applied:', gameConfig);
+        return true;
+    }
+    
+    console.warn('GameConfig.createFromCustomBalance not available');
+    return false;
+}
+
 function setLevelData(gameState) {
-    const numLevels = Object.keys(levelData).length;
-    console.log("Number of levels:", numLevels);
+    const activeLevelData = customLevelData || levelData;
+    const numLevels = Object.keys(activeLevelData).length;
+    console.log("Number of levels:", numLevels, customLevelData ? "(custom)" : "(default)");
     if (numLevels >= gameState.gameLevel) {
-        const levelConfig = levelData[gameState.gameLevel];
+        const levelConfig = activeLevelData[gameState.gameLevel];
         QUALITIES = levelConfig.qualities;
         if (QUALITIES.length === 0) {
             QUALITIES = ALL_QUALITIES;
@@ -540,6 +608,53 @@ function setLevelData(gameState) {
 }
 
 function startGame(mode, roomId) {
+    // Check for URL config - only applies to solo/offline mode
+    const urlConfigData = (mode === 'solo') ? loadUrlConfig() : null;
+    
+    if (urlConfigData) {
+        // URL config present - auto-start with custom settings
+        console.log('Auto-starting with URL config');
+        applyConfig(urlConfigData);
+        saveConfig(urlConfigData);
+        
+        // Force offline mode for URL config games
+        offlineMode = true;
+        localStorage.setItem('offlinePreferred', 'true');
+        
+        if (window.Analytics) {
+            Analytics.trackGameStart('solo', true);
+            Analytics.startSession(true);
+        }
+        
+        network = new LocalNetwork();
+        
+        const menuScreen = document.getElementById('menuScreen');
+        if (menuScreen) menuScreen.style.display = 'none';
+        canvas.style.display = 'block';
+        
+        init().then(() => {
+            // Use custom config settings - pass 'custom' as difficulty
+            const quizSettings = (urlConfigData.quizSettings && typeof urlConfigData.quizSettings === 'object')
+                ? urlConfigData.quizSettings
+                : getQuizSettingsFromSliders();
+            const mapStyle = document.getElementById('mapStyleSelect') ? document.getElementById('mapStyleSelect').value : 'classic';
+            network.sendStartSoloGame('custom', quizSettings, 'normal', mapStyle);
+            gameLoop();
+        }).catch((error) => {
+            console.error('Error initializing game:', error);
+        });
+        return;
+    }
+    
+    // No URL config - check for saved config to pre-fill sliders
+    if (mode === 'solo') {
+        const savedConfig = loadSavedConfig();
+        if (savedConfig && savedConfig.balance) {
+            console.log('Using saved config from localStorage');
+            applyConfig(savedConfig);
+        }
+    }
+    
     if (window.Analytics) {
         Analytics.trackGameStart(mode, offlineMode);
         Analytics.startSession(offlineMode);
@@ -710,6 +825,10 @@ document.addEventListener('DOMContentLoaded', function () {
                 return;
             }
             window.location.href = '/lobby';
+        });
+        document.getElementById('btnCustomGame').addEventListener('click', () => {
+            if (window.Analytics) Analytics.trackMenuClick('custom_game');
+            window.location.href = '/config';
         });
 
         // Settings Toggle

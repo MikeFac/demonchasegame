@@ -737,7 +737,9 @@
     <!-- Main Menu Buttons (New Layout) -->
     <div class="main-menu-buttons">
       <button id="btnSolo" class="primary-btn" style="margin-bottom: 15px; width: 100%;">Start Solo Game</button>
-      
+
+      <button id="btnCustomGame" class="secondary-btn" style="margin-bottom: 15px; width: 100%;">⚙️ Custom Game</button>
+
       <button id="btnMultiplayer" class="secondary-btn" style="margin-bottom: 15px; width: 100%;">Multiplayer Game</button>
 
       <div class="btn-row-split" style="display: flex; gap: 15px;">
@@ -972,6 +974,8 @@
   <script src="src/shared/utils.js"></script>
   <script src="src/shared/Physics.js"></script>
   <script src="src/shared/GameConfig.js?v=2.1"></script>
+  <script src="libs/lz-string.min.js"></script>
+  <script src="src/client/ConfigEncoder.js?v=1.0"></script>
   <script src="src/shared/map-generators/ClassicMaze.js"></script>
   <script src="src/shared/map-generators/NarrowPaths.js"></script>
   <script src="src/shared/map-generators/ComplexLabyrinth.js"></script>

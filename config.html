@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>VerseBattles: Custom Game Config</title>
+  <link rel="icon" type="image/x-icon" href="/favicon.ico">
+  <meta name="theme-color" content="#16213e">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      min-height: 100vh;
+      overflow-y: auto;
+      background-color: #3a4a5e;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      color: #fff;
+      padding: 20px;
+    }
+
+    .config-container {
+      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+      border-radius: 12px;
+      padding: 25px;
+      max-width: 420px;
+      width: 100%;
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+    }
+
+    .config-header {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+
+    .config-header h1 {
+      font-size: 1.3em;
+      margin-bottom: 4px;
+    }
+
+    .config-header p {
+      font-size: 0.8em;
+      color: #a8c5e6;
+    }
+
+    /* Tab Navigation */
+    .tab-nav {
+      display: flex;
+      gap: 4px;
+      margin-bottom: 16px;
+      background: rgba(0, 0, 0, 0.2);
+      border-radius: 8px;
+      padding: 4px;
+    }
+
+    .tab-btn {
+      flex: 1;
+      padding: 8px 4px;
+      border: none;
+      border-radius: 6px;
+      background: transparent;
+      color: #a8c5e6;
+      font-size: 0.8em;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .tab-btn:hover {
+      background: rgba(255, 255, 255, 0.08);
+    }
+
+    .tab-btn.active {
+      background: rgba(100, 150, 255, 0.25);
+      color: #fff;
+      box-shadow: 0 0 10px rgba(100, 150, 255, 0.2);
+    }
+
+    .tab-content {
+      display: none;
+    }
+
+    .tab-content.active {
+      display: block;
+    }
+
+    /* Form Sections */
+    .config-section {
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 8px;
+      padding: 14px;
+      margin-bottom: 12px;
+    }
+
+    .config-section h3 {
+      font-size: 0.75em;
+      font-weight: 600;
+      margin-bottom: 10px;
+      color: #a8c5e6;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    /* Slider Controls */
+    .slider-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 10px;
+    }
+
+    .slider-row:last-child {
+      margin-bottom: 0;
+    }
+
+    .slider-label {
+      font-size: 0.8em;
+      color: #ccc;
+      min-width: 110px;
+    }
+
+    .slider-row input[type="range"] {
+      flex: 1;
+      margin: 0 10px;
+      accent-color: #4a90e2;
+    }
+
+    .slider-value {
+      font-size: 0.8em;
+      color: #4a90e2;
+      min-width: 36px;
+      text-align: right;
+      font-weight: 600;
+    }
+
+    /* Placeholder messages */
+    .placeholder-msg {
+      text-align: center;
+      color: #666;
+      font-size: 0.85em;
+      padding: 20px 10px;
+    }
+
+    /* Action Buttons */
+    .config-actions {
+      margin-top: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .btn-play {
+      padding: 14px;
+      border: none;
+      border-radius: 8px;
+      font-size: 1em;
+      font-weight: 700;
+      cursor: pointer;
+      background: linear-gradient(135deg, #e94560, #c23152);
+      color: #fff;
+      transition: transform 0.1s, box-shadow 0.2s;
+    }
+
+    .btn-play:hover {
+      transform: scale(1.02);
+      box-shadow: 0 4px 15px rgba(233, 69, 96, 0.4);
+    }
+
+    .btn-secondary {
+      padding: 10px;
+      border: 2px solid rgba(255, 255, 255, 0.15);
+      border-radius: 8px;
+      font-size: 0.85em;
+      font-weight: 600;
+      cursor: pointer;
+      background: rgba(255, 255, 255, 0.05);
+      color: #a8c5e6;
+      transition: all 0.2s;
+    }
+
+    .btn-secondary:hover {
+      background: rgba(255, 255, 255, 0.1);
+      border-color: rgba(255, 255, 255, 0.3);
+    }
+
+    .btn-row {
+      display: flex;
+      gap: 10px;
+    }
+
+    .btn-row .btn-secondary {
+      flex: 1;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="config-container">
+    <div class="config-header">
+      <h1>Custom Game</h1>
+      <p>Configure your game settings</p>
+    </div>
+
+    <!-- Tab Navigation -->
+    <div class="tab-nav">
+      <button class="tab-btn active" data-tab="balance">Balance</button>
+      <button class="tab-btn" data-tab="levels">Levels</button>
+      <button class="tab-btn" data-tab="content">Content</button>
+    </div>
+
+    <!-- Balance Tab -->
+    <div id="tab-balance" class="tab-content active">
+      <div class="config-section">
+        <h3>Monster Difficulty</h3>
+        <div class="slider-row">
+          <span class="slider-label">Health</span>
+          <input type="range" id="monsterHealth" min="0.7" max="2.0" step="0.1" value="1.0">
+          <span class="slider-value" id="monsterHealthVal">1.0x</span>
+        </div>
+        <div class="slider-row">
+          <span class="slider-label">Damage</span>
+          <input type="range" id="monsterDamage" min="0.7" max="2.0" step="0.1" value="1.0">
+          <span class="slider-value" id="monsterDamageVal">1.0x</span>
+        </div>
+        <div class="slider-row">
+          <span class="slider-label">Speed</span>
+          <input type="range" id="monsterSpeed" min="0.7" max="2.0" step="0.1" value="1.0">
+          <span class="slider-value" id="monsterSpeedVal">1.0x</span>
+        </div>
+      </div>
+
+      <div class="config-section">
+        <h3>Spawning</h3>
+        <div class="slider-row">
+          <span class="slider-label">Spawn Rate</span>
+          <input type="range" id="spawnRate" min="0.5" max="2.0" step="0.1" value="1.0">
+          <span class="slider-value" id="spawnRateVal">1.0x</span>
+        </div>
+        <div class="slider-row">
+          <span class="slider-label">Max Monsters</span>
+          <input type="range" id="maxMonsters" min="0.5" max="2.0" step="0.1" value="1.0">
+          <span class="slider-value" id="maxMonstersVal">1.0x</span>
+        </div>
+        <div class="slider-row">
+          <span class="slider-label">Healing Freq.</span>
+          <input type="range" id="healingFrequency" min="0.5" max="2.0" step="0.1" value="1.0">
+          <span class="slider-value" id="healingFrequencyVal">1.0x</span>
+        </div>
+      </div>
+
+      <div class="config-section">
+        <h3>Quiz Distribution <span id="quizTotalLabel" style="float: right; font-size: 0.9em; color: #4a90e2;">Total: 100%</span></h3>
+        <div class="slider-row">
+          <span class="slider-label">First Letter</span>
+          <input type="range" id="qFirstLetter" min="0" max="100" step="5" value="25" data-mode="firstLetter">
+          <span class="slider-value" id="qFirstLetterVal">25%</span>
+        </div>
+        <div class="slider-row">
+          <span class="slider-label">Missing Word</span>
+          <input type="range" id="qMissingWord" min="0" max="100" step="5" value="25" data-mode="missingWord">
+          <span class="slider-value" id="qMissingWordVal">25%</span>
+        </div>
+        <div class="slider-row">
+          <span class="slider-label">Category Match</span>
+          <input type="range" id="qCategoryMatch" min="0" max="100" step="5" value="20" data-mode="categoryMatch">
+          <span class="slider-value" id="qCategoryMatchVal">20%</span>
+        </div>
+        <div class="slider-row">
+          <span class="slider-label">True / False</span>
+          <input type="range" id="qTrueFalse" min="0" max="100" step="5" value="15" data-mode="trueFalse">
+          <span class="slider-value" id="qTrueFalseVal">15%</span>
+        </div>
+        <div class="slider-row">
+          <span class="slider-label">Cloze (Fill Blanks)</span>
+          <input type="range" id="qCloze" min="0" max="100" step="5" value="15" data-mode="cloze">
+          <span class="slider-value" id="qClozeVal">15%</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Levels Tab (Phase 4) -->
+    <div id="tab-levels" class="tab-content">
+      <div class="config-section">
+        <p class="placeholder-msg">Level configuration coming soon.<br>Customize monsters, qualities, and spawn counts per level.</p>
+      </div>
+    </div>
+
+    <!-- Content Tab (Phase 5) -->
+    <div id="tab-content" class="tab-content">
+      <div class="config-section">
+        <p class="placeholder-msg">Custom content coming soon.<br>Upload your own verses via CSV or JSON.</p>
+      </div>
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="config-actions">
+      <button class="btn-play" id="btnPlayConfig">Play with These Settings</button>
+      <div class="btn-row">
+        <button class="btn-secondary" id="btnCopyLink">Copy Share Link</button>
+        <button class="btn-secondary" id="btnBack">Back to Menu</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="libs/lz-string.min.js"></script>
+  <script src="src/client/ConfigEncoder.js"></script>
+  <script>
+    // Tab switching
+    document.querySelectorAll('.tab-btn').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        document.querySelectorAll('.tab-btn').forEach(function (b) { b.classList.remove('active'); });
+        document.querySelectorAll('.tab-content').forEach(function (t) { t.classList.remove('active'); });
+        btn.classList.add('active');
+        document.getElementById('tab-' + btn.dataset.tab).classList.add('active');
+      });
+    });
+
+    // Balance slider value display
+    var sliderIds = ['monsterHealth', 'monsterDamage', 'monsterSpeed', 'spawnRate', 'maxMonsters', 'healingFrequency'];
+    sliderIds.forEach(function (id) {
+      var slider = document.getElementById(id);
+      var display = document.getElementById(id + 'Val');
+      slider.addEventListener('input', function () {
+        display.textContent = parseFloat(slider.value).toFixed(1) + 'x';
+      });
+    });
+
+    // Quiz distribution slider IDs and their display elements
+    var quizSliderIds = ['qFirstLetter', 'qMissingWord', 'qCategoryMatch', 'qTrueFalse', 'qCloze'];
+    var quizSliderModes = { qFirstLetter: 'firstLetter', qMissingWord: 'missingWord', qCategoryMatch: 'categoryMatch', qTrueFalse: 'trueFalse', qCloze: 'cloze' };
+
+    // Update all quiz slider display labels and total
+    function updateQuizLabels() {
+      var total = 0;
+      quizSliderIds.forEach(function (id) {
+        var val = parseInt(document.getElementById(id).value, 10);
+        document.getElementById(id + 'Val').textContent = val + '%';
+        total += val;
+      });
+      var totalLabel = document.getElementById('quizTotalLabel');
+      totalLabel.textContent = 'Total: ' + total + '%';
+      totalLabel.style.color = (total === 100) ? '#4a90e2' : '#e94560';
+    }
+
+    // Auto-normalize quiz sliders to sum to 100%
+    quizSliderIds.forEach(function (sliderId) {
+      var slider = document.getElementById(sliderId);
+      slider.addEventListener('input', function () {
+        var newVal = parseInt(slider.value, 10);
+        var remaining = 100 - newVal;
+
+        // Sum of other sliders
+        var otherSum = 0;
+        quizSliderIds.forEach(function (id) {
+          if (id !== sliderId) otherSum += parseInt(document.getElementById(id).value, 10);
+        });
+
+        // Redistribute proportionally
+        quizSliderIds.forEach(function (id) {
+          if (id !== sliderId) {
+            var s = document.getElementById(id);
+            if (otherSum === 0) {
+              s.value = Math.round(remaining / (quizSliderIds.length - 1) / 5) * 5;
+            } else {
+              s.value = Math.round((parseInt(s.value, 10) / otherSum) * remaining / 5) * 5;
+            }
+          }
+        });
+
+        // Fix rounding: adjust last non-changed slider
+        var total = 0;
+        quizSliderIds.forEach(function (id) { total += parseInt(document.getElementById(id).value, 10); });
+        if (total !== 100) {
+          for (var i = quizSliderIds.length - 1; i >= 0; i--) {
+            if (quizSliderIds[i] !== sliderId) {
+              var s = document.getElementById(quizSliderIds[i]);
+              s.value = parseInt(s.value, 10) + (100 - total);
+              break;
+            }
+          }
+        }
+
+        updateQuizLabels();
+      });
+    });
+
+    // Load config from URL if present (editing a shared config)
+    var existingConfig = ConfigEncoder.getFromURL();
+    if (existingConfig) {
+      // Restore balance sliders
+      if (existingConfig.balance) {
+        var b = existingConfig.balance;
+        sliderIds.forEach(function (id) {
+          if (b[id] !== undefined) {
+            var slider = document.getElementById(id);
+            slider.value = b[id];
+            document.getElementById(id + 'Val').textContent = parseFloat(b[id]).toFixed(1) + 'x';
+          }
+        });
+      }
+      // Restore quiz distribution sliders
+      if (existingConfig.quizSettings) {
+        var qs = existingConfig.quizSettings;
+        quizSliderIds.forEach(function (id) {
+          var mode = quizSliderModes[id];
+          if (qs[mode] !== undefined) {
+            document.getElementById(id).value = qs[mode];
+          }
+        });
+        updateQuizLabels();
+      }
+    }
+
+    function buildConfig() {
+      var config = ConfigEncoder.getDefault();
+      sliderIds.forEach(function (id) {
+        config.balance[id] = parseFloat(document.getElementById(id).value);
+      });
+      // Include quiz distribution settings
+      config.quizSettings = {};
+      quizSliderIds.forEach(function (id) {
+        config.quizSettings[quizSliderModes[id]] = parseInt(document.getElementById(id).value, 10);
+      });
+      return config;
+    }
+
+    // Play button
+    document.getElementById('btnPlayConfig').addEventListener('click', function () {
+      var config = buildConfig();
+      var url = ConfigEncoder.toURL(config, '/');
+      window.location.href = url;
+    });
+
+    // Copy share link
+    document.getElementById('btnCopyLink').addEventListener('click', function () {
+      var config = buildConfig();
+      var url = window.location.origin + ConfigEncoder.toURL(config, '/config');
+      navigator.clipboard.writeText(url).then(function () {
+        var btn = document.getElementById('btnCopyLink');
+        var original = btn.textContent;
+        btn.textContent = 'Copied!';
+        setTimeout(function () { btn.textContent = original; }, 1500);
+      });
+    });
+
+    // Back button
+    document.getElementById('btnBack').addEventListener('click', function () {
+      window.location.href = '/';
+    });
+  </script>
+</body>
+
+</html>

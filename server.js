@@ -27,6 +27,10 @@ app.get('/lobby', (req, res) => {
   res.sendFile(path.join(__dirname, 'lobby.html'));
 });
 
+app.get('/config', (req, res) => {
+  res.sendFile(path.join(__dirname, 'config.html'));
+});
+
 // Initialize Managers
 const roomManager = new RoomManager(io);
 const gameInstances = new Map(); // roomId -> Game instance
