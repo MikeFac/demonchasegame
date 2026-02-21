@@ -156,6 +156,21 @@ class InputHandler {
             return;
         }
 
+        // Check Learn Verses button (center of top bar)
+        const lb = UILayout.learnVersesButton;
+        const learnBtnX = (this.canvas.width - lb.width) / 2;
+        if (
+            clickedX >= learnBtnX &&
+            clickedX <= learnBtnX + lb.width &&
+            clickedY >= lb.y &&
+            clickedY <= lb.y + lb.height
+        ) {
+            if (this.callbacks.onMenuItemClick) {
+                this.callbacks.onMenuItemClick('review');
+            }
+            return;
+        }
+
         // Check menu panel items (if menu is open)
         if (typeof menuOpen !== 'undefined' && menuOpen) {
             const mp = UILayout.menuPanel;

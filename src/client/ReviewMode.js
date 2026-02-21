@@ -159,18 +159,8 @@
             restoreGameState();
         }
 
-        // Check if the click was on the "Incorrect" button
-        if (clickedX >= 20 && clickedX <= 100 && clickedY >= 15 && clickedY <= 45) {
-            currentReviewMode = 'incorrect';
-            currentReviewVerseIndex = 0;
-            stopAudio();
-            repeatEnabled = false;
-            hasPlayed = false;
-            displayReviewVerseScreen();
-        }
-
         // Check if the click was on the quality button
-        if (clickedX >= 110 && clickedX <= 190 && clickedY >= 15 && clickedY <= 45) {
+        if (clickedX >= 20 && clickedX <= 100 && clickedY >= 15 && clickedY <= 45) {
             currentReviewMode = 'quality';
             currentReviewVerseIndex = 0;
             stopAudio();
@@ -363,14 +353,10 @@
         const buttonWidth = 80;
         const buttonHeight = 30;
         const buttonY = 15;
-        const incorrectButtonX = 20;
-        const qualityButtonX = incorrectButtonX + buttonWidth + 10;
+        const qualityButtonX = 20;
         const gameButtonX = canvas.width - buttonWidth - 20;
 
-        ctx.fillStyle = currentReviewMode === 'incorrect' ? 'lightblue' : 'lightgray';
-        ctx.fillRect(incorrectButtonX, buttonY, buttonWidth, buttonHeight);
-
-        ctx.fillStyle = currentReviewMode === 'quality' ? 'lightblue' : 'lightgray';
+        ctx.fillStyle = 'lightblue';
         ctx.fillRect(qualityButtonX, buttonY, buttonWidth, buttonHeight);
 
         ctx.fillStyle = 'lightgray';
@@ -378,7 +364,6 @@
 
         ctx.font = '14px Arial';
         ctx.fillStyle = 'black';
-        ctx.fillText('Incorrect', incorrectButtonX + 10, buttonY + 20);
         ctx.fillText(vQuality, qualityButtonX + 10, buttonY + 20);
         ctx.fillText('Game', gameButtonX + 20, buttonY + 20);
     }

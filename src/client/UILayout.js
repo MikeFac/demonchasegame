@@ -32,6 +32,13 @@ const UILayout = (function () {
             y: 30  // Below quality buttons (y=5 + height=21 = 26, so y=30)
         },
 
+        // Learn Verses button - center of top bar
+        learnVersesButton: {
+            width: 150,
+            height: 20,
+            y: 2
+        },
+
         // Menu panel (when hamburger is open) - starts under the hamburger button, extends left
         menuPanel: {
             width: 160,

@@ -14,7 +14,7 @@
  *   --count N                     Verses per topic (default: 10)
  *   --seed path/to/seed.csv       Optional CSV of existing verses to build on
  *   --output path                 Output file (default: stdout)
- *   --model NAME                  OpenRouter model (default: anthropic/claude-sonnet-4-5-20250929)
+ *   --model NAME                  OpenRouter model (default: google/gemini-2.0-flash-001)
  *   --format csv|json             Output format (default: csv)
  *   --dry-run                     Show prompts without calling API
  */
@@ -39,7 +39,7 @@ const TOPICS = getArg('topics', '');
 const COUNT = parseInt(getArg('count', '10'), 10);
 const SEED_FILE = getArg('seed', '');
 const OUTPUT_FILE = getArg('output', '');
-const MODEL = getArg('model', 'anthropic/claude-sonnet-4-5-20250929');
+const MODEL = getArg('model', 'google/gemini-2.0-flash-001');
 const FORMAT = getArg('format', 'csv');
 const DRY_RUN = hasFlag('dry-run');
 
@@ -214,8 +214,8 @@ Return ONLY the JSON array. No markdown, no explanation.`;
 
 // --- Output formatting ---
 function escapeCSVField(value) {
-    const str = String(value);
-    if (str.includes(',') || str.includes('"') || str.includes('\n')) {
+    const str = String(value).replace(/[\r\n]+/g, ' ').trim();
+    if (str.includes(',') || str.includes('"')) {
         return '"' + str.replace(/"/g, '""') + '"';
     }
     return str;

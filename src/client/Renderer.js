@@ -124,8 +124,48 @@ class Renderer {
         const labelText = `${vQuality} ▼`;
         this.ctx.fillText(labelText, ci.x, ci.y + 16);
 
+        // Learn Verses button (center of top bar)
+        this.drawLearnVersesButton();
+
         // Hamburger Menu Button
         this.drawHamburgerButton(menuState);
+    }
+
+    drawLearnVersesButton() {
+        const lb = UILayout.learnVersesButton;
+        const btnX = (this.canvas.width - lb.width) / 2;
+        const btnY = lb.y;
+        const btnW = lb.width;
+        const btnH = lb.height;
+
+        // Gold gradient background
+        const gradient = this.ctx.createLinearGradient(btnX, btnY, btnX + btnW, btnY + btnH);
+        gradient.addColorStop(0, '#FFD700');
+        gradient.addColorStop(1, '#FFA500');
+
+        // Rounded rectangle
+        const radius = 4;
+        this.ctx.beginPath();
+        this.ctx.moveTo(btnX + radius, btnY);
+        this.ctx.lineTo(btnX + btnW - radius, btnY);
+        this.ctx.quadraticCurveTo(btnX + btnW, btnY, btnX + btnW, btnY + radius);
+        this.ctx.lineTo(btnX + btnW, btnY + btnH - radius);
+        this.ctx.quadraticCurveTo(btnX + btnW, btnY + btnH, btnX + btnW - radius, btnY + btnH);
+        this.ctx.lineTo(btnX + radius, btnY + btnH);
+        this.ctx.quadraticCurveTo(btnX, btnY + btnH, btnX, btnY + btnH - radius);
+        this.ctx.lineTo(btnX, btnY + radius);
+        this.ctx.quadraticCurveTo(btnX, btnY, btnX + radius, btnY);
+        this.ctx.closePath();
+
+        this.ctx.fillStyle = gradient;
+        this.ctx.fill();
+
+        // Text
+        this.ctx.fillStyle = '#1a1a2e';
+        this.ctx.font = 'bold 11px Arial';
+        this.ctx.textAlign = 'center';
+        this.ctx.fillText('📖 LEARN VERSES HERE!', btnX + btnW / 2, btnY + 14);
+        this.ctx.textAlign = 'left';
     }
 
     drawHamburgerButton(menuState) {

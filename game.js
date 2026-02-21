@@ -696,6 +696,18 @@ function startGame(mode, roomId) {
             network.sendJoinGame(roomId);
         }
         gameLoop();
+
+        // If launched from "Learn Verses" button, immediately enter review mode
+        if (window._enterReviewAfterInit) {
+            window._enterReviewAfterInit = false;
+            // Small delay to let the game state fully initialize
+            setTimeout(() => {
+                if (window.ReviewMode) {
+                    ReviewMode.saveGameState();
+                    ReviewMode.startReviewMode();
+                }
+            }, 500);
+        }
     }).catch((error) => {
         console.error('Error initializing game:', error);
     });
@@ -832,6 +844,12 @@ document.addEventListener('DOMContentLoaded', function () {
             if (window.Analytics) Analytics.trackMenuClick('custom_game');
             window.location.href = '/config';
         });
+        document.getElementById('btnLearnVerses').addEventListener('click', () => {
+            if (window.Analytics) Analytics.trackMenuClick('learn_verses');
+            // Start a solo game, then immediately enter review mode
+            window._enterReviewAfterInit = true;
+            startGame('solo');
+        });
 
         // Settings Toggle
         const btnSettings = document.getElementById('btnSettings');
@@ -839,6 +857,8 @@ document.addEventListener('DOMContentLoaded', function () {
         const btnSolo = document.getElementById('btnSolo');
         const btnMultiplayer = document.getElementById('btnMultiplayer');
         const btnInstructions = document.getElementById('btnInstructions');
+        const btnLearnVerses = document.getElementById('btnLearnVerses');
+        const btnCustomGame = document.getElementById('btnCustomGame');
         const offlineModeLabel = document.getElementById('offlineModeLabel');
         const logoImg = document.querySelector('#menuScreen .logo-container img');
         
@@ -853,6 +873,8 @@ document.addEventListener('DOMContentLoaded', function () {
                     if (btnSolo) btnSolo.style.display = 'none';
                     if (btnMultiplayer) btnMultiplayer.style.display = 'none';
                     if (btnInstructions) btnInstructions.style.display = 'none';
+                    if (btnLearnVerses) btnLearnVerses.style.display = 'none';
+                    if (btnCustomGame) btnCustomGame.style.display = 'none';
                     if (offlineModeLabel) offlineModeLabel.style.display = 'none';
                     
                     // Shrink logo
@@ -866,6 +888,8 @@ document.addEventListener('DOMContentLoaded', function () {
                     if (btnSolo) btnSolo.style.display = 'block';
                     if (btnMultiplayer) btnMultiplayer.style.display = 'block';
                     if (btnInstructions) btnInstructions.style.display = 'block';
+                    if (btnLearnVerses) btnLearnVerses.style.display = 'block';
+                    if (btnCustomGame) btnCustomGame.style.display = 'block';
                     if (offlineModeLabel) offlineModeLabel.style.display = 'block';
                     
                     // Restore logo
