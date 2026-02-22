@@ -71,6 +71,8 @@
   "review": {
     "previous": "Previous",
     "repeat": "Repeat",
+    "repeatOn": "Repeat On",
+    "meditationOn": "Meditation",
     "next": "Next",
     "game": "Game",
     "reference": "Reference: {0}",
