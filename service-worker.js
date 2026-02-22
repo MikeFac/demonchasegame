@@ -1,4 +1,4 @@
-var CACHE_NAME = 'versebattles-v5';
+var CACHE_NAME = 'versebattles-v6';
 
 // Sound effects to cache
 var SOUND_ASSETS = [
@@ -130,24 +130,25 @@ self.addEventListener('activate', function (event) {
     self.clients.claim();
 });
 
-// Fetch: stale-while-revalidate for JS/HTML, cache-first for images/sounds, network-only for API/external-audio
+// Fetch: stale-while-revalidate for JS/HTML, cache-first for images/sounds, network-only for API/audio/external-audio
 self.addEventListener('fetch', function (event) {
     var url = new URL(event.request.url);
 
-    // Network-only for non-GET, socket.io, API, and external audio
+    // Network-only for non-GET, socket.io, API, verse audio, and external audio
     if (event.request.method !== 'GET') return;
     if (url.pathname.startsWith('/socket.io')) return;
     if (url.pathname.startsWith('/api')) return;
     if (url.pathname.startsWith('/lobby')) return;
+    if (url.pathname.startsWith('/audio/')) return;  // Verse songs - managed by VerseSongService
     if (url.pathname.startsWith('/public/audio')) return;
     
-    // Cache-first for local sounds (but not external audio or music)
+    // Cache-first for local sounds (game sound effects only)
     if (url.pathname.startsWith('/sounds/') && url.pathname.endsWith('.mp3')) {
         event.respondWith(
             caches.match(event.request).then(function (cached) {
                 if (cached) return cached;
                 return fetch(event.request).then(function (response) {
-                    if (response.ok) {
+                    if (response.ok && response.status !== 206) {
                         var clone = response.clone();
                         caches.open(CACHE_NAME).then(function (cache) {
                             cache.put(event.request, clone);
@@ -171,7 +172,7 @@ self.addEventListener('fetch', function (event) {
             caches.match(event.request).then(function (cached) {
                 if (cached) return cached;
                 return fetch(event.request).then(function (response) {
-                    if (response.ok) {
+                    if (response.ok && response.status !== 206) {
                         var clone = response.clone();
                         caches.open(CACHE_NAME).then(function (cache) {
                             cache.put(event.request, clone);
@@ -190,7 +191,8 @@ self.addEventListener('fetch', function (event) {
     event.respondWith(
         caches.match(event.request).then(function (cached) {
             var fetchPromise = fetch(event.request).then(function (response) {
-                if (response.ok) {
+                // Only cache successful, full responses (not 206 partial)
+                if (response.ok && response.status !== 206) {
                     var clone = response.clone();
                     caches.open(CACHE_NAME).then(function (cache) {
                         cache.put(event.request, clone);
