@@ -469,7 +469,7 @@ function updateUIForOfflineMode() {
         offlineToggle.checked = true;
     }
     
-    showToast('📡 Offline Mode — No server connection', 3000);
+    showToast(t('toasts.offlineMode'), 3000);
 }
 
 /**
@@ -488,7 +488,7 @@ function setOfflineMode(enabled) {
     }
     
     if (enabled) {
-        showToast('📡 Offline Mode — No server connection', 3000);
+        showToast(t('toasts.offlineMode'), 3000);
     }
 }
 
@@ -835,7 +835,7 @@ document.addEventListener('DOMContentLoaded', function () {
         document.getElementById('btnMultiplayer').addEventListener('click', () => {
             if (window.Analytics) Analytics.trackMenuClick('multiplayer');
             if (!navigator.onLine) {
-                showToast('Multiplayer Game requires internet connection', 3000);
+                showToast(t('toasts.multiplayerRequiresInternet'), 3000);
                 return;
             }
             window.location.href = '/lobby';
@@ -967,7 +967,7 @@ window.onQuizCorrectAnswer = function (quizMode, verseReference) {
     if (!firstGameTips.ammoEarned && isInOnboardingWindow()) {
         firstGameTips.ammoEarned = true;
         if (window.Analytics) Analytics.trackFtueTip('ammo_earned');
-        showToast('💡 Earn ammo by answering quizzes correctly');
+        showToast(t('toasts.earnAmmo'));
     }
 
     // Track daily challenge progress (only first_letter mode)
@@ -1110,7 +1110,7 @@ async function init() {
                 if (!firstGameTips.monsterKilled && isInOnboardingWindow()) {
                     firstGameTips.monsterKilled = true;
                     if (window.Analytics) Analytics.trackFtueTip('monster_killed_tip');
-                    showToast('💡 Killing demons earns XP and increases your level');
+                    showToast(t('toasts.xpLevelUp'));
                 }
 
                 demonDies.play();
@@ -1260,7 +1260,7 @@ async function init() {
                                 url: window.location.origin
                             }).then(() => {
                                 localStorage.setItem('hasShared', 'true');
-                                showToast('✅ Thanks for sharing!', 2000);
+                                showToast(t('toasts.thanksForSharing'), 2000);
                             }).catch(() => {
                                 // User cancelled, no action needed
                             });
@@ -1268,7 +1268,7 @@ async function init() {
                             // Desktop: Copy to clipboard
                             navigator.clipboard.writeText(shareText).then(() => {
                                 localStorage.setItem('hasShared', 'true');
-                                showToast('📋 Share text copied to clipboard!', 3000);
+                                showToast(t('toasts.shareCopied'), 3000);
                             });
                         }
                     }, 2000); // Show share prompt 2s after level complete
@@ -1735,14 +1735,14 @@ async function init() {
         // ===== FIRST 60 SECONDS: Show pre-game tip =====
         setTimeout(() => {
             if (isInOnboardingWindow()) {
-                showToast('💡 TIP: Answer quizzes correctly to deal damage!', 4000);
+                showToast(t('toasts.quizTipDamage'), 4000);
             }
         }, 1000); // Show 1 second after game starts
 
         // Show hint about learning verses in menu (8 seconds after game starts)
         setTimeout(() => {
             if (isInOnboardingWindow() && !localStorage.getItem('hasSeenVerseHint')) {
-                showToast('📖 Go to Menu to learn verses!', 5000);
+                showToast(t('toasts.goToMenuLearn'), 5000);
                 localStorage.setItem('hasSeenVerseHint', 'true');
             }
         }, 8000);
@@ -2355,7 +2355,7 @@ function gameLoop() {
                 if (!firstGameTips.healingCollected && isInOnboardingWindow()) {
                     firstGameTips.healingCollected = true;
                     if (window.Analytics) Analytics.trackFtueTip('healing_collected');
-                    showToast('💡 Walk over green crosses to restore health');
+                    showToast(t('toasts.healingCrosses'));
                 }
 
                 if (window.Analytics) Analytics.trackItemCollected('healing');

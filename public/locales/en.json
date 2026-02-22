@@ -316,5 +316,16 @@
     ],
     "startingIn": "Starting in {0}...",
     "startNow": "Start Now"
+  },
+  "toasts": {
+    "offlineMode": "📡 Offline Mode — No server connection",
+    "multiplayerRequiresInternet": "Multiplayer Game requires internet connection",
+    "earnAmmo": "💡 Earn ammo by answering quizzes correctly",
+    "xpLevelUp": "💡 Killing demons earns XP and increases your level",
+    "thanksForSharing": "✅ Thanks for sharing!",
+    "shareCopied": "📋 Share text copied to clipboard!",
+    "quizTipDamage": "💡 TIP: Answer quizzes correctly to deal damage!",
+    "goToMenuLearn": "📖 Go to Menu to learn verses!",
+    "healingCrosses": "💡 Walk over green crosses to restore health"
   }
 }

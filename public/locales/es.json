@@ -323,5 +323,16 @@
     ],
     "startingIn": "Empezando en {0}...",
     "startNow": "Empezar ahora"
+  },
+  "toasts": {
+    "offlineMode": "📡 Modo sin conexión — Sin conexión al servidor",
+    "multiplayerRequiresInternet": "El juego multijugador requiere conexión a internet",
+    "earnAmmo": "💡 Gana munición respondiendo correctamente a las preguntas",
+    "xpLevelUp": "💡 Derrotar demonios te da XP y aumenta tu nivel",
+    "thanksForSharing": "✅ ¡Gracias por compartir!",
+    "shareCopied": "📋 ¡Texto para compartir copiado al portapapeles!",
+    "quizTipDamage": "💡 CONSEJO: ¡Responde correctamente para infligir daño!",
+    "goToMenuLearn": "📖 ¡Ve al Menú para aprender versículos!",
+    "healingCrosses": "💡 Pasa sobre las cruces verdes para recuperar salud"
   }
 }
