@@ -66,7 +66,8 @@
     "startSoloGame": "Start Solo Game",
     "language": "🌐 Language",
     "customGame": "⚙️ Custom Game",
-    "multiplayerGame": "Multiplayer Game"
+    "multiplayerGame": "Multiplayer Game",
+    "missions": "⚔️ Missions"
   },
   "review": {
     "previous": "Previous",
@@ -77,6 +78,19 @@
     "game": "Game",
     "reference": "Reference: {0}",
     "learn": "Learn: {0}"
+  },
+  "overland": {
+    "title": "Select Mission",
+    "locked": "[LOCKED]",
+    "completed": "Completed",
+    "available": "Available",
+    "startMission": "Start Mission",
+    "learnVerses": "Learn Verses",
+    "missionComplete": "Mission Complete!",
+    "missionFailed": "Mission Failed",
+    "returnToMap": "Return to Map",
+    "chapterComplete": "Chapter Complete!",
+    "unlockChapter": "Unlocked: {0}"
   },
   "votd": {
     "verseOfTheDay": "Verse of the Day",

@@ -1,0 +1,47 @@
+{
+  "schemaVersion": 1,
+  "chapters": [
+    {
+      "id": "chapter1",
+      "slug": "chapter1-foundations",
+      "name": "Foundations of Faith",
+      "description": "Build your faith against the enemy's first attacks",
+      "nodeShape": "shield",
+      "theme": "stone",
+      "authorId": "system",
+      "visibility": "public",
+      "missionIds": ["faith-01", "faith-02"],
+      "unlockRequirement": null
+    },
+    {
+      "id": "chapter2",
+      "slug": "chapter2-love",
+      "name": "Love in Action",
+      "description": "Learn to walk in love and bring healing to others",
+      "nodeShape": "heart",
+      "theme": "earth",
+      "authorId": "system",
+      "visibility": "public",
+      "missionIds": ["love-01", "love-02"],
+      "unlockRequirement": {
+        "chapterId": "chapter1",
+        "missionsCompleted": 2
+      }
+    },
+    {
+      "id": "chapter3",
+      "slug": "chapter3-battle",
+      "name": "Armed for Battle",
+      "description": "Take up the sword of the Spirit and stand firm",
+      "nodeShape": "sword",
+      "theme": "crystal",
+      "authorId": "system",
+      "visibility": "public",
+      "missionIds": ["battle-01", "battle-02"],
+      "unlockRequirement": {
+        "chapterId": "chapter2",
+        "missionsCompleted": 2
+      }
+    }
+  ]
+}

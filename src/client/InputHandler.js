@@ -22,6 +22,7 @@ class InputHandler {
             onQuizOptionClick: null,
             onReviewButtonClick: null,
             onReviewModeClick: null,
+            onOverlandClick: null, // (x, y) => void - Overland mode click handler
             onGameClick: null, // (x, y) => boolean (handled?)
             onHamburgerClick: null,
             onMenuItemClick: null // (itemId) => void
@@ -93,6 +94,14 @@ class InputHandler {
                 VotdLearningMode.handleClick(clickedX, clickedY);
             } else if (typeof votdMode !== 'undefined' && votdMode === 'test' && typeof VotdTestMode !== 'undefined') {
                 VotdTestMode.handleClick(clickedX, clickedY);
+            }
+            return;
+        }
+        
+        // Handle Overland (mission selection) mode
+        if (typeof gameMode !== 'undefined' && gameMode === 'overland') {
+            if (this.callbacks.onOverlandClick) {
+                this.callbacks.onOverlandClick(clickedX, clickedY);
             }
             return;
         }

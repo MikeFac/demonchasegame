@@ -1,0 +1,36 @@
+{
+  "schemaVersion": 1,
+  "id": "chapter3",
+  "missions": [
+    {
+      "id": "battle-01",
+      "name": "Sword of the Spirit",
+      "description": "Wield the sword of the Spirit against condemnation and unbelief",
+      "mapStyle": "city",
+      "qualities": ["Knowledge", "Prophecy"],
+      "monsters": ["Condemnation", "Unbelief", "Temptation"],
+      "monsterDamageFactor": 1.5,
+      "monsterSpeed": 8,
+      "playerSpeed": 6,
+      "maxMonsters": 30,
+      "monstersToKill": 20,
+      "spawnRate": 10000,
+      "xpMultiplier": 1.5
+    },
+    {
+      "id": "battle-02",
+      "name": "Final Victory",
+      "description": "Stand in the power of God and overcome pride and despair",
+      "mapStyle": "classic",
+      "qualities": ["Endurance", "Hope", "Power"],
+      "monsters": ["Pride", "Despair", "Swarm", "Jezebel"],
+      "monsterDamageFactor": 1.8,
+      "monsterSpeed": 9,
+      "playerSpeed": 7,
+      "maxMonsters": 35,
+      "monstersToKill": 25,
+      "spawnRate": 8000,
+      "xpMultiplier": 1.8
+    }
+  ]
+}

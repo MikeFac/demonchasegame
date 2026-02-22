@@ -1,0 +1,36 @@
+{
+  "schemaVersion": 1,
+  "id": "chapter1",
+  "missions": [
+    {
+      "id": "faith-01",
+      "name": "The Shield of Faith",
+      "description": "Defeat Fear and Doubt with the shield of faith",
+      "mapStyle": "classic",
+      "qualities": ["Faith", "Courage"],
+      "monsters": ["Fear", "Doubt", "Confusion"],
+      "monsterDamageFactor": 1.0,
+      "monsterSpeed": 5,
+      "playerSpeed": 5,
+      "maxMonsters": 20,
+      "monstersToKill": 12,
+      "spawnRate": 18000,
+      "xpMultiplier": 1.0
+    },
+    {
+      "id": "faith-02",
+      "name": "Standing Firm",
+      "description": "Stand firm against confusion and spiritual blindness",
+      "mapStyle": "narrow",
+      "qualities": ["Courage", "Knowledge"],
+      "monsters": ["Blindness", "Confusion", "Ignorance"],
+      "monsterDamageFactor": 1.2,
+      "monsterSpeed": 6,
+      "playerSpeed": 5,
+      "maxMonsters": 25,
+      "monstersToKill": 15,
+      "spawnRate": 15000,
+      "xpMultiplier": 1.2
+    }
+  ]
+}

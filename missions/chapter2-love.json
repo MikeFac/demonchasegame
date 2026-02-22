@@ -1,0 +1,36 @@
+{
+  "schemaVersion": 1,
+  "id": "chapter2",
+  "missions": [
+    {
+      "id": "love-01",
+      "name": "The Greatest Command",
+      "description": "Walk in love and overcome strife and unforgiveness",
+      "mapStyle": "labyrinth",
+      "qualities": ["Love", "Wisdom"],
+      "monsters": ["Strife", "Deception", "Shame"],
+      "monsterDamageFactor": 1.3,
+      "monsterSpeed": 6,
+      "playerSpeed": 5,
+      "maxMonsters": 25,
+      "monstersToKill": 15,
+      "spawnRate": 14000,
+      "xpMultiplier": 1.3
+    },
+    {
+      "id": "love-02",
+      "name": "Healing Hands",
+      "description": "Bring healing and overcome infirmity and deception",
+      "mapStyle": "open",
+      "qualities": ["Healing", "Faith"],
+      "monsters": ["Infirmity", "Deception", "Poverty"],
+      "monsterDamageFactor": 1.4,
+      "monsterSpeed": 7,
+      "playerSpeed": 6,
+      "maxMonsters": 30,
+      "monstersToKill": 18,
+      "spawnRate": 12000,
+      "xpMultiplier": 1.4
+    }
+  ]
+}

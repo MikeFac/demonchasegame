@@ -66,7 +66,8 @@
     "startSoloGame": "Juego en solitario",
     "language": "🌐 Idioma",
     "customGame": "⚙️ Juego personalizado",
-    "multiplayerGame": "Juego multijugador"
+    "multiplayerGame": "Juego multijugador",
+    "missions": "⚔️ Misiones"
   },
   "review": {
     "previous": "Anterior",
@@ -77,6 +78,19 @@
     "game": "Juego",
     "reference": "Referencia: {0}",
     "learn": "Aprender: {0}"
+  },
+  "overland": {
+    "title": "Seleccionar Misión",
+    "locked": "[BLOQUEADO]",
+    "completed": "Completado",
+    "available": "Disponible",
+    "startMission": "Iniciar Misión",
+    "learnVerses": "Aprender Versículos",
+    "missionComplete": "¡Misión Completada!",
+    "missionFailed": "Misión Fallida",
+    "returnToMap": "Volver al Mapa",
+    "chapterComplete": "¡Capítulo Completado!",
+    "unlockChapter": "Desbloqueado: {0}"
   },
   "votd": {
     "verseOfTheDay": "Versículo del día",

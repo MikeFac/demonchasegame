@@ -248,6 +248,13 @@ let menuOpen = false;
 let isSoloGame = true; // Updated from server gameConfig
 let meleeHitProbabilityNoAnswer = 0.1; // Probability to hit in melee without answering quiz (default: Normal 10%)
 
+// Mission system state
+let overlandRenderer = null;
+let currentMission = null;
+let currentMissionConfig = null;
+let missionWorlds = [];
+let missionsInitialized = false;
+
 // Verse Test shield setting (Option A/B)
 let verseTestShielded = localStorage.getItem('verseTestShielded') === 'true';
 let verseTestShieldActive = false;
@@ -883,6 +890,13 @@ document.addEventListener('DOMContentLoaded', function () {
         document.getElementById('btnCustomGame').addEventListener('click', () => {
             if (window.Analytics) Analytics.trackMenuClick('custom_game');
             window.location.href = '/config';
+        });
+        document.getElementById('btnMissions').addEventListener('click', () => {
+            if (window.Analytics) Analytics.trackMenuClick('missions');
+            // Hide menu screen and show overland
+            const menuScreen = document.getElementById('menuScreen');
+            if (menuScreen) menuScreen.style.display = 'none';
+            showOverland();
         });
         document.getElementById('btnLearnVerses').addEventListener('click', () => {
             if (window.Analytics) Analytics.trackMenuClick('learn_verses');
@@ -1589,6 +1603,9 @@ async function init() {
             onReviewModeClick: (event) => {
                 ReviewMode.handleReviewClick(event);
             },
+            onOverlandClick: (x, y) => {
+                handleOverlandClick(x, y);
+            },
             onHamburgerClick: () => {
                 menuOpen = !menuOpen;
             },
@@ -1811,6 +1828,181 @@ async function init() {
     });
 }
 
+// ==================== Mission System Functions ====================
+
+async function initializeMissions() {
+    if (missionsInitialized) return true;
+    
+    try {
+        // Load mission data
+        const worlds = await missionClient.getWorlds();
+        missionWorlds = worlds;
+        
+        // Check and update unlocks
+        if (window.progressManager) {
+            await progressManager.checkUnlocks(worlds);
+        }
+        
+        // Initialize overland renderer
+        if (window.OverlandRenderer && !overlandRenderer) {
+            overlandRenderer = new OverlandRenderer(ctx, canvas);
+            overlandRenderer.setWorlds(worlds);
+        }
+        
+        missionsInitialized = true;
+        console.log('Missions initialized:', worlds.length, 'chapters');
+        return true;
+    } catch (error) {
+        console.error('Failed to initialize missions:', error);
+        return false;
+    }
+}
+
+function showOverland() {
+    gameMode = 'overland';
+    canvas.width = 400;
+    canvas.height = Math.min(600, window.innerHeight - 80);
+    initializeMissions();
+}
+
+function handleOverlandClick(x, y) {
+    if (!overlandRenderer || !window.progressManager) return;
+    
+    const progress = progressManager.getProgress();
+    
+    // Check for mission node click
+    const clickedNode = overlandRenderer.handleClick(x, y, progress);
+    
+    // Check for Start Mission button
+    if (overlandRenderer.isStartMissionClicked(x, y)) {
+        const selected = overlandRenderer.getSelectedMission();
+        if (selected) {
+            startMission(selected.worldId, selected.missionId);
+            return;
+        }
+    }
+    
+    // Check for Learn Verses button
+    if (overlandRenderer.isLearnVersesClicked(x, y)) {
+        const selected = overlandRenderer.getSelectedMission();
+        if (selected && window.ReviewMode) {
+            // Enter review mode with mission's verse categories
+            const world = missionWorlds.find(w => w.id === selected.worldId);
+            if (world) {
+                const mission = world.missions.find(m => m.id === selected.missionId);
+                if (mission && mission.qualities && mission.qualities.length > 0) {
+                    vQuality = mission.qualities[0];
+                }
+            }
+            ReviewMode.startReviewMode();
+        }
+        return;
+    }
+}
+
+async function startMission(worldId, missionId) {
+    try {
+        const mission = await missionClient.getMission(worldId, missionId);
+        if (!mission) {
+            console.error('Mission not found:', worldId, missionId);
+            return;
+        }
+        
+        currentMission = mission;
+        currentMissionConfig = missionClient.missionToGameConfig(mission);
+        
+        console.log('Starting mission:', mission.name);
+        
+        // Reset game state for mission
+        gameMode = 'game';
+        gameState.gameLevel = 1;
+        gameState.monsters = [];
+        gameState.monstersKilled = 0;
+        gameState.terrainTheme = mission.worldTheme || 'stone';
+        
+        // Set verse qualities for this mission
+        if (mission.qualities && mission.qualities.length > 0) {
+            vQuality = mission.qualities[0];
+            gameCategory = mission.qualities.join(',');
+        }
+        
+        // Start the game with mission config
+        if (offlineMode) {
+            startOfflineMissionGame(mission);
+        } else {
+            // For online mode, we'd need server support
+            // For now, just start a solo game
+            startGame('solo');
+        }
+        
+    } catch (error) {
+        console.error('Failed to start mission:', error);
+    }
+}
+
+function startOfflineMissionGame(mission) {
+    if (!network || !network.engine) {
+        console.error('Network/engine not available for mission');
+        return;
+    }
+    
+    // Create game config from mission
+    const config = currentMissionConfig;
+    
+    // Apply mission config to the game
+    customLevelData = config.levelData;
+    customMonsterHealthMultiplier = 1.0;
+    meleeHitProbabilityNoAnswer = 0.1;
+    
+    // Reset game state
+    levelCompleted = false;
+    gameOverFlag = false;
+    isAnswerCorrect = null;
+    monsters = [];
+    gameState.monstersKilled = 0;
+    gameState.monstersToKill = mission.monstersToKill;
+    
+    // Pick a verse for the mission's quality
+    if (mission.qualities && mission.qualities.length > 0) {
+        vQuality = mission.qualities[0];
+    }
+    QuizManager.pickQualityVerse();
+    
+    console.log('Mission started:', mission.name);
+}
+
+function completeMission(stars) {
+    if (!currentMission) return;
+    
+    const xpEarned = Math.floor(100 * (currentMission.xpMultiplier || 1.0) * stars / 3);
+    
+    if (window.progressManager) {
+        progressManager.completeMission(currentMission.id, stars, xpEarned);
+        
+        // Check for chapter unlocks
+        progressManager.checkUnlocks(missionWorlds);
+    }
+    
+    console.log('Mission completed:', currentMission.id, 'stars:', stars, 'XP:', xpEarned);
+    
+    // Show completion message
+    flashMessages.push({
+        text: t('overland.missionComplete', 'Mission Complete!') + ' +' + xpEarned + ' XP',
+        color: '#4CAF50',
+        startTime: Date.now(),
+        duration: 3000
+    });
+    
+    currentMission = null;
+    currentMissionConfig = null;
+}
+
+function returnToOverland() {
+    currentMission = null;
+    currentMissionConfig = null;
+    showOverland();
+}
+
 // Note: handleMouseClick has been replaced by InputHandler module
 
 // Game loop
@@ -1854,6 +2046,16 @@ function gameLoop() {
             VotdTestMode.render(elapsedTime / 1000);
         }
         lastUpdateTime = currentTime; // Keep time in sync so game resumes correctly
+        requestAnimationFrame(gameLoop);
+        return;
+    }
+    
+    // Handle Overland (mission selection) rendering
+    if (gameMode === 'overland') {
+        if (overlandRenderer && window.progressManager) {
+            overlandRenderer.render(progressManager.getProgress());
+        }
+        lastUpdateTime = currentTime;
         requestAnimationFrame(gameLoop);
         return;
     }
