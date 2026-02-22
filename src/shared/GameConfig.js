@@ -46,7 +46,7 @@ const PRESETS = {
       healingSpawnRate: 0.7,       // 30% faster healing spawns
       maxMonsters: 0.7             // 70% max concurrent monsters
     },
-    meleeHitProbabilityNoAnswer: 0.5  // 50% chance to hit without answering quiz
+    meleeHitProbabilityNoAnswer: 0.2  // 20% chance to hit without answering quiz
   },
   normal: {
     name: 'Normal',
@@ -59,7 +59,7 @@ const PRESETS = {
       healingSpawnRate: 1.0,
       maxMonsters: 1.0
     },
-    meleeHitProbabilityNoAnswer: 0.3  // 30% chance to hit without answering quiz
+    meleeHitProbabilityNoAnswer: 0.1  // 10% chance to hit without answering quiz
   },
   hard: {
     name: 'Hard',
@@ -228,7 +228,7 @@ function createFromCustomBalance(balance, customQuizSettings, levelOverrides) {
     multipliers: m,
     monsterHealthMultiplier: m.monsterHealth,
     quizSettings: quizSettings,
-    meleeHitProbabilityNoAnswer: 0.2  // Default for custom: 20% chance
+    meleeHitProbabilityNoAnswer: 0.1  // Default for custom: 10% chance
   };
 }
 

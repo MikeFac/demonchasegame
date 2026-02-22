@@ -41,9 +41,10 @@ Uses existing difficulty presets (Easy/Normal/Hard):
 
 | Difficulty | Hit Probability | Rationale |
 |------------|-----------------|-----------|
-| Easy | 50% | Welcoming to new players |
-| Normal | 30% | Helps but doesn't replace learning |
+| Easy | 20% | Welcoming to new players |
+| Normal | 10% | Helps but doesn't replace learning |
 | Hard | 0% | Must know verses to succeed (current behavior) |
+| Custom | 10% | Default for custom configurations |
 
 ---
 

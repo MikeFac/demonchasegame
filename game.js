@@ -246,7 +246,7 @@ let menuOpen = false;
 
 // Multiplayer state
 let isSoloGame = true; // Updated from server gameConfig
-let meleeHitProbabilityNoAnswer = 0.3; // Probability to hit in melee without answering quiz (default: Normal)
+let meleeHitProbabilityNoAnswer = 0.1; // Probability to hit in melee without answering quiz (default: Normal 10%)
 
 // Verse Test shield setting (Option A/B)
 let verseTestShielded = localStorage.getItem('verseTestShielded') === 'true';

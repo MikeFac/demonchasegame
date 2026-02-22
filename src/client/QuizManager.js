@@ -543,7 +543,7 @@
 
             const correctVerse = organizedVerses[vQuality] && organizedVerses[vQuality][currentVerseIndex];
             answerFullVerse = correctVerse ? correctVerse.Text : '';
-            setAnswerResultTimeout(3000);
+            setAnswerResultTimeout(4500);
 
             if (typeof window.MusicManager !== 'undefined' && window.MusicManager.recordVerseLearned) {
                 window.MusicManager.recordVerseLearned(currentReference, true);
@@ -557,7 +557,7 @@
             qualityIndex[vQuality] = (qualityIndex[vQuality] + 1) % organizedVerses[vQuality].length;
             const wrongVerse = organizedVerses[vQuality] && organizedVerses[vQuality][currentVerseIndex];
             answerFullVerse = wrongVerse ? wrongVerse.Text : '';
-            setAnswerResultTimeout(4000);
+            setAnswerResultTimeout(6000);
 
             if (!incorrectAnswerReferences.includes(currentReference)) {
                 incorrectAnswerReferences.push(currentReference);
@@ -638,7 +638,7 @@
 
             const correctVerse = organizedVerses[vQuality] && organizedVerses[vQuality][currentVerseIndex];
             answerFullVerse = correctVerse ? correctVerse.Text : '';
-            setAnswerResultTimeout(3000);
+            setAnswerResultTimeout(4500);
 
             // Track verse learning via music (if available)
             if (typeof window.MusicManager !== 'undefined' && window.MusicManager.recordVerseLearned) {
@@ -654,7 +654,7 @@
             qualityIndex[vQuality] = (qualityIndex[vQuality] + 1) % organizedVerses[vQuality].length;
             const wrongVerse = organizedVerses[vQuality] && organizedVerses[vQuality][currentVerseIndex];
             answerFullVerse = wrongVerse ? wrongVerse.Text : '';
-            setAnswerResultTimeout(3000);
+            setAnswerResultTimeout(4500);
 
             if (!incorrectAnswerReferences.includes(currentReference)) {
                 incorrectAnswerReferences.push(currentReference);
