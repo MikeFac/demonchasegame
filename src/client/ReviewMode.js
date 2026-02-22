@@ -111,12 +111,12 @@
                 displayReviewVerse(verseDetails.text);
 
                 ctx.font = '20px Arial';
-                ctx.fillStyle = 'black';
-                ctx.fillText(t('review.learn', tCategory(verseDetails.category)), 10, canvas.height - 90);
+                ctx.fillStyle = 'white';
+                ctx.fillText(t('review.learn', tCategory(verseDetails.category)), 20, canvas.height - 90);
 
                 ctx.font = '20px Arial';
-                ctx.fillStyle = 'black';
-                ctx.fillText(t('review.reference', verseReference), 10, canvas.height - 120);
+                ctx.fillStyle = 'white';
+                ctx.fillText(t('review.reference', verseReference), 20, canvas.height - 120);
 
                 if (!isAudioPlaying && !repeatEnabled && !meditationMode) {
                     startVerseAudio(verseReference);
@@ -126,12 +126,12 @@
     }
 
     function displayReviewVerse(text) {
-        const fontSize = 22;
-        const lineHeight = fontSize * 1.2;
-        const maxWidth = canvas.width - 20;
+        const fontSize = 28;
+        const lineHeight = fontSize * 1.3;
+        const maxWidth = canvas.width - 40;
 
         ctx.font = `${fontSize}px Arial`;
-        ctx.fillStyle = 'black';
+        ctx.fillStyle = 'white';
 
         const words = text.split(' ');
         let line = '';
@@ -143,7 +143,7 @@
             const testWidth = metrics.width;
 
             if (testWidth > maxWidth && i > 0) {
-                ctx.fillText(line, 10, y);
+                ctx.fillText(line, 20, y);
                 line = words[i] + ' ';
                 y += lineHeight;
             } else {
@@ -151,7 +151,7 @@
             }
         }
 
-        ctx.fillText(line, 10, y);
+        ctx.fillText(line, 20, y);
     }
 
     function drawNavigationButtons() {
