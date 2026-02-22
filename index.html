@@ -974,10 +974,10 @@
       <h2 id="instructionsTitle"></h2>
       <div id="instructionsContent" class="page-content"></div>
       <div class="instructions-nav">
-        <button id="btnPrev">Back</button>
+        <button id="btnPrev" data-i18n="tutorial.back">Back</button>
         <span class="page-indicator" id="pageIndicator"></span>
-        <button id="btnStartPlaying">Start Playing</button>
-        <button id="btnNext">Next</button>
+        <button id="btnStartPlaying" data-i18n="tutorial.startPlaying">Start Playing</button>
+        <button id="btnNext" data-i18n="tutorial.next">Next</button>
       </div>
     </div>
   </div>
@@ -1366,10 +1366,10 @@
         btnPrev.disabled = (index === 0);
         // Last page: change Next to "Close"
         if (index === pages.length - 1) {
-          btnNext.textContent = 'Close';
+          btnNext.textContent = t('tutorial.close');
           btnNext.style.background = '#333';
         } else {
-          btnNext.textContent = 'Next';
+          btnNext.textContent = t('tutorial.next');
           btnNext.style.background = '#e94560';
         }
       }

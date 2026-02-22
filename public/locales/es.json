@@ -270,6 +270,10 @@
     "city": "Ciudad cuadrícula"
   },
   "tutorial": {
+    "next": "Siguiente",
+    "back": "Atrás",
+    "close": "Cerrar",
+    "startPlaying": "Empezar a jugar",
     "pages": [
       {
         "title": "Bienvenido",

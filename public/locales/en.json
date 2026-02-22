@@ -263,6 +263,10 @@
     "city": "Grid City"
   },
   "tutorial": {
+    "next": "Next",
+    "back": "Back",
+    "close": "Close",
+    "startPlaying": "Start Playing",
     "pages": [
       {
         "title": "Welcome",
