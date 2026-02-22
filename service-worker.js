@@ -1,4 +1,4 @@
-var CACHE_NAME = 'versebattles-v6';
+var CACHE_NAME = 'versebattles-v7';
 
 // Sound effects to cache
 var SOUND_ASSETS = [
