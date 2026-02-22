@@ -39,7 +39,8 @@
                 quizSettings: engine.gameConfig.quizSettings,
                 preset: engine.gameConfig.preset,
                 presetName: engine.gameConfig.presetName,
-                isSoloGame: isSoloGame !== false
+                isSoloGame: isSoloGame !== false,
+                meleeHitProbabilityNoAnswer: engine.gameConfig.meleeHitProbabilityNoAnswer || 0.0
             });
         }
 

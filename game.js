@@ -246,6 +246,7 @@ let menuOpen = false;
 
 // Multiplayer state
 let isSoloGame = true; // Updated from server gameConfig
+let meleeHitProbabilityNoAnswer = 0.3; // Probability to hit in melee without answering quiz (default: Normal)
 
 // Verse Test shield setting (Option A/B)
 let verseTestShielded = localStorage.getItem('verseTestShielded') === 'true';
@@ -1344,6 +1345,10 @@ async function init() {
                 if (config.isSoloGame !== undefined) {
                     isSoloGame = config.isSoloGame;
                 }
+                // Store melee hit probability for attacks without quiz answer
+                if (config.meleeHitProbabilityNoAnswer !== undefined) {
+                    meleeHitProbabilityNoAnswer = config.meleeHitProbabilityNoAnswer;
+                }
                 // Override local quiz settings with server-authoritative values
                 if (config.quizSettings) {
                     quizSettings = config.quizSettings;
@@ -2199,7 +2204,16 @@ function gameLoop() {
                 // Handle combat (ghosts cannot fight)
                 if (currentTime - lastAttackTime > ATTACK_RATE) {
                     lastAttackTime = currentTime;
+                    
+                    // Determine if attack hits
+                    let attackHits = false;
                     if (isAnswerCorrect === true) {
+                        attackHits = true;  // Always hit if answered correctly
+                    } else if (meleeHitProbabilityNoAnswer > 0 && Math.random() < meleeHitProbabilityNoAnswer) {
+                        attackHits = true;  // Probability-based hit without answer
+                    }
+                    
+                    if (attackHits) {
                         attackSound.play(); // Play the attack sound effect
                         monster.isAttacked = true; // Set isAttacked to true when the monster is attacked
                         setTimeout(() => {

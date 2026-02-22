@@ -45,7 +45,8 @@ const PRESETS = {
       spawnRate: 1.5,              // 50% slower spawning (multiply interval)
       healingSpawnRate: 0.7,       // 30% faster healing spawns
       maxMonsters: 0.7             // 70% max concurrent monsters
-    }
+    },
+    meleeHitProbabilityNoAnswer: 0.5  // 50% chance to hit without answering quiz
   },
   normal: {
     name: 'Normal',
@@ -57,7 +58,8 @@ const PRESETS = {
       spawnRate: 1.0,
       healingSpawnRate: 1.0,
       maxMonsters: 1.0
-    }
+    },
+    meleeHitProbabilityNoAnswer: 0.3  // 30% chance to hit without answering quiz
   },
   hard: {
     name: 'Hard',
@@ -69,7 +71,8 @@ const PRESETS = {
       spawnRate: 0.7,              // 30% faster spawning (multiply interval)
       healingSpawnRate: 1.5,       // 50% slower healing spawns
       maxMonsters: 1.3             // 30% more concurrent monsters
-    }
+    },
+    meleeHitProbabilityNoAnswer: 0.0  // Must answer quiz to hit (current behavior)
   }
 };
 
@@ -136,7 +139,10 @@ function createGameConfig(presetName = 'normal', customQuizSettings = null) {
     monsterHealthMultiplier: m.monsterHealth,
 
     // Quiz settings (independent of monster difficulty)
-    quizSettings: quizSettings
+    quizSettings: quizSettings,
+
+    // Melee combat: probability to hit without answering quiz (0.0 - 1.0)
+    meleeHitProbabilityNoAnswer: preset.meleeHitProbabilityNoAnswer || 0.0
   };
 }
 
@@ -221,7 +227,8 @@ function createFromCustomBalance(balance, customQuizSettings, levelOverrides) {
     levelData: levelData,
     multipliers: m,
     monsterHealthMultiplier: m.monsterHealth,
-    quizSettings: quizSettings
+    quizSettings: quizSettings,
+    meleeHitProbabilityNoAnswer: 0.2  // Default for custom: 20% chance
   };
 }
 
