@@ -14,6 +14,45 @@ const I18n = (function () {
     let _strings = {};
     let _loaded = false;
     let _lang = 'en';
+    
+    // Minimal English fallback for offline use
+    const _fallbackStrings = {
+        ui: {
+            correct: "Correct!",
+            incorrect: "Incorrect!",
+            gameOver: "GAME OVER",
+            gameOverTitle: "Game Over",
+            restart: "Restart",
+            menu: "Menu",
+            learnVersesHere: "Learn Verses Here",
+            playAgain: "Play Again",
+            returnToMenu: "Return to Menu",
+            ghost: "Ghost",
+            offline: "Offline"
+        },
+        menu: {
+            solo: "Solo Game",
+            multiplayer: "Multiplayer",
+            options: "Options",
+            back: "Back"
+        },
+        toasts: {
+            offlineMode: "Offline mode enabled",
+            earnAmmo: "Answer correctly to earn ammo!",
+            quizTipDamage: "Answer quiz to damage demon!",
+            goToMenuLearn: "Go to menu to learn verses first",
+            healingCrosses: "Collect crosses to heal!",
+            multiplayerRequiresInternet: "Multiplayer requires internet",
+            thanksForSharing: "Thanks for sharing!",
+            shareCopied: "Share link copied!"
+        },
+        stats: {
+            levelReached: "Level Reached: {0}",
+            monstersKilled: "Monsters Killed: {0}",
+            versesLearned: "Verses Learned: {0}",
+            timePlayed: "Time Played: {0}"
+        }
+    };
 
     /**
      * Determine which locale to load.
@@ -33,6 +72,7 @@ const I18n = (function () {
     /**
      * Load locale synchronously (for initial page load).
      * Uses XMLHttpRequest to ensure strings are available before rendering.
+     * Falls back to inline fallback strings when offline.
      */
     function loadSync(langCode) {
         _lang = langCode || _detectLanguage();
@@ -42,21 +82,28 @@ const I18n = (function () {
             xhr.send();
             if (xhr.status === 200) {
                 _strings = JSON.parse(xhr.responseText);
+                _loaded = true;
+                localStorage.setItem('lang', _lang);
+                return;
             } else if (_lang !== 'en') {
                 console.warn('i18n: locale "' + _lang + '" not found, falling back to "en"');
                 xhr.open('GET', '/locales/en.json', false);
                 xhr.send();
                 if (xhr.status === 200) {
                     _strings = JSON.parse(xhr.responseText);
+                    _loaded = true;
+                    localStorage.setItem('lang', 'en');
+                    return;
                 }
             }
-            _loaded = true;
-            localStorage.setItem('lang', _lang);
         } catch (e) {
-            console.error('i18n: failed to load locale', e);
-            _strings = {};
-            _loaded = true;
+            console.warn('i18n: XHR failed, using fallback strings:', e.message);
         }
+        
+        // Use inline fallback strings when network fails
+        _strings = _fallbackStrings;
+        _loaded = true;
+        console.log('i18n: using fallback strings for offline mode');
     }
 
     /**
@@ -70,7 +117,13 @@ const I18n = (function () {
                 console.warn(`i18n: locale "${_lang}" not found, falling back to "en"`);
                 if (_lang !== 'en') {
                     const fallback = await fetch('/locales/en.json');
-                    _strings = await fallback.json();
+                    if (fallback.ok) {
+                        _strings = await fallback.json();
+                    } else {
+                        _strings = _fallbackStrings;
+                    }
+                } else {
+                    _strings = _fallbackStrings;
                 }
             } else {
                 _strings = await resp.json();
@@ -78,8 +131,8 @@ const I18n = (function () {
             _loaded = true;
             localStorage.setItem('lang', _lang);
         } catch (e) {
-            console.error('i18n: failed to load locale', e);
-            _strings = {};
+            console.warn('i18n: fetch failed, using fallback strings:', e);
+            _strings = _fallbackStrings;
             _loaded = true;
         }
     }

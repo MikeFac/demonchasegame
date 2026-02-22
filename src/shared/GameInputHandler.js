@@ -138,14 +138,29 @@
         if (player.state !== 'alive') return;
         player.health -= damage;
         if (player.health < 0) player.health = 0;
+        
+        // Only set ghost state for multiplayer games
+        // Solo games should show game over instead
+        var isSoloGame = engine.roomId && engine.roomId.startsWith('solo-');
+        
         if (player.health <= 0 && player.state === 'alive') {
-            player.state = 'ghost';
-            player.canAttack = false;
-            engine.emitter.emit('playerDied', {
-                playerCode: playerCode,
-                username: player.username || 'Player'
-            });
-            console.log('Player ' + playerCode + ' (' + (player.username || 'Player') + ') died — now a ghost');
+            if (isSoloGame) {
+                // Solo game: emit playerDied for client to show game over, but don't set ghost
+                engine.emitter.emit('playerDied', {
+                    playerCode: playerCode,
+                    username: player.username || 'Player'
+                });
+                console.log('Player ' + playerCode + ' (' + (player.username || 'Player') + ') died in solo game');
+            } else {
+                // Multiplayer: player becomes ghost and can watch others
+                player.state = 'ghost';
+                player.canAttack = false;
+                engine.emitter.emit('playerDied', {
+                    playerCode: playerCode,
+                    username: player.username || 'Player'
+                });
+                console.log('Player ' + playerCode + ' (' + (player.username || 'Player') + ') died — now a ghost');
+            }
         }
         engine.emitter.emit('gameStateUpdate', engine.gameState);
     }

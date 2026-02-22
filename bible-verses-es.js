@@ -1,4 +1,4 @@
-function loadSelectedVerses() {
+function loadSelectedVersesES() {
   return [
   {
     "Id": 1,

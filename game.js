@@ -505,18 +505,57 @@ function isInOnboardingWindow() {
 // to retrieve verses from database in PRD
 async function loadVerses() {
     console.log("gameCategory: " + gameCategory);
+    
+    // Check if we should use offline/local verses
+    const shouldUseOfflineVerses = offlineMode || !navigator.onLine;
+    
+    if (shouldUseOfflineVerses) {
+        console.log('Loading verses from bundled file (offline mode)');
+        loadVersesFromBundle();
+        return;
+    }
+    
     try {
         const response = await fetch('get_verses.php?category=' + gameCategory);
         if (!response.ok) {
             throw new Error('Network response was not ok ' + response.statusText);
         }
         const data = await response.json();
-        console.log('Verses loaded:', data);
-        organizedVerses = QuizManager.organizeByCategory2(data); // Assign the retrieved verses to organizedVerses
+        console.log('Verses loaded from server:', data.length, 'verses');
+        organizedVerses = QuizManager.organizeByCategory2(data);
     } catch (error) {
-        console.error('Error loading verses:', error);
-        throw new Error('Failed to load verses'); // This will propagate the error
+        console.warn('Failed to load verses from server, falling back to bundle:', error.message);
+        loadVersesFromBundle();
     }
+}
+
+function loadVersesFromBundle() {
+    let verses;
+    const lang = typeof I18n !== 'undefined' ? I18n.getLang() : 'en';
+    
+    // Use Spanish verses if language is Spanish and function exists
+    if (lang === 'es' && typeof loadSelectedVersesES === 'function') {
+        console.log('Loading Spanish verses from bundle');
+        verses = loadSelectedVersesES();
+    } else if (typeof loadSelectedVerses === 'function') {
+        console.log('Loading English verses from bundle');
+        verses = loadSelectedVerses();
+    } else {
+        console.error('No verse bundle available');
+        organizedVerses = {};
+        return;
+    }
+    
+    // Filter by category if specified
+    let filteredVerses = verses;
+    if (gameCategory && gameCategory !== 'All') {
+        filteredVerses = verses.filter(function(v) {
+            return v.Category === gameCategory;
+        });
+        console.log('Filtered to', filteredVerses.length, 'verses for category:', gameCategory);
+    }
+    
+    organizedVerses = QuizManager.organizeByCategory2(filteredVerses);
 }
 
 // === Custom Config Loading (from URL or localStorage) ===
@@ -1169,7 +1208,10 @@ async function init() {
             // Multiplayer lifecycle notifications
             onPlayerDied: (data) => {
                 if (data.playerCode === playerCode) {
-                    flashMessages.push({ text: 'You died! You are now a ghost.', color: '#ff6666', startTime: Date.now(), duration: 4000 });
+                    // Only show ghost message in multiplayer; solo games show game over modal
+                    if (!isSoloGame) {
+                        flashMessages.push({ text: 'You died! You are now a ghost.', color: '#ff6666', startTime: Date.now(), duration: 4000 });
+                    }
                     gameOver.play();
                 } else {
                     flashMessages.push({ text: `${data.username} has died!`, color: '#ff4444', startTime: Date.now(), duration: 3000 });

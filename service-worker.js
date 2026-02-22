@@ -1,14 +1,57 @@
-var CACHE_NAME = 'versebattles-v3';
+var CACHE_NAME = 'versebattles-v5';
 
-// Core assets to cache (no audio — too large for mobile storage)
+// Sound effects to cache
+var SOUND_ASSETS = [
+    '/sounds/bullet_impact.mp3',
+    '/sounds/monster_explosion.mp3',
+    '/sounds/level_up.mp3',
+    '/sounds/player_attacked.mp3',
+    '/sounds/monster_attacked.mp3',
+    '/sounds/healing_recharge.mp3',
+    '/sounds/game_over.mp3',
+    '/sounds/heal_pickup.mp3'
+];
+
+// Core images to pre-cache
+var IMAGE_ASSETS = [
+    '/images/player1-sprite96.png',
+    '/images/player2-sprite96.png',
+    '/images/player3-sprite96.png',
+    '/images/player4-sprite96.png',
+    '/images/healing_point.png',
+    '/images/shield_of_faith.png',
+    '/images/VerseBattles-logo.png',
+    '/images/monsters/fear_demon.png',
+    '/images/monsters/doubt_spirit.png',
+    '/images/monsters/condemnation_demon.png',
+    '/images/monsters/unbelief_demon.png',
+    '/images/monsters/depression_spirit.png',
+    '/images/monsters/infirmity_spirit.png',
+    '/images/monsters/confusion_spirit.png',
+    '/images/monsters/ignorance_spirit.png',
+    '/images/monsters/strife_spirit.png',
+    '/images/monsters/PRIDE.png',
+    '/images/monsters/DISCOURAGEMENT.png',
+    '/images/monsters/DEMON-SWARM.png',
+    '/images/monsters/DEMON-OF-POVERTY.png',
+    '/images/monsters/DECEPTION_SPIRIT1.png',
+    '/images/monsters/SPIRITUALBLINDNESS.png',
+    '/images/monsters/SHAME-ACCUSATION.png',
+    '/images/monsters/JEZEBEL.png',
+    '/images/effects/explosion2.png',
+    '/images/terrains/terrain256.png',
+    '/images/terrains/houses-and-buildings400.png'
+];
+
+// Core assets to cache
 var CORE_ASSETS = [
     '/',
     '/index.html',
     '/game.js',
     '/bible-verses.js',
     '/bible-verses-es.js',
-    '/public/locales/en.json',
-    '/public/locales/es.json',
+    '/locales/en.json',
+    '/locales/es.json',
     '/src/client/i18n.js',
     '/manifest.json',
     // Shared modules
@@ -51,12 +94,20 @@ var CORE_ASSETS = [
     '/src/client/VotdMenuOverlay.js'
 ];
 
-// Install: cache core assets
+// Install: cache core assets, sounds, and images
 self.addEventListener('install', function (event) {
     event.waitUntil(
         caches.open(CACHE_NAME).then(function (cache) {
-            console.log('Service Worker: Caching core assets');
-            return cache.addAll(CORE_ASSETS);
+            console.log('Service Worker: Caching core assets, sounds, and images');
+            // Cache all assets in parallel, continue even if some fail (e.g., if missing)
+            var allAssets = CORE_ASSETS.concat(SOUND_ASSETS).concat(IMAGE_ASSETS);
+            return Promise.all(
+                allAssets.map(function (url) {
+                    return cache.add(url).catch(function (err) {
+                        console.warn('Service Worker: Failed to cache', url, err);
+                    });
+                })
+            );
         })
     );
     self.skipWaiting();
@@ -79,17 +130,40 @@ self.addEventListener('activate', function (event) {
     self.clients.claim();
 });
 
-// Fetch: stale-while-revalidate for JS/HTML, cache-first for images, network-only for API/audio
+// Fetch: stale-while-revalidate for JS/HTML, cache-first for images/sounds, network-only for API/external-audio
 self.addEventListener('fetch', function (event) {
     var url = new URL(event.request.url);
 
-    // Network-only for non-GET, socket.io, API, and audio
+    // Network-only for non-GET, socket.io, API, and external audio
     if (event.request.method !== 'GET') return;
     if (url.pathname.startsWith('/socket.io')) return;
     if (url.pathname.startsWith('/api')) return;
     if (url.pathname.startsWith('/lobby')) return;
     if (url.pathname.startsWith('/public/audio')) return;
-    if (url.pathname.endsWith('.mp3') || url.pathname.endsWith('.ogg') || url.pathname.endsWith('.wav')) return;
+    
+    // Cache-first for local sounds (but not external audio or music)
+    if (url.pathname.startsWith('/sounds/') && url.pathname.endsWith('.mp3')) {
+        event.respondWith(
+            caches.match(event.request).then(function (cached) {
+                if (cached) return cached;
+                return fetch(event.request).then(function (response) {
+                    if (response.ok) {
+                        var clone = response.clone();
+                        caches.open(CACHE_NAME).then(function (cache) {
+                            cache.put(event.request, clone);
+                        });
+                    }
+                    return response;
+                }).catch(function () {
+                    return new Response('', { status: 404 });
+                });
+            })
+        );
+        return;
+    }
+    
+    // Skip external audio files (verse audio from remote servers)
+    if (url.origin !== self.location.origin && url.pathname.match(/\.(mp3|ogg|wav)$/)) return;
 
     // Cache-first for images
     if (url.pathname.match(/\.(png|jpg|jpeg|gif|svg|ico)$/)) {
