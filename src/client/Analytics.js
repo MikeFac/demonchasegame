@@ -4,11 +4,70 @@
     let lastHeartbeatLevel = 1;
     let lastHeartbeatKills = 0;
     let sessionStarted = false;
+    let eventQueue = [];
+    let gtagLoadAttempted = false;
 
     function track(eventName, params) {
+        var event = { name: eventName, params: params || {}, time: Date.now() };
+        
         if (typeof gtag !== 'undefined') {
+            // gtag available - send queued events first, then this one
+            _flushQueue();
             gtag('event', eventName, params || {});
+        } else if (navigator.onLine) {
+            // Online but gtag not loaded - try to load it
+            eventQueue.push(event);
+            _loadGtag();
+        } else {
+            // Offline - queue for later
+            eventQueue.push(event);
         }
+    }
+    
+    function _loadGtag() {
+        if (gtagLoadAttempted) return;
+        gtagLoadAttempted = true;
+        
+        var script = document.createElement('script');
+        script.src = 'https://www.googletagmanager.com/gtag/js?id=G-673VQ9VE50';
+        script.async = true;
+        script.onload = function () {
+            window.dataLayer = window.dataLayer || [];
+            function gtagLoader() { dataLayer.push(arguments); }
+            window.gtag = gtagLoader;
+            gtag('js', new Date());
+            gtag('config', 'G-673VQ9VE50');
+            _flushQueue();
+        };
+        document.head.appendChild(script);
+    }
+    
+    function _flushQueue() {
+        if (typeof gtag === 'undefined' || eventQueue.length === 0) return;
+        
+        // Only flush events from the last 5 minutes (avoid stale data)
+        var cutoff = Date.now() - (5 * 60 * 1000);
+        var toSend = eventQueue.filter(function(e) { return e.time > cutoff; });
+        eventQueue = [];
+        
+        toSend.forEach(function(event) {
+            gtag('event', event.name, event.params);
+        });
+        
+        if (toSend.length > 0) {
+            console.log('Analytics: flushed', toSend.length, 'queued events');
+        }
+    }
+    
+    // Listen for online event to flush queue
+    if (typeof window !== 'undefined') {
+        window.addEventListener('online', function() {
+            if (eventQueue.length > 0 && typeof gtag === 'undefined') {
+                _loadGtag();
+            } else {
+                _flushQueue();
+            }
+        });
     }
 
     function startSession(offlineMode) {
