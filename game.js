@@ -2880,12 +2880,17 @@ function updateGameState(newGameState) {
     if (gameState.players && playerCode) {
         Object.keys(gameState.players).forEach(code => {
             if (code === playerCode) {
-                // In offline mode, ALWAYS use local player position - never use server position
-                // This prevents the wall collision bug from position sync issues
+                // In offline mode, use local position if it exists, otherwise use server position
                 if (offlineMode) {
-                    // Keep local x/y, only update stats from server
-                    const { x, y } = player;
-                    player = { ...player, ...gameState.players[code], x: x, y: y };
+                    const serverPlayer = gameState.players[code];
+                    // Use server position if local is undefined (initial spawn), otherwise keep local
+                    if (player.x === undefined || player.y === undefined) {
+                        player = { ...player, ...serverPlayer };
+                    } else {
+                        // Keep local x/y, update everything else from server
+                        const { x, y } = player;
+                        player = { ...player, ...serverPlayer, x: x, y: y };
+                    }
                 } else {
                     // Multiplayer: reconciliation with server
                     // Update our player, but preserve local dimensions which come from the loaded image
@@ -2905,13 +2910,6 @@ function updateGameState(newGameState) {
                         player.x = x + (serverPlayer.x - x) * 0.3;
                         player.y = y + (serverPlayer.y - y) * 0.3;
                     }
-                }
-
-                if (player.width) {
-                    // preserve width/height if already set
-                }
-                if (player.height) {
-                    // preserve
                 }
             } else {
                 // Update other players
