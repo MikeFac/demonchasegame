@@ -1876,9 +1876,28 @@ let overlandClickHandler = null;
 
 async function showOverland() {
     gameMode = 'overland';
+    
+    // Hide any visible overlays
+    const splashScreen = document.getElementById('splashScreen');
+    if (splashScreen) splashScreen.style.display = 'none';
+    
+    const votdModal = document.getElementById('votdModal');
+    if (votdModal) votdModal.style.display = 'none';
+    
+    const menuScreen = document.getElementById('menuScreen');
+    if (menuScreen) menuScreen.style.display = 'none';
+    
+    const quickStartOverlay = document.getElementById('quickStartOverlay');
+    if (quickStartOverlay) quickStartOverlay.style.display = 'none';
+    
     canvas.width = 400;
     canvas.height = Math.min(600, window.innerHeight - 80);
     ctx = canvas.getContext('2d');
+    
+    console.log('showOverland: canvas set to', canvas.width, 'x', canvas.height);
+    
+    // Make sure canvas is visible
+    canvas.style.display = 'block';
     
     // Set up click handler for overland mode
     if (overlandClickHandler) {
@@ -1893,6 +1912,8 @@ async function showOverland() {
     canvas.addEventListener('click', overlandClickHandler);
     
     await initializeMissions();
+    
+    console.log('showOverland: starting game loop, canvas display:', canvas.style.display);
     
     // Start the game loop for overland rendering
     requestAnimationFrame(gameLoop);
@@ -2041,6 +2062,13 @@ function gameLoop() {
 
     // Handle Overland mode FIRST (doesn't need playerCode or game to be loaded)
     if (gameMode === 'overland') {
+        // Debug: draw a test rectangle first
+        ctx.fillStyle = '#1a1a2e';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.fillStyle = '#4a90e2';
+        ctx.font = '24px Arial';
+        ctx.fillText('OVERLAND MODE', 100, 100);
+        
         if (overlandRenderer && window.progressManager) {
             overlandRenderer.render(progressManager);
         } else if (window.progressManager) {

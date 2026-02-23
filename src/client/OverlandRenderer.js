@@ -30,6 +30,7 @@
             this.selectedMission = null;
             this.worlds = [];
             this.nodePositions = [];
+            this._logCount = 0;
         }
         
         /**
@@ -93,7 +94,16 @@
             const ctx = this.ctx;
             const canvas = this.canvas;
             
-            console.log('OverlandRenderer.render() called, worlds:', this.worlds?.length, 'nodes:', this.nodePositions?.length);
+            // Log only occasionally (every 60 frames = ~1 second)
+            if (this._logCount % 60 === 0) {
+                console.log('OverlandRenderer.render() canvas:', canvas.width, 'x', canvas.height, 'worlds:', this.worlds?.length, 'nodes:', this.nodePositions?.length);
+            }
+            this._logCount++;
+            
+            if (!ctx || !canvas) {
+                console.error('OverlandRenderer: no ctx or canvas');
+                return;
+            }
             
             // Clear canvas
             ctx.fillStyle = '#1a1a2e';
