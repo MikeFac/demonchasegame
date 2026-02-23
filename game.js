@@ -1831,22 +1831,27 @@ async function init() {
 // ==================== Mission System Functions ====================
 
 async function initializeMissions() {
-    if (missionsInitialized) return true;
+    if (missionsInitialized && overlandRenderer) return true;
     
     try {
         // Load mission data
         const worlds = await missionClient.getWorlds();
         missionWorlds = worlds;
         
+        console.log('Loaded worlds:', worlds);
+        
         // Check and update unlocks
         if (window.progressManager) {
             await progressManager.checkUnlocks(worlds);
         }
         
-        // Initialize overland renderer
-        if (window.OverlandRenderer && !overlandRenderer) {
+        // Initialize overland renderer (always recreate to ensure current canvas/ctx)
+        if (window.OverlandRenderer) {
             overlandRenderer = new OverlandRenderer(ctx, canvas);
             overlandRenderer.setWorlds(worlds);
+            console.log('OverlandRenderer created');
+        } else {
+            console.error('OverlandRenderer not available');
         }
         
         missionsInitialized = true;
@@ -1858,11 +1863,30 @@ async function initializeMissions() {
     }
 }
 
-function showOverland() {
+let overlandClickHandler = null;
+
+async function showOverland() {
     gameMode = 'overland';
     canvas.width = 400;
     canvas.height = Math.min(600, window.innerHeight - 80);
-    initializeMissions();
+    ctx = canvas.getContext('2d');
+    
+    // Set up click handler for overland mode
+    if (overlandClickHandler) {
+        canvas.removeEventListener('click', overlandClickHandler);
+    }
+    overlandClickHandler = function(event) {
+        const rect = canvas.getBoundingClientRect();
+        const x = event.clientX - rect.left;
+        const y = event.clientY - rect.top;
+        handleOverlandClick(x, y);
+    };
+    canvas.addEventListener('click', overlandClickHandler);
+    
+    await initializeMissions();
+    
+    // Start the game loop for overland rendering
+    requestAnimationFrame(gameLoop);
 }
 
 function handleOverlandClick(x, y) {
@@ -2007,6 +2031,18 @@ function returnToOverland() {
 
 // Game loop
 function gameLoop() {
+
+    // Handle Overland mode FIRST (doesn't need playerCode or game to be loaded)
+    if (gameMode === 'overland') {
+        if (overlandRenderer && window.progressManager) {
+            overlandRenderer.render(progressManager.getProgress());
+        } else if (window.progressManager) {
+            // Initialize if not done yet
+            initializeMissions();
+        }
+        requestAnimationFrame(gameLoop);
+        return;
+    }
 
     if (!playerCode) {
         console.log("Waiting for player code assignment");
