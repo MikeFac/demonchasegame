@@ -661,9 +661,6 @@ function startGame(mode, roomId) {
     if (window._missionConfig && mode === 'solo') {
         console.log('Starting mission game with config');
         
-        // Reset player position to undefined so it gets set fresh from spawn
-        player = undefined;
-        
         const missionConfig = window._missionConfig;
         const mapStyle = window._missionMapStyle || 'classic';
         const missionQualities = window._missionQualities;
@@ -677,24 +674,7 @@ function startGame(mode, roomId) {
         offlineMode = true;
         localStorage.setItem('offlinePreferred', 'true');
         
-        if (window.Analytics) {
-            Analytics.trackGameStart('mission', true);
-            Analytics.startSession(true);
-        }
-        
-        network = new LocalNetwork();
-        
-        const menuScreen = document.getElementById('menuScreen');
-        if (menuScreen) menuScreen.style.display = 'none';
-        canvas.style.display = 'block';
-        
-        // Hide any overlays
-        const votdModal = document.getElementById('votdModal');
-        if (votdModal) votdModal.style.display = 'none';
-        const quickStartOverlay = document.getElementById('quickStartOverlay');
-        if (quickStartOverlay) quickStartOverlay.style.display = 'none';
-        
-        // Set custom level data before init
+        // Set custom level data BEFORE init (like URL config does)
         customLevelData = {
             1: {
                 qualities: missionQualities || ['Faith'],
@@ -705,24 +685,28 @@ function startGame(mode, roomId) {
             }
         };
         
-        init().then(() => {
-            const quizSettings = getQuizSettingsFromSliders();
-            network.sendStartSoloGame('normal', quizSettings, 'normal', mapStyle, missionConfig);
-            gameLoop();
-        }).catch((error) => {
-            console.error('Error initializing mission game:', error);
-        });
-        return;
+        // Use the URL config path (which works correctly for solo games)
+        window._missionUrlConfig = missionConfig;
+        
+        // Continue with normal startGame flow - it will detect _missionUrlConfig
     }
     
     // Check for URL config - only applies to solo/offline mode
     const urlConfigData = (mode === 'solo') ? loadUrlConfig() : null;
     
-    if (urlConfigData) {
+    // Also check for mission URL config
+    const missionUrlConfig = window._missionUrlConfig;
+    if (missionUrlConfig) {
+        window._missionUrlConfig = null; // Clear it
+    }
+    
+    if (urlConfigData || missionUrlConfig) {
         // URL config present - auto-start with custom settings
-        console.log('Auto-starting with URL config');
-        applyConfig(urlConfigData);
-        saveConfig(urlConfigData);
+        console.log('Auto-starting with URL/mission config');
+        const configData = urlConfigData || missionUrlConfig;
+        
+        applyConfig(configData);
+        if (urlConfigData) saveConfig(configData);
         
         // Force offline mode for URL config games
         offlineMode = true;
@@ -741,8 +725,11 @@ function startGame(mode, roomId) {
         
         init().then(() => {
             // Use custom config settings - pass full urlConfig for level overrides
-            const quizSettings = (urlConfigData.quizSettings && typeof urlConfigData.quizSettings === 'object')
-                ? urlConfigData.quizSettings
+            const quizSettings = (configData.quizSettings && typeof configData.quizSettings === 'object')
+                ? configData.quizSettings
+                : getQuizSettingsFromSliders();
+            const mapStyle = document.getElementById('mapStyleSelect') ? document.getElementById('mapStyleSelect').value : 'classic';
+            network.sendStartSoloGame('custom', quizSettings, 'normal', mapStyle, configData);
                 : getQuizSettingsFromSliders();
             const mapStyle = document.getElementById('mapStyleSelect') ? document.getElementById('mapStyleSelect').value : 'classic';
             network.sendStartSoloGame('custom', quizSettings, 'normal', mapStyle, urlConfigData);
@@ -1157,10 +1144,10 @@ async function init() {
                 if (playerCode === null) {
                     playerCode = code.toString();
                     console.log('Received my player code:', playerCode);
-                    // Initialize player without position - will be set from spawn point when walls arrive
+                    // Initialize player - position will be set from spawn point when walls arrive
                     player = {
-                        x: undefined,
-                        y: undefined,
+                        x: Math.random() * canvas.width,
+                        y: Math.random() * canvas.height,
                         health: 60,
                         maxHealth: 100,
                         width: 48,
@@ -2880,17 +2867,11 @@ function updateGameState(newGameState) {
     if (gameState.players && playerCode) {
         Object.keys(gameState.players).forEach(code => {
             if (code === playerCode) {
-                // In offline mode, use local position if it exists, otherwise use server position
+                // In offline mode, always keep local position (server is local too)
                 if (offlineMode) {
-                    const serverPlayer = gameState.players[code];
-                    // Use server position if local is undefined (initial spawn), otherwise keep local
-                    if (player.x === undefined || player.y === undefined) {
-                        player = { ...player, ...serverPlayer };
-                    } else {
-                        // Keep local x/y, update everything else from server
-                        const { x, y } = player;
-                        player = { ...player, ...serverPlayer, x: x, y: y };
-                    }
+                    // Keep local position, update stats from server
+                    const { x, y } = player;
+                    player = { ...player, ...gameState.players[code], x: x, y: y };
                 } else {
                     // Multiplayer: reconciliation with server
                     // Update our player, but preserve local dimensions which come from the loaded image
