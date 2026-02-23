@@ -1949,8 +1949,6 @@ async function showOverland() {
     canvas.height = Math.min(600, window.innerHeight - 80);
     ctx = canvas.getContext('2d');
     
-    console.log('showOverland: canvas set to', canvas.width, 'x', canvas.height);
-    
     // Make sure canvas is visible
     canvas.style.display = 'block';
     
