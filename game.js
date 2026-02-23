@@ -2889,15 +2889,15 @@ function updateGameState(newGameState) {
                     player.x = x;
                     player.y = y;
                 } else {
-                    // Smooth blend toward server position instead of hard snap
-                    player.x = x + (serverPlayer.x - x) * 0.3;
-                    player.y = y + (serverPlayer.y - y) * 0.3;
-                    // Log large reconciliation — this blend could land player in a wall
-                    if (clientWallGrid && player.width && player.height) {
-                        const blendCollides = clientWallGrid.collides(player.x, player.y, player.width, player.height);
-                        if (blendCollides) {
-                            console.error(`[WallSpawn] BUG: Position blend put player in wall! local=(${x.toFixed(1)},${y.toFixed(1)}) server=(${serverPlayer.x.toFixed(1)},${serverPlayer.y.toFixed(1)}) result=(${player.x.toFixed(1)},${player.y.toFixed(1)}) dist=${dist.toFixed(1)}`);
-                        }
+                    // In offline mode (single player), just use server position directly
+                    // The large difference is likely from starting a new game/mission
+                    if (offlineMode) {
+                        player.x = serverPlayer.x;
+                        player.y = serverPlayer.y;
+                    } else {
+                        // Smooth blend toward server position for multiplayer
+                        player.x = x + (serverPlayer.x - x) * 0.3;
+                        player.y = y + (serverPlayer.y - y) * 0.3;
                     }
                 }
 

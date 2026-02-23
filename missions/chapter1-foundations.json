@@ -14,7 +14,7 @@
       "playerSpeed": 5,
       "maxMonsters": 20,
       "monstersToKill": 12,
-      "spawnRate": 18000,
+      "spawnRate": 18,
       "xpMultiplier": 1.0
     },
     {
@@ -29,7 +29,7 @@
       "playerSpeed": 5,
       "maxMonsters": 25,
       "monstersToKill": 15,
-      "spawnRate": 15000,
+      "spawnRate": 15,
       "xpMultiplier": 1.2
     }
   ]
