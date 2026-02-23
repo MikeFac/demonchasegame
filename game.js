@@ -657,6 +657,61 @@ function setLevelData(gameState) {
 }
 
 function startGame(mode, roomId) {
+    // Check for mission config (set by startMission)
+    if (window._missionConfig && mode === 'solo') {
+        console.log('Starting mission game with config');
+        
+        const missionConfig = window._missionConfig;
+        const mapStyle = window._missionMapStyle || 'classic';
+        const missionQualities = window._missionQualities;
+        
+        // Clear mission config so it doesn't persist
+        window._missionConfig = null;
+        window._missionMapStyle = null;
+        window._missionQualities = null;
+        
+        // Force offline mode for missions
+        offlineMode = true;
+        localStorage.setItem('offlinePreferred', 'true');
+        
+        if (window.Analytics) {
+            Analytics.trackGameStart('mission', true);
+            Analytics.startSession(true);
+        }
+        
+        network = new LocalNetwork();
+        
+        const menuScreen = document.getElementById('menuScreen');
+        if (menuScreen) menuScreen.style.display = 'none';
+        canvas.style.display = 'block';
+        
+        // Hide any overlays
+        const votdModal = document.getElementById('votdModal');
+        if (votdModal) votdModal.style.display = 'none';
+        const quickStartOverlay = document.getElementById('quickStartOverlay');
+        if (quickStartOverlay) quickStartOverlay.style.display = 'none';
+        
+        // Set custom level data before init
+        customLevelData = {
+            1: {
+                qualities: missionQualities || ['Faith'],
+                monsters: missionConfig.levels[0]?.monsters || ['Fear', 'Doubt'],
+                monstersToKill: missionConfig.levels[0]?.monstersToKill || 10,
+                maxMonsters: missionConfig.levels[0]?.maxMonsters || 20,
+                spawnRate: missionConfig.levels[0]?.spawnRate ? missionConfig.levels[0].spawnRate * 1000 : 18000
+            }
+        };
+        
+        init().then(() => {
+            const quizSettings = getQuizSettingsFromSliders();
+            network.sendStartSoloGame('normal', quizSettings, 'normal', mapStyle, missionConfig);
+            gameLoop();
+        }).catch((error) => {
+            console.error('Error initializing mission game:', error);
+        });
+        return;
+    }
+    
     // Check for URL config - only applies to solo/offline mode
     const urlConfigData = (mode === 'solo') ? loadUrlConfig() : null;
     
@@ -1965,62 +2020,44 @@ async function startMission(worldId, missionId) {
         
         console.log('Starting mission:', mission.name);
         
-        // Reset game state for mission
-        gameMode = 'game';
-        gameState.gameLevel = 1;
-        gameState.monsters = [];
-        gameState.monstersKilled = 0;
-        gameState.terrainTheme = mission.worldTheme || 'stone';
+        // Build mission config in URL config format
+        const missionUrlConfig = {
+            balance: {
+                monsterHealth: 1.0,
+                monsterDamage: mission.monsterDamageFactor || 1.0,
+                monsterSpeed: 1.0,
+                spawnRate: mission.spawnRate ? mission.spawnRate / 18000 : 1.0,
+                maxMonsters: mission.maxMonsters ? mission.maxMonsters / 20 : 1.0,
+                healingFrequency: 1.0
+            },
+            levels: [{
+                qualities: mission.qualities,
+                monsters: mission.monsters,
+                monstersToKill: mission.monstersToKill,
+                maxMonsters: mission.maxMonsters,
+                spawnRate: mission.spawnRate ? mission.spawnRate / 1000 : 18
+            }]
+        };
+        
+        // Store mission config globally so startGame can use it
+        window._missionConfig = missionUrlConfig;
+        window._missionMapStyle = mission.mapStyle || 'classic';
         
         // Set verse qualities for this mission
         if (mission.qualities && mission.qualities.length > 0) {
-            vQuality = mission.qualities[0];
-            gameCategory = mission.qualities.join(',');
+            window._missionQualities = mission.qualities;
         }
         
-        // Start the game with mission config
-        if (offlineMode) {
-            startOfflineMissionGame(mission);
-        } else {
-            // For online mode, we'd need server support
-            // For now, just start a solo game
-            startGame('solo');
-        }
+        // Force offline mode for missions
+        offlineMode = true;
+        localStorage.setItem('offlinePreferred', 'true');
+        
+        // Start the game (this handles all initialization)
+        startGame('solo');
         
     } catch (error) {
         console.error('Failed to start mission:', error);
     }
-}
-
-function startOfflineMissionGame(mission) {
-    if (!network || !network.engine) {
-        console.error('Network/engine not available for mission');
-        return;
-    }
-    
-    // Create game config from mission
-    const config = currentMissionConfig;
-    
-    // Apply mission config to the game
-    customLevelData = config.levelData;
-    customMonsterHealthMultiplier = 1.0;
-    meleeHitProbabilityNoAnswer = 0.1;
-    
-    // Reset game state
-    levelCompleted = false;
-    gameOverFlag = false;
-    isAnswerCorrect = null;
-    monsters = [];
-    gameState.monstersKilled = 0;
-    gameState.monstersToKill = mission.monstersToKill;
-    
-    // Pick a verse for the mission's quality
-    if (mission.qualities && mission.qualities.length > 0) {
-        vQuality = mission.qualities[0];
-    }
-    QuizManager.pickQualityVerse();
-    
-    console.log('Mission started:', mission.name);
 }
 
 function completeMission(stars) {
@@ -2062,20 +2099,11 @@ function gameLoop() {
 
     // Handle Overland mode FIRST (doesn't need playerCode or game to be loaded)
     if (gameMode === 'overland') {
-        // Debug: draw a test rectangle first
-        ctx.fillStyle = '#1a1a2e';
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-        ctx.fillStyle = '#4a90e2';
-        ctx.font = '24px Arial';
-        ctx.fillText('OVERLAND MODE', 100, 100);
-        
         if (overlandRenderer && window.progressManager) {
             overlandRenderer.render(progressManager);
         } else if (window.progressManager) {
             // Initialize if not done yet
             initializeMissions();
-        } else {
-            console.log('Overland: progressManager not available');
         }
         requestAnimationFrame(gameLoop);
         return;
