@@ -661,6 +661,9 @@ function startGame(mode, roomId) {
     if (window._missionConfig && mode === 'solo') {
         console.log('Starting mission game with config');
         
+        // Reset player position to undefined so it gets set fresh from spawn
+        player = undefined;
+        
         const missionConfig = window._missionConfig;
         const mapStyle = window._missionMapStyle || 'classic';
         const missionQualities = window._missionQualities;
@@ -1154,9 +1157,10 @@ async function init() {
                 if (playerCode === null) {
                     playerCode = code.toString();
                     console.log('Received my player code:', playerCode);
+                    // Initialize player without position - will be set from spawn point when walls arrive
                     player = {
-                        x: Math.random() * canvas.width,
-                        y: Math.random() * canvas.height,
+                        x: undefined,
+                        y: undefined,
                         health: 60,
                         maxHealth: 100,
                         width: 48,
@@ -2880,20 +2884,20 @@ function updateGameState(newGameState) {
                 const { width, height, x, y } = player;
                 const serverPlayer = gameState.players[code];
 
-                // Update stats (health, xp, etc) but handle position carefully
-                player = { ...player, ...serverPlayer };
-
-                // Reconciliation: trust local prediction, only blend toward server if very far off
-                const dist = Math.sqrt(Math.pow(serverPlayer.x - x, 2) + Math.pow(serverPlayer.y - y, 2));
-                if (dist < 60) {
-                    player.x = x;
-                    player.y = y;
+                // In offline mode, always trust local position - server is local too
+                if (offlineMode) {
+                    // Just update stats from server but keep local position
+                    player = { ...player, ...serverPlayer, x: x, y: y };
                 } else {
-                    // In offline mode (single player), just use server position directly
-                    // The large difference is likely from starting a new game/mission
-                    if (offlineMode) {
-                        player.x = serverPlayer.x;
-                        player.y = serverPlayer.y;
+                    // Multiplayer: reconciliation with server
+                    // Update stats (health, xp, etc) but handle position carefully
+                    player = { ...player, ...serverPlayer };
+
+                    // Reconciliation: trust local prediction, only blend toward server if very far off
+                    const dist = Math.sqrt(Math.pow(serverPlayer.x - x, 2) + Math.pow(serverPlayer.y - y, 2));
+                    if (dist < 60) {
+                        player.x = x;
+                        player.y = y;
                     } else {
                         // Smooth blend toward server position for multiplayer
                         player.x = x + (serverPlayer.x - x) * 0.3;
