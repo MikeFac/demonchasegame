@@ -1892,10 +1892,8 @@ async function showOverland() {
 function handleOverlandClick(x, y) {
     if (!overlandRenderer || !window.progressManager) return;
     
-    const progress = progressManager.getProgress();
-    
     // Check for mission node click
-    const clickedNode = overlandRenderer.handleClick(x, y, progress);
+    const clickedNode = overlandRenderer.handleClick(x, y, progressManager);
     
     // Check for Start Mission button
     if (overlandRenderer.isStartMissionClicked(x, y)) {
@@ -2035,7 +2033,7 @@ function gameLoop() {
     // Handle Overland mode FIRST (doesn't need playerCode or game to be loaded)
     if (gameMode === 'overland') {
         if (overlandRenderer && window.progressManager) {
-            overlandRenderer.render(progressManager.getProgress());
+            overlandRenderer.render(progressManager);
         } else if (window.progressManager) {
             // Initialize if not done yet
             initializeMissions();

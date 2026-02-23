@@ -87,9 +87,9 @@
         
         /**
          * Render the overland screen.
-         * @param {Object} progress - Progress state from ProgressManager
+         * @param {ProgressManager} progressManager - ProgressManager instance
          */
-        render(progress) {
+        render(progressManager) {
             const ctx = this.ctx;
             const canvas = this.canvas;
             
@@ -101,11 +101,11 @@
             this._drawHeader(ctx, canvas);
             
             // Draw chapters and missions
-            this._drawChapters(ctx, canvas, progress);
+            this._drawChapters(ctx, canvas, progressManager);
             
             // Draw mission info panel if selected
             if (this.selectedMission) {
-                this._drawMissionInfo(ctx, canvas, progress);
+                this._drawMissionInfo(ctx, canvas, progressManager);
             }
             
             // Draw bottom buttons
@@ -131,10 +131,10 @@
         /**
          * Draw all chapters with their mission nodes.
          */
-        _drawChapters(ctx, canvas, progress) {
+        _drawChapters(ctx, canvas, progressManager) {
             for (const chapterData of this.nodePositions) {
                 const world = this.worlds.find(w => w.id === chapterData.worldId);
-                const isUnlocked = progress.isWorldUnlocked(chapterData.worldId);
+                const isUnlocked = progressManager.isWorldUnlocked(chapterData.worldId);
                 
                 // Draw chapter name
                 ctx.font = 'bold 14px Arial';
@@ -163,7 +163,7 @@
                 
                 // Draw nodes
                 for (const node of chapterData.nodes) {
-                    this._drawNode(ctx, node, progress, isUnlocked);
+                    this._drawNode(ctx, node, progressManager, isUnlocked);
                 }
             }
         }
@@ -171,8 +171,8 @@
         /**
          * Draw a single mission node.
          */
-        _drawNode(ctx, node, progress, isWorldUnlocked) {
-            const isCompleted = progress.isMissionCompleted(node.missionId);
+        _drawNode(ctx, node, progressManager, isWorldUnlocked) {
+            const isCompleted = progressManager.isMissionCompleted(node.missionId);
             const isSelected = this.selectedMission && this.selectedMission.missionId === node.missionId;
             
             let colors;
@@ -197,7 +197,7 @@
             
             // Draw mission number or stars
             if (isWorldUnlocked) {
-                const stars = progress.getMissionStars(node.missionId);
+                const stars = progressManager.getMissionStars(node.missionId);
                 if (stars > 0) {
                     ctx.font = '12px Arial';
                     ctx.fillStyle = '#FFD700';
@@ -289,7 +289,7 @@
         /**
          * Draw mission info panel at bottom.
          */
-        _drawMissionInfo(ctx, canvas, progress) {
+        _drawMissionInfo(ctx, canvas, progressManager) {
             const panelY = canvas.height - 100;
             const panelHeight = 60;
             
@@ -304,7 +304,7 @@
             ctx.fillText(this.selectedMission.missionName, canvas.width / 2, panelY + 20);
             
             // Mission status
-            const isCompleted = progress.isMissionCompleted(this.selectedMission.missionId);
+            const isCompleted = progressManager.isMissionCompleted(this.selectedMission.missionId);
             const statusText = isCompleted ? t('overland.completed', 'Completed') : t('overland.available', 'Available');
             ctx.font = '12px Arial';
             ctx.fillStyle = isCompleted ? '#4CAF50' : '#4a90e2';
@@ -355,12 +355,12 @@
          * Handle click to select a mission node.
          * @param {number} screenX - Screen X coordinate
          * @param {number} screenY - Screen Y coordinate
-         * @param {Object} progress - Progress state
+         * @param {ProgressManager} progressManager - ProgressManager instance
          * @returns {Object|null} Clicked node or null
          */
-        handleClick(screenX, screenY, progress) {
+        handleClick(screenX, screenY, progressManager) {
             for (const chapterData of this.nodePositions) {
-                const isUnlocked = progress.isWorldUnlocked(chapterData.worldId);
+                const isUnlocked = progressManager.isWorldUnlocked(chapterData.worldId);
                 if (!isUnlocked) continue;
                 
                 for (const node of chapterData.nodes) {
