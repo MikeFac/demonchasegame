@@ -93,6 +93,8 @@
             const ctx = this.ctx;
             const canvas = this.canvas;
             
+            console.log('OverlandRenderer.render() called, worlds:', this.worlds?.length, 'nodes:', this.nodePositions?.length);
+            
             // Clear canvas
             ctx.fillStyle = '#1a1a2e';
             ctx.fillRect(0, 0, canvas.width, canvas.height);

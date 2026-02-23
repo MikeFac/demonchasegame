@@ -1845,11 +1845,20 @@ async function initializeMissions() {
             await progressManager.checkUnlocks(worlds);
         }
         
+        // Load full world data with missions for each world
+        const worldsWithMissions = [];
+        for (const worldMeta of worlds) {
+            const fullWorld = await missionClient.getWorld(worldMeta.id);
+            if (fullWorld) {
+                worldsWithMissions.push(fullWorld);
+            }
+        }
+        
         // Initialize overland renderer (always recreate to ensure current canvas/ctx)
         if (window.OverlandRenderer) {
             overlandRenderer = new OverlandRenderer(ctx, canvas);
-            overlandRenderer.setWorlds(worlds);
-            console.log('OverlandRenderer created');
+            overlandRenderer.setWorlds(worldsWithMissions);
+            console.log('OverlandRenderer created with', worldsWithMissions.length, 'worlds');
         } else {
             console.error('OverlandRenderer not available');
         }
@@ -2037,6 +2046,8 @@ function gameLoop() {
         } else if (window.progressManager) {
             // Initialize if not done yet
             initializeMissions();
+        } else {
+            console.log('Overland: progressManager not available');
         }
         requestAnimationFrame(gameLoop);
         return;
