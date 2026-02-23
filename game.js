@@ -2880,16 +2880,18 @@ function updateGameState(newGameState) {
     if (gameState.players && playerCode) {
         Object.keys(gameState.players).forEach(code => {
             if (code === playerCode) {
-                // Update our player, but preserve local dimensions which come from the loaded image
-                const { width, height, x, y } = player;
-                const serverPlayer = gameState.players[code];
-
-                // In offline mode, always trust local position - server is local too
+                // In offline mode, ALWAYS use local player position - never use server position
+                // This prevents the wall collision bug from position sync issues
                 if (offlineMode) {
-                    // Just update stats from server but keep local position
-                    player = { ...player, ...serverPlayer, x: x, y: y };
+                    // Keep local x/y, only update stats from server
+                    const { x, y } = player;
+                    player = { ...player, ...gameState.players[code], x: x, y: y };
                 } else {
                     // Multiplayer: reconciliation with server
+                    // Update our player, but preserve local dimensions which come from the loaded image
+                    const { width, height, x, y } = player;
+                    const serverPlayer = gameState.players[code];
+
                     // Update stats (health, xp, etc) but handle position carefully
                     player = { ...player, ...serverPlayer };
 
@@ -2905,9 +2907,11 @@ function updateGameState(newGameState) {
                     }
                 }
 
-                if (width && height) {
-                    player.width = width;
-                    player.height = height;
+                if (player.width) {
+                    // preserve width/height if already set
+                }
+                if (player.height) {
+                    // preserve
                 }
             } else {
                 // Update other players
