@@ -656,57 +656,40 @@ function setLevelData(gameState) {
     }
 }
 
-function startGame(mode, roomId) {
-    // Check for mission config (set by startMission)
-    if (window._missionConfig && mode === 'solo') {
+function startGame(mode, roomId, missionOpts) {
+    // Handle mission config passed directly from startMission()
+    if (missionOpts && mode === 'solo') {
         console.log('Starting mission game with config');
-        
-        const missionConfig = window._missionConfig;
-        const mapStyle = window._missionMapStyle || 'classic';
-        const missionQualities = window._missionQualities;
-        
-        // Clear mission config so it doesn't persist
-        window._missionConfig = null;
-        window._missionMapStyle = null;
-        window._missionQualities = null;
-        
+
         // Force offline mode for missions
         offlineMode = true;
         localStorage.setItem('offlinePreferred', 'true');
-        
+
         // Set custom level data BEFORE init (like URL config does)
+        const level = missionOpts.config.levels[0] || {};
         customLevelData = {
             1: {
-                qualities: missionQualities || ['Faith'],
-                monsters: missionConfig.levels[0]?.monsters || ['Fear', 'Doubt'],
-                monstersToKill: missionConfig.levels[0]?.monstersToKill || 10,
-                maxMonsters: missionConfig.levels[0]?.maxMonsters || 20,
-                spawnRate: missionConfig.levels[0]?.spawnRate ? missionConfig.levels[0].spawnRate * 1000 : 18000
+                qualities: missionOpts.qualities || ['Faith'],
+                monsters: level.monsters || ['Fear', 'Doubt'],
+                monstersToKill: level.monstersToKill || 10,
+                maxMonsters: level.maxMonsters || 20,
+                spawnRate: level.spawnRate ? level.spawnRate * 1000 : 18000
             }
         };
-        
-        // Use the URL config path (which works correctly for solo games)
-        window._missionUrlConfig = missionConfig;
-        
-        // Continue with normal startGame flow - it will detect _missionUrlConfig
     }
-    
+
     // Check for URL config - only applies to solo/offline mode
     const urlConfigData = (mode === 'solo') ? loadUrlConfig() : null;
-    
-    // Also check for mission URL config
-    const missionUrlConfig = window._missionUrlConfig;
-    if (missionUrlConfig) {
-        window._missionUrlConfig = null; // Clear it
-    }
-    
-    if (urlConfigData || missionUrlConfig) {
-        // URL config present - auto-start with custom settings
-        console.log('Auto-starting with URL/mission config');
-        const configData = urlConfigData || missionUrlConfig;
-        
+
+    // Use mission config or URL config (mission takes priority)
+    const configData = (missionOpts && missionOpts.config) || urlConfigData;
+
+    if (configData) {
+        // Custom config present - auto-start with settings
+        console.log('Auto-starting with', missionOpts ? 'mission' : 'URL', 'config');
+
         applyConfig(configData);
-        if (urlConfigData) saveConfig(configData);
+        if (!missionOpts && urlConfigData) saveConfig(urlConfigData);
         
         // Force offline mode for URL config games
         offlineMode = true;
@@ -728,11 +711,9 @@ function startGame(mode, roomId) {
             const quizSettings = (configData.quizSettings && typeof configData.quizSettings === 'object')
                 ? configData.quizSettings
                 : getQuizSettingsFromSliders();
-            const mapStyle = document.getElementById('mapStyleSelect') ? document.getElementById('mapStyleSelect').value : 'classic';
+            const mapStyle = (missionOpts && missionOpts.mapStyle)
+                || (document.getElementById('mapStyleSelect') ? document.getElementById('mapStyleSelect').value : 'classic');
             network.sendStartSoloGame('custom', quizSettings, 'normal', mapStyle, configData);
-                : getQuizSettingsFromSliders();
-            const mapStyle = document.getElementById('mapStyleSelect') ? document.getElementById('mapStyleSelect').value : 'classic';
-            network.sendStartSoloGame('custom', quizSettings, 'normal', mapStyle, urlConfigData);
             gameLoop();
         }).catch((error) => {
             console.error('Error initializing game:', error);
@@ -1324,6 +1305,10 @@ async function init() {
                     const oldX = player.x, oldY = player.y;
                     player.x = data.spawnX;
                     player.y = data.spawnY;
+                    // Sync position to engine so it matches client
+                    network.sendPosition(player.x, player.y);
+                    // Clear any movement target so player doesn't walk back to old position
+                    if (inputHandler) inputHandler.clearTarget();
                     const spawnCollides = clientWallGrid.collides(player.x, player.y, player.width, player.height);
                     console.log(`[WallSpawn] onWalls: moved player from (${oldX.toFixed(1)}, ${oldY.toFixed(1)}) to spawn (${player.x}, ${player.y}) wallCollides=${spawnCollides} w=${player.width} h=${player.height}`);
                     if (spawnCollides) {
@@ -2003,14 +1988,14 @@ async function startMission(worldId, missionId) {
             console.error('Mission not found:', worldId, missionId);
             return;
         }
-        
+
         currentMission = mission;
         currentMissionConfig = missionClient.missionToGameConfig(mission);
-        
+
         console.log('Starting mission:', mission.name);
-        
-        // Build mission config in URL config format
-        const missionUrlConfig = {
+
+        // Build mission config in URL config format (same shape as loadUrlConfig)
+        const config = {
             balance: {
                 monsterHealth: 1.0,
                 monsterDamage: mission.monsterDamageFactor || 1.0,
@@ -2027,23 +2012,14 @@ async function startMission(worldId, missionId) {
                 spawnRate: mission.spawnRate ? mission.spawnRate / 1000 : 18
             }]
         };
-        
-        // Store mission config globally so startGame can use it
-        window._missionConfig = missionUrlConfig;
-        window._missionMapStyle = mission.mapStyle || 'classic';
-        
-        // Set verse qualities for this mission
-        if (mission.qualities && mission.qualities.length > 0) {
-            window._missionQualities = mission.qualities;
-        }
-        
-        // Force offline mode for missions
-        offlineMode = true;
-        localStorage.setItem('offlinePreferred', 'true');
-        
-        // Start the game (this handles all initialization)
-        startGame('solo');
-        
+
+        // Pass mission config directly to startGame (no window globals)
+        startGame('solo', undefined, {
+            config: config,
+            mapStyle: mission.mapStyle || 'classic',
+            qualities: mission.qualities
+        });
+
     } catch (error) {
         console.error('Failed to start mission:', error);
     }
