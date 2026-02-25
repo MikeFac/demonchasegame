@@ -173,14 +173,25 @@
         c.fillText(isAudioPlaying ? t('votd.playing') : t('votd.playAudio'), audioX + 60, audioY + 28);
         hitRects.push({ name: 'audio', x: audioX, y: audioY, w: 120, h: 40 });
 
-        // Start Learning button
+        // Devotional button
+        const devX = CANVAS_WIDTH / 2 - 60;
+        const devY = CANVAS_HEIGHT - 80;
+        c.fillStyle = '#e8d44d';
+        c.fillRect(devX, devY, 120, 36);
+        c.fillStyle = '#333';
+        c.font = 'bold 14px Arial';
+        c.fillText('Devotional', devX + 60, devY + 24);
+        hitRects.push({ name: 'devotional', x: devX, y: devY, w: 120, h: 36 });
+
+        // Start Learning button (moved down to make room)
         const startX = CANVAS_WIDTH / 2 - 70;
-        const startY = CANVAS_HEIGHT - 80;
+        const startY = CANVAS_HEIGHT - 35;
         c.fillStyle = '#4CAF50';
-        c.fillRect(startX, startY, 140, 40);
+        c.fillRect(startX, startY, 140, 32);
         c.fillStyle = '#fff';
-        c.fillText(t('votd.startLearning'), startX + 70, startY + 28);
-        hitRects.push({ name: 'startLearning', x: startX, y: startY, w: 140, h: 40 });
+        c.font = '15px Arial';
+        c.fillText(t('votd.startLearning'), startX + 70, startY + 22);
+        hitRects.push({ name: 'startLearning', x: startX, y: startY, w: 140, h: 32 });
 
         c.textAlign = 'left';
     }
@@ -278,7 +289,22 @@
         if (line.length > 0) c.fillText(line, x, y);
     }
 
+    function openDevotional() {
+        if (!currentVerse || !window.SermonViewer) return;
+        stopAudio();
+        var category = currentVerse.Category || 'General';
+        SermonViewer.open(currentVerse.Reference, currentVerse.Text, category, function () {
+            // Return to VOTD learning mode when sermon viewer closes
+        });
+    }
+
     function render() {
+        // If sermon viewer is open, let it render instead
+        if (window.SermonViewer && SermonViewer.isOpen()) {
+            SermonViewer.render();
+            return;
+        }
+
         if (currentPhase === 'presentation') {
             drawPresentation();
         } else if (currentPhase === 'learning') {
@@ -287,6 +313,12 @@
     }
 
     function handleClick(x, y) {
+        // If sermon viewer is open, delegate clicks to it
+        if (window.SermonViewer && SermonViewer.isOpen()) {
+            SermonViewer.handleClick(x, y);
+            return;
+        }
+
         for (const rect of hitRects) {
             if (x >= rect.x && x <= rect.x + rect.w && y >= rect.y && y <= rect.y + rect.h) {
                 if (rect.name === 'audio') {
@@ -298,6 +330,8 @@
                     hideNextWord();
                 } else if (rect.name === 'testNow') {
                     launchTest();
+                } else if (rect.name === 'devotional') {
+                    openDevotional();
                 }
                 return;
             }

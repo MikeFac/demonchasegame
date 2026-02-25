@@ -7,6 +7,7 @@ require('dotenv').config();
 const Game = require('./src/server/Game');
 const RoomManager = require('./src/server/RoomManager');
 const verseSongRouter = require('./src/server/routes/verseSong');
+const sermonRouter = require('./src/server/routes/sermon');
 const { retryFailedGenerations } = require('./src/server/jobs/retryFailedGenerations');
 
 const app = express();
@@ -72,6 +73,9 @@ app.get('/api/quiz-presets', (req, res) => {
 
 // Verse Song Routes
 app.use('/api/verse-song', verseSongRouter);
+
+// Sermon / Devotional Routes
+app.use('/api/sermon', sermonRouter);
 
 // ==================== Socket.IO ====================
 

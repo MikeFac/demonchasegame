@@ -175,6 +175,15 @@ function applyLevelOverrides(levelData, levels) {
       }
     }
   });
+
+  // Remove levels beyond what the override specifies
+  // (e.g. mission with 1 level should not have levels 2-5)
+  var maxLevel = levels.length;
+  for (var key in levelData) {
+    if (levelData.hasOwnProperty(key) && parseInt(key, 10) > maxLevel) {
+      delete levelData[key];
+    }
+  }
 }
 
 /**

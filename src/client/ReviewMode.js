@@ -69,6 +69,12 @@
 
     function displayReviewVerseScreen() {
         if (gameMode === 'review') {
+            // If sermon viewer is open, let it render instead
+            if (window.SermonViewer && SermonViewer.isOpen()) {
+                SermonViewer.render();
+                return;
+            }
+
             ctx.clearRect(0, 0, canvas.width, canvas.height);
 
             ctx.fillStyle = 'black';
@@ -308,6 +314,12 @@
         const clickedX = event.clientX - rect.left;
         const clickedY = event.clientY - rect.top;
 
+        // If sermon viewer is open, delegate clicks to it
+        if (window.SermonViewer && SermonViewer.isOpen()) {
+            SermonViewer.handleClick(clickedX, clickedY);
+            return;
+        }
+
         // Handle category picker clicks (modal - consumes all clicks)
         if (reviewCategoryPickerOpen) {
             const categories = (typeof QUALITIES !== 'undefined' && QUALITIES.length > 0) 
@@ -351,6 +363,22 @@
             // Click outside items closes picker
             reviewCategoryPickerOpen = false;
             displayReviewVerseScreen();
+            return;
+        }
+
+        // Check if the click was on the "Devotional" button (center top bar)
+        const devotionalBtnX = Math.floor((canvas.width - 90) / 2);
+        if (clickedX >= devotionalBtnX && clickedX <= devotionalBtnX + 90 && clickedY >= 15 && clickedY <= 45) {
+            const verseRef = getCurrentVerseReference();
+            const verseDetails = getVerseDetails(verseRef);
+            if (verseRef && verseDetails && window.SermonViewer) {
+                stopAudio();
+                clearRepeatTimer();
+                SermonViewer.open(verseRef, verseDetails.text, verseDetails.category, function () {
+                    // Return to review mode when sermon viewer closes
+                    displayReviewVerseScreen();
+                });
+            }
             return;
         }
 
@@ -606,6 +634,7 @@
         const buttonHeight = 30;
         const buttonY = 15;
         const qualityButtonX = 20;
+        const devotionalButtonX = Math.floor((canvas.width - 90) / 2);
         const gameButtonX = canvas.width - buttonWidth - 20;
 
         // Category button (tappable to open picker)
@@ -620,6 +649,16 @@
         const categoryLabel = (typeof tCategory === 'function') ? tCategory(vQuality) : vQuality;
         const displayLabel = categoryLabel.length > 10 ? categoryLabel.substring(0, 10) + '...' : categoryLabel;
         ctx.fillText(displayLabel + ' ▾', qualityButtonX + 5, buttonY + 20);
+
+        // Devotional button (center)
+        ctx.fillStyle = '#e8d44d';
+        ctx.fillRect(devotionalButtonX, buttonY, 90, buttonHeight);
+        ctx.strokeStyle = '#c4a000';
+        ctx.lineWidth = 1;
+        ctx.strokeRect(devotionalButtonX, buttonY, 90, buttonHeight);
+        ctx.font = '13px Arial';
+        ctx.fillStyle = '#333';
+        ctx.fillText('Devotional', devotionalButtonX + 8, buttonY + 20);
 
         // Game button
         ctx.fillStyle = 'lightgray';
