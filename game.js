@@ -208,6 +208,7 @@ let currentQuiz = null; // Unified quiz object from QuizManager
 let answerFullVerse = null;
 let isAnswerCorrect = null; // Global variable to store the answer status
 let gameOverFlag = false;
+let _gameLoopRunning = false;
 let maxSpawns = 0;  //should be updated by server
 let spawnsLeft = 10; //should be updated by server
 // Get the current script path
@@ -657,6 +658,14 @@ function setLevelData(gameState) {
 }
 
 function startGame(mode, roomId, missionOpts) {
+    // Clean up previous game if one was running
+    if (network) {
+        network.disconnect();
+        network = null;
+    }
+    playerCode = null;
+    gameOverFlag = false;
+
     // Handle mission config passed directly from startMission()
     if (missionOpts && mode === 'solo') {
         console.log('Starting mission game with config');
@@ -664,18 +673,6 @@ function startGame(mode, roomId, missionOpts) {
         // Force offline mode for missions
         offlineMode = true;
         localStorage.setItem('offlinePreferred', 'true');
-
-        // Set custom level data BEFORE init (like URL config does)
-        const level = missionOpts.config.levels[0] || {};
-        customLevelData = {
-            1: {
-                qualities: missionOpts.qualities || ['Faith'],
-                monsters: level.monsters || ['Fear', 'Doubt'],
-                monstersToKill: level.monstersToKill || 10,
-                maxMonsters: level.maxMonsters || 20,
-                spawnRate: level.spawnRate ? level.spawnRate * 1000 : 18000
-            }
-        };
     }
 
     // Check for URL config - only applies to solo/offline mode
@@ -701,11 +698,11 @@ function startGame(mode, roomId, missionOpts) {
         }
         
         network = new LocalNetwork();
-        
+
         const menuScreen = document.getElementById('menuScreen');
         if (menuScreen) menuScreen.style.display = 'none';
         canvas.style.display = 'block';
-        
+
         init().then(() => {
             // Use custom config settings - pass full urlConfig for level overrides
             const quizSettings = (configData.quizSettings && typeof configData.quizSettings === 'object')
@@ -714,7 +711,7 @@ function startGame(mode, roomId, missionOpts) {
             const mapStyle = (missionOpts && missionOpts.mapStyle)
                 || (document.getElementById('mapStyleSelect') ? document.getElementById('mapStyleSelect').value : 'classic');
             network.sendStartSoloGame('custom', quizSettings, 'normal', mapStyle, configData);
-            gameLoop();
+            if (!_gameLoopRunning) gameLoop();
         }).catch((error) => {
             console.error('Error initializing game:', error);
         });
@@ -768,7 +765,7 @@ function startGame(mode, roomId, missionOpts) {
         } else if (mode === 'join' && roomId) {
             network.sendJoinGame(roomId);
         }
-        gameLoop();
+        if (!_gameLoopRunning) gameLoop();
 
         // If launched from "Learn Verses" button, immediately enter review mode
         if (window._enterReviewAfterInit) {
@@ -1127,8 +1124,8 @@ async function init() {
                     console.log('Received my player code:', playerCode);
                     // Initialize player - position will be set from spawn point when walls arrive
                     player = {
-                        x: Math.random() * canvas.width,
-                        y: Math.random() * canvas.height,
+                        x: canvas.width / 2,
+                        y: canvas.height / 2,
                         health: 60,
                         maxHealth: 100,
                         width: 48,
@@ -1551,6 +1548,7 @@ async function init() {
         console.log('Initialised currentVerseIndex: ' + currentVerseIndex);
 
         // Set up the timer to display a new verse every 10 seconds
+        if (verseTimer) clearInterval(verseTimer);
         verseTimer = setInterval(function () {
             QuizManager.pickQualityVerse();
         }, VERSECHANGETIME);
@@ -1827,20 +1825,21 @@ async function init() {
         // Reset session start time when game starts
         sessionStartTime = Date.now();
 
-        // ===== FIRST 60 SECONDS: Show pre-game tip =====
-        setTimeout(() => {
-            if (isInOnboardingWindow()) {
-                showToast(t('toasts.quizTipDamage'), 4000);
-            }
-        }, 1000); // Show 1 second after game starts
+        // ===== FIRST 60 SECONDS: Show pre-game tip (only on first game) =====
+        if (!_gameLoopRunning) {
+            setTimeout(() => {
+                if (isInOnboardingWindow()) {
+                    showToast(t('toasts.quizTipDamage'), 4000);
+                }
+            }, 1000);
 
-        // Show hint about learning verses in menu (8 seconds after game starts)
-        setTimeout(() => {
-            if (isInOnboardingWindow() && !localStorage.getItem('hasSeenVerseHint')) {
-                showToast(t('toasts.goToMenuLearn'), 5000);
-                localStorage.setItem('hasSeenVerseHint', 'true');
-            }
-        }, 8000);
+            setTimeout(() => {
+                if (isInOnboardingWindow() && !localStorage.getItem('hasSeenVerseHint')) {
+                    showToast(t('toasts.goToMenuLearn'), 5000);
+                    localStorage.setItem('hasSeenVerseHint', 'true');
+                }
+            }, 8000);
+        }
 
         // Set up onboarding modal dismiss handler
         const onboardingModal = document.getElementById('onboardingModal');
@@ -1995,13 +1994,16 @@ async function startMission(worldId, missionId) {
         console.log('Starting mission:', mission.name);
 
         // Build mission config in URL config format (same shape as loadUrlConfig)
+        // Mission JSON stores spawnRate in seconds (e.g., 18 = 18s)
+        // balance multipliers are ratios against base LevelConfig values
+        // levels[] overrides are in seconds (applyLevelOverrides converts to ms)
         const config = {
             balance: {
                 monsterHealth: 1.0,
                 monsterDamage: mission.monsterDamageFactor || 1.0,
                 monsterSpeed: 1.0,
-                spawnRate: mission.spawnRate ? mission.spawnRate / 18000 : 1.0,
-                maxMonsters: mission.maxMonsters ? mission.maxMonsters / 20 : 1.0,
+                spawnRate: 1.0,
+                maxMonsters: 1.0,
                 healingFrequency: 1.0
             },
             levels: [{
@@ -2009,7 +2011,7 @@ async function startMission(worldId, missionId) {
                 monsters: mission.monsters,
                 monstersToKill: mission.monstersToKill,
                 maxMonsters: mission.maxMonsters,
-                spawnRate: mission.spawnRate ? mission.spawnRate / 1000 : 18
+                spawnRate: mission.spawnRate || 18
             }]
         };
 
@@ -2061,6 +2063,7 @@ function returnToOverland() {
 
 // Game loop
 function gameLoop() {
+    _gameLoopRunning = true;
 
     // Handle Overland mode FIRST (doesn't need playerCode or game to be loaded)
     if (gameMode === 'overland') {
@@ -2442,6 +2445,17 @@ function gameLoop() {
                 inputHandler.clearTarget();
             }
         }
+
+        // Debug: detect sudden teleport
+        if (player._prevX !== undefined) {
+            const jump = Math.sqrt((player.x - player._prevX) ** 2 + (player.y - player._prevY) ** 2);
+            if (jump > 100) {
+                console.error(`[TELEPORT] from (${player._prevX.toFixed(0)},${player._prevY.toFixed(0)}) to (${player.x.toFixed(0)},${player.y.toFixed(0)}) jump=${jump.toFixed(0)}`);
+                console.trace('[TELEPORT] stack');
+            }
+        }
+        player._prevX = player.x;
+        player._prevY = player.y;
 
         // Update camera to follow player
         camera.x = player.x - canvas.width / 2;
@@ -2847,7 +2861,16 @@ function updateGameState(newGameState) {
                 if (offlineMode) {
                     // Keep local position, update stats from server
                     const { x, y } = player;
+                    const serverX = gameState.players[code].x;
+                    const serverY = gameState.players[code].y;
                     player = { ...player, ...gameState.players[code], x: x, y: y };
+                    // Debug: detect if server position drifted far from client
+                    if (typeof x === 'number' && typeof serverX === 'number') {
+                        const drift = Math.sqrt((serverX - x) ** 2 + (serverY - y) ** 2);
+                        if (drift > 100) {
+                            console.warn(`[DRIFT] server=(${serverX.toFixed(0)},${serverY.toFixed(0)}) client=(${x.toFixed(0)},${y.toFixed(0)}) drift=${drift.toFixed(0)}`);
+                        }
+                    }
                 } else {
                     // Multiplayer: reconciliation with server
                     // Update our player, but preserve local dimensions which come from the loaded image
