@@ -7,11 +7,16 @@
  */
 const UILayout = (function () {
     const C = window.Constants || {};
+    const BASE_CANVAS_WIDTH = 400;
     const QUALITY_LINE_HEIGHT = C.QUALITY_LINE_HEIGHT || 45;
     const BUTTON_WIDTH = C.BUTTON_WIDTH || 84;
     const BUTTON_HEIGHT = C.BUTTON_HEIGHT || 21;
     const BUTTON_PADDING = C.BUTTON_PADDING || 4;
     const ANSWER_SECTION_HEIGHT = C.ANSWER_SECTION_HEIGHT || 17;
+
+    function getScaleFactor(canvasWidth) {
+        return canvasWidth / BASE_CANVAS_WIDTH;
+    }
 
     return {
         // Base constants (from Constants.js, re-exported for convenience)
@@ -20,6 +25,10 @@ const UILayout = (function () {
         BUTTON_HEIGHT,
         BUTTON_PADDING,
         ANSWER_SECTION_HEIGHT,
+        BASE_CANVAS_WIDTH,
+
+        // Scale factor for responsive layouts
+        getScaleFactor,
 
         // Playable area boundaries
         playableTop: QUALITY_LINE_HEIGHT + BUTTON_HEIGHT,
@@ -144,6 +153,19 @@ const UILayout = (function () {
 
         getQuizButtonY(canvasHeight) {
             return canvasHeight - this.quizOptions.bottomOffset;
+        },
+
+        // Responsive quiz options based on canvas width
+        getQuizOptions(canvasWidth) {
+            const scale = getScaleFactor(canvasWidth);
+            return {
+                width: this.quizOptions.width * scale,
+                height: this.quizOptions.height,
+                spacing: this.quizOptions.spacing * scale,
+                startX: Math.max(7, this.quizOptions.startX * scale),
+                rightPadding: Math.max(5, this.quizOptions.rightPadding * scale),
+                bottomOffset: this.quizOptions.bottomOffset
+            };
         }
     };
 })();

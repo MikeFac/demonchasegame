@@ -34,16 +34,18 @@
     body {
       display: flex;
       justify-content: center;
-      align-items: center;
+      align-items: flex-start;
       height: 100dvh;
-      overflow: hidden;
+      overflow-x: hidden;
       background-color: #3a4a5e;
-      padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+      padding-top: 10px;
     }
 
     canvas {
       border: 1px solid black;
       display: none;
+      max-width: 100vw;
+      overflow-x: hidden;
     }
 
     #menuScreen {
@@ -1145,7 +1147,7 @@
   <script src="src/shared/GamePlayerHandler.js?v=1.1"></script>
   <script src="src/shared/GameEngine.js?v=2.1"></script>
   <script src="src/client/LocalNetwork.js"></script>
-  <script src="src/client/UILayout.js?v=2.07"></script>
+  <script src="src/client/UILayout.js?v=2.08"></script>
   <script src="src/client/MusicManager.js"></script>
   <script src="src/client/SoundEffects.js"></script>
   <script src="src/client/VerseSongService.js"></script>
@@ -1327,7 +1329,7 @@
       }
     }
   </script>
-  <script src="game.js?v=2.32"></script>
+  <script src="game.js?v=2.33"></script>
   <script>
     // Register service worker for PWA offline support
     if ('serviceWorker' in navigator) {

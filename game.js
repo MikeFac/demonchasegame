@@ -83,9 +83,23 @@ window.addEventListener('beforeunload', function (e) {
 });
 
 // Handle window resize and orientation change for mobile browsers
+function getOptimalCanvasWidth() {
+    const minWidth = 320;
+    const maxWidth = 420;
+    const idealWidth = 400;
+    const viewportWidth = window.innerWidth || 400;
+    
+    if (viewportWidth < minWidth) return minWidth;
+    if (viewportWidth > maxWidth) return Math.min(maxWidth, idealWidth);
+    return Math.min(viewportWidth - 10, idealWidth);
+}
+
 function handleResize() {
     if (!canvas) return;
-    canvas.height = Math.min(600, window.innerHeight - 80);
+    const newWidth = getOptimalCanvasWidth();
+    const newHeight = Math.min(600, window.innerHeight - 80);
+    canvas.width = newWidth;
+    canvas.height = newHeight;
 }
 window.addEventListener('resize', handleResize);
 window.addEventListener('orientationchange', handleResize);
@@ -1699,8 +1713,8 @@ async function init() {
 
         currentReviewMode = 'quality'; // Possible values: 'incorrect', 'quality'
         gameMode = 'game';
-        canvas.width = 400; // Set the canvas width to 412 pixels (for Samsung Galaxy A53 in portrait mode)
-        canvas.height = Math.min(600, window.innerHeight - 80); // Reduced max height and increased margin to prevent scrollbars on mobile
+        canvas.width = getOptimalCanvasWidth();
+        canvas.height = Math.min(600, window.innerHeight - 80);
         ctx = canvas.getContext('2d');
         console.log('Canvas width:', canvas.width);
         console.log('Canvas height:', canvas.height);
@@ -2113,7 +2127,7 @@ async function showOverland() {
     const quickStartOverlay = document.getElementById('quickStartOverlay');
     if (quickStartOverlay) quickStartOverlay.style.display = 'none';
     
-    canvas.width = 400;
+    canvas.width = getOptimalCanvasWidth();
     canvas.height = Math.min(600, window.innerHeight - 80);
     ctx = canvas.getContext('2d');
     
