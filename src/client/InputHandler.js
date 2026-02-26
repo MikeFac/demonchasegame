@@ -362,31 +362,10 @@ class InputHandler {
             }
         }
 
-        // Update movement target for playable area clicks
-        {
-            const playableTop = QUALITY_LINE_HEIGHT + BUTTON_HEIGHT;
-            const playableBottom = this.canvas.height - ANSWER_SECTION_HEIGHT - 14;
-
-            if (clickedY > playableTop && clickedY < playableBottom) {
-                // Check if external handler wants to process this click first (e.g., shooting)
-                let handled = false;
-                if (this.callbacks.onGameClick) {
-                    handled = this.callbacks.onGameClick(clickedX, clickedY);
-                }
-
-                // Only update movement target if not handled
-                if (!handled) {
-                    // Convert screen coords to world coords at click time
-                    this.worldTargetX = clickedX + this.camera.x;
-                    this.worldTargetY = clickedY + this.camera.y;
-                }
-            }
-        }
-
-        // Check cloze letter buttons (must come before regular quiz options check)
-        if (typeof currentQuiz !== 'undefined' && currentQuiz && currentQuiz.mode === 'cloze' && 
+        // Check cloze letter buttons FIRST (before movement target)
+        if (typeof currentQuiz !== 'undefined' && currentQuiz && currentQuiz.mode === 'cloze' &&
             currentQuiz.letterOptions && !currentQuiz.isComplete && !currentQuiz.showFullAnswer) {
-            
+
             const canvasWidth = this.canvas.width;
 
             // Must match letter button layout in Renderer.displayClozeOptions
@@ -409,11 +388,36 @@ class InputHandler {
                     clickedY >= letterY &&
                     clickedY <= letterY + letterBtnHeight
                 ) {
+                    if (typeof dbg === 'function') dbg('CLICK', `cloze letter '${letter}' at (${clickedX.toFixed(0)},${clickedY.toFixed(0)}) btnY=${letterY}`);
                     if (typeof QuizManager !== 'undefined' && QuizManager.handleClozeLetterSelect) {
                         QuizManager.handleClozeLetterSelect(letter);
                     }
                     return;
                 }
+            }
+        }
+
+        // Update movement target for playable area clicks
+        {
+            const playableTop = QUALITY_LINE_HEIGHT + BUTTON_HEIGHT;
+            const playableBottom = this.canvas.height - ANSWER_SECTION_HEIGHT - 14;
+
+            if (clickedY > playableTop && clickedY < playableBottom) {
+                // Check if external handler wants to process this click first (e.g., shooting)
+                let handled = false;
+                if (this.callbacks.onGameClick) {
+                    handled = this.callbacks.onGameClick(clickedX, clickedY);
+                }
+
+                // Only update movement target if not handled
+                if (!handled) {
+                    // Convert screen coords to world coords at click time
+                    this.worldTargetX = clickedX + this.camera.x;
+                    this.worldTargetY = clickedY + this.camera.y;
+                    if (typeof dbg === 'function') dbg('CLICK', `move target set world=(${this.worldTargetX.toFixed(0)},${this.worldTargetY.toFixed(0)}) screen=(${clickedX.toFixed(0)},${clickedY.toFixed(0)}) playArea=${playableTop}-${playableBottom}`);
+                }
+            } else {
+                if (typeof dbg === 'function') dbg('CLICK', `outside playable area screen=(${clickedX.toFixed(0)},${clickedY.toFixed(0)}) playArea=${playableTop}-${playableBottom}`);
             }
         }
 
@@ -480,10 +484,11 @@ class InputHandler {
                     clickedY >= buttonY &&
                     clickedY <= buttonY + buttonHeight
                 ) {
+                    if (typeof dbg === 'function') dbg('CLICK', `quiz option '${currentQuiz.options[i]}' at (${clickedX.toFixed(0)},${clickedY.toFixed(0)}) btnY=${buttonY}`);
                     if (this.callbacks.onQuizOptionClick) {
                         this.callbacks.onQuizOptionClick(currentQuiz.options[i], i);
                     }
-                    break;
+                    return;
                 }
             }
         }

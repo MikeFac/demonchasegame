@@ -1,4 +1,17 @@
 let PRD = false;
+let DEBUG_MOVEMENT = true; // Toggle position/movement debug logging
+const _dbgLog = []; // Ring buffer of recent debug events
+function dbg(tag, msg, data) {
+    if (!DEBUG_MOVEMENT) return;
+    const t = (performance.now() / 1000).toFixed(3);
+    const entry = `[${t}][${tag}] ${msg}` + (data ? ' ' + JSON.stringify(data) : '');
+    _dbgLog.push(entry);
+    if (_dbgLog.length > 200) _dbgLog.shift();
+    console.log(entry);
+}
+// Expose for console access: type dumpDbg() in browser console
+window.dumpDbg = () => _dbgLog.forEach(e => console.log(e));
+
 let currentTime = Date.now();
 let socket;
 let playerCode = null;  // code to access player information for the current player
@@ -210,6 +223,7 @@ let isAnswerCorrect = null; // Global variable to store the answer status
 let gameOverFlag = false;
 let _gameLoopRunning = false;
 let _gameGeneration = 0; // Incremented on each new game to stop old game loops
+let _dbgHeartbeat = 0;
 let maxSpawns = 0;  //should be updated by server
 let spawnsLeft = 10; //should be updated by server
 // Get the current script path
@@ -765,6 +779,12 @@ function resetGameState() {
 }
 
 function startGame(mode, roomId, missionOpts) {
+    // Remove overland click handler so it doesn't fire during gameplay
+    if (overlandClickHandler) {
+        canvas.removeEventListener('click', overlandClickHandler);
+        overlandClickHandler = null;
+    }
+
     // Reset all game state to prevent leaks between games
     resetGameState();
 
@@ -1223,7 +1243,7 @@ async function init() {
             onPlayerCode: (code) => {
                 if (playerCode === null) {
                     playerCode = code.toString();
-                    console.log('Received my player code:', playerCode);
+                    dbg('INIT', `onPlayerCode=${playerCode} canvas=(${canvas.width},${canvas.height})`);
                     // Initialize player - position will be set from spawn point when walls arrive
                     player = {
                         x: canvas.width / 2,
@@ -1402,6 +1422,7 @@ async function init() {
                 // Move player to spawn point if available
                 if (data.spawnX !== undefined && data.spawnY !== undefined) {
                     const oldX = player.x, oldY = player.y;
+                    dbg('WALLS', `onWalls: spawn teleport from (${oldX.toFixed(0)},${oldY.toFixed(0)}) to (${data.spawnX},${data.spawnY})`);
                     player.x = data.spawnX;
                     player.y = data.spawnY;
                     // Sync position to engine so it matches client
@@ -2080,6 +2101,8 @@ function handleOverlandClick(x, y) {
 }
 
 async function startMission(worldId, missionId) {
+    dbg('MISSION', `startMission called! worldId=${worldId} missionId=${missionId} gameMode=${gameMode} gameOverFlag=${gameOverFlag} killed=${gameState.monstersKilled}/${gameState.monstersToKill}`);
+    console.trace('[MISSION] startMission call stack');
     try {
         const mission = await missionClient.getMission(worldId, missionId);
         if (!mission) {
@@ -2202,6 +2225,13 @@ function gameLoop(generation) {
     if (!player) console.log("Player not initialised in gameLoop");
     currentTime = Date.now();
     const elapsedTime = currentTime - lastUpdateTime;
+
+    // Debug position heartbeat (every 2s)
+    if (DEBUG_MOVEMENT && player && currentTime - (_dbgHeartbeat || 0) > 2000) {
+        _dbgHeartbeat = currentTime;
+        const wt = inputHandler ? inputHandler.getWorldTarget() : null;
+        dbg('POS', `(${player.x.toFixed(0)},${player.y.toFixed(0)}) hp=${player.health} ammo=${player.ammo} ans=${isAnswerCorrect} target=${wt ? '(' + wt.x.toFixed(0) + ',' + wt.y.toFixed(0) + ')' : 'none'} killed=${gameState.monstersKilled}/${gameState.monstersToKill}`);
+    }
 
     // [WallSpawn] Periodic check: is the player currently inside a wall? (every ~1s)
     if (player && clientWallGrid && player.width && player.height && currentTime - _wallSpawnCheckTimer > 1000) {
@@ -2553,9 +2583,13 @@ function gameLoop(generation) {
         // Debug: detect sudden teleport
         if (player._prevX !== undefined) {
             const jump = Math.sqrt((player.x - player._prevX) ** 2 + (player.y - player._prevY) ** 2);
-            if (jump > 100) {
-                console.error(`[TELEPORT] from (${player._prevX.toFixed(0)},${player._prevY.toFixed(0)}) to (${player.x.toFixed(0)},${player.y.toFixed(0)}) jump=${jump.toFixed(0)}`);
+            if (jump > 50) {
+                dbg('TELEPORT', `from (${player._prevX.toFixed(0)},${player._prevY.toFixed(0)}) to (${player.x.toFixed(0)},${player.y.toFixed(0)}) jump=${jump.toFixed(0)}`);
                 console.trace('[TELEPORT] stack');
+                // Dump recent debug log for context
+                console.warn('=== RECENT DEBUG LOG (last 30 entries) ===');
+                _dbgLog.slice(-30).forEach(e => console.warn(e));
+                console.warn('=== END DEBUG LOG ===');
             }
         }
         player._prevX = player.x;
@@ -2971,8 +3005,8 @@ function updateGameState(newGameState) {
                     // Debug: detect if server position drifted far from client
                     if (typeof x === 'number' && typeof serverX === 'number') {
                         const drift = Math.sqrt((serverX - x) ** 2 + (serverY - y) ** 2);
-                        if (drift > 100) {
-                            console.warn(`[DRIFT] server=(${serverX.toFixed(0)},${serverY.toFixed(0)}) client=(${x.toFixed(0)},${y.toFixed(0)}) drift=${drift.toFixed(0)}`);
+                        if (drift > 10) {
+                            dbg('SYNC', `eng=(${serverX.toFixed(0)},${serverY.toFixed(0)}) cli=(${x.toFixed(0)},${y.toFixed(0)}) drift=${drift.toFixed(0)} hp=${player.health} xp=${player.xp} ammo=${player.ammo}`);
                         }
                     }
                 } else {
@@ -3072,6 +3106,7 @@ function lerp(a, b, t) {
 
 // Update the handlePlayerAttack function to only send the attack data to the server
 function handlePlayerAttack(monster) {
+    dbg('ATTACK', `attacking monster=${monster.id} at (${monster.x.toFixed(0)},${monster.y.toFixed(0)}) player=(${player.x.toFixed(0)},${player.y.toFixed(0)}) ammo=${player.ammo}`);
     const attackData = {
         monsterId: monster.id,
         damage: 2 // Or whatever damage calculation you're using

@@ -149,6 +149,7 @@
         // Teleport all players
         for (var playerCode in engine.gameState.players) {
             var p = engine.gameState.players[playerCode];
+            if (typeof dbg === 'function') dbg('ENG-RESET', 'resetLevelData teleport player ' + playerCode + ' from (' + p.x.toFixed(0) + ',' + p.y.toFixed(0) + ') to (' + engine.spawnX + ',' + engine.spawnY + ')');
             p.x = engine.spawnX;
             p.y = engine.spawnY;
         }

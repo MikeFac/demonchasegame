@@ -18,11 +18,20 @@ No npm start script configured. No linter configured.
 
 **IMPORTANT**: Always use `./restart-server.sh` to restart the server. Do not manually kill node processes.
 
-## ⚠️ CRITICAL: Server Restart After Code Changes
+## ⚠️ CRITICAL: Cache Busting & Server Restart After Code Changes
+
+**After modifying ANY client-side JavaScript file, you MUST bump its version parameter in `index.html`.**
+
+Script tags use `?v=X.XX` for cache busting. If you change a `.js` file but don't bump the version, the browser will serve the old cached version and your changes will NOT take effect.
+
+**Steps after every code change:**
+1. Bump the `?v=` parameter in `index.html` for each modified `.js` file (e.g., `?v=2.21` → `?v=2.22`)
+2. If a script tag has no `?v=` parameter, add one (e.g., `src="foo.js"` → `src="foo.js?v=1.0"`)
+3. Restart the server with `./restart-server.sh`
 
 **ALWAYS restart the server immediately after making changes to:**
 - `index.html` (HTML structure, modals, script tags)
-- Any client-side JavaScript files in `src/client/`
+- Any client-side JavaScript files in `src/client/` or `src/shared/`
 - Version numbers in script tags (cache-busting)
 
 **DO NOT tell the user to refresh the browser without restarting the server first.** The user should only need to refresh AFTER the server has been restarted. Restart the server automatically and immediately after changes.

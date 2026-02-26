@@ -131,6 +131,7 @@
             var targetMonster = gameState.monsters.find(function (m) { return m.id === attackData.monsterId; });
 
             if (player && targetMonster) {
+                if (typeof dbg === 'function') dbg('ENG-ATK', 'handleAttack player=(' + player.x.toFixed(0) + ',' + player.y.toFixed(0) + ') monster=' + targetMonster.id + ' hp=' + targetMonster.health + ' killed=' + gameState.monstersKilled + '/' + gameState.monstersToKill);
                 targetMonster.health -= attackData.damage;
                 if (targetMonster.health <= 0) {
                     var deathX = targetMonster.x;

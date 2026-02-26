@@ -516,6 +516,7 @@
     }
 
     function onClozeComplete(success) {
+        if (typeof dbg === 'function') dbg('QUIZ', `onClozeComplete success=${success} pos=(${player.x.toFixed(0)},${player.y.toFixed(0)})`);
         const verseEntry = organizedVerses[vQuality] && organizedVerses[vQuality][currentVerseIndex];
         const currentReference = verseEntry ? verseEntry.Reference : '';
 

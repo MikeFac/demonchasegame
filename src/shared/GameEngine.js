@@ -205,6 +205,7 @@
 
             // Check Level Completion
             if (this.gameState.monstersKilled >= (this.gameState.monstersToKill || 999) && !this._levelAdvancing && !this._gameEnded) {
+                if (typeof dbg === 'function') dbg('ENG-LVL', 'Level complete! killed=' + this.gameState.monstersKilled + '/' + this.gameState.monstersToKill + ' level=' + this.gameState.gameLevel + '/' + Object.keys(this.levelData).length);
                 if (this.gameState.gameLevel >= Object.keys(this.levelData).length) {
                     this._endGame('victory');
                 } else {
