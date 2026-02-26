@@ -82,6 +82,14 @@ window.addEventListener('beforeunload', function (e) {
     }
 });
 
+// Handle window resize and orientation change for mobile browsers
+function handleResize() {
+    if (!canvas) return;
+    canvas.height = Math.min(600, window.innerHeight - 80);
+}
+window.addEventListener('resize', handleResize);
+window.addEventListener('orientationchange', handleResize);
+
 // Solo game difficulty selection
 let soloDifficulty = 'normal';
 
@@ -117,6 +125,9 @@ document.addEventListener('DOMContentLoaded', function () {
     if (canvas) {
         // Get the 2D rendering context
         ctx = canvas.getContext('2d');
+
+        // Initialize canvas size for mobile browsers
+        handleResize();
 
         // Track mouse position for tooltips and hover effects
         canvas.addEventListener('mousemove', (e) => {
