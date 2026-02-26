@@ -244,6 +244,13 @@
             box-shadow: 0 0 15px rgba(102, 126, 234, 0.5);
         }
 
+        .chapter-btn, .mission-btn {
+            flex: 0 0 auto;
+            min-width: 80px;
+            padding: 8px 12px;
+            font-size: 0.85em;
+        }
+
         .quiz-slider-group {
             display: flex;
             flex-direction: column;
@@ -353,18 +360,10 @@
             </div>
 
             <div id="missionPicker" style="margin: 20px 0; display: none;">
-                <label style="display: block; margin-bottom: 10px; font-weight: bold;">Chapter:</label>
-                <select id="chapterSelect"
-                    style="width: 100%; padding: 15px; border-radius: 10px; border: none; font-size: 1.1em; background: rgba(255, 255, 255, 0.9); color: #333; margin-bottom: 10px;">
-                    <option value="">-- Select Chapter --</option>
-                </select>
-                <label style="display: block; margin-bottom: 10px; font-weight: bold;">Mission:</label>
-                <select id="missionSelect"
-                    style="width: 100%; padding: 15px; border-radius: 10px; border: none; font-size: 1.1em; background: rgba(255, 255, 255, 0.9); color: #333; margin-bottom: 10px;"
-                    disabled>
-                    <option value="">-- Select Mission --</option>
-                </select>
-                <p id="missionDescription" style="font-size: 0.9em; opacity: 0.8; min-height: 1.5em;"></p>
+                <label style="display: block; margin-bottom: 10px; font-weight: bold;">Select Mission:</label>
+                <div id="chapterButtons" style="display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 15px;"></div>
+                <div id="missionButtons" style="display: flex; gap: 8px; flex-wrap: wrap;"></div>
+                <p id="missionDescription" style="font-size: 0.9em; opacity: 0.8; min-height: 1.5em; margin-top: 10px;"></p>
             </div>
 
             <div id="mapStyleSection" style="margin: 20px 0;">
@@ -402,25 +401,31 @@
                 <div class="quiz-slider-group">
                     <div class="slider-item">
                         <label><span data-i18n="config.firstLetter">First Letter</span> <span style="opacity:0.6" data-i18n="config.difficultyHard">(Hard)</span></label>
-                        <input type="range" min="0" max="100" value="30" step="5" data-mode="firstLetter"
-                            class="quiz-slider">
-                        <span class="pct">30%</span>
-                    </div>
-                    <div class="slider-item">
-                        <label><span data-i18n="config.missingWord">Missing Word</span> <span style="opacity:0.6" data-i18n="config.difficultyMedium">(Medium)</span></label>
-                        <input type="range" min="0" max="100" value="30" step="5" data-mode="missingWord"
-                            class="quiz-slider">
-                        <span class="pct">30%</span>
-                    </div>
-                    <div class="slider-item">
-                        <label><span data-i18n="config.categoryMatch">Category Match</span> <span style="opacity:0.6" data-i18n="config.difficultyEasy">(Easy)</span></label>
-                        <input type="range" min="0" max="100" value="25" step="5" data-mode="categoryMatch"
+                        <input type="range" min="0" max="100" value="25" step="5" data-mode="firstLetter"
                             class="quiz-slider">
                         <span class="pct">25%</span>
                     </div>
                     <div class="slider-item">
+                        <label><span data-i18n="config.missingWord">Missing Word</span> <span style="opacity:0.6" data-i18n="config.difficultyMedium">(Medium)</span></label>
+                        <input type="range" min="0" max="100" value="25" step="5" data-mode="missingWord"
+                            class="quiz-slider">
+                        <span class="pct">25%</span>
+                    </div>
+                    <div class="slider-item">
+                        <label><span data-i18n="config.categoryMatch">Category Match</span> <span style="opacity:0.6" data-i18n="config.difficultyEasy">(Easy)</span></label>
+                        <input type="range" min="0" max="100" value="20" step="5" data-mode="categoryMatch"
+                            class="quiz-slider">
+                        <span class="pct">20%</span>
+                    </div>
+                    <div class="slider-item">
                         <label><span data-i18n="config.trueFalse">True / False</span> <span style="opacity:0.6">(Easiest)</span></label>
                         <input type="range" min="0" max="100" value="15" step="5" data-mode="trueFalse"
+                            class="quiz-slider">
+                        <span class="pct">15%</span>
+                    </div>
+                    <div class="slider-item">
+                        <label><span data-i18n="config.cloze">Cloze</span> <span style="opacity:0.6">(Medium)</span></label>
+                        <input type="range" min="0" max="100" value="15" step="5" data-mode="cloze"
                             class="quiz-slider">
                         <span class="pct">15%</span>
                     </div>
@@ -533,9 +538,6 @@
             if (sessionToken) {
                 tryLogin();
             }
-            // Set up chapter/mission dropdowns
-            document.getElementById('chapterSelect').addEventListener('change', onChapterSelected);
-            document.getElementById('missionSelect').addEventListener('change', onMissionSelected);
         });
 
         // ==================== Auth ====================
@@ -721,69 +723,80 @@
             try {
                 const res = await fetch('/missions/chapters.json');
                 chaptersData = await res.json();
-                const select = document.getElementById('chapterSelect');
-                select.innerHTML = '<option value="">-- Select Chapter --</option>';
+                const container = document.getElementById('chapterButtons');
+                container.innerHTML = '';
                 chaptersData.chapters.forEach(ch => {
-                    const opt = document.createElement('option');
-                    opt.value = ch.id;
-                    opt.textContent = ch.name;
-                    opt.dataset.slug = ch.slug;
-                    select.appendChild(opt);
+                    const btn = document.createElement('button');
+                    btn.type = 'button';
+                    btn.className = 'preset-btn chapter-btn';
+                    btn.dataset.chapterId = ch.id;
+                    btn.dataset.slug = ch.slug;
+                    btn.innerHTML = `<div style="font-weight: bold;">${ch.name}</div>`;
+                    btn.onclick = () => selectChapter(ch.id);
+                    container.appendChild(btn);
                 });
             } catch (err) {
                 console.error('Failed to load chapters:', err);
             }
         }
 
-        async function onChapterSelected() {
-            const chapterSelect = document.getElementById('chapterSelect');
-            const missionSelect = document.getElementById('missionSelect');
-            const chapterId = chapterSelect.value;
+        let selectedChapterId = null;
+        let selectedMissionId = null;
+
+        function selectChapter(chapterId) {
+            selectedChapterId = chapterId;
+            selectedMissionId = null;
             document.getElementById('missionDescription').textContent = '';
-
-            if (!chapterId) {
-                missionSelect.innerHTML = '<option value="">-- Select Mission --</option>';
-                missionSelect.disabled = true;
-                return;
-            }
-
-            // Load chapter missions if not cached
-            if (!chapterMissions[chapterId]) {
-                const chapter = chaptersData.chapters.find(c => c.id === chapterId);
-                if (!chapter) return;
-                try {
-                    const res = await fetch('/missions/' + chapter.slug + '.json');
-                    const data = await res.json();
-                    chapterMissions[chapterId] = data.missions;
-                } catch (err) {
-                    console.error('Failed to load chapter missions:', err);
-                    return;
-                }
-            }
-
-            const missions = chapterMissions[chapterId];
-            missionSelect.innerHTML = '<option value="">-- Select Mission --</option>';
-            missions.forEach(m => {
-                const opt = document.createElement('option');
-                opt.value = m.id;
-                opt.textContent = m.name;
-                missionSelect.appendChild(opt);
+            
+            // Update button styles
+            document.querySelectorAll('.chapter-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.chapterId === chapterId);
             });
-            missionSelect.disabled = false;
+            document.querySelectorAll('.mission-btn').forEach(btn => btn.remove());
+
+            // Load and display missions for this chapter
+            const chapter = chaptersData.chapters.find(c => c.id === chapterId);
+            if (!chapter) return;
+
+            if (!chapterMissions[chapterId]) {
+                fetch(`/missions/${chapter.slug}.json`)
+                    .then(res => res.json())
+                    .then(data => {
+                        chapterMissions[chapterId] = data.missions;
+                        renderMissionButtons(chapterId);
+                    })
+                    .catch(err => console.error('Failed to load missions:', err));
+            } else {
+                renderMissionButtons(chapterId);
+            }
         }
 
-        function onMissionSelected() {
-            const chapterId = document.getElementById('chapterSelect').value;
-            const missionId = document.getElementById('missionSelect').value;
-            const descEl = document.getElementById('missionDescription');
+        function renderMissionButtons(chapterId) {
+            const container = document.getElementById('missionButtons');
+            container.innerHTML = '';
+            const missions = chapterMissions[chapterId] || [];
+            missions.forEach(m => {
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.className = 'preset-btn mission-btn';
+                btn.dataset.missionId = m.id;
+                btn.innerHTML = `<div style="font-weight: bold;">${m.name}</div><div style="font-size: 0.8em; opacity: 0.8;">${m.difficulty || 'Normal'}</div>`;
+                btn.onclick = () => selectMission(m.id, m.name, m.description);
+                container.appendChild(btn);
+            });
+        }
 
-            if (!chapterId || !missionId || !chapterMissions[chapterId]) {
-                descEl.textContent = '';
-                return;
-            }
+        function selectMission(missionId, name, description) {
+            selectedMissionId = missionId;
+            document.getElementById('missionDescription').textContent = name + ': ' + (description || '');
+            document.querySelectorAll('.mission-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.missionId === missionId);
+            });
+        }
 
-            const mission = chapterMissions[chapterId].find(m => m.id === missionId);
-            descEl.textContent = mission ? mission.description : '';
+        function getSelectedMission() {
+            if (!selectedChapterId || !selectedMissionId) return null;
+            return { worldId: selectedChapterId, missionId: selectedMissionId };
         }
 
         function selectPreset(preset) {
@@ -863,9 +876,9 @@
 
         function applyQuizPreset(type) {
             const presets = {
-                easy: { firstLetter: 5, missingWord: 15, categoryMatch: 30, trueFalse: 50 },
-                balanced: { firstLetter: 30, missingWord: 30, categoryMatch: 25, trueFalse: 15 },
-                hard: { firstLetter: 60, missingWord: 30, categoryMatch: 5, trueFalse: 5 }
+                easy: { firstLetter: 5, missingWord: 15, categoryMatch: 30, trueFalse: 40, cloze: 10 },
+                balanced: { firstLetter: 25, missingWord: 25, categoryMatch: 20, trueFalse: 15, cloze: 15 },
+                hard: { firstLetter: 50, missingWord: 25, categoryMatch: 10, trueFalse: 5, cloze: 10 }
             };
 
             const preset = presets[type];
@@ -906,17 +919,15 @@
             };
 
             if (selectedGameMode === 'mission') {
-                const chapterId = document.getElementById('chapterSelect').value;
-                const missionId = document.getElementById('missionSelect').value;
-                if (!chapterId || !missionId) {
-                    alert('Please select a chapter and mission');
+                const mission = getSelectedMission();
+                if (!mission) {
+                    alert('Please select a mission');
                     return;
                 }
-                options.worldId = chapterId;
-                options.missionId = missionId;
-                // Include mission name for display in room settings
-                const mission = chapterMissions[chapterId] && chapterMissions[chapterId].find(m => m.id === missionId);
-                options.missionName = mission ? mission.name : '';
+                options.worldId = mission.worldId;
+                options.missionId = mission.missionId;
+                const missionData = chapterMissions[mission.worldId] && chapterMissions[mission.worldId].find(m => m.id === mission.missionId);
+                options.missionName = missionData ? missionData.name : '';
             }
 
             socket.emit('createRoom', options, (result) => {
