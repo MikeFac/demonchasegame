@@ -3,13 +3,15 @@
 
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>VerseBattles: Demon Chase</title>
   <link rel="icon" type="image/x-icon" href="/favicon.ico">
   <link rel="manifest" href="/manifest.json">
   <meta name="theme-color" content="#16213e">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <link rel="apple-touch-icon" href="/images/VerseBattles-logo.png">
+  <link rel="apple-touch-startup-image" href="/images/VerseBattles-logo.png">
   <!-- Google Analytics 4 -->
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-673VQ9VE50"></script>
   <script>
@@ -25,6 +27,10 @@
       box-sizing: border-box;
     }
 
+    html {
+      padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+    }
+
     body {
       display: flex;
       justify-content: center;
@@ -32,6 +38,7 @@
       height: 100dvh;
       overflow: hidden;
       background-color: #3a4a5e;
+      padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
     }
 
     canvas {
@@ -1320,7 +1327,7 @@
       }
     }
   </script>
-  <script src="game.js?v=2.31"></script>
+  <script src="game.js?v=2.32"></script>
   <script>
     // Register service worker for PWA offline support
     if ('serviceWorker' in navigator) {

@@ -4,19 +4,21 @@
   "description": "Fight demons by learning Bible verses in this action dungeon game",
   "start_url": "/",
   "display": "standalone",
-  "orientation": "portrait",
+  "orientation": "portrait-primary",
   "background_color": "#1a1a2e",
   "theme_color": "#16213e",
   "icons": [
     {
       "src": "/images/VerseBattles-logo.png",
       "sizes": "192x192",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any maskable"
     },
     {
       "src": "/images/VerseBattles-logo.png",
       "sizes": "512x512",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any maskable"
     }
   ]
 }
