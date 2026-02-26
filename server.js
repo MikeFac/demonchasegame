@@ -6,6 +6,7 @@ const mongoose = require('mongoose');
 require('dotenv').config();
 const Game = require('./src/server/Game');
 const RoomManager = require('./src/server/RoomManager');
+const { buildMissionGameConfig } = require('./src/server/missionLoader');
 const verseSongRouter = require('./src/server/routes/verseSong');
 const sermonRouter = require('./src/server/routes/sermon');
 const { retryFailedGenerations } = require('./src/server/jobs/retryFailedGenerations');
@@ -224,11 +225,22 @@ io.on('connection', (socket) => {
       // Get room config and create game with preset + quiz settings
       const room = roomManager.rooms.get(roomId);
       const GameConfig = require('./src/server/config/GameConfig');
-      const gameConfig = GameConfig.createGameConfig(
-        room.settings.preset,
-        room.settings.quizSettings
-      );
-      gameConfig.mapStyle = room.settings.mapStyle || 'classic';
+      let gameConfig;
+
+      if (room.settings.gameMode === 'mission') {
+        // Load mission JSON and build config from it
+        gameConfig = buildMissionGameConfig(room.settings, GameConfig);
+        if (!gameConfig) {
+          room.status = 'waiting';
+          return callback({ success: false, error: 'Failed to load mission data' });
+        }
+      } else {
+        gameConfig = GameConfig.createGameConfig(
+          room.settings.preset,
+          room.settings.quizSettings
+        );
+        gameConfig.mapStyle = room.settings.mapStyle || 'classic';
+      }
 
       // Create new Game instance for this room with config
       const game = new Game(io, roomId, gameConfig);

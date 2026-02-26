@@ -1,205 +1,103 @@
 # Game Architecture Documentation
-## Overview of Improvements (Claude Opus 4.6)
 
-### Key Architectural Improvements
+**Last Updated:** 2026-02-27
+
+## Overview
+
+Server-authoritative multiplayer Bible verse quiz game with top-down dungeon combat. Players fight demons by answering quizzes to earn ammo. Features a chapter-based mission system with overland map, AI devotional sermons, and verse-of-the-day learning mode.
+
+### Key Architectural Principles
 
 1. **Server-Side Authority (Source of Truth)**
-   - All game state mutations now happen on the server
-   - Client receives state updates via Socket.IO broadcasts
-   - Eliminates client-side prediction/desync issues
-   - Files: `Game.js`, `MonsterManager.js`, `PlayerManager.js`
+   - All game state mutations happen on the server (or shared GameEngine)
+   - Client receives state updates via Socket.IO broadcasts (multiplayer) or local emitter (solo missions)
+   - One exception: Monster damage to player is client-calculated for responsiveness
 
-2. **Manager Pattern Implementation**
-   - `MonsterManager`: Handles monster spawning, movement, damage, death
-   - `PlayerManager`: Handles player connections, movement validation, attacks
-   - `BulletManager`: Handles projectile physics and collision
-   - Clean separation of concerns from monolithic server.js
+2. **Shared Game Engine (src/shared/)**
+   - `GameEngine.js`: Environment-agnostic game loop, works on both server (Node.js) and client (browser)
+   - `GameLifecycle.js`: Level transitions, game end conditions, grace periods
+   - `GameConfig.js`: Difficulty presets, quiz balance validation
+   - Server's `Game.js` wraps GameEngine with Socket.IO-specific emitter
+   - Client can run GameEngine locally for offline solo missions via `LocalNetwork.js`
 
-3. **Shared Configuration**
-   - `LevelConfig.js`: Level data shared between client and server
-   - `Constants.js`: Game constants shared between client and server
-   - Prevents configuration drift between client and server
+3. **Manager Pattern**
+   - `MonsterManager`: Monster spawning, AI movement, damage, special abilities
+   - `PlayerManager`: Player connections, spawn validation, health/XP
+   - `BulletManager`: Projectile physics, wall/monster collision
+   - `CollectibleManager`: Armor of God items, healing/shield spawning
 
-4. **Physics Utilities**
-   - `Physics.js`: Centralized collision detection
-   - `isOverlapping()`: AABB collision for walls, monsters, players
-   - `findNearestPlayer()`: AI helper for chaser monsters
-   - `checkCollisionCircleRect()`: Bullet collision detection
+4. **Content Provider Abstraction (Missions)**
+   - `ContentProvider` → abstract interface for loading worlds/missions
+   - `FileContentProvider` → loads from `/missions/*.json` files
+   - Future: `DatabaseContentProvider` → loads from MongoDB API
+   - `MissionClient` → frontend wrapper, converts mission config to GameEngine format
 
 5. **Room/Lobby System**
-   - `RoomManager.js`: Multiplayer lobby functionality
-   - Supports solo play (backward compatibility) and multiplayer rooms
+   - `RoomManager.js`: Multiplayer lobby, auth, room management
    - Game instances scoped to rooms via `gameInstances` Map
-
----
-
-## BUG IDENTIFIED: Monsters Not Moving
-
-### Location
-File: `src/server/entities/MonsterManager.js`
-Method: `updateMonsters()` (line 149)
-
-### Root Cause
-**The monster movement code exists and executes, but the movement magnitude may be too small or the broadcast happens after the state is reset.**
-
-Looking at the code flow:
-1. `Game.update()` calls `monsterManager.updateMonsters()` (line 153)
-2. `updateMonsters()` modifies `gameState.monsters` array directly (in-place mutations)
-3. `Game.update()` broadcasts `this.gameState` to all clients (line 159)
-4. Client receives update and overwrites local monsters array (`game.js` line 88-120)
-
-### Movement Logic (Lines 149-214)
-```javascript
-updateMonsters() {
-    const { gameState, levelData } = this;
-    const currentLevelData = levelData[gameState.gameLevel];
-    const speed = currentLevelData.monsterSpeed; // 5, 7, or 9
-
-    gameState.monsters.forEach(monster => {
-        if (monster.chaser) {
-            // Chaser behavior: move toward nearest player
-            let nearestPlayer = Physics.findNearestPlayer(monster, gameState);
-            if (nearestPlayer) {
-                let dx = nearestPlayer.x - monster.x;
-                let dy = nearestPlayer.y - monster.y;
-                let distance = Math.sqrt(dx * dx + dy * dy);
-
-                // Calculate new position using normalized vector * speed
-                const newX = monster.x + (dx / distance) * speed;
-                const newY = monster.y + (dy / distance) * speed;
-
-                // Wall collision check before moving
-                if (!Physics.isOverlapping(newX, newY, Constants.MONSTER_WIDTH, Constants.MONSTER_HEIGHT, gameState, monster.id)) {
-                    monster.x = newX;
-                    monster.y = newY;
-                }
-            }
-        } else {
-            // Random walker behavior
-            if (monster.walkingDistance === undefined) {
-                monster.walkingDistance = Math.random() * (Constants.MAX_WALK_DISTANCE - Constants.MIN_WALK_DISTANCE) + Constants.MIN_WALK_DISTANCE;
-                monster.angle = Math.random() * 2 * Math.PI;
-            }
-
-            let dx = Math.cos(monster.angle) * speed;
-            let dy = Math.sin(monster.angle) * speed;
-
-            const newX = monster.x + dx;
-            const newY = monster.y + dy;
-
-            if (!Physics.isOverlapping(newX, newY, Constants.MONSTER_WIDTH, Constants.MONSTER_HEIGHT, gameState, monster.id)) {
-                monster.x = newX;
-                monster.y = newY;
-                monster.walkingDistance -= speed;
-            } else {
-                // Hit wall, pick new direction
-                monster.walkingDistance = undefined;
-                monster.angle = undefined;
-            }
-
-            if (monster.walkingDistance <= 0) {
-                monster.walkingDistance = undefined;
-                monster.angle = undefined;
-            }
-        }
-
-        // Update health bar position to follow monster
-        monster.healthBar.x = monster.x - monster.width / 2;
-        monster.healthBar.y = monster.y - monster.height / 2 - 10;
-        monster.healthBar.width = (monster.health / 10) * monster.width;
-
-        // Handle health bar visibility timeout
-        if (monster.showHealthTimeout && Date.now() > monster.showHealthTimeout) {
-            monster.showHealth = false;
-            monster.showHealthTimeout = null;
-        }
-    });
-}
-```
-
-### Potential Issues to Investigate
-
-1. **Update Loop Timing**: The game loop runs every 50ms (20 ticks/second). With speed=5 and 20 ticks/sec, monsters could move up to 100 pixels/second if not blocked.
-
-2. **Collision Detection**: `Physics.isOverlapping()` is called with the new position. If there's a collision, the monster doesn't move. Monsters might be constantly colliding with:
-   - Other monsters
-   - Walls
-   - Players
-
-3. **Wall Collision**: The maze generation creates many walls. Monsters spawn using grid-based valid positions but may get stuck if walls shift or collision detection is too aggressive.
-
-4. **Distance Calculation**: For chasers, if `distance` is very small, the normalized vector could cause jitter or division issues (though distance=0 would cause NaN).
-
-5. **State Broadcast**: The game state is broadcast after all updates. Ensure `this.io.emit('gameStateUpdate', this.gameState)` is actually reaching clients.
-
-### Debug Recommendations
-
-Add logging to `updateMonsters()`:
-```javascript
-console.log(`Updating ${gameState.monsters.length} monsters, speed=${speed}`);
-gameState.monsters.forEach((monster, i) => {
-    console.log(`Monster ${i}: pos=(${monster.x.toFixed(1)}, ${monster.y.toFixed(1)}), type=${monster.chaser ? 'chaser' : 'walker'}`);
-});
-```
-
-Add logging to client state reception:
-```javascript
-// In game.js updateGameState()
-console.log('Received gameState with monsters:', newGameState.monsters?.length);
-newGameState.monsters?.forEach((m, i) => {
-    console.log(`Monster ${i}: pos=(${m.x.toFixed(1)}, ${m.y.toFixed(1)})`);
-});
-```
+   - Solo players get room ID `solo-{socketId}`
 
 ---
 
 ## Data Flow Summary
 
-### Server-Side Game Loop (Game.js)
+### Server-Side Game Loop (GameEngine)
 ```
-start() 
-  └── setInterval() every 50ms
+start()
+  └── setInterval() every 16ms (60fps)
        └── update()
-            ├── monsterManager.updateMonsters()  // Move monsters
-            ├── bulletManager.update()            // Move bullets
-            └── io.emit('gameStateUpdate')        // Broadcast state
+            ├── monsterManager.updateMonsters()  // Move monsters, AI
+            ├── bulletManager.update()            // Move bullets, collision
+            ├── checkGracePeriods()               // Disconnect cleanup
+            ├── checkGameEnd()                    // All players dead?
+            ├── Level completion check            // monstersKilled >= target
+            └── emitter.emit('gameStateUpdate')   // Broadcast state
 ```
 
 ### Client-Side Update (game.js)
 ```
-Socket receives 'gameStateUpdate'
+Receives 'gameStateUpdate' (via Socket.IO or local emitter)
   └── updateGameState(newGameState)
-       ├── Merge newGameState into local gameState
-       ├── Map monsters array (adds client-side healthBar objects)
-       └── Update local player stats from server
+       ├── Preserve local player dimensions (from sprite image)
+       ├── Position blend: < 60px drift → keep local, ≥ 60px → 30% blend
+       ├── Trust server for health, XP, level, ammo
+       └── Replace monsters, healingPoints, shieldPoints, bullets
 ```
 
-### Monster Spawning Flow
+### Mission Flow (Overland → Game → Victory)
 ```
-Game.start()
-  └── setInterval() every 2000ms
-       └── monsterManager.spawnMonster()
-            ├── Check: connectedPlayers > 0
-            ├── Check: monsters.length < maxMonsters
-            ├── Find valid spawn position (grid-based)
-            ├── Create monster object with chaser/walker flag
-            └── io.emit('gameStateUpdate')
+gameMode = 'overland' → Player clicks mission node
+  → MissionClient.getMission() → missionToGameConfig()
+  → resetGameState() (preserves currentMission across reset)
+  → GameEngine runs single-level mission
+  → monstersKilled >= monstersToKill → endGame('victory')
+  → completeMission() → ProgressManager records stars + XP
+  → gameMode = 'overland'
 ```
 
 ---
 
-## Fixed Issues (from git log)
+## Fixed Issues
 
-- Source of truth moved to server (no client-authoritative movement)
-- Monster spawning fixed (was checking wrong condition)
-- Bullet system implemented with proper collision
-- Wall collision working for players and monsters
+### Core Game
+- Server-authoritative game state (eliminated client desync)
+- Monster spawning (was checking wrong condition)
+- Bullet system with proper wall/monster collision
 - XP/Level system synced between client and server
 - Ammo management server-side
 - Player sprite assignment (1-4) with wrapping
-- Game Over stops gameplay
-- Damage calculation standardized
+- Game Over stops gameplay correctly
 - Healing point and shield point collection synced
+- Demon special abilities (Freezing Aura, Armored Shell, Spirit Drain, Dash, Erratic)
+
+### Missions System (feature/missions branch)
+- Mission spawn rate: Fixed ms/seconds confusion in spawnRate config
+- Game cleanup on restart: Comprehensive `resetGameState()` prevents stale state
+- Stale overland click handler: Removed handler that restarted game mid-mission
+- Mission victory flow: Now correctly returns to overland instead of reloading page
+- `currentMission` preservation: Maintained across `resetGameState()` calls
+- Position sync: Server position used when local is undefined (initial spawn)
+- Offline mode: Always uses local player position to avoid undefined errors
 
 ---
 
@@ -208,36 +106,71 @@ Game.start()
 ```
 /home/michael/proj/dcgame/
 ├── server.js                 # Entry point, Express + Socket.IO setup
-├── game.js                   # Client-side game logic
+├── game.js                   # Client-side orchestrator (game modes, state machine)
+├── missions/                 # Mission content (JSON)
+│   ├── chapters.json         # Chapter index with unlock requirements
+│   ├── chapter1-foundations.json
+│   ├── chapter2-love.json
+│   └── chapter3-battle.json
 ├── src/
 │   ├── server/
-│   │   ├── Game.js           # Main server game loop
+│   │   ├── Game.js           # Server game loop (wraps shared GameEngine)
 │   │   ├── RoomManager.js    # Multiplayer lobby logic
 │   │   ├── entities/
 │   │   │   ├── MonsterManager.js  # Monster AI and spawning
 │   │   │   ├── PlayerManager.js   # Player connection/movement
-│   │   │   └── BulletManager.js   # Projectile system
+│   │   │   ├── BulletManager.js   # Projectile system
+│   │   │   └── CollectibleManager.js  # Armor/healing/shield items
+│   │   ├── routes/
+│   │   │   └── sermon.js     # AI sermon REST endpoint
+│   │   ├── services/
+│   │   │   └── SermonService.js   # AI sermon generation
+│   │   ├── models/
+│   │   │   ├── Sermon.js     # Sermon cache model (MongoDB)
+│   │   │   ├── VerseSong.js  # Verse song records
+│   │   │   └── CategoryStyle.js   # Category music styles
 │   │   └── utils/
 │   │       ├── Physics.js    # Collision detection
-│   │       └── Maze.js       # Wall generation
+│   │       ├── Maze.js       # Legacy maze generator
+│   │       └── map-generators/    # 5 pluggable map styles
 │   ├── client/
-│   │   ├── InputHandler.js   # Mouse/keyboard input
-│   │   ├── Renderer.js       # Canvas rendering
-│   │   ├── UILayout.js       # UI positioning constants
-│   │   └── Network.js        # Socket.IO client wrapper
+│   │   ├── Renderer.js       # Canvas rendering (class)
+│   │   ├── InputHandler.js   # Click dispatch (class)
+│   │   ├── Network.js        # Socket.IO client wrapper (class)
+│   │   ├── LocalNetwork.js   # Offline/local event emitter
+│   │   ├── QuizManager.js    # 5 quiz modes (IIFE)
+│   │   ├── ReviewMode.js     # Verse review/study (IIFE)
+│   │   ├── VerseTestScreen.js # First-letter test overlay (IIFE)
+│   │   ├── UILayout.js       # UI positioning constants (IIFE)
+│   │   ├── MusicManager.js   # Audio playback (IIFE)
+│   │   ├── VerseSongService.js # Song API client (IIFE)
+│   │   ├── OverlandRenderer.js # Campaign map drawing (class)
+│   │   ├── ProgressManager.js  # Mission progress persistence (class)
+│   │   ├── SermonViewer.js   # AI devotional viewer (IIFE)
+│   │   └── VotdLearningMode.js # Verse memorization mode (IIFE)
 │   └── shared/
-│       ├── Constants.js      # Game constants (shared)
-│       └── LevelConfig.js    # Level data (shared)
+│       ├── Constants.js      # Game constants (dual export)
+│       ├── LevelConfig.js    # Level definitions (dual export)
+│       ├── WallGrid.js       # O(1) spatial collision (dual export)
+│       ├── GameEngine.js     # Environment-agnostic game loop
+│       ├── GameLifecycle.js  # Level transitions, game end
+│       ├── GameConfig.js     # Difficulty presets, validation
+│       ├── ContentProvider.js # Abstract content interface
+│       ├── FileContentProvider.js # File-based content loader
+│       ├── MissionClient.js  # Mission content API client
+│       └── entities/
+│           └── PlayerManager.js # Shared player management
 ```
 
 ---
 
 ## Key Constants
 
-- `WORLD_WIDTH/WORLD_HEIGHT`: 2000x2000 (game world size)
+- `WORLD_WIDTH/WORLD_HEIGHT`: 3000x3000 (game world size)
 - `CANVAS_WIDTH/CANVAS_HEIGHT`: 400x600 (viewport)
-- `MONSTER_SPEED`: 5 (level 1), 7 (level 2), 9 (level 3)
-- `PLAYER_SPEED`: 5 (level 1), 6 (levels 2-3)
-- `MONSTER_WIDTH/MONSTER_HEIGHT`: 50x50
+- `CELL_SIZE`: 25px (collision grid)
+- `PLAYER_WIDTH/PLAYER_HEIGHT`: 48x48
+- `MONSTER_WIDTH/MONSTER_HEIGHT`: 48x48
 - `BULLET_SPEED`: 15, `BULLET_DAMAGE`: 2
-- `AMMO_COST`: 1, `AMMO_REWARD`: 5
+- `AMMO_REWARD`: 2 (quiz correct), `SHIELD_DURATION`: 10s
+- `MONSTER_DROP_CHANCE`: 60%

@@ -24,6 +24,11 @@ This document maps how data flows between all components and every Socket.IO eve
 | Daily challenge | Client | localStorage persistence |
 | Verses learned | Client | localStorage persistence |
 | Menu state | Client | game.js global `menuOpen` |
+| Game mode | Client | `gameMode` in game.js ('overland', 'game', 'review', 'votd') |
+| Current mission | Client | `currentMission` / `currentMissionConfig` in game.js |
+| Mission progress | Client | ProgressManager → localStorage `missionProgress` |
+| Overland map state | Client | OverlandRenderer (selected world/mission, node positions) |
+| Sermon content | Server | SermonService generates, Sermon model caches in MongoDB |
 
 ---
 
@@ -148,6 +153,76 @@ After 5s:
     - Reschedule monster spawning at new rate
   Server → 'walls' { new walls, grid, spawn }   // To all sockets
   Server continues broadcasting gameStateUpdate with new level data
+```
+
+### Mission Flow (Solo Missions via Overland Map)
+
+```
+gameMode = 'overland'
+  Player opens game → MissionClient.initialize() → loads chapters.json
+  OverlandRenderer draws map nodes (locked/unlocked/completed)
+  Player clicks mission node
+    ↓
+  startMission(worldId, missionId)
+    → MissionClient.getMission(worldId, missionId)
+    → missionToGameConfig(mission) → single-level config
+    → Preserve currentMission reference
+    → resetGameState()
+    → Restore currentMission after reset
+    → startGame() with mission config
+    → gameMode = 'game'
+    ↓
+  GameEngine runs (single level, mission-specific monsters/speeds/qualities)
+    → monstersKilled >= monstersToKill
+    → GameLifecycle.endGame('victory')
+    ↓
+  onGameEnded event fires (game.js callback)
+    → Game-over modal with mission stats
+    → Player clicks "Continue"
+    → completeMission(stars, xpEarned)
+    → ProgressManager records completion + unlocks next chapter if eligible
+    → gameMode = 'overland' (return to map)
+```
+
+### Game Mode Transitions
+
+```
+                    ┌──────────────────────────────────────┐
+                    │                                      │
+                    ▼                                      │
+┌─────────┐    ┌─────────┐    ┌─────────┐    ┌─────────┐  │
+│  START   │───▶│OVERLAND │───▶│  GAME   │───▶│ VICTORY │──┘
+└─────────┘    └─────────┘    └─────────┘    └─────────┘
+                    │              │
+                    │              ▼
+                    │         ┌─────────┐
+                    │         │  VOTD   │ (Verse of the Day learning)
+                    │         └─────────┘
+                    │
+                    ▼
+               ┌─────────┐
+               │ REVIEW  │ (Verse review/study)
+               └─────────┘
+```
+
+### GameEngine Events (Emitter-based, not Socket.IO)
+
+```
+GameEngine emits:
+  'gameStateUpdate'  → Full gameState (every frame)
+  'levelAdvancing'   → { countdown: 5, nextLevel: N }
+  'gameEnded'        → { result: 'victory'|'defeat', level, monstersKilled, playerStats }
+  'playerLeftGame'   → { code, username }
+  'monsterKilled'    → { monsterId, x, y }
+  'bulletHit'        → { x, y }
+  'levelProgress'    → { killed, required }
+  'armorAbsorb'      → { monsterId, armorLeft }
+
+Per-player (via registerPlayerSend):
+  'walls'            → Wall grid data for rendering
+  'playerCode'       → Unique player identifier
+  'playerNumber'     → Sprite number (1-4)
+  'gameConfig'       → Quiz settings, difficulty config
 ```
 
 ### Multiplayer Lobby Events
@@ -293,38 +368,61 @@ Server → 'gameStarted' { roomId }  // All room members redirect to /?room=ID
 ## 5. Module Dependency Graph
 
 ```
-                    index.html
-                        │
-          ┌─────────────┼─────────────────────┐
-          │             │                     │
-     bible-verses.js  Constants.js          game.js
-          │           LevelConfig.js           │
-          │           WallGrid.js              │
-          │           UILayout.js              │
-          │                                    │
-          │    ┌───────┬───────┬───────┬───────┼───────┬───────┐
-          │    │       │       │       │       │       │       │
-          │ Network Renderer Input  Quiz    Review  Verse   Music
-          │   .js     .js    Handler Manager  Mode   Test   Manager
-          │                   .js    .js      .js   Screen   .js
-          │                                          .js      │
-          │                                                VerseSong
-          │                                                Service.js
-          │
-     server.js
-          │
-    ┌─────┼──────┬──────────┐
-    │     │      │          │
-  Game  Room   GameConfig  VerseSong
-  .js  Manager  .js       Routes
-    │    .js                 │
-    │                    ┌───┼───┐
-    ├─────────┐        Suno  VS   CS
-    │         │        Svc  Model Model
-  Monster  Player  Bullet
-  Manager  Manager Manager
-    │         │       │
-    └─────────┴───────┘
+                       index.html
+                           │
+         ┌─────────────────┼──────────────────────┐
+         │                 │                       │
+    bible-verses.js   Shared Modules             game.js
+         │            (Constants,                    │
+         │             LevelConfig,                  │
+         │             WallGrid,                     │
+         │             UILayout,                     │
+         │             GameEngine,         ┌─────────┼──────────┐
+         │             GameLifecycle,      │         │          │
+         │             GameConfig,      Overland  Mission   Progress
+         │             ContentProvider, Renderer  Client    Manager
+         │             FileContent-       .js      .js       .js
+         │             Provider,            │        │
+         │             MissionClient)       │  ContentProvider
+         │                                  │  FileContentProvider
+         │                                  │        │
+         │    ┌───────┬───────┬───────┬─────┤        │
+         │    │       │       │       │     │    /missions/*.json
+         │ Network Renderer Input  Quiz   Local
+         │   .js     .js    Handler Manager Network
+         │                   .js    .js     .js
+         │
+         │    ┌───────┬───────┬───────┐
+         │  Review  Verse   Sermon  VOTD
+         │  Mode    Test    Viewer  Learning
+         │  .js    Screen   .js    Mode.js
+         │          .js       │
+         │                    │
+         │    ┌───────┐       │
+         │  Music   VerseSong │
+         │  Manager Service   │
+         │   .js     .js      │
+         │                    │
+    server.js                 │
+         │                    │
+   ┌─────┼──────┬─────────┬──┘
+   │     │      │         │
+ Game  Room   VerseSong  Sermon
+ .js  Manager Routes    Routes
+   │    .js      │        │
+   │         ┌───┼───┐  Sermon
+   │        Suno  VS  CS Service
+   │        Svc Model Model .js
+   │
+   │  (Game.js wraps shared GameEngine
+   │   with Socket.IO emitter)
+   │
+   ├─────────┐
+   │         │
+ Monster  Player  Bullet  Collectible
+ Manager  Manager Manager  Manager
+   │         │       │        │
+   └─────────┴───────┴────────┘
               │
          ┌────┼────┐
        Physics  MapGen  WallGrid
@@ -344,6 +442,20 @@ Server → 'gameStarted' { roomId }  // All room members redirect to /?room=ID
 | `versesLearned` | "0"-"1618" | Total unique verses learned |
 | `learned_{reference}` | "true" | Per-verse learning flag |
 | `verseTestShielded` | "true"/"false" | Test shield setting (Option A/B) |
+| `missionProgress` | JSON object | Mission completions, unlocked chapters, stars, XP (see schema below) |
+
+**Mission Progress Schema** (stored as JSON string):
+```json
+{
+  "schemaVersion": 1,
+  "completedMissions": ["faith-01", "faith-02"],
+  "currentWorldId": "chapter1",
+  "unlockedWorlds": ["chapter1", "chapter2"],
+  "missionStars": { "faith-01": 3, "faith-02": 2 },
+  "totalXP": 350,
+  "lastPlayedAt": "2026-02-25T10:00:00Z"
+}
+```
 
 ---
 

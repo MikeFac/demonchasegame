@@ -339,6 +339,35 @@
             <input type="text" id="roomNameInput" data-i18n-placeholder="lobby.create.roomNamePlaceholder" placeholder="Room name (optional)">
 
             <div style="margin: 20px 0;">
+                <label style="display: block; margin-bottom: 10px; font-weight: bold;">Game Mode:</label>
+                <div class="difficulty-selector">
+                    <button class="preset-btn active" data-gamemode="classic" onclick="selectGameMode('classic')">
+                        <div style="font-weight: bold; margin-bottom: 5px;">Classic</div>
+                        <div style="font-size: 0.85em; opacity: 0.8;">5-level progression</div>
+                    </button>
+                    <button class="preset-btn" data-gamemode="mission" onclick="selectGameMode('mission')">
+                        <div style="font-weight: bold; margin-bottom: 5px;">Mission</div>
+                        <div style="font-size: 0.85em; opacity: 0.8;">Campaign mission</div>
+                    </button>
+                </div>
+            </div>
+
+            <div id="missionPicker" style="margin: 20px 0; display: none;">
+                <label style="display: block; margin-bottom: 10px; font-weight: bold;">Chapter:</label>
+                <select id="chapterSelect"
+                    style="width: 100%; padding: 15px; border-radius: 10px; border: none; font-size: 1.1em; background: rgba(255, 255, 255, 0.9); color: #333; margin-bottom: 10px;">
+                    <option value="">-- Select Chapter --</option>
+                </select>
+                <label style="display: block; margin-bottom: 10px; font-weight: bold;">Mission:</label>
+                <select id="missionSelect"
+                    style="width: 100%; padding: 15px; border-radius: 10px; border: none; font-size: 1.1em; background: rgba(255, 255, 255, 0.9); color: #333; margin-bottom: 10px;"
+                    disabled>
+                    <option value="">-- Select Mission --</option>
+                </select>
+                <p id="missionDescription" style="font-size: 0.9em; opacity: 0.8; min-height: 1.5em;"></p>
+            </div>
+
+            <div id="mapStyleSection" style="margin: 20px 0;">
                 <label style="display: block; margin-bottom: 10px; font-weight: bold;" data-i18n="lobby.create.mapStyle">Map Style:</label>
                 <select id="mapStyleInput"
                     style="width: 100%; padding: 15px; border-radius: 10px; border: none; font-size: 1.1em; background: rgba(255, 255, 255, 0.9);">
@@ -350,7 +379,7 @@
                 </select>
             </div>
 
-            <div style="margin: 20px 0;">
+            <div id="difficultySection" style="margin: 20px 0;">
                 <label style="display: block; margin-bottom: 10px; font-weight: bold;" data-i18n="lobby.create.monsterDifficulty">Monster Difficulty:</label>
                 <div class="difficulty-selector">
                     <button class="preset-btn" data-preset="easy" onclick="selectPreset('easy')">
@@ -495,12 +524,18 @@
         let currentRoom = null;
         let isReady = false;
         let selectedPreset = 'normal';
+        let selectedGameMode = 'classic';
+        let chaptersData = null;
+        let chapterMissions = {};  // chapterId -> missions array
 
         // Initialize
         document.addEventListener('DOMContentLoaded', () => {
             if (sessionToken) {
                 tryLogin();
             }
+            // Set up chapter/mission dropdowns
+            document.getElementById('chapterSelect').addEventListener('change', onChapterSelected);
+            document.getElementById('missionSelect').addEventListener('change', onMissionSelected);
         });
 
         // ==================== Auth ====================
@@ -630,13 +665,17 @@
                 const isPlaying = room.status === 'playing';
                 const badge = isPlaying ? `<span style="color:#ffaa00;font-size:11px;margin-left:6px;">${t('lobby.rooms.inProgress')}</span>` : '';
                 const clickAction = isPlaying ? `joinInProgressGame('${room.id}')` : `joinRoom('${room.id}')`;
-                const difficulty = t(`config.difficulty${room.settings.preset.charAt(0).toUpperCase() + room.settings.preset.slice(1)}`);
-                const category = room.settings.category ? tCategory(room.settings.category) : t('ui.selectCategory');
+                const isMission = room.settings.gameMode === 'mission';
+                const modeLabel = isMission
+                    ? ('Mission: ' + (room.settings.missionName || room.settings.missionId))
+                    : t(`config.difficulty${room.settings.preset.charAt(0).toUpperCase() + room.settings.preset.slice(1)}`);
+                const category = room.settings.category ? tCategory(room.settings.category) : '';
+                const subtitle = category ? (modeLabel + ' • ' + category) : modeLabel;
                 return `
                 <div class="room-item" onclick="${clickAction}">
                     <div class="room-info">
                         <h3>📦 ${room.name}${badge}</h3>
-                        <span>${difficulty} • ${category}</span>
+                        <span>${subtitle}</span>
                     </div>
                     <div class="player-count">${room.playerCount}/${room.maxPlayers}</div>
                 </div>
@@ -650,6 +689,101 @@
             updatePresetButtons();
             applyQuizPreset('balanced');
             setupQuizSliders();
+            selectGameMode('classic');
+        }
+
+        // ==================== Game Mode Selection ====================
+
+        function selectGameMode(mode) {
+            selectedGameMode = mode;
+            document.querySelectorAll('[data-gamemode]').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.gamemode === mode);
+            });
+
+            const missionPicker = document.getElementById('missionPicker');
+            const mapStyleSection = document.getElementById('mapStyleSection');
+            const difficultySection = document.getElementById('difficultySection');
+
+            if (mode === 'mission') {
+                missionPicker.style.display = 'block';
+                mapStyleSection.style.display = 'none';
+                difficultySection.style.display = 'none';
+                loadChapters();
+            } else {
+                missionPicker.style.display = 'none';
+                mapStyleSection.style.display = 'block';
+                difficultySection.style.display = 'block';
+            }
+        }
+
+        async function loadChapters() {
+            if (chaptersData) return;
+            try {
+                const res = await fetch('/missions/chapters.json');
+                chaptersData = await res.json();
+                const select = document.getElementById('chapterSelect');
+                select.innerHTML = '<option value="">-- Select Chapter --</option>';
+                chaptersData.chapters.forEach(ch => {
+                    const opt = document.createElement('option');
+                    opt.value = ch.id;
+                    opt.textContent = ch.name;
+                    opt.dataset.slug = ch.slug;
+                    select.appendChild(opt);
+                });
+            } catch (err) {
+                console.error('Failed to load chapters:', err);
+            }
+        }
+
+        async function onChapterSelected() {
+            const chapterSelect = document.getElementById('chapterSelect');
+            const missionSelect = document.getElementById('missionSelect');
+            const chapterId = chapterSelect.value;
+            document.getElementById('missionDescription').textContent = '';
+
+            if (!chapterId) {
+                missionSelect.innerHTML = '<option value="">-- Select Mission --</option>';
+                missionSelect.disabled = true;
+                return;
+            }
+
+            // Load chapter missions if not cached
+            if (!chapterMissions[chapterId]) {
+                const chapter = chaptersData.chapters.find(c => c.id === chapterId);
+                if (!chapter) return;
+                try {
+                    const res = await fetch('/missions/' + chapter.slug + '.json');
+                    const data = await res.json();
+                    chapterMissions[chapterId] = data.missions;
+                } catch (err) {
+                    console.error('Failed to load chapter missions:', err);
+                    return;
+                }
+            }
+
+            const missions = chapterMissions[chapterId];
+            missionSelect.innerHTML = '<option value="">-- Select Mission --</option>';
+            missions.forEach(m => {
+                const opt = document.createElement('option');
+                opt.value = m.id;
+                opt.textContent = m.name;
+                missionSelect.appendChild(opt);
+            });
+            missionSelect.disabled = false;
+        }
+
+        function onMissionSelected() {
+            const chapterId = document.getElementById('chapterSelect').value;
+            const missionId = document.getElementById('missionSelect').value;
+            const descEl = document.getElementById('missionDescription');
+
+            if (!chapterId || !missionId || !chapterMissions[chapterId]) {
+                descEl.textContent = '';
+                return;
+            }
+
+            const mission = chapterMissions[chapterId].find(m => m.id === missionId);
+            descEl.textContent = mission ? mission.description : '';
         }
 
         function selectPreset(preset) {
@@ -762,12 +896,30 @@
             const name = document.getElementById('roomNameInput').value.trim();
             const mapStyle = document.getElementById('mapStyleInput').value;
             const quizSettings = getQuizSettingsFromSliders();
-            socket.emit('createRoom', {
+
+            const options = {
                 name,
                 preset: selectedPreset,
                 mapStyle: mapStyle,
-                quizSettings: quizSettings
-            }, (result) => {
+                quizSettings: quizSettings,
+                gameMode: selectedGameMode
+            };
+
+            if (selectedGameMode === 'mission') {
+                const chapterId = document.getElementById('chapterSelect').value;
+                const missionId = document.getElementById('missionSelect').value;
+                if (!chapterId || !missionId) {
+                    alert('Please select a chapter and mission');
+                    return;
+                }
+                options.worldId = chapterId;
+                options.missionId = missionId;
+                // Include mission name for display in room settings
+                const mission = chapterMissions[chapterId] && chapterMissions[chapterId].find(m => m.id === missionId);
+                options.missionName = mission ? mission.name : '';
+            }
+
+            socket.emit('createRoom', options, (result) => {
                 if (result.success) {
                     currentRoom = result.room;
                     isReady = false;
@@ -835,9 +987,15 @@
             // Show room settings summary
             const s = currentRoom.settings;
             const qs = s.quizSettings || {};
-            document.getElementById('roomSettings').innerHTML =
-                `Monsters: <strong>${s.presetDisplay || 'Normal'}</strong> &nbsp;|&nbsp; ` +
-                `Quiz: FL ${qs.firstLetter || 30}% / MW ${qs.missingWord || 30}% / CM ${qs.categoryMatch || 25}% / TF ${qs.trueFalse || 15}%`;
+            let settingsHtml;
+            if (s.gameMode === 'mission') {
+                settingsHtml = `Mode: <strong>Mission</strong> — ${s.missionName || s.missionId} &nbsp;|&nbsp; ` +
+                    `Quiz: FL ${qs.firstLetter || 30}% / MW ${qs.missingWord || 30}% / CM ${qs.categoryMatch || 25}% / TF ${qs.trueFalse || 15}%`;
+            } else {
+                settingsHtml = `Monsters: <strong>${s.presetDisplay || 'Normal'}</strong> &nbsp;|&nbsp; ` +
+                    `Quiz: FL ${qs.firstLetter || 30}% / MW ${qs.missingWord || 30}% / CM ${qs.categoryMatch || 25}% / TF ${qs.trueFalse || 15}%`;
+            }
+            document.getElementById('roomSettings').innerHTML = settingsHtml;
 
             const isHost = currentRoom.hostId === currentUser.id;
             const me = currentRoom.players.find(p => p.id === currentUser.id);

@@ -115,6 +115,16 @@ class RoomManager {
             }
         }
 
+        // Validate game mode
+        const gameMode = options.gameMode === 'mission' ? 'mission' : 'classic';
+
+        // Validate mission settings if mission mode
+        if (gameMode === 'mission') {
+            if (!options.worldId || !options.missionId) {
+                return { success: false, error: 'Mission mode requires worldId and missionId' };
+            }
+        }
+
         // Validate monster difficulty preset
         const GameConfig = require('./config/GameConfig');
         const presetName = options.preset || 'normal';
@@ -150,7 +160,11 @@ class RoomManager {
                 preset: presetName,
                 presetDisplay: GameConfig.PRESETS[presetName].name,
                 quizSettings: quizSettings,
-                mapStyle: options.mapStyle || 'classic'
+                mapStyle: options.mapStyle || 'classic',
+                gameMode: gameMode,
+                worldId: gameMode === 'mission' ? options.worldId : undefined,
+                missionId: gameMode === 'mission' ? options.missionId : undefined,
+                missionName: gameMode === 'mission' ? (options.missionName || '') : undefined
             },
             createdAt: new Date()
         };

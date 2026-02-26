@@ -19,8 +19,11 @@
 11. [Difficulty & Config System](#difficulty--config-system)
 12. [Verse-to-Song Learning](#verse-to-song-learning)
 13. [Visual Systems](#visual-systems)
-14. [Key Patterns & Gotchas](#key-patterns--gotchas)
-15. [Dependencies & Scripts](#dependencies--scripts)
+14. [Missions System](#missions-system)
+15. [Shared Game Engine](#shared-game-engine-srcshared)
+16. [Sermon Viewer & Devotional Content](#sermon-viewer--devotional-content)
+17. [Key Patterns & Gotchas](#key-patterns--gotchas)
+18. [Dependencies & Scripts](#dependencies--scripts)
 
 ---
 
@@ -67,7 +70,12 @@ dcgame/
 │   │   └── utils/
 │   │       ├── Physics.js             # Collision helpers
 │   │       ├── Maze.js                # Legacy maze generator
-│   │       ├── ReferenceNormalizer.js  # Verse reference canonicalization
+│   │       └── ReferenceNormalizer.js  # Verse reference canonicalization
+│   │   ├── routes/
+│   │   │   └── sermon.js             # REST endpoint for AI sermons
+│   │   ├── services/
+│   │   │   └── SermonService.js      # AI sermon generation
+│   │   └── utils/
 │   │       └── map-generators/        # Pluggable map generation system
 │   │           ├── index.js           # Factory router (5 map styles)
 │   │           ├── ClassicMaze.js     # Room-based dungeon, MST corridors
@@ -80,17 +88,36 @@ dcgame/
 │   │   ├── Renderer.js                # All canvas drawing (class)
 │   │   ├── InputHandler.js            # Click dispatch + coord conversion (class)
 │   │   ├── Network.js                 # Socket.IO wrapper (class, global `network`)
+│   │   ├── LocalNetwork.js            # Offline/local event emitter (for solo missions)
 │   │   ├── QuizManager.js             # 5 quiz modes, verse rotation (IIFE)
 │   │   ├── ReviewMode.js              # Verse review/study screen (IIFE)
 │   │   ├── VerseTestScreen.js         # Sequential first-letter test overlay (IIFE)
 │   │   ├── UILayout.js                # Centralized UI positioning (IIFE)
 │   │   ├── MusicManager.js            # Audio playback, verse songs (IIFE)
-│   │   └── VerseSongService.js        # Verse song API client (IIFE)
+│   │   ├── VerseSongService.js        # Verse song API client (IIFE)
+│   │   ├── OverlandRenderer.js        # Overland campaign map drawing (class)
+│   │   ├── ProgressManager.js         # Mission progress persistence (class)
+│   │   ├── SermonViewer.js            # AI devotional sermon viewer (IIFE)
+│   │   └── VotdLearningMode.js        # Verse of the Day learning mode (IIFE)
 │   │
 │   └── shared/
 │       ├── Constants.js               # Game constants (dual export)
 │       ├── LevelConfig.js             # Level definitions (dual export)
-│       └── WallGrid.js                # O(1) spatial collision grid (dual export)
+│       ├── WallGrid.js                # O(1) spatial collision grid (dual export)
+│       ├── GameEngine.js              # Environment-agnostic game loop (dual export)
+│       ├── GameLifecycle.js           # Level transitions, game end (dual export)
+│       ├── GameConfig.js              # Difficulty presets, quiz validation (dual export)
+│       ├── ContentProvider.js         # Abstract content loading interface (dual export)
+│       ├── FileContentProvider.js     # File-based content loader (dual export)
+│       ├── MissionClient.js           # Mission content API client (dual export)
+│       └── entities/
+│           └── PlayerManager.js       # Shared player management (dual export)
+│
+├── missions/                          # Mission content (JSON)
+│   ├── chapters.json                  # Chapter index with unlock requirements
+│   ├── chapter1-foundations.json      # Chapter 1: Foundations of Faith (2 missions)
+│   ├── chapter2-love.json            # Chapter 2: Love in Action (2 missions)
+│   └── chapter3-battle.json          # Chapter 3: Armed for Battle (2 missions)
 │
 ├── scripts/                           # Seeding, generation, maintenance scripts
 ├── test/                              # Ad-hoc test scripts (not a test framework)
@@ -641,13 +668,163 @@ Gradient: Green (> 60%) → Yellow (30-60%) → Red (< 30%). Dark background, bl
 
 ---
 
+## Missions System
+
+### Architecture Overview
+
+The missions system transforms the fixed 5-level progression into a chapter-based campaign with an overland map. Players unlock chapters sequentially, each containing multiple missions with unique monster rosters, map styles, and verse categories.
+
+**Content abstraction** uses a provider pattern for future database-driven content:
+```
+Current:  game.js → MissionClient → FileContentProvider → /missions/*.json
+Future:   game.js → MissionClient → DatabaseContentProvider → MongoDB API
+```
+
+### Content Layer
+
+**src/shared/ContentProvider.js** — Abstract interface (62 lines). Defines async API: `getWorlds()`, `getWorld(id)`, `getMission(worldId, missionId)`, `isWorldAvailable(id)`. Dual export (Node + browser).
+
+**src/shared/FileContentProvider.js** — Loads from JSON files via `fetch` (browser) or `fs.readFileSync` (server). Caches worlds and missions after first load.
+
+**src/shared/MissionClient.js** — Frontend API client wrapping FileContentProvider. Singleton (`window.missionClient`). Key method: `missionToGameConfig(mission)` converts mission JSON to the format GameEngine expects (single-level `levelData` with monsters, speeds, spawn rates, XP multiplier).
+
+### Mission JSON Schema
+
+**`/missions/chapters.json`** — Chapter index with ids, slugs, names, node shapes (shield/heart/sword), terrain themes, mission ID lists, and unlock requirements.
+
+**`/missions/chapter{N}-*.json`** — Per-chapter mission definitions:
+```json
+{
+  "id": "faith-01",
+  "name": "The Shield of Faith",
+  "mapStyle": "classic",
+  "qualities": ["Faith", "Courage"],
+  "monsters": ["Fear", "Doubt", "Confusion"],
+  "monsterDamageFactor": 1.0,
+  "monsterSpeed": 5,
+  "maxMonsters": 20,
+  "monstersToKill": 12,
+  "spawnRate": 18000,
+  "xpMultiplier": 1.0
+}
+```
+
+**3 chapters, 6 missions total**:
+| Chapter | Theme | Missions | Monsters |
+|---------|-------|----------|----------|
+| 1: Foundations of Faith | Stone | Shield of Faith, Standing Firm | Fear, Doubt, Confusion, Blindness, Ignorance |
+| 2: Love in Action | Earth | Greatest Command, Healing Hands | Strife, Unforgiveness, Infirmity, Deception |
+| 3: Armed for Battle | Crystal | Sword of the Spirit, Final Victory | Condemnation, Unbelief, Pride, Despair |
+
+### Progress System
+
+**src/client/ProgressManager.js** — localStorage-based progress persistence (221 lines). Tracks completed missions, unlocked chapters, star ratings (1-3), total XP, and timestamps. Schema-versioned for future migration.
+
+localStorage key: `missionProgress`
+```json
+{
+  "schemaVersion": 1,
+  "completedMissions": ["faith-01"],
+  "currentWorldId": "chapter1",
+  "unlockedWorlds": ["chapter1"],
+  "missionStars": { "faith-01": 3 },
+  "totalXP": 150,
+  "lastPlayedAt": "2026-02-25T10:00:00Z"
+}
+```
+
+### Overland Map
+
+**src/client/OverlandRenderer.js** — Draws the overland campaign map (441 lines). Renders chapter nodes as themed shapes (shield, heart, sword) with locked/unlocked/completed/current color states. Calculates node positions dynamically for the canvas.
+
+### Game Flow State Machine
+
+```
+game.js gameMode: 'overland' | 'game' | 'review' | 'votd'
+
+OVERLAND → player clicks mission node → startMission(worldId, missionId)
+  → MissionClient.getMission() → missionToGameConfig()
+  → resetGameState() (preserves currentMission across reset)
+  → startGame() with mission config (single-level)
+  → GameEngine runs mission → monstersKilled >= monstersToKill
+  → GameLifecycle.endGame('victory')
+  → completeMission() → ProgressManager records stars + XP
+  → gameMode = 'overland' (return to map)
+```
+
+**Key debugging fix**: `resetGameState()` was clearing `currentMission` before the game could read it. Fixed by preserving and restoring mission state across the reset call.
+
+---
+
+## Shared Game Engine (src/shared/)
+
+The `feature/missions` branch refactored the server-only `Game.js` into environment-agnostic shared modules:
+
+### src/shared/GameEngine.js — Core Engine (295 lines)
+
+Environment-agnostic game loop and manager coordinator. Accepts an abstract `emitter` (Socket.IO on server, EventEmitter on client for offline play). Delegates player handling to `GamePlayerHandler`, input dispatch to `GameInputHandler`, and level transitions to `GameLifecycle`.
+
+**Constructor** receives `(emitter, gameConfig, roomId)`:
+1. Creates config via `GameConfig.createGameConfig()` if not provided
+2. Generates maze via `MapGeneratorFactory`
+3. Initializes `gameState`, entity managers (MonsterManager, PlayerManager, BulletManager, CollectibleManager)
+4. Spawns initial healing points and collectibles
+
+**Loops** (`start()`):
+1. Main loop (60fps): `update()` → move monsters, update bullets, check grace periods, check game end, check level completion
+2. Monster spawning: Dynamic `setTimeout` scheduling via `_scheduleNextSpawn()`
+3. Healing spawn: Config-adjusted interval
+4. Collectible respawn: Periodic via `CollectibleManager`
+
+**Level completion**: When `monstersKilled >= monstersToKill`, checks if at final level → `endGame('victory')` or `handleLevelAdvance()`.
+
+### src/shared/GameLifecycle.js — Level Transitions (214 lines)
+
+Static module with functions that operate on an engine instance:
+- `handleLevelAdvance(engine)`: Emits `levelAdvancing` with 5s countdown, then resets level data
+- `resetLevelData(engine, level)`: Regenerates maze, teleports all players, re-emits walls, spawns initial monsters (25% of max)
+- `checkGracePeriods(engine)`: Removes disconnected players after 30s grace period
+- `checkGameEnd(engine)`: In multiplayer, detects all players dead → `endGame('defeat')`
+- `endGame(engine, result)`: Emits `gameEnded` with stats, stops engine after 10s
+
+### src/shared/GameConfig.js — Difficulty System (269 lines)
+
+Moved from `src/server/config/GameConfig.js` to shared. Contains monster difficulty presets (easy/normal/hard multipliers), quiz balance presets, melee hit probability, and `createGameConfig()` factory. Adds `validateQuizSettings()` supporting both 5-key (with verseTest/cloze) formats.
+
+### src/shared/entities/PlayerManager.js — Shared Player Logic (197 lines)
+
+Environment-agnostic player management: add/remove players, spawn position validation, player code generation.
+
+---
+
+## Sermon Viewer & Devotional Content
+
+### src/client/SermonViewer.js — AI Devotional Viewer (309 lines)
+
+Canvas-based paginated sermon viewer. Fetches AI-generated devotional content for the current verse via `/api/sermon` endpoint. Displays sermon pages with navigation (prev/next), ending with a prayer page.
+
+**Server components**:
+- `src/server/routes/sermon.js` (86 lines) — REST endpoint for sermon generation
+- `src/server/services/SermonService.js` (125 lines) — AI sermon generation service
+- `src/server/models/Sermon.js` (48 lines) — MongoDB model for caching sermons
+
+### src/client/VotdLearningMode.js — Verse of the Day Learning (374 lines)
+
+Progressive verse memorization interface. Two phases:
+1. **Presentation**: Shows full verse with audio playback
+2. **Learning**: Progressively hides words, player fills in blanks
+
+Pauses background music during learning. Canvas-based rendering with touch-friendly buttons.
+
+---
+
 ## Key Patterns & Gotchas
 
 ### Module Patterns
-- **IIFE + window.X**: QuizManager, ReviewMode, MusicManager, VerseSongService, UILayout, VerseTestScreen
-- **ES6 Class**: Renderer, InputHandler, Network
+- **IIFE + window.X**: QuizManager, ReviewMode, MusicManager, VerseSongService, UILayout, VerseTestScreen, SermonViewer, VotdLearningMode
+- **ES6 Class**: Renderer, InputHandler, Network, OverlandRenderer, ProgressManager
 - **Global scope**: game.js (orchestrator with many globals)
-- **Dual export**: Shared modules use `module.exports` (Node) + `window.X` (browser)
+- **Dual export**: Shared modules use `module.exports` (Node) + `window.X` (browser) — includes GameEngine, GameLifecycle, GameConfig, ContentProvider, FileContentProvider, MissionClient, Constants, LevelConfig, WallGrid
 
 ### Critical Gotchas
 
@@ -670,6 +847,12 @@ Gradient: Green (> 60%) → Yellow (30-60%) → Red (< 30%). Dark background, bl
 9. **playerPosition not validated server-side**: Client performs collision checks locally, sends result to server. Server trusts client.
 
 10. **spawnsLeft tracked but doesn't block spawning**: Monster spawning only checks concurrent limit (`maxMonsters`).
+
+11. **`resetGameState()` clears mission state**: When starting a mission, `currentMission` must be preserved across `resetGameState()` — the game saves and restores it around the reset call.
+
+12. **Mission spawnRate is in milliseconds**: Mission JSON defines `spawnRate` in ms (e.g., 18000 = 18s). Earlier bugs from ms/seconds confusion were fixed.
+
+13. **Overland mode has its own render path**: When `gameMode === 'overland'`, OverlandRenderer draws instead of the normal game renderer. Click handling routes to mission node selection.
 
 ### Collectibles Pattern
 ```

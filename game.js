@@ -1539,6 +1539,16 @@ async function init() {
                 if (config.meleeHitProbabilityNoAnswer !== undefined) {
                     meleeHitProbabilityNoAnswer = config.meleeHitProbabilityNoAnswer;
                 }
+                // Set currentMission for multiplayer mission games so completeMission() works
+                if (config.missionId && !currentMission) {
+                    currentMission = {
+                        id: config.missionId,
+                        name: config.missionName || config.missionId,
+                        worldId: config.worldId,
+                        xpMultiplier: config.xpMultiplier || 1.0
+                    };
+                    console.log('[MISSION] Set currentMission from server config:', currentMission.name);
+                }
                 // Override local quiz settings with server-authoritative values
                 if (config.quizSettings) {
                     quizSettings = config.quizSettings;
@@ -1835,16 +1845,20 @@ async function init() {
             onGameOverButtonClick: () => {
                 console.log('[GAMEOVER] Button clicked! finalStats.isMission:', finalStats.isMission, 'currentMission:', currentMission, 'finalStats:', finalStats);
                 if (finalStats.isMission) {
-                    // Mission ended — award stars based on result and return to overland
+                    // Mission ended — award stars based on result
                     const isVictory = finalStats.result === 'victory';
                     const stars = isVictory ? 3 : 0;
-                    console.log('[GAMEOVER] Completing mission with', stars, 'stars, returning to overland');
-                    // Need to restore currentMission reference for completeMission to work
-                    if (!currentMission && finalStats.missionId) {
-                        console.warn('[GAMEOVER] currentMission was null, cannot call completeMission - going straight to overland');
-                        returnToOverland();
-                    } else {
+                    console.log('[GAMEOVER] Completing mission with', stars, 'stars');
+                    // Record progress locally if currentMission is set
+                    if (currentMission) {
                         completeMission(stars);
+                    } else {
+                        console.warn('[GAMEOVER] currentMission was null, cannot call completeMission');
+                    }
+                    // Solo missions return to overland; multiplayer missions return to lobby
+                    if (typeof isSoloGame !== 'undefined' && !isSoloGame) {
+                        window.location.href = '/lobby';
+                    } else {
                         returnToOverland();
                     }
                 } else if (typeof isSoloGame !== 'undefined' && !isSoloGame) {

@@ -35,13 +35,21 @@
         if (engine._sendToPlayer[playerId]) {
             engine._sendToPlayer[playerId]('walls', engine._getWallData());
             var isSoloGame = engine.roomId && engine.roomId.startsWith('solo-');
-            engine._sendToPlayer[playerId]('gameConfig', {
+            var configMsg = {
                 quizSettings: engine.gameConfig.quizSettings,
                 preset: engine.gameConfig.preset,
                 presetName: engine.gameConfig.presetName,
                 isSoloGame: isSoloGame !== false,
                 meleeHitProbabilityNoAnswer: engine.gameConfig.meleeHitProbabilityNoAnswer || 0.0
-            });
+            };
+            // Include mission metadata if this is a mission game
+            if (engine.gameConfig.missionId) {
+                configMsg.missionId = engine.gameConfig.missionId;
+                configMsg.worldId = engine.gameConfig.worldId;
+                configMsg.missionName = engine.gameConfig.missionName;
+                configMsg.xpMultiplier = engine.gameConfig.xpMultiplier;
+            }
+            engine._sendToPlayer[playerId]('gameConfig', configMsg);
         }
 
         // Map playerId to playerCode for input routing
@@ -124,12 +132,19 @@
                     sendFn('playerCode', code);
                     sendFn('walls', engine._getWallData());
                     var isSoloGame = engine.roomId && engine.roomId.startsWith('solo-');
-                    sendFn('gameConfig', {
+                    var reconConfigMsg = {
                         quizSettings: engine.gameConfig.quizSettings,
                         preset: engine.gameConfig.preset,
                         presetName: engine.gameConfig.presetName,
                         isSoloGame: isSoloGame !== false
-                    });
+                    };
+                    if (engine.gameConfig.missionId) {
+                        reconConfigMsg.missionId = engine.gameConfig.missionId;
+                        reconConfigMsg.worldId = engine.gameConfig.worldId;
+                        reconConfigMsg.missionName = engine.gameConfig.missionName;
+                        reconConfigMsg.xpMultiplier = engine.gameConfig.xpMultiplier;
+                    }
+                    sendFn('gameConfig', reconConfigMsg);
                     sendFn('playerNumber', Object.keys(engine.gameState.players).indexOf(code) + 1);
 
                     engine.emitter.emit('playerReconnected', { code: code, username: username });

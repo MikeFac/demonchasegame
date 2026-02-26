@@ -24,6 +24,9 @@ Thumbs.db
 .claude/
 .worktrees/
 
+# Private/internal documents
+Marketing-and-Roadmap/
+
 # Test/debug artifacts
 .playwright-cli/
 
