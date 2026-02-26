@@ -209,6 +209,7 @@ let answerFullVerse = null;
 let isAnswerCorrect = null; // Global variable to store the answer status
 let gameOverFlag = false;
 let _gameLoopRunning = false;
+let _gameGeneration = 0; // Incremented on each new game to stop old game loops
 let maxSpawns = 0;  //should be updated by server
 let spawnsLeft = 10; //should be updated by server
 // Get the current script path
@@ -657,14 +658,115 @@ function setLevelData(gameState) {
     }
 }
 
-function startGame(mode, roomId, missionOpts) {
-    // Clean up previous game if one was running
+/**
+ * Reset all game-scoped state between games.
+ * Called at the start of every new game to prevent stale state leaks.
+ */
+function resetGameState() {
+    // Network & identity
     if (network) {
         network.disconnect();
         network = null;
     }
     playerCode = null;
+    player = { x: 0, y: 0, health: 100, maxHealth: 100, width: 48, height: 48, xp: 0, level: 1, ammo: 0 };
+
+    // Game flags
     gameOverFlag = false;
+    gameOverModalVisible = false;
+    isGameLoaded = false;
+    _gameLoopRunning = false;
+    _gameGeneration++; // Stop any old game loop chain
+
+    // Level transition state
+    if (levelAdvanceTimer) clearInterval(levelAdvanceTimer);
+    levelAdvanceTimer = null;
+    levelCompleted = false;
+    levelAdvanceCountdown = 0;
+    movementFrozen = false;
+    levelTransitionStartTime = 0;
+
+    // Game state — fresh object so no stale references
+    gameState = {
+        players: {},
+        monsters: [],
+        healingPoints: [],
+        collectibles: [],
+        connectedPlayers: 0,
+        gameLevel: 1,
+        terrainTheme: 'stone',
+        maxSpawns: 0,
+        spawnsLeft: 0,
+        monstersKilled: 0,
+        monstersToKill: 10,
+        bullets: []
+    };
+    monsters = [];
+    healingPoints = [];
+
+    // Custom config — reset so solo games don't inherit mission config
+    customLevelData = null;
+    customMonsterHealthMultiplier = 1.0;
+    urlConfig = null;
+
+    // Camera
+    camera = { x: 0, y: 0 };
+
+    // Visual effects
+    flashMessages = [];
+    damageNumbers = [];
+    deathParticles = [];
+    screenShake = { x: 0, y: 0, intensity: 0, duration: 0 };
+
+    // Inventory & buffs
+    inventory = { sword: 0, belt: 0, helmet: 0, breastplate: 0, sandals: 0, shield: 0 };
+    activeBuffs = {
+        sword: { active: false, endTime: 0 },
+        shield: { active: false, endTime: 0 },
+        breastplate: { active: false, endTime: 0 },
+        sandals: { active: false, endTime: 0 }
+    };
+    inventoryOpen = false;
+
+    // Input
+    if (inputHandler) {
+        inputHandler.clearTarget();
+        inputHandler.setCamera(camera);
+    }
+
+    // Quiz state
+    currentQuiz = null;
+    answerFullVerse = null;
+    isAnswerCorrect = null;
+
+    // Combat
+    lastAttackTime = 0;
+    lastAttackedMonster = null;
+    explosionTimer = 0;
+
+    // Misc game state
+    finalStats = { level: 1, monstersKilled: 0, versesLearned: 0, timePlayed: 0 };
+    sessionStartTime = Date.now();
+    goalsOverlayVisible = false;
+    menuOpen = false;
+    categoryPickerOpen = false;
+    modalPaused = false;
+    modalPauseStartTime = 0;
+    verseTestShieldActive = false;
+    votdAutoLaunchHandled = false;
+
+    // Mission state
+    currentMission = null;
+    currentMissionConfig = null;
+
+    // Walls
+    clientWalls = [];
+    clientWallGrid = null;
+}
+
+function startGame(mode, roomId, missionOpts) {
+    // Reset all game state to prevent leaks between games
+    resetGameState();
 
     // Handle mission config passed directly from startMission()
     if (missionOpts && mode === 'solo') {
@@ -1530,9 +1632,6 @@ async function init() {
 
         currentReviewMode = 'quality'; // Possible values: 'incorrect', 'quality'
         gameMode = 'game';
-        levelCompleted = false;
-        levelAdvanceCountdown = 0;
-        levelAdvanceTimer = null;
         canvas.width = 400; // Set the canvas width to 412 pixels (for Samsung Galaxy A53 in portrait mode)
         canvas.height = Math.min(600, window.innerHeight - 80); // Reduced max height and increased margin to prevent scrollbars on mobile
         ctx = canvas.getContext('2d');
@@ -1942,9 +2041,9 @@ async function showOverland() {
     await initializeMissions();
     
     console.log('showOverland: starting game loop, canvas display:', canvas.style.display);
-    
+
     // Start the game loop for overland rendering
-    requestAnimationFrame(gameLoop);
+    if (!_gameLoopRunning) gameLoop();
 }
 
 function handleOverlandClick(x, y) {
@@ -2062,8 +2161,13 @@ function returnToOverland() {
 // Note: handleMouseClick has been replaced by InputHandler module
 
 // Game loop
-function gameLoop() {
+function gameLoop(generation) {
+    // If generation doesn't match, this is a stale loop chain — stop it
+    if (generation !== undefined && generation !== _gameGeneration) return;
+
     _gameLoopRunning = true;
+    const gen = _gameGeneration; // Capture for requestAnimationFrame callbacks
+    const nextFrame = () => requestAnimationFrame(() => gameLoop(gen));
 
     // Handle Overland mode FIRST (doesn't need playerCode or game to be loaded)
     if (gameMode === 'overland') {
@@ -2073,25 +2177,25 @@ function gameLoop() {
             // Initialize if not done yet
             initializeMissions();
         }
-        requestAnimationFrame(gameLoop);
+        nextFrame();
         return;
     }
 
     if (!playerCode) {
         console.log("Waiting for player code assignment");
-        requestAnimationFrame(gameLoop);
+        nextFrame();
         return;
     }
 
     if (!isGameLoaded) {
         drawLoadingScreen();
-        requestAnimationFrame(gameLoop);
+        nextFrame();
         return;
     }
 
     if (!gameState) {
         console.error("Game state is undefined");
-        requestAnimationFrame(gameLoop);
+        nextFrame();
         return;
     }
     //for multiplayer
@@ -2115,7 +2219,7 @@ function gameLoop() {
             VotdTestMode.render(elapsedTime / 1000);
         }
         lastUpdateTime = currentTime; // Keep time in sync so game resumes correctly
-        requestAnimationFrame(gameLoop);
+        nextFrame();
         return;
     }
     
@@ -2125,7 +2229,7 @@ function gameLoop() {
             overlandRenderer.render(progressManager.getProgress());
         }
         lastUpdateTime = currentTime;
-        requestAnimationFrame(gameLoop);
+        nextFrame();
         return;
     }
 
@@ -2263,7 +2367,7 @@ function gameLoop() {
                 inputHandler.gameOverModalVisible = gameOverModalVisible;
                 inputHandler.restartButtonRect = restartButtonRect;
             }
-            requestAnimationFrame(gameLoop);
+            nextFrame();
             return;
         }
 
@@ -2803,7 +2907,7 @@ function gameLoop() {
         lastUpdateTime = currentTime;
     }
 
-    requestAnimationFrame(gameLoop);
+    nextFrame();
 } //end gameLoop
 
 
