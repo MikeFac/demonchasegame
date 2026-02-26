@@ -12,6 +12,16 @@ function dbg(tag, msg, data) {
 // Expose for console access: type dumpDbg() in browser console
 window.dumpDbg = () => _dbgLog.forEach(e => console.log(e));
 
+// Debug: Instant victory (for testing victory flow without playing)
+window.debugWin = () => {
+    if (network && network.engine) {
+        console.log('[DEBUG] Triggering instant victory');
+        network.engine._endGame('victory');
+    } else {
+        console.error('[DEBUG] No engine running');
+    }
+};
+
 let currentTime = Date.now();
 let socket;
 let playerCode = null;  // code to access player information for the current player
@@ -785,8 +795,19 @@ function startGame(mode, roomId, missionOpts) {
         overlandClickHandler = null;
     }
 
+    // Preserve mission state if starting a mission (resetGameState clears it)
+    const preservedMission = currentMission;
+    const preservedMissionConfig = currentMissionConfig;
+
     // Reset all game state to prevent leaks between games
     resetGameState();
+
+    // Restore mission state if this is a mission game
+    if (missionOpts && mode === 'solo') {
+        currentMission = preservedMission;
+        currentMissionConfig = preservedMissionConfig;
+        console.log('[MISSION] Restored mission state after resetGameState:', currentMission?.name);
+    }
 
     // Handle mission config passed directly from startMission()
     if (missionOpts && mode === 'solo') {
@@ -1395,6 +1416,7 @@ async function init() {
                 flashMessages.push({ text: `${data.username} reconnected!`, color: '#44ff44', startTime: Date.now(), duration: 3000 });
             },
             onGameEnded: (data) => {
+                console.log('[GAMEOVER] onGameEnded fired! currentMission:', currentMission, 'result:', data.result);
                 gameOverFlag = true;
                 gameOverModalVisible = true;
                 const sessionDuration = Math.floor((Date.now() - sessionStartTime) / 1000);
@@ -1408,6 +1430,7 @@ async function init() {
                     isMission: !!currentMission,
                     isSoloGame: true  // offline/solo games always true; multiplayer uses server.js
                 };
+                console.log('[GAMEOVER] finalStats.isMission set to:', finalStats.isMission);
             },
             onWalls: (data) => {
                 clientWalls = data.walls;
@@ -1810,15 +1833,25 @@ async function init() {
                 }
             },
             onGameOverButtonClick: () => {
-                if (currentMission) {
+                console.log('[GAMEOVER] Button clicked! finalStats.isMission:', finalStats.isMission, 'currentMission:', currentMission, 'finalStats:', finalStats);
+                if (finalStats.isMission) {
                     // Mission ended — award stars based on result and return to overland
                     const isVictory = finalStats.result === 'victory';
                     const stars = isVictory ? 3 : 0;
-                    completeMission(stars);
-                    returnToOverland();
+                    console.log('[GAMEOVER] Completing mission with', stars, 'stars, returning to overland');
+                    // Need to restore currentMission reference for completeMission to work
+                    if (!currentMission && finalStats.missionId) {
+                        console.warn('[GAMEOVER] currentMission was null, cannot call completeMission - going straight to overland');
+                        returnToOverland();
+                    } else {
+                        completeMission(stars);
+                        returnToOverland();
+                    }
                 } else if (typeof isSoloGame !== 'undefined' && !isSoloGame) {
+                    console.log('[GAMEOVER] Returning to lobby (multiplayer)');
                     window.location.href = '/lobby';
                 } else {
+                    console.log('[GAMEOVER] Reloading page (solo)');
                     window.location.reload();
                 }
             },

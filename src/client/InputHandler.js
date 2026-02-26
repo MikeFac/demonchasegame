@@ -137,7 +137,9 @@ class InputHandler {
             if (clickedX >= btnX && clickedX <= btnX + btnW &&
                 clickedY >= btnY && clickedY <= btnY + btnH) {
                 // Delegate to callback so game.js can handle missions vs solo vs multiplayer
+                console.log('[INPUT] Game over button clicked. Has callback?', !!this.callbacks.onGameOverButtonClick, 'Callbacks:', Object.keys(this.callbacks));
                 if (this.callbacks.onGameOverButtonClick) {
+                    console.log('[INPUT] Calling onGameOverButtonClick callback');
                     this.callbacks.onGameOverButtonClick();
                 } else if (typeof isSoloGame !== 'undefined' && !isSoloGame) {
                     console.log("Returning to lobby...");
