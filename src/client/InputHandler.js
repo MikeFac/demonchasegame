@@ -136,8 +136,10 @@ class InputHandler {
 
             if (clickedX >= btnX && clickedX <= btnX + btnW &&
                 clickedY >= btnY && clickedY <= btnY + btnH) {
-                // Restart game or return to lobby
-                if (typeof isSoloGame !== 'undefined' && !isSoloGame) {
+                // Delegate to callback so game.js can handle missions vs solo vs multiplayer
+                if (this.callbacks.onGameOverButtonClick) {
+                    this.callbacks.onGameOverButtonClick();
+                } else if (typeof isSoloGame !== 'undefined' && !isSoloGame) {
                     console.log("Returning to lobby...");
                     window.location.href = '/lobby';
                 } else {

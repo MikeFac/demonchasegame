@@ -1404,7 +1404,9 @@ async function init() {
                     monstersKilled: data.monstersKilled,
                     playerStats: data.playerStats,
                     versesLearned: versesLearned,
-                    timePlayed: sessionDuration
+                    timePlayed: sessionDuration,
+                    isMission: !!currentMission,
+                    isSoloGame: true  // offline/solo games always true; multiplayer uses server.js
                 };
             },
             onWalls: (data) => {
@@ -1805,6 +1807,19 @@ async function init() {
                 } else if (itemId === 'leave') {
                     network.sendLeaveGame();
                     window.location.href = isSoloGame ? '/' : '/lobby';
+                }
+            },
+            onGameOverButtonClick: () => {
+                if (currentMission) {
+                    // Mission ended — award stars based on result and return to overland
+                    const isVictory = finalStats.result === 'victory';
+                    const stars = isVictory ? 3 : 0;
+                    completeMission(stars);
+                    returnToOverland();
+                } else if (typeof isSoloGame !== 'undefined' && !isSoloGame) {
+                    window.location.href = '/lobby';
+                } else {
+                    window.location.reload();
                 }
             },
             onGameClick: (x, y) => {

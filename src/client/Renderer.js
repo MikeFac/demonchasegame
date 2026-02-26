@@ -481,7 +481,15 @@ class Renderer {
         ctx.fillStyle = '#ffffff';
         ctx.font = 'bold 16px Arial';
         ctx.textAlign = 'center';
-        ctx.fillText(isMultiplayer ? t('ui.returnToLobby') : t('ui.tryAgain'), canvas.width / 2, buttonY + 26);
+        let buttonLabel;
+        if (finalStats.isMission) {
+            buttonLabel = 'Back to Missions';
+        } else if (isMultiplayer && !finalStats.isSoloGame) {
+            buttonLabel = t('ui.returnToLobby');
+        } else {
+            buttonLabel = t('ui.tryAgain');
+        }
+        ctx.fillText(buttonLabel, canvas.width / 2, buttonY + 26);
     }
 
     drawMessages(uiState) {
