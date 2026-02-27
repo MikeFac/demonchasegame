@@ -85,13 +85,21 @@ window.addEventListener('beforeunload', function (e) {
 // Handle window resize and orientation change for mobile browsers
 function getOptimalCanvasWidth() {
     const minWidth = 320;
-    const maxWidth = 420;
+    const maxMobileWidth = 420;
+    const maxDesktopWidth = 600;
     const idealWidth = 400;
     const viewportWidth = window.innerWidth || 400;
+    const isMobile = viewportWidth < 768;
     
     if (viewportWidth < minWidth) return minWidth;
-    if (viewportWidth > maxWidth) return Math.min(maxWidth, idealWidth);
-    return Math.min(viewportWidth - 10, idealWidth);
+    
+    if (isMobile) {
+        // Mobile: cap at 420, prefer slightly less than viewport
+        return Math.min(viewportWidth - 10, maxMobileWidth, idealWidth);
+    } else {
+        // Desktop: allow wider canvas up to 600px
+        return Math.min(Math.max(viewportWidth * 0.4, idealWidth), maxDesktopWidth);
+    }
 }
 
 function handleResize() {
