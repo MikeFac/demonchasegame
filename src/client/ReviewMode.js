@@ -199,6 +199,20 @@
             ctx.fillText('▾', delayDropdownX + 55, buttonY + 25);
         }
 
+        // Share button (between repeat and next)
+        const shareButtonX = meditationMode ? (delayDropdownX + 70 + 10) : (repeatButtonX + buttonWidth + 10);
+        const shareButtonWidth = 70;
+        if (shareButtonX + shareButtonWidth < nextButtonX - 10) {
+            ctx.fillStyle = '#4CAF50';
+            ctx.fillRect(shareButtonX, buttonY, shareButtonWidth, buttonHeight);
+            ctx.strokeStyle = '#388E3C';
+            ctx.lineWidth = 1;
+            ctx.strokeRect(shareButtonX, buttonY, shareButtonWidth, buttonHeight);
+            ctx.font = '16px Arial';
+            ctx.fillStyle = 'white';
+            ctx.fillText('📤 Share', shareButtonX + 5, buttonY + 25);
+        }
+
         // Next button
         ctx.fillStyle = 'lightgray';
         ctx.fillRect(nextButtonX, buttonY, buttonWidth, buttonHeight);
@@ -449,6 +463,29 @@
                 clearRepeatTimer();
             }
             displayReviewVerseScreen();
+        }
+
+        // Check if the click was on the "Share" button
+        const buttonY = canvas.height - 60;
+        const repeatButtonX = 110;
+        const delayDropdownX = repeatButtonX + 80 + 10;
+        const shareButtonX = meditationMode ? (delayDropdownX + 70 + 10) : (repeatButtonX + 80 + 10);
+        const shareButtonWidth = 70;
+        if (shareButtonX + shareButtonWidth < canvas.width - 100 - 10) {
+            if (clickedX >= shareButtonX && clickedX <= shareButtonX + shareButtonWidth &&
+                clickedY >= buttonY && clickedY <= buttonY + 40) {
+                // Share current verse
+                const verseRef = getCurrentVerseReference();
+                const verseDetails = getVerseDetails(verseRef);
+                if (verseRef && verseDetails && window.ShareManager) {
+                    ShareManager.shareVerse(verseRef, verseDetails.text).then(result => {
+                        if (result.success) {
+                            ShareManager.showShareSuccess(result.method);
+                        }
+                    });
+                }
+                return;
+            }
         }
 
         // Check if the click was on the delay dropdown (only in meditation mode)

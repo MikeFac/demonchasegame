@@ -212,7 +212,7 @@ class Renderer {
         const isPlaying = musicState.isPlaying;
 
         const testShieldOn = menuState.verseTestShielded || false;
-        const itemCount = 8;
+        const itemCount = 9;
 
         // Panel background
         this.ctx.fillStyle = 'rgba(0, 0, 0, 0.9)';
@@ -230,6 +230,7 @@ class Renderer {
             { id: 'verseCotD', label: t('menu.verseCotD') },
             { id: 'verseTest', label: t('menu.verseTest') },
             { id: 'toggleTestShield', label: testShieldOn ? t('menu.testShieldOn') : t('menu.testShieldOff') },
+            { id: 'shareGame', label: '📤 Share Game', color: '#4CAF50' },
             { id: 'leave', label: t('menu.leaveGame'), color: '#ff4444' }
         ];
 

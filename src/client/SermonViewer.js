@@ -212,8 +212,22 @@
             hitRects.push({ name: 'prev', x: prevX, y: btnY, w: prevW, h: btnH });
         }
 
-        // Next / Done button
+        // Share button (center, only on last page)
         var isLastPage = currentPage >= sermonData.pages.length;
+        if (isLastPage) {
+            var shareX = CANVAS_WIDTH / 2 - 40;
+            var shareW = 80;
+            c.fillStyle = '#4CAF50';
+            roundRect(c, shareX, btnY, shareW, btnH, 6);
+            c.fill();
+            c.fillStyle = '#fff';
+            c.font = 'bold 14px Arial';
+            c.textAlign = 'center';
+            c.fillText('📤 Share', shareX + shareW / 2, btnY + 27);
+            hitRects.push({ name: 'share', x: shareX, y: btnY, w: shareW, h: btnH });
+        }
+
+        // Next / Done button
         var nextX = CANVAS_WIDTH - 120;
         var nextW = 100;
         c.fillStyle = isLastPage ? '#4CAF50' : '#0066cc';
@@ -253,6 +267,14 @@
                 } else if (r.name === 'next') {
                     currentPage = Math.min(totalPages - 1, currentPage + 1);
                     render();
+                } else if (r.name === 'share') {
+                    if (window.ShareManager && sermonData) {
+                        ShareManager.shareDevotional(sermonData.verseReference).then(function(result) {
+                            if (result.success) {
+                                ShareManager.showShareSuccess(result.method);
+                            }
+                        });
+                    }
                 } else if (r.name === 'done' || r.name === 'close') {
                     close();
                 } else if (r.name === 'retry') {

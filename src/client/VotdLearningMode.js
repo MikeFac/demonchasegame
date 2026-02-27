@@ -183,7 +183,18 @@
         c.fillText('Devotional', devX + 60, devY + 24);
         hitRects.push({ name: 'devotional', x: devX, y: devY, w: 120, h: 36 });
 
-        // Start Learning button (moved down to make room)
+        // Share button (left side at bottom)
+        const shareX = 20;
+        const shareY = CANVAS_HEIGHT - 35;
+        c.fillStyle = '#4CAF50';
+        c.fillRect(shareX, shareY, 70, 32);
+        c.fillStyle = '#fff';
+        c.font = '14px Arial';
+        c.textAlign = 'center';
+        c.fillText('📤 Share', shareX + 35, shareY + 22);
+        hitRects.push({ name: 'share', x: shareX, y: shareY, w: 70, h: 32 });
+
+        // Start Learning button (center)
         const startX = CANVAS_WIDTH / 2 - 70;
         const startY = CANVAS_HEIGHT - 35;
         c.fillStyle = '#4CAF50';
@@ -323,6 +334,14 @@
             if (x >= rect.x && x <= rect.x + rect.w && y >= rect.y && y <= rect.y + rect.h) {
                 if (rect.name === 'audio') {
                     playVerseAudio();
+                } else if (rect.name === 'share') {
+                    if (window.ShareManager && currentVerse) {
+                        ShareManager.shareVotd(currentVerse.Reference).then(result => {
+                            if (result.success) {
+                                ShareManager.showShareSuccess(result.method);
+                            }
+                        });
+                    }
                 } else if (rect.name === 'startLearning') {
                     currentPhase = 'learning';
                     hideNextWord(); // Start with 1 word hidden

@@ -290,8 +290,22 @@ class InputHandler {
                 return;
             }
 
-            // Leave Game button area (eighth item)
-            const leaveY = panelY + padding + (itemH + padding / 2) * 7;
+            // Share Game button area (eighth item)
+            const shareGameY = panelY + padding + (itemH + padding / 2) * 7;
+            if (
+                clickedX >= panelX + padding &&
+                clickedX <= panelX + mp.width - padding &&
+                clickedY >= shareGameY &&
+                clickedY <= shareGameY + itemH
+            ) {
+                if (this.callbacks.onMenuItemClick) {
+                    this.callbacks.onMenuItemClick('shareGame');
+                }
+                return;
+            }
+
+            // Leave Game button area (ninth item)
+            const leaveY = panelY + padding + (itemH + padding / 2) * 8;
             if (
                 clickedX >= panelX + padding &&
                 clickedX <= panelX + mp.width - padding &&
@@ -305,7 +319,7 @@ class InputHandler {
             }
 
             // Click outside menu items but inside panel - just close menu
-            const itemCount = 8;
+            const itemCount = 9;
             if (
                 clickedX >= panelX &&
                 clickedX <= panelX + mp.width &&

@@ -1874,6 +1874,14 @@ async function init() {
                         startTime: Date.now(),
                         duration: 1500
                     });
+                } else if (itemId === 'shareGame') {
+                    if (window.ShareManager) {
+                        ShareManager.shareInvite().then(result => {
+                            if (result.success) {
+                                ShareManager.showShareSuccess(result.method);
+                            }
+                        });
+                    }
                 } else if (itemId === 'leave') {
                     network.sendLeaveGame();
                     window.location.href = isSoloGame ? '/' : '/lobby';
