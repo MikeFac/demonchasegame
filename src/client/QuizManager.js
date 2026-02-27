@@ -711,6 +711,7 @@
             answerResultTimeout = null;
             isAnswerCorrect = null;
             answerFullVerse = null;
+            lastAnsweredReference = null;
         }
     }
 

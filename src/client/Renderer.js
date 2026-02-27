@@ -506,6 +506,15 @@ class Renderer {
             this.ctx.fillStyle = 'green';
             this.ctx.font = '17px Arial';
             this.ctx.fillText(t('ui.correct'), this.canvas.width / 2 - 35, this.canvas.height / 2);
+
+            // Display verse reference below "Correct!" message
+            if (typeof lastAnsweredReference !== 'undefined' && lastAnsweredReference) {
+                this.ctx.fillStyle = '#90EE90'; // Light green
+                this.ctx.font = '14px Arial';
+                this.ctx.textAlign = 'center';
+                this.ctx.fillText(lastAnsweredReference, this.canvas.width / 2, this.canvas.height / 2 + 25);
+                this.ctx.textAlign = 'left';
+            }
         } else if (isAnswerCorrect === false) {
             this.ctx.fillStyle = 'red';
             this.ctx.font = '17px Arial';
@@ -1440,6 +1449,13 @@ class Renderer {
 
             if (quiz.isComplete) {
                 this.ctx.fillText('✓ Correct!', leftPadding, textY + 4);
+
+                // Display verse reference after "Correct!" for cloze quiz
+                if (typeof lastAnsweredReference !== 'undefined' && lastAnsweredReference) {
+                    this.ctx.fillStyle = '#90EE90';
+                    this.ctx.font = '13px Arial';
+                    this.ctx.fillText(lastAnsweredReference, leftPadding, textY + 22);
+                }
             } else {
                 this.ctx.fillText('✗ Answer: ' + quiz.answers.join(', '), leftPadding, textY + 4);
             }

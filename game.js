@@ -263,6 +263,7 @@ let ALL_QUALITIES;
 let currentQuiz = null; // Unified quiz object from QuizManager
 let answerFullVerse = null;
 let isAnswerCorrect = null; // Global variable to store the answer status
+let lastAnsweredReference = null; // Stores verse reference for display after correct answer
 let gameOverFlag = false;
 let _gameLoopRunning = false;
 let _gameGeneration = 0; // Incremented on each new game to stop old game loops
@@ -1192,6 +1193,9 @@ function initializeVerseCounter() {
 
 // Callback for QuizManager to notify of correct answers
 window.onQuizCorrectAnswer = function (quizMode, verseReference) {
+    // Store reference for display in UI
+    lastAnsweredReference = verseReference;
+
     if (window.Analytics) {
         Analytics.trackQuizCorrect(quizMode, verseReference);
     }
