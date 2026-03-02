@@ -33,12 +33,12 @@ const UILayout = (function () {
         // Playable area boundaries
         playableTop: QUALITY_LINE_HEIGHT + BUTTON_HEIGHT,
 
-        // Hamburger menu button - moved below quality buttons
+        // Hamburger menu button - aligned with top bar
         hamburgerButton: {
             width: 28,
             height: 24,
             rightOffset: 35,
-            y: 30  // Below quality buttons (y=5 + height=21 = 26, so y=30)
+            y: 5  // In line with the top bar
         },
 
         // Learn Verses button - center of top bar
@@ -52,7 +52,7 @@ const UILayout = (function () {
         menuPanel: {
             width: 160,
             rightOffset: 35,
-            topOffset: 58,  // hamburger y (30) + height (24) + 4px gap = 58
+            topOffset: 33,  // hamburger y (5) + height (24) + 4px gap = 33
             itemHeight: 32,
             padding: 8
         },

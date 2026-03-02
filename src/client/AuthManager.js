@@ -20,11 +20,17 @@ class AuthManager {
     async init(publishableKey) {
         this.publishableKey = publishableKey;
         
+        if (!publishableKey) {
+            console.log('AuthManager: No Clerk publishable key — auth disabled');
+            return false;
+        }
+        
         return new Promise((resolve, reject) => {
             const script = document.createElement('script');
             script.setAttribute('data-clerk-publishable-key', publishableKey);
             script.async = true;
-            script.src = `https://cdn.clerk.com/edge/clerk.browser.js`;
+            // Use jsdelivr CDN (cdn.clerk.com may not resolve on all servers)
+            script.src = `https://cdn.jsdelivr.net/npm/@clerk/clerk-js@latest/dist/clerk.browser.js`;
             
             script.onload = async () => {
                 try {
@@ -52,7 +58,17 @@ class AuthManager {
                 }
             };
             
-            script.onerror = (err) => reject(new Error('Failed to load Clerk script'));
+            script.onerror = (err) => {
+                console.warn('Clerk CDN failed, trying local fallback...');
+                // Try loading from local vendor path as fallback
+                const fallbackScript = document.createElement('script');
+                fallbackScript.setAttribute('data-clerk-publishable-key', publishableKey);
+                fallbackScript.async = true;
+                fallbackScript.src = '/vendor/clerk.browser.js';
+                fallbackScript.onload = script.onload;
+                fallbackScript.onerror = () => reject(new Error('Failed to load Clerk script from all sources'));
+                document.body.appendChild(fallbackScript);
+            };
             document.body.appendChild(script);
         });
     }
@@ -87,14 +103,35 @@ class AuthManager {
      */
     async openSignIn() {
         if (!this.clerk) return;
-        this.clerk.openSignIn();
+        this.clerk.openSignIn({
+            afterSignInUrl: window.location.href,
+            redirectUrl: window.location.href
+        });
     }
 
     /**
-     * Sign Out
+     * Open Clerk Sign-up UI
+     */
+    async openSignUp() {
+        if (!this.clerk) return;
+        this.clerk.openSignUp({
+            afterSignUpUrl: window.location.href,
+            redirectUrl: window.location.href
+        });
+    }
+
+    /**
+     * Sign Out — clears local state and Clerk session
      */
     async signOut() {
         if (!this.clerk) return;
+        // Clear local state immediately
+        this.user = null;
+        this.dbUser = null;
+        this.isAuthenticated = false;
+        this.isRegistered = false;
+        this._notifyAuthChange();
+        // Then clear the Clerk session
         await this.clerk.signOut();
     }
 

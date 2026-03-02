@@ -61,23 +61,124 @@
       position: relative;
     }
 
-    #authStatus {
+    #authContainer {
       position: absolute;
       top: 10px;
       right: 15px;
-      font-size: 0.75em;
+      display: none; /* Hidden until Clerk loads */
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 4px;
+    }
+
+    #authButtons {
+      display: flex;
+      flex-direction: column;
+      align-items: stretch;
+      gap: 4px;
+    }
+
+    #authContainer .auth-btn {
+      font-size: 0.7em;
+      padding: 4px 12px;
+      border-radius: 12px;
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      background: rgba(255, 255, 255, 0.1);
       color: #a8c5e6;
       cursor: pointer;
+      white-space: nowrap;
+      text-align: center;
+    }
+
+    #authContainer .auth-btn:hover {
+      background: rgba(255, 255, 255, 0.2);
+    }
+
+    #authContainer .auth-btn.primary {
+      background: linear-gradient(135deg, #4a90e2, #357abd);
+      color: #fff;
+      border-color: #357abd;
+    }
+
+    #authSignedIn {
       display: flex;
       align-items: center;
       gap: 5px;
+      cursor: pointer;
+      font-size: 0.75em;
+      color: #a8c5e6;
     }
 
-    #authStatus img {
+    #authSignedIn img {
       width: 24px;
       height: 24px;
       border-radius: 50%;
       border: 1px solid rgba(255, 255, 255, 0.3);
+    }
+
+    /* Sign-up Benefits Modal */
+    #signupBenefitsModal {
+      display: none;
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: rgba(0,0,0,0.7);
+      z-index: 9999;
+      align-items: center;
+      justify-content: center;
+    }
+    #signupBenefitsModal.open {
+      display: flex;
+    }
+    #signupBenefitsContent {
+      background: linear-gradient(135deg, #1a1a2e, #16213e);
+      border: 1px solid rgba(255,255,255,0.15);
+      border-radius: 16px;
+      padding: 28px 24px;
+      max-width: 340px;
+      width: 90%;
+      color: #e0e0e0;
+      text-align: center;
+    }
+    #signupBenefitsContent h2 {
+      color: #e94560;
+      margin: 0 0 10px;
+      font-size: 1.2em;
+    }
+    #signupBenefitsContent .benefit-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+      text-align: left;
+      margin: 10px 0;
+      font-size: 0.85em;
+    }
+    #signupBenefitsContent .benefit-icon {
+      font-size: 1.2em;
+      flex-shrink: 0;
+    }
+    #signupBenefitsContent .benefit-actions {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-top: 18px;
+    }
+    #signupBenefitsContent .benefit-actions button {
+      padding: 10px;
+      border-radius: 8px;
+      border: none;
+      font-weight: bold;
+      cursor: pointer;
+      font-size: 0.9em;
+    }
+    #btnBenefitSignUp {
+      background: linear-gradient(135deg, #4a90e2, #357abd);
+      color: #fff;
+    }
+    #btnBenefitCancel {
+      background: rgba(255,255,255,0.1);
+      color: #a8c5e6;
+      border: 1px solid rgba(255,255,255,0.2) !important;
     }
 
     #menuScreen .logo-container {
@@ -956,7 +1057,16 @@
   </div>
 
   <div id="menuScreen">
-    <div id="authStatus">Sign In</div>
+    <div id="authContainer">
+      <div id="authButtons">
+        <button class="auth-btn" id="btnSignIn">Sign In</button>
+        <button class="auth-btn primary" id="btnSignUp">Sign Up</button>
+      </div>
+      <div id="authSignedIn" style="display: none;">
+        <img id="authAvatar" src="" alt="Profile">
+        <span id="authName"></span>
+      </div>
+    </div>
     <div class="logo-container">
       <img src="images/VerseBattles-logo.png" alt="VerseBattles: Demon Chase">
     </div>
@@ -1135,38 +1245,82 @@
   </div>
 
   <!-- Privacy Policy Modal -->
+  <!-- Sign-up Benefits Modal -->
+  <div id="signupBenefitsModal">
+    <div id="signupBenefitsContent">
+      <h2>Why Create an Account?</h2>
+      <p style="font-size: 0.85em; opacity: 0.8; margin-bottom: 12px;">Registration is free and optional. You can play as a guest without an account.</p>
+
+      <div class="benefit-item">
+        <span class="benefit-icon">💾</span>
+        <span><strong>Save Your Progress</strong> — Your verse learning, levels, and achievements are saved to the cloud and sync across devices.</span>
+      </div>
+      <div class="benefit-item">
+        <span class="benefit-icon">🌍</span>
+        <span><strong>Create & Share Worlds</strong> — Design custom missions and share them with friends and the community.</span>
+      </div>
+      <div class="benefit-item">
+        <span class="benefit-icon">🏆</span>
+        <span><strong>Leaderboards</strong> — Compete with other players and track your learning journey.</span>
+      </div>
+      <div class="benefit-item">
+        <span class="benefit-icon">🤝</span>
+        <span><strong>Multiplayer</strong> — Join or host multiplayer games with other registered players.</span>
+      </div>
+
+      <div class="benefit-actions">
+        <button id="btnBenefitSignUp">Create Account</button>
+        <button id="btnBenefitCancel">Maybe Later</button>
+      </div>
+    </div>
+  </div>
+
   <div id="privacyModal">
     <div id="privacyModalContent">
       <h2>Privacy Policy</h2>
 
-      <p><strong>VerseBattles does not collect or sell personal information.</strong></p>
+      <p><strong>VerseBattles is committed to protecting your privacy.</strong></p>
+
+      <h3>Age Requirement</h3>
+      <p>You must be <strong>16 years of age or older</strong> to create an account or use the registration features of VerseBattles. The game can be played without an account by users of any age under parental supervision.</p>
 
       <h3>Data Collection</h3>
       <ul>
-        <li>We use <strong>Google Analytics 4</strong> to understand how players use the game</li>
-        <li>Analytics collects: gameplay events (correct answers, levels completed, monsters defeated), device type, browser, and general location (country/region)</li>
-        <li><strong>No personal information</strong> such as names, emails, or personally identifiable information are collected</li>
-        <li>Google Analytics data is governed by <a href="https://policies.google.com/privacy" target="_blank">Google's Privacy Policy</a></li>
+        <li><strong>Without an account:</strong> We use Google Analytics 4 to collect anonymous gameplay events (correct answers, levels completed), device type, browser, and general location (country/region). No personal information is collected.</li>
+        <li><strong>With an account:</strong> If you register, we store your chosen username, email address (provided via Clerk authentication), gameplay progress, and any worlds you create. Authentication is handled securely by <a href="https://clerk.com/privacy" target="_blank">Clerk</a>.</li>
+        <li>We do <strong>not</strong> collect or store passwords — authentication is handled entirely by Clerk's secure service.</li>
       </ul>
 
       <h3>Data Use</h3>
       <ul>
-        <li>Analytics data helps us improve the game and measure how players discover and use VerseBattles</li>
-        <li>We do not share data with third parties except Google</li>
-        <li>Data is not used for targeted advertising or user profiling</li>
+        <li>Analytics data helps us improve the game experience</li>
+        <li>Account data is used solely to provide game features (progress sync, world sharing, leaderboards)</li>
+        <li>We do <strong>not</strong> sell, share, or use your data for advertising or user profiling</li>
+        <li>Data is not shared with third parties except Google (analytics) and Clerk (authentication)</li>
+      </ul>
+
+      <h3>Data Storage & Security</h3>
+      <ul>
+        <li>Account data is stored securely in MongoDB with encryption at rest</li>
+        <li>The game works offline — your local progress is stored in your browser and synced when online</li>
+        <li>We use industry-standard security practices to protect your information</li>
       </ul>
 
       <h3>Your Rights</h3>
       <ul>
+        <li>You can <strong>delete your account</strong> at any time, which removes all your data from our servers</li>
         <li>You can disable analytics collection in your browser settings</li>
-        <li>We do not use tracking cookies (only session cookies for gameplay)</li>
-        <li>Your gameplay data is not saved or associated with any account</li>
+        <li>You can request a copy of your data by contacting us</li>
+        <li>Registration is entirely optional — you can play the full game without an account</li>
       </ul>
+
+      <h3>Children's Privacy</h3>
+      <p>VerseBattles does not knowingly collect personal information from children under 16. If we discover that a child under 16 has created an account, we will promptly delete it. Parents and guardians can contact us to request removal of their child's data.</p>
 
       <h3>Contact</h3>
       <p>Questions about our privacy practices? Email us at <strong><a href="mailto:michaelfackerell@gmail.com">michaelfackerell@gmail.com</a></strong></p>
 
-      <p style="font-size: 0.9em; opacity: 0.8; margin-top: 30px;">Last updated: February 2026</p>
+      <p style="font-size: 0.9em; opacity: 0.8; margin-top: 30px;">Last updated: March 2026</p>
 
       <button id="btnClosePrivacy">Close</button>
     </div>
@@ -1572,7 +1726,13 @@
 
     // --- Authentication & Sync Integration ---
     (async function() {
-      const authStatus = document.getElementById('authStatus');
+      const authContainer = document.getElementById('authContainer');
+      const authButtons = document.getElementById('authButtons');
+      const authSignedIn = document.getElementById('authSignedIn');
+      const btnSignIn = document.getElementById('btnSignIn');
+      const btnSignUp = document.getElementById('btnSignUp');
+      const authAvatar = document.getElementById('authAvatar');
+      const authName = document.getElementById('authName');
       const regModal = document.getElementById('registrationModal');
       const btnRegisterSubmit = document.getElementById('btnRegisterSubmit');
       const regUsernameInput = document.getElementById('regUsername');
@@ -1581,84 +1741,118 @@
       const regTerms = document.getElementById('regTerms');
       const linkPrivacyModal = document.getElementById('linkPrivacyModal');
 
-      // 1. Fetch Config & Init Auth
-      try {
-        const configResp = await fetch('/api/config');
-        const config = await configResp.json();
-        
-        const auth = new AuthManager();
-        window.authManager = auth;
-        await auth.init(config.clerkPublishableKey);
-        
-        const sync = new SyncManager(auth, window.progressManager);
-        window.syncManager = sync;
-        window.progressManager.setSyncManager(sync);
-        sync.start();
+      const auth = new AuthManager();
+      window.authManager = auth;
+      const signupBenefitsModal = document.getElementById('signupBenefitsModal');
 
-        // 2. Auth State Listener
-        auth.onAuthChange((state) => {
-          if (state.isAuthenticated) {
-            if (state.dbUser) {
-              // Safe DOM construction — no innerHTML with external data
-              authStatus.textContent = '';
-              const avatar = document.createElement('img');
-              avatar.src = state.user.imageUrl || '';
-              avatar.title = state.dbUser.username || '';
-              avatar.alt = 'Profile';
-              authStatus.appendChild(avatar);
-              regModal.classList.remove('open');
+      // Sign In — opens Clerk sign-in directly
+      btnSignIn.addEventListener('click', () => {
+        if (auth.clerk) auth.openSignIn();
+      });
+
+      // Sign Up — show benefits modal first
+      btnSignUp.addEventListener('click', () => {
+        signupBenefitsModal.classList.add('open');
+      });
+
+      // Benefits modal: Create Account → actually open Clerk sign-up
+      document.getElementById('btnBenefitSignUp').addEventListener('click', () => {
+        signupBenefitsModal.classList.remove('open');
+        if (auth.clerk) auth.openSignUp();
+      });
+
+      // Benefits modal: Maybe Later → just close
+      document.getElementById('btnBenefitCancel').addEventListener('click', () => {
+        signupBenefitsModal.classList.remove('open');
+      });
+
+      // Close benefits modal on overlay click
+      signupBenefitsModal.addEventListener('click', (e) => {
+        if (e.target === signupBenefitsModal) signupBenefitsModal.classList.remove('open');
+      });
+
+      // Sign Out
+      authSignedIn.addEventListener('click', async () => {
+        if (auth.isAuthenticated && confirm('Sign out?')) {
+          await auth.signOut();
+          // Force UI update after sign-out
+          authButtons.style.display = '';
+          authSignedIn.style.display = 'none';
+        }
+      });
+
+      linkPrivacyModal.addEventListener('click', (e) => {
+        e.preventDefault();
+        document.getElementById('privacyLink').click();
+      });
+
+      btnRegisterSubmit.addEventListener('click', async () => {
+        const username = regUsernameInput.value.trim();
+        if (!username) return alert('Please enter a username');
+        if (!regAgeGate.checked) return alert('You must be 16 or older');
+        if (!regPrivacy.checked || !regTerms.checked) return alert('Please agree to terms and privacy');
+
+        try {
+          btnRegisterSubmit.disabled = true;
+          btnRegisterSubmit.textContent = 'Saving...';
+          await auth.register({
+            username,
+            agreedToTerms: true,
+            agreedToPrivacy: true,
+            ageVerified: true
+          });
+          if (window.syncManager) await window.syncManager.sync();
+        } catch (err) {
+          alert(err.message);
+        } finally {
+          btnRegisterSubmit.disabled = false;
+          btnRegisterSubmit.textContent = 'Start Journey';
+        }
+      });
+
+      // Async Clerk init
+      async function initClerk() {
+        try {
+          const configResp = await fetch('/api/config');
+          const config = await configResp.json();
+
+          await auth.init(config.clerkPublishableKey);
+
+          if (!auth.clerk) return; // No key or init failed — stay hidden
+
+          // Clerk loaded — show auth container
+          authContainer.style.display = 'flex';
+
+          const sync = new SyncManager(auth, window.progressManager);
+          window.syncManager = sync;
+          window.progressManager.setSyncManager(sync);
+          sync.start();
+
+          // Auth state listener — toggle between buttons and signed-in avatar
+          auth.onAuthChange((state) => {
+            if (state.isAuthenticated) {
+              authButtons.style.display = 'none';
+              if (state.dbUser) {
+                authAvatar.src = state.user.imageUrl || '';
+                authName.textContent = state.dbUser.username || '';
+                authSignedIn.style.display = 'flex';
+                regModal.classList.remove('open');
+              } else {
+                authSignedIn.style.display = 'none';
+                regModal.classList.add('open');
+              }
             } else {
-              authStatus.textContent = 'Complete Profile';
-              regModal.classList.add('open');
+              authButtons.style.display = '';
+              authSignedIn.style.display = 'none';
+              regModal.classList.remove('open');
             }
-          } else {
-            authStatus.textContent = 'Sign In';
-            regModal.classList.remove('open');
-          }
-        });
-
-        // 3. UI Event Listeners
-        authStatus.addEventListener('click', () => {
-          if (auth.isAuthenticated) {
-            if (confirm('Sign out?')) auth.signOut();
-          } else {
-            auth.openSignIn();
-          }
-        });
-
-        linkPrivacyModal.addEventListener('click', (e) => {
-          e.preventDefault();
-          document.getElementById('privacyLink').click();
-        });
-
-        btnRegisterSubmit.addEventListener('click', async () => {
-          const username = regUsernameInput.value.trim();
-          if (!username) return alert('Please enter a username');
-          if (!regAgeGate.checked) return alert('You must be 16 or older');
-          if (!regPrivacy.checked || !regTerms.checked) return alert('Please agree to terms and privacy');
-
-          try {
-            btnRegisterSubmit.disabled = true;
-            btnRegisterSubmit.textContent = 'Saving...';
-            await auth.register({
-              username,
-              agreedToTerms: true,
-              agreedToPrivacy: true,
-              ageVerified: true
-            });
-            // Sync immediately after registration
-            await sync.sync();
-          } catch (err) {
-            alert(err.message);
-          } finally {
-            btnRegisterSubmit.disabled = false;
-            btnRegisterSubmit.textContent = 'Start Journey';
-          }
-        });
-
-      } catch (err) {
-        console.error('Auth Init Failed:', err);
+          });
+        } catch (err) {
+          console.error('Auth Init Failed:', err);
+        }
       }
+
+      initClerk();
     })();
 
     // Privacy Policy Modal

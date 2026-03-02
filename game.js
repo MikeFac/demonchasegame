@@ -2177,11 +2177,16 @@ async function showOverland() {
 function handleOverlandClick(x, y) {
     if (!overlandRenderer || !window.progressManager) return;
     
+    console.log('handleOverlandClick:', x, y, 'canvas:', canvas.width, canvas.height);
+    
     // Check for mission node click
     const clickedNode = overlandRenderer.handleClick(x, y, progressManager);
+    if (clickedNode) console.log('Clicked node:', clickedNode.missionName);
     
     // Check for Start Mission button
-    if (overlandRenderer.isStartMissionClicked(x, y)) {
+    const startClicked = overlandRenderer.isStartMissionClicked(x, y);
+    console.log('isStartMissionClicked:', startClicked);
+    if (startClicked) {
         const selected = overlandRenderer.getSelectedMission();
         if (selected) {
             startMission(selected.worldId, selected.missionId);
@@ -2190,7 +2195,9 @@ function handleOverlandClick(x, y) {
     }
     
     // Check for Learn Verses button
-    if (overlandRenderer.isLearnVersesClicked(x, y)) {
+    const learnClicked = overlandRenderer.isLearnVersesClicked(x, y);
+    console.log('isLearnVersesClicked:', learnClicked, 'selectedMission:', !!overlandRenderer.getSelectedMission(), 'ReviewMode:', !!window.ReviewMode);
+    if (learnClicked) {
         const selected = overlandRenderer.getSelectedMission();
         if (selected && window.ReviewMode) {
             // Enter review mode with mission's verse categories
@@ -2201,7 +2208,18 @@ function handleOverlandClick(x, y) {
                     vQuality = mission.qualities[0];
                 }
             }
-            ReviewMode.startReviewMode();
+            // Ensure verses are loaded before entering review mode
+            // (they may not be loaded if the user hasn't played a game yet)
+            if (!organizedVerses || Object.keys(organizedVerses).length === 0) {
+                console.log('Loading verses before entering review mode...');
+                loadVerses().then(() => {
+                    console.log('Verses loaded, entering review mode');
+                    ReviewMode.startReviewMode();
+                });
+            } else {
+                console.log('Verses already loaded, entering review mode');
+                ReviewMode.startReviewMode();
+            }
         }
         return;
     }

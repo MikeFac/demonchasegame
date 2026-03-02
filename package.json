@@ -11,6 +11,7 @@
   "description": "",
   "dependencies": {
     "@clerk/backend": "^2.33.0",
+    "@clerk/clerk-js": "^5.125.4",
     "axios": "^1.13.5",
     "dotenv": "^17.2.4",
     "express": "^4.19.2",
