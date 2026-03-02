@@ -9,6 +9,9 @@ const RoomManager = require('./src/server/RoomManager');
 const { buildMissionGameConfig } = require('./src/server/missionLoader');
 const verseSongRouter = require('./src/server/routes/verseSong');
 const sermonRouter = require('./src/server/routes/sermon');
+const userRouter = require('./src/server/routes/users');
+const progressRouter = require('./src/server/routes/progress');
+const worldRouter = require('./src/server/routes/worlds');
 const { retryFailedGenerations } = require('./src/server/jobs/retryFailedGenerations');
 
 const app = express();
@@ -41,10 +44,17 @@ const gameInstances = new Map(); // roomId -> Game instance
 
 // ==================== REST API ====================
 
-// Register a new user
+// Public endpoint: return Clerk publishable key (safe to expose)
+app.get('/api/clerk-key', (req, res) => {
+  const key = process.env.CLERK_PUBLISHABLE_KEY;
+  if (!key) return res.status(404).json({ error: 'Clerk not configured' });
+  res.json({ publishableKey: key });
+});
+
+// Register a new user (with optional Clerk ID for authenticated users)
 app.post('/api/register', (req, res) => {
-  const { username } = req.body;
-  const result = roomManager.registerUser(username);
+  const { username, clerkId } = req.body;
+  const result = roomManager.registerUser(username, clerkId || undefined);
   res.json(result);
 });
 
@@ -58,6 +68,13 @@ app.post('/api/login', (req, res) => {
 // Get room list
 app.get('/api/rooms', (req, res) => {
   res.json({ rooms: roomManager.getRoomList() });
+});
+
+// Get client-side config (Clerk keys, etc.)
+app.get('/api/config', (req, res) => {
+  res.json({
+    clerkPublishableKey: process.env.CLERK_PUBLISHABLE_KEY
+  });
 });
 
 // Get monster difficulty preset list
@@ -77,6 +94,15 @@ app.use('/api/verse-song', verseSongRouter);
 
 // Sermon / Devotional Routes
 app.use('/api/sermon', sermonRouter);
+
+// New User Registration & Profile Routes
+app.use('/api/users', userRouter);
+
+// New Progress Persistence Routes
+app.use('/api/progress', progressRouter);
+
+// New World Management & Sharing Routes
+app.use('/api/worlds', worldRouter);
 
 // ==================== Socket.IO ====================
 

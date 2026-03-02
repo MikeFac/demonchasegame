@@ -1,4 +1,4 @@
-var CACHE_NAME = 'versebattles-v7';
+var CACHE_NAME = 'versebattles-v9';
 
 // Sound effects to cache
 var SOUND_ASSETS = [
@@ -91,7 +91,12 @@ var CORE_ASSETS = [
     '/src/client/VersOfTheDayManager.js',
     '/src/client/VotdLearningMode.js',
     '/src/client/VotdTestMode.js',
-    '/src/client/VotdMenuOverlay.js'
+    '/src/client/VotdMenuOverlay.js',
+    // Auth & Sync modules
+    '/src/client/ProgressManager.js',
+    '/src/client/AuthManager.js',
+    '/src/client/SyncManager.js',
+    '/src/client/WorldBrowser.js'
 ];
 
 // Install: cache core assets, sounds, and images

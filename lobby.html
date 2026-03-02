@@ -320,6 +320,21 @@
             <div class="logo">⚔️</div>
             <h1 data-i18n="lobby.login.header">Demon Chase</h1>
             <div id="loginError" class="error hidden"></div>
+
+            <!-- Clerk Sign-In (optional) -->
+            <div id="clerkAuthSection" style="margin-bottom: 15px; display: none;">
+                <div id="clerkSignedIn" style="display: none; text-align: center; margin-bottom: 10px;">
+                    <div style="display: flex; align-items: center; justify-content: center; gap: 8px; margin-bottom: 8px;">
+                        <img id="clerkAvatar" src="" alt="" style="width: 32px; height: 32px; border-radius: 50%; display: none;">
+                        <span id="clerkName" style="font-weight: bold;"></span>
+                    </div>
+                    <button class="btn-secondary" onclick="clerkSignOut()" style="padding: 6px 12px; font-size: 0.85em; width: auto;">Sign Out</button>
+                </div>
+                <button id="clerkSignInBtn" class="btn-secondary" onclick="clerkSignIn()" style="display: none;">
+                    🔑 Sign In with Google
+                </button>
+            </div>
+
             <input type="text" id="usernameInput" data-i18n-placeholder="lobby.login.usernamePlaceholder" placeholder="Enter your username" maxlength="20">
             <button class="btn-primary" onclick="register()" data-i18n="lobby.login.playOnline">Play Online</button>
             <button class="btn-secondary" onclick="playSolo()" data-i18n="lobby.login.practiceSolo">Practice (Solo)</button>
@@ -336,8 +351,25 @@
 
             <button class="btn-primary" onclick="quickPlay()" data-i18n="lobby.rooms.quickPlay">⚡ Quick Play</button>
             <button class="btn-secondary" onclick="showCreateRoom()" data-i18n="lobby.rooms.createRoom">+ Create Room</button>
+            <button id="browseWorldsBtn" class="btn-secondary" onclick="showWorldBrowser()" style="display: none;">🌍 Browse Worlds</button>
             <div class="divider">or</div>
             <button class="btn-secondary" onclick="logout()" data-i18n="lobby.rooms.logout">Logout</button>
+        </div>
+
+        <!-- World Browser Screen -->
+        <div id="worldBrowserScreen" class="panel hidden">
+            <h2 style="margin-bottom: 20px;">🌍 World Browser</h2>
+            <div style="margin-bottom: 15px;">
+                <input type="text" id="shareCodeInput" placeholder="Enter share code (e.g. FAITH42X)" style="width: 60%; display: inline-block;">
+                <button class="btn-secondary" onclick="lookupShareCode()" style="width: 35%; display: inline-block; padding: 15px;">Go</button>
+            </div>
+            <div id="worldList">
+                <!-- Worlds rendered here by WorldBrowser -->
+            </div>
+            <div id="worldDetail" style="display: none;">
+                <!-- World detail rendered here -->
+            </div>
+            <button class="btn-secondary" onclick="showLobby()" style="margin-top: 15px;">← Back to Lobby</button>
         </div>
 
         <!-- Create Room Screen -->
@@ -461,6 +493,8 @@
     </div>
 
     <script src="src/client/i18n.js"></script>
+    <script src="src/client/AuthManager.js"></script>
+    <script src="src/client/WorldBrowser.js"></script>
     <script>
         I18n.loadSync();
         I18n.updateDOM();
@@ -533,12 +567,99 @@
         let chaptersData = null;
         let chapterMissions = {};  // chapterId -> missions array
 
+        // Clerk auth state
+        let authManager = null;
+        let worldBrowser = null;
+        let clerkUser = null;
+
         // Initialize
         document.addEventListener('DOMContentLoaded', () => {
             if (sessionToken) {
                 tryLogin();
             }
+            initClerk();
         });
+
+        // ==================== Clerk Auth ====================
+
+        async function initClerk() {
+            try {
+                authManager = new AuthManager();
+                const publishableKey = await fetchClerkKey();
+                if (!publishableKey) {
+                    console.log('No Clerk key configured — Clerk sign-in disabled');
+                    return;
+                }
+                await authManager.init(publishableKey);
+                worldBrowser = new WorldBrowser(authManager);
+
+                // Show Clerk auth section
+                document.getElementById('clerkAuthSection').style.display = 'block';
+
+                authManager.onAuthChange((state) => {
+                    clerkUser = state.user;
+                    updateClerkUI(state);
+                });
+            } catch (err) {
+                console.warn('Clerk init failed (running without Clerk):', err.message);
+            }
+        }
+
+        async function fetchClerkKey() {
+            try {
+                const res = await fetch('/api/clerk-key');
+                if (!res.ok) return null;
+                const data = await res.json();
+                return data.publishableKey || null;
+            } catch (e) {
+                return null;
+            }
+        }
+
+        function updateClerkUI(state) {
+            const signInBtn = document.getElementById('clerkSignInBtn');
+            const signedInDiv = document.getElementById('clerkSignedIn');
+            const browseWorldsBtn = document.getElementById('browseWorldsBtn');
+
+            if (state.isAuthenticated) {
+                signInBtn.style.display = 'none';
+                signedInDiv.style.display = 'block';
+
+                // Show name
+                const name = state.user.firstName || state.user.fullName || 'Signed In';
+                document.getElementById('clerkName').textContent = name;
+
+                // Show avatar safely
+                const avatar = document.getElementById('clerkAvatar');
+                if (state.user.imageUrl) {
+                    avatar.src = state.user.imageUrl;
+                    avatar.style.display = 'inline-block';
+                } else {
+                    avatar.style.display = 'none';
+                }
+
+                // Auto-fill username if empty
+                const usernameInput = document.getElementById('usernameInput');
+                if (!usernameInput.value && state.user.firstName) {
+                    usernameInput.value = state.user.firstName.replace(/[^a-zA-Z0-9_]/g, '');
+                }
+
+                // Show world browser button in lobby
+                if (browseWorldsBtn) browseWorldsBtn.style.display = 'block';
+            } else {
+                signInBtn.style.display = 'block';
+                signedInDiv.style.display = 'none';
+                if (browseWorldsBtn) browseWorldsBtn.style.display = 'none';
+            }
+        }
+
+        function clerkSignIn() {
+            if (authManager) authManager.openSignIn();
+        }
+
+        function clerkSignOut() {
+            if (authManager) authManager.signOut();
+        }
 
         // ==================== Auth ====================
 
@@ -550,10 +671,16 @@
             }
 
             try {
+                // Include clerkId if user is signed in with Clerk
+                const body = { username };
+                if (clerkUser) {
+                    body.clerkId = clerkUser.id;
+                }
+
                 const res = await fetch('/api/register', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ username })
+                    body: JSON.stringify(body)
                 });
                 const data = await res.json();
 
@@ -1071,10 +1198,55 @@
             });
         }
 
+        // ==================== World Browser ====================
+
+        async function showWorldBrowser() {
+            if (!worldBrowser) return;
+            showScreen('worldBrowserScreen');
+            document.getElementById('worldDetail').style.display = 'none';
+            document.getElementById('worldList').style.display = 'block';
+
+            const worlds = await worldBrowser.loadWorlds();
+            worldBrowser.renderWorldList(document.getElementById('worldList'), {
+                onSelect: (world) => showWorldDetail(world)
+            });
+        }
+
+        async function showWorldDetail(world) {
+            const full = await worldBrowser.getWorld(world.slug);
+            if (!full) return;
+            document.getElementById('worldList').style.display = 'none';
+            document.getElementById('worldDetail').style.display = 'block';
+            worldBrowser.renderWorldDetail(full, document.getElementById('worldDetail'), {
+                onJoin: async (w) => {
+                    const result = await worldBrowser.joinWorld(w.slug);
+                    if (result.success) {
+                        alert('Joined world: ' + w.name);
+                        showWorldBrowser();
+                    } else {
+                        alert(result.error || 'Failed to join');
+                    }
+                },
+                onBack: () => showWorldBrowser()
+            });
+        }
+
+        async function lookupShareCode() {
+            if (!worldBrowser) return;
+            const code = document.getElementById('shareCodeInput').value.trim();
+            if (!code) return;
+            const result = await worldBrowser.joinByShareCode(code);
+            if (result.success && result.world) {
+                showWorldDetail(result.world);
+            } else {
+                alert(result.error || 'Share code not found');
+            }
+        }
+
         // ==================== UI Helpers ====================
 
         function showScreen(screenId) {
-            ['loginScreen', 'lobbyScreen', 'createRoomScreen', 'roomScreen'].forEach(id => {
+            ['loginScreen', 'lobbyScreen', 'createRoomScreen', 'roomScreen', 'worldBrowserScreen'].forEach(id => {
                 document.getElementById(id).classList.add('hidden');
             });
             document.getElementById(screenId).classList.remove('hidden');

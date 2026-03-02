@@ -23,7 +23,16 @@
     class ProgressManager {
         constructor() {
             this._progress = null;
+            this._syncManager = null;
             this._load();
+        }
+        
+        /**
+         * Wire up a SyncManager for automatic change queuing.
+         * @param {SyncManager} syncManager
+         */
+        setSyncManager(syncManager) {
+            this._syncManager = syncManager;
         }
         
         /**
@@ -114,6 +123,16 @@
             this._progress.lastPlayedAt = new Date().toISOString();
             
             this._save();
+            
+            // Queue change for server sync
+            if (this._syncManager) {
+                this._syncManager.queueChange({
+                    type: 'missionComplete',
+                    missionId, stars, xpEarned,
+                    timestamp: Date.now()
+                });
+            }
+            
             console.log('ProgressManager: Mission completed', missionId, 'stars:', stars, 'XP:', xpEarned);
         }
         
@@ -134,6 +153,16 @@
             if (!this._progress.unlockedWorlds.includes(worldId)) {
                 this._progress.unlockedWorlds.push(worldId);
                 this._save();
+                
+                // Queue change for server sync
+                if (this._syncManager) {
+                    this._syncManager.queueChange({
+                        type: 'worldUnlock',
+                        worldId,
+                        timestamp: Date.now()
+                    });
+                }
+                
                 console.log('ProgressManager: World unlocked', worldId);
             }
         }
@@ -200,6 +229,47 @@
             return this._progress.totalXP;
         }
         
+        /**
+         * Overwrite local progress with server-synced data.
+         * Used by SyncManager after a successful sync.
+         * 
+         * Note: The server sends Mongoose docs where `missionStars` is a Map object.
+         * We convert it to a plain object for localStorage compatibility.
+         * @param {Object} syncedProgress - Progress data from server
+         */
+        overwriteProgress(syncedProgress) {
+            // Convert Mongoose Maps to plain objects (missionStars comes as { _data: ... } or entries)
+            let stars = syncedProgress.missionStars || this._progress.missionStars;
+            if (stars && typeof stars === 'object' && !(stars instanceof Object && !Array.isArray(stars))) {
+                // Already a plain object, fine
+            }
+            // If it's a Mongoose Map or has entries(), convert it
+            if (stars && typeof stars.entries === 'function') {
+                const plain = {};
+                for (const [k, v] of stars.entries()) {
+                    plain[k] = v;
+                }
+                stars = plain;
+            }
+            // If it has $__, it's a Mongoose subdoc — use toJSON
+            if (stars && stars.toJSON) {
+                stars = stars.toJSON();
+            }
+
+            this._progress = {
+                ...this._progress,
+                completedMissions: syncedProgress.completedMissions || this._progress.completedMissions,
+                unlockedWorlds: syncedProgress.unlockedWorlds || this._progress.unlockedWorlds,
+                missionStars: stars,
+                totalXP: Math.max(this._progress.totalXP, syncedProgress.totalXP || 0),
+                lastPlayedAt: syncedProgress.updatedAt || this._progress.lastPlayedAt
+            };
+            this._save();
+            
+            // Trigger any UI updates needed
+            window.dispatchEvent(new CustomEvent('progressUpdated', { detail: this._progress }));
+        }
+
         /**
          * Reset all progress.
          */

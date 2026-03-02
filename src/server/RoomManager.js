@@ -11,11 +11,12 @@ class RoomManager {
     // ==================== User Management ====================
 
     /**
-     * Register a new user with just a username
+     * Register a new user with a username and optional Clerk ID
      * @param {string} username 
+     * @param {string} [clerkId] - Optional Clerk user ID for authenticated users
      * @returns {{success: boolean, user?: Object, error?: string}}
      */
-    registerUser(username) {
+    registerUser(username, clerkId) {
         // Validate username
         if (!username || typeof username !== 'string') {
             return { success: false, error: 'Username is required' };
@@ -41,6 +42,7 @@ class RoomManager {
             id: crypto.randomBytes(8).toString('hex'),
             username: cleanUsername,
             sessionToken: crypto.randomBytes(16).toString('hex'),
+            clerkId: clerkId || null,  // Link to Clerk account if authenticated
             createdAt: new Date(),
             lastSeen: new Date()
         };
@@ -52,7 +54,8 @@ class RoomManager {
             user: {
                 id: user.id,
                 username: user.username,
-                sessionToken: user.sessionToken
+                sessionToken: user.sessionToken,
+                clerkId: user.clerkId
             }
         };
     }

@@ -58,6 +58,26 @@
       max-width: 400px;
       width: 100%;
       box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+      position: relative;
+    }
+
+    #authStatus {
+      position: absolute;
+      top: 10px;
+      right: 15px;
+      font-size: 0.75em;
+      color: #a8c5e6;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    #authStatus img {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      border: 1px solid rgba(255, 255, 255, 0.3);
     }
 
     #menuScreen .logo-container {
@@ -846,6 +866,86 @@
       0%, 100% { box-shadow: 0 4px 15px rgba(255, 215, 0, 0.4); }
       50% { box-shadow: 0 4px 25px rgba(255, 215, 0, 0.8), 0 0 15px rgba(255, 165, 0, 0.4); }
     }
+    /* Registration Modal */
+    #registrationModal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.85);
+      z-index: 1000;
+      justify-content: center;
+      align-items: center;
+      font-family: 'Segoe UI', sans-serif;
+    }
+
+    #registrationModal.open {
+      display: flex;
+    }
+
+    #registrationModalContent {
+      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+      color: #fff;
+      padding: 30px;
+      border-radius: 12px;
+      max-width: 400px;
+      width: 90%;
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    #registrationModalContent h2 {
+      margin-bottom: 20px;
+      color: #ffd700;
+      text-align: center;
+    }
+
+    .form-group {
+      margin-bottom: 15px;
+      text-align: left;
+    }
+
+    .form-group label {
+      display: block;
+      font-size: 0.85em;
+      margin-bottom: 5px;
+      color: #a8c5e6;
+    }
+
+    .form-group input[type="text"] {
+      width: 100%;
+      padding: 10px;
+      border-radius: 6px;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      background: rgba(0, 0, 0, 0.2);
+      color: #fff;
+    }
+
+    .form-group.checkbox-group {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      font-size: 0.85em;
+      color: #fff;
+    }
+
+    .form-group.checkbox-group input {
+      margin-top: 3px;
+    }
+
+    #btnRegisterSubmit {
+      width: 100%;
+      padding: 12px;
+      background: linear-gradient(135deg, #e94560, #c23152);
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      font-weight: bold;
+      cursor: pointer;
+      margin-top: 10px;
+    }
   </style>
 </head>
 
@@ -856,8 +956,40 @@
   </div>
 
   <div id="menuScreen">
+    <div id="authStatus">Sign In</div>
     <div class="logo-container">
       <img src="images/VerseBattles-logo.png" alt="VerseBattles: Demon Chase">
+    </div>
+
+    <!-- Registration Modal -->
+    <div id="registrationModal">
+      <div id="registrationModalContent">
+        <h2>Complete Registration</h2>
+        <p style="font-size: 0.8em; color: #a8c5e6; margin-bottom: 20px;">To save your progress and create worlds, please complete your profile.</p>
+        
+        <div class="form-group">
+          <label for="regUsername">Choose a Username</label>
+          <input type="text" id="regUsername" placeholder="e.g. VerseWarrior77" maxlength="20">
+        </div>
+
+        <div class="form-group checkbox-group">
+          <input type="checkbox" id="regAgeGate">
+          <label for="regAgeGate">I confirm that I am 16 years of age or older.</label>
+        </div>
+
+        <div class="form-group checkbox-group">
+          <input type="checkbox" id="regPrivacy">
+          <label for="regPrivacy">I have read and agree to the <a href="#" id="linkPrivacyModal" style="color: #ffd700;">Privacy Policy</a>.</label>
+        </div>
+
+        <div class="form-group checkbox-group">
+          <input type="checkbox" id="regTerms">
+          <label for="regTerms">I agree to the Terms and Conditions.</label>
+        </div>
+
+        <button id="btnRegisterSubmit">Start Journey</button>
+        <p style="font-size: 0.7em; color: rgba(255,255,255,0.4); margin-top: 15px; text-align: center;">Registration is optional. You can play as a guest without saving progress.</p>
+      </div>
     </div>
 
     <!-- Main Menu Buttons (New Layout) -->
@@ -1160,6 +1292,8 @@
   <script src="src/shared/FileContentProvider.js?v=1.1"></script>
   <script src="src/shared/MissionClient.js?v=1.1"></script>
   <script src="src/client/ProgressManager.js?v=1.1"></script>
+  <script src="src/client/AuthManager.js?v=1.0"></script>
+  <script src="src/client/SyncManager.js?v=1.0"></script>
   <script src="src/client/OverlandRenderer.js?v=1.5"></script>
   <script src="src/client/QuizManager.js?v=2.5"></script>
   <script src="src/client/VerseTestScreen.js"></script>
@@ -1434,6 +1568,97 @@
       // Pulse the How to Play button to indicate it's available
       // (Don't auto-open - FTUE has its own quick-start overlay)
       btnInstructions.classList.add('pulse');
+    })();
+
+    // --- Authentication & Sync Integration ---
+    (async function() {
+      const authStatus = document.getElementById('authStatus');
+      const regModal = document.getElementById('registrationModal');
+      const btnRegisterSubmit = document.getElementById('btnRegisterSubmit');
+      const regUsernameInput = document.getElementById('regUsername');
+      const regAgeGate = document.getElementById('regAgeGate');
+      const regPrivacy = document.getElementById('regPrivacy');
+      const regTerms = document.getElementById('regTerms');
+      const linkPrivacyModal = document.getElementById('linkPrivacyModal');
+
+      // 1. Fetch Config & Init Auth
+      try {
+        const configResp = await fetch('/api/config');
+        const config = await configResp.json();
+        
+        const auth = new AuthManager();
+        window.authManager = auth;
+        await auth.init(config.clerkPublishableKey);
+        
+        const sync = new SyncManager(auth, window.progressManager);
+        window.syncManager = sync;
+        window.progressManager.setSyncManager(sync);
+        sync.start();
+
+        // 2. Auth State Listener
+        auth.onAuthChange((state) => {
+          if (state.isAuthenticated) {
+            if (state.dbUser) {
+              // Safe DOM construction — no innerHTML with external data
+              authStatus.textContent = '';
+              const avatar = document.createElement('img');
+              avatar.src = state.user.imageUrl || '';
+              avatar.title = state.dbUser.username || '';
+              avatar.alt = 'Profile';
+              authStatus.appendChild(avatar);
+              regModal.classList.remove('open');
+            } else {
+              authStatus.textContent = 'Complete Profile';
+              regModal.classList.add('open');
+            }
+          } else {
+            authStatus.textContent = 'Sign In';
+            regModal.classList.remove('open');
+          }
+        });
+
+        // 3. UI Event Listeners
+        authStatus.addEventListener('click', () => {
+          if (auth.isAuthenticated) {
+            if (confirm('Sign out?')) auth.signOut();
+          } else {
+            auth.openSignIn();
+          }
+        });
+
+        linkPrivacyModal.addEventListener('click', (e) => {
+          e.preventDefault();
+          document.getElementById('privacyLink').click();
+        });
+
+        btnRegisterSubmit.addEventListener('click', async () => {
+          const username = regUsernameInput.value.trim();
+          if (!username) return alert('Please enter a username');
+          if (!regAgeGate.checked) return alert('You must be 16 or older');
+          if (!regPrivacy.checked || !regTerms.checked) return alert('Please agree to terms and privacy');
+
+          try {
+            btnRegisterSubmit.disabled = true;
+            btnRegisterSubmit.textContent = 'Saving...';
+            await auth.register({
+              username,
+              agreedToTerms: true,
+              agreedToPrivacy: true,
+              ageVerified: true
+            });
+            // Sync immediately after registration
+            await sync.sync();
+          } catch (err) {
+            alert(err.message);
+          } finally {
+            btnRegisterSubmit.disabled = false;
+            btnRegisterSubmit.textContent = 'Start Journey';
+          }
+        });
+
+      } catch (err) {
+        console.error('Auth Init Failed:', err);
+      }
     })();
 
     // Privacy Policy Modal

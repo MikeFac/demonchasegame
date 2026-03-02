@@ -2270,6 +2270,11 @@ function completeMission(stars) {
     
     console.log('Mission completed:', currentMission.id, 'stars:', stars, 'XP:', xpEarned);
     
+    // Trigger immediate sync to persist progress
+    if (window.syncManager) {
+        window.syncManager.sync().catch(e => console.warn('Post-mission sync failed:', e.message));
+    }
+    
     // Show completion message
     flashMessages.push({
         text: t('overland.missionComplete', 'Mission Complete!') + ' +' + xpEarned + ' XP',
