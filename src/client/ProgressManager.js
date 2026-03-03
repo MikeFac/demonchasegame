@@ -17,6 +17,7 @@
         unlockedWorlds: ['chapter1'],
         missionStars: {},
         totalXP: 0,
+        versesLearned: [],  // Array of verse references mastered
         lastPlayedAt: null
     };
     
@@ -51,7 +52,12 @@
                         return;
                     }
                     
-                    this._progress = data;
+                    // Merge with defaults to ensure all fields exist (handles new fields added later)
+                    this._progress = {
+                        ...DEFAULT_PROGRESS,
+                        ...data,
+                        versesLearned: data.versesLearned || []  // Ensure versesLearned exists
+                    };
                 } else {
                     this._progress = { ...DEFAULT_PROGRESS };
                 }
@@ -230,6 +236,70 @@
         }
         
         /**
+         * Add a learned verse reference.
+         * @param {string} verseRef - Verse reference (e.g., "John 3:16")
+         * @returns {boolean} True if newly added, false if already learned
+         */
+        addVerseLearned(verseRef) {
+            if (!verseRef) return false;
+            
+            // Ensure versesLearned array exists
+            if (!this._progress.versesLearned) {
+                this._progress.versesLearned = [];
+            }
+            
+            // Normalize the reference
+            const normalized = verseRef.trim();
+            
+            // Check if already learned
+            if (this._progress.versesLearned.includes(normalized)) {
+                return false;
+            }
+            
+            // Add to array
+            this._progress.versesLearned.push(normalized);
+            this._save();
+            
+            // Queue sync if available
+            if (this._syncManager) {
+                this._syncManager.queueChange({ 
+                    type: 'verseLearned', 
+                    verseRef: normalized 
+                });
+                this._syncManager.sync();
+            }
+            
+            return true;
+        }
+        
+        /**
+         * Get all learned verse references.
+         * @returns {string[]} Array of verse references
+         */
+        getVersesLearned() {
+            return [...(this._progress.versesLearned || [])];
+        }
+        
+        /**
+         * Check if a verse has been learned.
+         * @param {string} verseRef - Verse reference
+         * @returns {boolean}
+         */
+        isVerseLearned(verseRef) {
+            const normalized = verseRef?.trim();
+            const learned = this._progress.versesLearned || [];
+            return normalized ? learned.includes(normalized) : false;
+        }
+        
+        /**
+         * Get count of learned verses.
+         * @returns {number}
+         */
+        getVersesLearnedCount() {
+            return (this._progress.versesLearned || []).length;
+        }
+        
+        /**
          * Overwrite local progress with server-synced data.
          * Used by SyncManager after a successful sync.
          * 
@@ -262,6 +332,7 @@
                 unlockedWorlds: syncedProgress.unlockedWorlds || this._progress.unlockedWorlds,
                 missionStars: stars,
                 totalXP: Math.max(this._progress.totalXP, syncedProgress.totalXP || 0),
+                versesLearned: syncedProgress.versesLearned || this._progress.versesLearned,
                 lastPlayedAt: syncedProgress.updatedAt || this._progress.lastPlayedAt
             };
             this._save();

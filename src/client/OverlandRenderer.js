@@ -118,19 +118,32 @@
         }
         
         /**
-         * Draw the header with title.
+         * Draw the header with title, back button, and user info.
          */
         _drawHeader(ctx, canvas) {
             // Header background
             ctx.fillStyle = '#16213e';
             ctx.fillRect(0, 0, canvas.width, 50);
             
-            // Title
+            // Back to Menu button (left side)
+            this._drawButton(ctx, 10, 10, 80, 30, '← Menu', '#4a4a6a');
+            
+            // Title (center)
             ctx.font = 'bold 20px Arial';
             ctx.fillStyle = '#ffffff';
             ctx.textAlign = 'center';
             ctx.fillText(t('overland.title', 'Select Mission'), canvas.width / 2, 32);
             ctx.textAlign = 'left';
+            
+            // User info (right side) - show if logged in
+            if (window.authManager && window.authManager.isAuthenticated) {
+                const username = window.authManager.dbUser?.username || window.authManager.user?.firstName || 'User';
+                ctx.font = '12px Arial';
+                ctx.fillStyle = '#4CAF50';
+                ctx.textAlign = 'right';
+                ctx.fillText(`👤 ${username}`, canvas.width - 10, 30);
+                ctx.textAlign = 'left';
+            }
         }
         
         /**
@@ -404,8 +417,6 @@
          * Check if Learn Verses button was clicked.
          */
         isLearnVersesClicked(screenX, screenY) {
-            if (!this.selectedMission) return false;
-            
             const buttonY = this.canvas.height - 35;
             const buttonWidth = 100;
             const buttonHeight = 30;

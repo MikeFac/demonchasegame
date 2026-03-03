@@ -47,6 +47,11 @@ router.post('/sync', requireAuth, async (req, res) => {
             dbProgress = new PlayerProgress({ userId: user._id });
         }
 
+        // Initialize Map if not present
+        if (!dbProgress.missionStars) {
+            dbProgress.missionStars = new Map();
+        }
+
         // --- Basic Merge Strategy: Union of Arrays, Max of numbers ---
         
         // 1. Completed Missions (Set Union)
@@ -77,6 +82,13 @@ router.post('/sync', requireAuth, async (req, res) => {
             ...(clientProgress.unlockedWorlds || [])
         ]);
         dbProgress.unlockedWorlds = Array.from(unlockedWorlds);
+
+        // 6. Verses Learned (Set Union - unique verse references)
+        const versesLearned = new Set([
+            ...(dbProgress.versesLearned || []),
+            ...(clientProgress.versesLearned || [])
+        ]);
+        dbProgress.versesLearned = Array.from(versesLearned);
 
         dbProgress.lastSyncedAt = new Date();
         dbProgress.syncVersion = (dbProgress.syncVersion || 0) + 1;

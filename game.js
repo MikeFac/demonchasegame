@@ -102,6 +102,18 @@ function getOptimalCanvasWidth() {
     }
 }
 
+// Global function to ensure canvas is properly sized for any mode
+function ensureCanvasSize() {
+    const newWidth = getOptimalCanvasWidth();
+    const newHeight = Math.min(600, window.innerHeight - 80);
+    if (canvas.width !== newWidth || canvas.height !== newHeight) {
+        canvas.width = newWidth;
+        canvas.height = newHeight;
+        ctx = canvas.getContext('2d');
+        console.log('Canvas resized to:', canvas.width, canvas.height);
+    }
+}
+
 function handleResize() {
     if (!canvas) return;
     const newWidth = getOptimalCanvasWidth();
@@ -274,7 +286,7 @@ let spawnsLeft = 10; //should be updated by server
 const currentScriptPath = document.currentScript.src;
 const scriptDirectory = currentScriptPath.substring(0, currentScriptPath.lastIndexOf('/'));
 
-let gameMode = 'game'; // Possible values: 'game', 'review'
+window.gameMode = 'game'; // Possible values: 'game', 'review', 'overland', 'votd'
 let repeatEnabled = false;
 let repeatTimeout = null;
 let hasPlayed = false;
@@ -312,7 +324,7 @@ let meleeHitProbabilityNoAnswer = 0.1; // Probability to hit in melee without an
 let overlandRenderer = null;
 let currentMission = null;
 let currentMissionConfig = null;
-let missionWorlds = [];
+window.missionWorlds = [];
 let missionsInitialized = false;
 
 // Verse Test shield setting (Option A/B)
@@ -570,31 +582,9 @@ function isInOnboardingWindow() {
     return elapsed < ONBOARDING_DURATION;
 }
 
-// to retrieve verses from database in PRD
 async function loadVerses() {
     console.log("gameCategory: " + gameCategory);
-    
-    // Check if we should use offline/local verses
-    const shouldUseOfflineVerses = offlineMode || !navigator.onLine;
-    
-    if (shouldUseOfflineVerses) {
-        console.log('Loading verses from bundled file (offline mode)');
-        loadVersesFromBundle();
-        return;
-    }
-    
-    try {
-        const response = await fetch('get_verses.php?category=' + gameCategory);
-        if (!response.ok) {
-            throw new Error('Network response was not ok ' + response.statusText);
-        }
-        const data = await response.json();
-        console.log('Verses loaded from server:', data.length, 'verses');
-        organizedVerses = QuizManager.organizeByCategory2(data);
-    } catch (error) {
-        console.warn('Failed to load verses from server, falling back to bundle:', error.message);
-        loadVersesFromBundle();
-    }
+    loadVersesFromBundle();
 }
 
 function loadVersesFromBundle() {
@@ -1187,7 +1177,11 @@ function initializeDailyChallenge() {
 
 // Initialize Verse Counter (persists forever)
 function initializeVerseCounter() {
-    versesLearned = parseInt(localStorage.getItem('versesLearned') || '0');
+    if (window.progressManager) {
+        versesLearned = progressManager.getVersesLearnedCount();
+    } else {
+        versesLearned = parseInt(localStorage.getItem('versesLearned') || '0');
+    }
     console.log(`Verses Learned: ${versesLearned}/${TOTAL_VERSES}`);
 }
 
@@ -1264,21 +1258,40 @@ window.onQuizCorrectAnswer = function (quizMode, verseReference) {
             }
         }
 
-        // Track unique verses learned (only first_letter mode counts)
-        const verseKey = `learned_${verseReference.replace(/\s+/g, '_')}`;
-        if (!localStorage.getItem(verseKey)) {
-            localStorage.setItem(verseKey, 'true');
-            versesLearned++;
-            localStorage.setItem('versesLearned', versesLearned.toString());
+        // Track unique verses learned (first_letter and cloze modes count)
+        if (quizMode === 'first_letter' || quizMode === 'cloze') {
+            if (window.progressManager) {
+                const isNew = progressManager.addVerseLearned(verseReference);
+                if (isNew) {
+                    versesLearned = progressManager.getVersesLearnedCount();
+                    
+                    // Flash: new verse learned
+                    flashMessages.push({
+                        text: `New verse learned! (${versesLearned}/${TOTAL_VERSES})`,
+                        color: '#ffcc00',
+                        startTime: Date.now(),
+                        duration: 2000
+                    });
+                    console.log(`Verse learned! Total: ${versesLearned}/${TOTAL_VERSES}`);
+                }
+            } else {
+                // Fallback to localStorage if ProgressManager not available
+                const verseKey = `learned_${verseReference.replace(/\s+/g, '_')}`;
+                if (!localStorage.getItem(verseKey)) {
+                    localStorage.setItem(verseKey, 'true');
+                    versesLearned++;
+                    localStorage.setItem('versesLearned', versesLearned.toString());
 
-            // Flash: new verse learned
-            flashMessages.push({
-                text: `New verse learned! (${versesLearned}/${TOTAL_VERSES})`,
-                color: '#ffcc00',
-                startTime: Date.now(),
-                duration: 2000
-            });
-            console.log(`Verse learned! Total: ${versesLearned}/${TOTAL_VERSES}`);
+                    // Flash: new verse learned
+                    flashMessages.push({
+                        text: `New verse learned! (${versesLearned}/${TOTAL_VERSES})`,
+                        color: '#ffcc00',
+                        startTime: Date.now(),
+                        duration: 2000
+                    });
+                    console.log(`Verse learned! Total: ${versesLearned}/${TOTAL_VERSES}`);
+                }
+            }
         }
     }
 };
@@ -1697,7 +1710,7 @@ async function init() {
         }
 
         // Apply level 1 qualities from custom config (if present)
-        // This must happen after ALL_QUALITIES is populated but before vQuality is picked
+        // This must happen after ALL_QUALITIES is populated but before window.vQuality is picked
         if (customLevelData && customLevelData[1] && customLevelData[1].qualities && customLevelData[1].qualities.length > 0) {
             QUALITIES = customLevelData[1].qualities;
             console.log('Custom level 1 qualities applied:', QUALITIES);
@@ -1705,7 +1718,7 @@ async function init() {
             QUALITIES = ALL_QUALITIES;
         }
 
-        vQuality = QUALITIES[Math.floor(Math.random() * QUALITIES.length)]; // Initial random quality
+        window.vQuality = QUALITIES[Math.floor(Math.random() * QUALITIES.length)]; // Initial random quality
 
         qualityIndex = {};
         for (const quality of ALL_QUALITIES) {
@@ -1724,7 +1737,7 @@ async function init() {
         passedVerseTests = new Set();
 
         currentReviewMode = 'quality'; // Possible values: 'incorrect', 'quality'
-        gameMode = 'game';
+        window.gameMode = 'game';
         canvas.width = getOptimalCanvasWidth();
         canvas.height = Math.min(600, window.innerHeight - 80);
         ctx = canvas.getContext('2d');
@@ -1811,7 +1824,7 @@ async function init() {
                 categoryPickerOpen = !categoryPickerOpen;
             },
             onCategorySelect: (category) => {
-                vQuality = category;
+                window.vQuality = category;
                 categoryPickerOpen = false;
                 QuizManager.pickQualityVerse();
             },
@@ -1836,7 +1849,7 @@ async function init() {
 
                 if (itemId === 'review') {
                     ReviewMode.saveGameState();
-                    ReviewMode.startReviewMode();
+                    ReviewMode.startReviewMode({ returnTo: 'game' });
                 } else if (itemId === 'playPause') {
                     MusicManager.togglePlay();
                     console.log('Music playing:', MusicManager.getIsPlaying());
@@ -1852,7 +1865,7 @@ async function init() {
                     // Launch Verse of the Day
                     VersOfTheDayManager.clearExpiredBonus(); // Check if bonus expired
                     if (window.VotdLearningMode) {
-                        gameMode = 'votd';
+                        window.gameMode = 'votd';
                         votdMode = 'learning';
                         VotdLearningMode.start(VersOfTheDayManager.getTodayVerse());
                     } else {
@@ -1860,7 +1873,7 @@ async function init() {
                     }
                 } else if (itemId === 'verseTest') {
                     // Launch verse test with current verse (with rewards)
-                    const verse = organizedVerses[vQuality][currentVerseIndex];
+                    const verse = organizedVerses[window.vQuality][currentVerseIndex];
                     if (verse) {
                         const testDifficulty = Math.min(5 + player.level, 15);
                         launchVerseTest(verse.Text, verse.Reference, testDifficulty);
@@ -1936,7 +1949,7 @@ async function init() {
                 if (x >= vtBtnX && x <= vtBtnX + vtBtnSize &&
                     y >= vtBtnY && y <= vtBtnY + vtBtnSize) {
                     // Trigger verse test (same as menu → Verse Test)
-                    const verse = organizedVerses[vQuality] && organizedVerses[vQuality][currentVerseIndex];
+                    const verse = organizedVerses[window.vQuality] && organizedVerses[window.vQuality][currentVerseIndex];
                     if (verse) {
                         const testDifficulty = Math.min(5 + player.level, 15);
                         launchVerseTest(verse.Text, verse.Reference, testDifficulty);
@@ -2093,7 +2106,7 @@ async function initializeMissions() {
     try {
         // Load mission data
         const worlds = await missionClient.getWorlds();
-        missionWorlds = worlds;
+        window.missionWorlds = worlds;
         
         console.log('Loaded worlds:', worlds);
         
@@ -2110,6 +2123,8 @@ async function initializeMissions() {
                 worldsWithMissions.push(fullWorld);
             }
         }
+        
+        window.worldsWithMissions = worldsWithMissions;
         
         // Initialize overland renderer (always recreate to ensure current canvas/ctx)
         if (window.OverlandRenderer) {
@@ -2132,7 +2147,10 @@ async function initializeMissions() {
 let overlandClickHandler = null;
 
 async function showOverland() {
-    gameMode = 'overland';
+window.gameMode = 'overland';
+    
+    // Ensure canvas is properly sized
+    ensureCanvasSize();
     
     // Hide any visible overlays
     const splashScreen = document.getElementById('splashScreen');
@@ -2197,36 +2215,67 @@ function handleOverlandClick(x, y) {
     // Check for Learn Verses button
     const learnClicked = overlandRenderer.isLearnVersesClicked(x, y);
     console.log('isLearnVersesClicked:', learnClicked, 'selectedMission:', !!overlandRenderer.getSelectedMission(), 'ReviewMode:', !!window.ReviewMode);
-    if (learnClicked) {
-        const selected = overlandRenderer.getSelectedMission();
-        if (selected && window.ReviewMode) {
-            // Enter review mode with mission's verse categories
-            const world = missionWorlds.find(w => w.id === selected.worldId);
-            if (world) {
-                const mission = world.missions.find(m => m.id === selected.missionId);
-                if (mission && mission.qualities && mission.qualities.length > 0) {
-                    vQuality = mission.qualities[0];
+    if (learnClicked && overlandRenderer.getSelectedMission()) {
+        // Only allow Learn Verses if a mission is selected
+        if (window.ReviewMode) {
+            const selected = overlandRenderer.getSelectedMission();
+            let reviewQuality = null;
+            // Get verse quality from selected mission
+            if (selected && window.worldsWithMissions && window.worldsWithMissions.length > 0) {
+                const world = window.worldsWithMissions.find(w => w.id === selected.worldId);
+                if (world) {
+                    const mission = world.missions.find(m => m.id === selected.missionId);
+                    if (mission && mission.qualities && mission.qualities.length > 0) {
+                        reviewQuality = mission.qualities[0];
+                    }
                 }
             }
+            
+            const reviewOptions = {
+                returnTo: 'overland',
+                vQuality: reviewQuality
+            };
+            
             // Ensure verses are loaded before entering review mode
             // (they may not be loaded if the user hasn't played a game yet)
-            if (!organizedVerses || Object.keys(organizedVerses).length === 0) {
+            if (typeof organizedVerses === 'undefined' || !organizedVerses || Object.keys(organizedVerses).length === 0) {
                 console.log('Loading verses before entering review mode...');
                 loadVerses().then(() => {
                     console.log('Verses loaded, entering review mode');
-                    ReviewMode.startReviewMode();
+                    ReviewMode.startReviewMode(reviewOptions);
+                    setupReviewClickHandler();
                 });
             } else {
                 console.log('Verses already loaded, entering review mode');
-                ReviewMode.startReviewMode();
+                ReviewMode.startReviewMode(reviewOptions);
+                setupReviewClickHandler();
             }
         }
         return;
     }
 }
 
+function setupReviewClickHandler() {
+    ensureCanvasSize();
+    
+    // Remove overland click handler
+    if (overlandClickHandler) {
+        canvas.removeEventListener('click', overlandClickHandler);
+        overlandClickHandler = null;
+    }
+    
+    // Add a small delay before registering handlers to prevent click propagation
+    // from game mode to review mode
+    setTimeout(function() {
+        const reviewClickHandler = function(event) {
+            ReviewMode.handleReviewClick(event);
+        };
+        canvas.addEventListener('click', reviewClickHandler);
+    }, 50);
+}
+
 async function startMission(worldId, missionId) {
-    dbg('MISSION', `startMission called! worldId=${worldId} missionId=${missionId} gameMode=${gameMode} gameOverFlag=${gameOverFlag} killed=${gameState.monstersKilled}/${gameState.monstersToKill}`);
+    dbg('MISSION', `startMission called! worldId=${worldId} missionId=${missionId} window.gameMode=${window.gameMode} gameOverFlag=${gameOverFlag} killed=${gameState.monstersKilled}/${gameState.monstersToKill}`);
     console.trace('[MISSION] startMission call stack');
     try {
         const mission = await missionClient.getMission(worldId, missionId);
@@ -2323,12 +2372,23 @@ function gameLoop(generation) {
     const nextFrame = () => requestAnimationFrame(() => gameLoop(gen));
 
     // Handle Overland mode FIRST (doesn't need playerCode or game to be loaded)
-    if (gameMode === 'overland') {
+    if (window.gameMode === 'overland') {
         if (overlandRenderer && window.progressManager) {
             overlandRenderer.render(progressManager);
         } else if (window.progressManager) {
             // Initialize if not done yet
             initializeMissions();
+        }
+        nextFrame();
+        return;
+    }
+
+    // Handle Review mode (verse learning) - doesn't need playerCode
+    if (window.gameMode === 'review') {
+        ensureCanvasSize();
+        console.log('Review mode render, canvas:', canvas.width, canvas.height);
+        if (window.ReviewMode && typeof ReviewMode.displayReviewVerseScreen === 'function') {
+            ReviewMode.displayReviewVerseScreen();
         }
         nextFrame();
         return;
@@ -2372,7 +2432,7 @@ function gameLoop(generation) {
     }
 
     // Handle VOTD rendering
-    if (gameMode === 'votd') {
+    if (window.gameMode === 'votd') {
         if (votdMode === 'learning' && window.VotdLearningMode) {
             VotdLearningMode.render();
         } else if (votdMode === 'test' && window.VotdTestMode) {
@@ -2384,7 +2444,7 @@ function gameLoop(generation) {
     }
     
     // Handle Overland (mission selection) rendering
-    if (gameMode === 'overland') {
+    if (window.gameMode === 'overland') {
         if (overlandRenderer && window.progressManager) {
             overlandRenderer.render(progressManager.getProgress());
         }
@@ -2393,9 +2453,9 @@ function gameLoop(generation) {
         return;
     }
 
-    if (gameMode === 'game') {
+    if (window.gameMode === 'game') {
         const uiState = {
-            vQuality,
+            vQuality: window.vQuality,
             categoryPickerOpen,
             allCategories: QUALITIES,
             gameOverFlag,
@@ -2406,13 +2466,13 @@ function gameLoop(generation) {
             explosionTimer,
             currentVerse: {
                 text: answerFullVerse || (currentQuiz ? currentQuiz.promptText : ''),
-                reference: (organizedVerses[vQuality] && organizedVerses[vQuality][currentVerseIndex]) ? organizedVerses[vQuality][currentVerseIndex].Reference : ''
+                reference: (organizedVerses[window.vQuality] && organizedVerses[window.vQuality][currentVerseIndex]) ? organizedVerses[window.vQuality][currentVerseIndex].Reference : ''
             },
             quiz: answerFullVerse ? null : currentQuiz,
             menuState: {
                 menuOpen,
                 musicState: MusicManager.getState(),
-                reviewActive: gameMode === 'review',
+                reviewActive: window.gameMode === 'review',
                 verseTestShielded
             },
             dailyChallengeProgress,
@@ -2540,7 +2600,7 @@ function gameLoop(generation) {
         ctx.fillRect(0, 0, canvas.width, QUALITY_LINE_HEIGHT);
         ctx.fillStyle = 'white';
         ctx.font = '14px Arial'; // Set the font size
-        this.ctx.fillText(`Learn: ${vQuality}`, 7, 22);
+        this.ctx.fillText(`Learn: ${window.vQuality}`, 7, 22);
 
         drawReviewButton();
 
@@ -3045,11 +3105,11 @@ function gameLoop(generation) {
         });
  
         // Display the Bible verse and request the next animation frame
-        displayBibleVerse(gappedVerse, organizedVerses[vQuality][currentVerseIndex].Reference);
+        displayBibleVerse(gappedVerse, organizedVerses[window.vQuality][currentVerseIndex].Reference);
         */
-    } //end gameMode = 'game'
+    } //end window.gameMode = 'game'
 
-    //start gameMode = 'review'
+    //start window.gameMode = 'review'
     else {
         //console.log("About to enter displayReviewVerseScreen");
         ReviewMode.displayReviewVerseScreen();
@@ -3106,7 +3166,7 @@ function updateGameState(newGameState) {
         if (typeof VotdLearningMode !== 'undefined' && typeof VersOfTheDayManager !== 'undefined') {
             votdAutoLaunchHandled = true;
             localStorage.removeItem('votdAutoLaunch');
-            gameMode = 'votd';
+            window.gameMode = 'votd';
             votdMode = 'learning';
             const verse = VersOfTheDayManager.getTodayVerse();
             console.log('Got verse:', verse?.Reference);

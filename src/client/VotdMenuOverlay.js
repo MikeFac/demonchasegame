@@ -66,6 +66,16 @@
         if (modal) {
             modal.style.display = 'none';
         }
+
+        // If user is on missions screen (overland), don't start a game
+        const onMissionsScreen = (window.gameMode === 'overland');
+        if (onMissionsScreen) {
+            console.log('User is on missions screen, not starting game');
+            return;
+        }
+
+        // Clear votdAutoLaunch flag since we're not going to VOTD learning mode
+        localStorage.removeItem('votdAutoLaunch');
     }
 
     /**

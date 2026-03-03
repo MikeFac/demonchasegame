@@ -54,7 +54,7 @@
         const verseWords = currentVerse.Text.split(' ');
         maxWordsHidden = Math.ceil(verseWords.length / 2);
 
-        gameMode = 'votd';
+        window.gameMode = 'votd';
         votdMode = 'learning';
 
         console.log('VOTD Learning Mode started:', currentVerse.Reference);
@@ -378,7 +378,7 @@
 
     function exitLearningMode() {
         stopAudio();
-        gameMode = 'game';
+        window.gameMode = 'game';
         votdMode = null;
         currentVerse = null;
     }

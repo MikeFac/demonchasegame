@@ -10,6 +10,8 @@
     let repeatDelay = 5000; // Default 5 seconds in milliseconds
     let repeatTimer = null;
     let meditationMode = false; // Toggle for continuous repeat
+    let returnToMode = 'game'; // Where to return when exiting review ('game' or 'overland')
+    let ignoreNextClick = false; // Flag to ignore click that triggered review mode
 
     // Repeat delay options (in milliseconds)
     const REPEAT_DELAYS = {
@@ -30,26 +32,45 @@
         };
     }
 
-    function startReviewMode() {
-        gameMode = 'review';
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-
+    function startReviewMode(options) {
+        options = options || {};
+        returnToMode = options.returnTo || 'game';
+        
+        // Set vQuality if provided
+        if (options.vQuality) {
+            window.vQuality = options.vQuality;
+        } else if (!window.vQuality) {
+            // Default to first available quality
+            const qualities = Object.keys(organizedVerses || []);
+            window.vQuality = qualities.length > 0 ? qualities[0] : 'Faith';
+        }
+        
         currentReviewVerseIndex = 0;
         repeatEnabled = false;
         meditationMode = false;
         reviewCategoryPickerOpen = false;
+        ignoreNextClick = true; // Ignore the click that triggered review mode
+        
+        window.gameMode = 'review';
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
 
         if (window.Analytics) {
             var verseCount = incorrectAnswerReferences.length > 0 
                 ? incorrectAnswerReferences.length 
-                : (organizedVerses[vQuality] ? organizedVerses[vQuality].length : 0);
+                : (organizedVerses[window.vQuality] ? organizedVerses[window.vQuality].length : 0);
             Analytics.trackReviewModeUsed(verseCount);
         }
     }
 
     function restoreGameState() {
-        gameMode = 'game';
         clearRepeatTimer();
+        
+        if (returnToMode === 'overland' && typeof showOverland === 'function') {
+            window.gameMode = 'overland';
+            showOverland();
+        } else {
+            window.gameMode = 'game';
+        }
     }
 
     function getVerseDetails(reference) {
@@ -68,7 +89,7 @@
     }
 
     function displayReviewVerseScreen() {
-        if (gameMode === 'review') {
+        if (window.gameMode === 'review') {
             // If sermon viewer is open, let it render instead
             if (window.SermonViewer && SermonViewer.isOpen()) {
                 SermonViewer.render();
@@ -99,7 +120,7 @@
                 verseReference = incorrectAnswerReferences[currentReviewVerseIndex];
                 verseDetails = getVerseDetails(verseReference);
             } else if (currentReviewMode === 'quality') {
-                const qualityVerses = organizedVerses[vQuality];
+                const qualityVerses = organizedVerses[window.vQuality];
                 if (!qualityVerses || qualityVerses.length === 0) {
                     ctx.font = '18px Arial';
                     ctx.fillStyle = 'red';
@@ -109,7 +130,7 @@
                 verseReference = qualityVerses[currentReviewVerseIndex].Reference;
                 verseDetails = {
                     text: qualityVerses[currentReviewVerseIndex].Text,
-                    category: vQuality
+                    category: window.vQuality
                 };
             }
 
@@ -232,7 +253,7 @@
         const categories = (typeof QUALITIES !== 'undefined' && QUALITIES.length > 0) 
             ? QUALITIES 
             : Object.keys(organizedVerses);
-        const currentCategory = vQuality;
+        const currentCategory = window.vQuality;
         const padding = 10;
         const itemH = 32;
         const cols = 2;
@@ -324,6 +345,12 @@
     }
 
     function handleReviewClick(event) {
+        // Ignore the click that triggered review mode (prevents double-triggering)
+        if (ignoreNextClick) {
+            ignoreNextClick = false;
+            return;
+        }
+        
         const rect = canvas.getBoundingClientRect();
         const clickedX = event.clientX - rect.left;
         const clickedY = event.clientY - rect.top;
@@ -361,7 +388,7 @@
                 if (clickedX >= itemX && clickedX <= itemX + colWidth &&
                     clickedY >= itemY && clickedY <= itemY + itemH) {
                     // Category selected
-                    vQuality = categories[idx];
+                    window.vQuality = categories[idx];
                     currentReviewVerseIndex = 0;
                     reviewCategoryPickerOpen = false;
                     stopAudio();
@@ -432,7 +459,7 @@
             if (currentReviewMode === 'incorrect') {
                 currentReviewVerseIndex = Math.min(currentReviewVerseIndex + 1, incorrectAnswerReferences.length - 1);
             } else if (currentReviewMode === 'quality') {
-                const qualityVerses = organizedVerses[vQuality];
+                const qualityVerses = organizedVerses[window.vQuality];
                 currentReviewVerseIndex = Math.min(currentReviewVerseIndex + 1, qualityVerses.length - 1);
             }
             stopAudio();
@@ -632,18 +659,18 @@
                 hasPlayed = true;
                 
                 // Handle meditation mode repeat
-                if (meditationMode && gameMode === 'review') {
+                if (meditationMode && window.gameMode === 'review') {
                     repeatTimer = setTimeout(() => {
-                        if (meditationMode && gameMode === 'review') {
+                        if (meditationMode && window.gameMode === 'review') {
                             hasPlayed = false;
                             startVerseAudio(getCurrentVerseReference());
                         }
                     }, repeatDelay);
                 }
                 // Handle simple repeat mode (one repeat only)
-                else if (repeatEnabled && gameMode === 'review' && verseReference === getCurrentVerseReference()) {
+                else if (repeatEnabled && window.gameMode === 'review' && verseReference === getCurrentVerseReference()) {
                     setTimeout(() => {
-                        if (repeatEnabled && gameMode === 'review' && verseReference === getCurrentVerseReference()) {
+                        if (repeatEnabled && window.gameMode === 'review' && verseReference === getCurrentVerseReference()) {
                             hasPlayed = false;
                             startVerseAudio(verseReference);
                         }
@@ -683,7 +710,7 @@
 
         ctx.font = '14px Arial';
         ctx.fillStyle = 'black';
-        const categoryLabel = (typeof tCategory === 'function') ? tCategory(vQuality) : vQuality;
+        const categoryLabel = (typeof tCategory === 'function') ? tCategory(window.vQuality) : window.vQuality;
         const displayLabel = categoryLabel.length > 10 ? categoryLabel.substring(0, 10) + '...' : categoryLabel;
         ctx.fillText(displayLabel + ' ▾', qualityButtonX + 5, buttonY + 20);
 
@@ -697,20 +724,20 @@
         ctx.fillStyle = '#333';
         ctx.fillText('Devotional', devotionalButtonX + 8, buttonY + 20);
 
-        // Game button
+        // Back button
         ctx.fillStyle = 'lightgray';
         ctx.fillRect(gameButtonX, buttonY, buttonWidth, buttonHeight);
 
         ctx.font = '14px Arial';
         ctx.fillStyle = 'black';
-        ctx.fillText(t('review.game'), gameButtonX + 20, buttonY + 20);
+        ctx.fillText('Back', gameButtonX + 25, buttonY + 20);
     }
 
     function getCurrentVerseReference() {
         if (currentReviewMode === 'incorrect') {
             return incorrectAnswerReferences[currentReviewVerseIndex];
         } else if (currentReviewMode === 'quality') {
-            const qualityVerses = organizedVerses[vQuality];
+            const qualityVerses = organizedVerses[window.vQuality];
             return qualityVerses ? qualityVerses[currentReviewVerseIndex].Reference : null;
         }
     }
