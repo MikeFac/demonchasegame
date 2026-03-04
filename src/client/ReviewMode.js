@@ -36,6 +36,8 @@
         options = options || {};
         returnToMode = options.returnTo || 'game';
         
+        console.log('[REVIEW DEBUG] startReviewMode: options =', options, 'canvas =', (typeof canvas !== 'undefined' ? `${canvas.width}x${canvas.height}` : 'undefined'));
+        
         // Set vQuality if provided
         if (options.vQuality) {
             window.vQuality = options.vQuality;
@@ -53,6 +55,7 @@
         
         window.gameMode = 'review';
         ctx.clearRect(0, 0, canvas.width, canvas.height);
+        console.log('[REVIEW DEBUG] startReviewMode: cleared canvas, gameMode =', window.gameMode);
 
         if (window.Analytics) {
             var verseCount = incorrectAnswerReferences.length > 0 
@@ -90,6 +93,8 @@
 
     function displayReviewVerseScreen() {
         if (window.gameMode === 'review') {
+            console.log('[REVIEW DEBUG] displayReviewVerseScreen: canvas =', (typeof canvas !== 'undefined' ? `${canvas.width}x${canvas.height}` : 'undefined'), 'ctx =', (typeof ctx !== 'undefined' ? 'defined' : 'undefined'));
+            
             // If sermon viewer is open, let it render instead
             if (window.SermonViewer && SermonViewer.isOpen()) {
                 SermonViewer.render();
@@ -135,6 +140,7 @@
             }
 
             if (verseDetails) {
+                console.log('[REVIEW DEBUG] displayReviewVerseScreen: calling displayReviewVerse, text length =', verseDetails.text.length);
                 displayReviewVerse(verseDetails.text);
 
                 ctx.font = '20px Arial';
@@ -156,6 +162,8 @@
         const fontSize = 28;
         const lineHeight = fontSize * 1.3;
         const maxWidth = canvas.width - 40;
+        
+        console.log('[REVIEW DEBUG] displayReviewVerse: maxWidth =', maxWidth, 'canvas.width =', canvas.width, 'starting y =', 100);
 
         ctx.font = `${fontSize}px Arial`;
         ctx.fillStyle = 'white';
@@ -170,6 +178,7 @@
             const testWidth = metrics.width;
 
             if (testWidth > maxWidth && i > 0) {
+                console.log('[REVIEW DEBUG] displayReviewVerse: drawing line at x=20, y=' + y + ', line =', line.trim());
                 ctx.fillText(line, 20, y);
                 line = words[i] + ' ';
                 y += lineHeight;
@@ -177,7 +186,8 @@
                 line = testLine;
             }
         }
-
+        
+        console.log('[REVIEW DEBUG] displayReviewVerse: final line at x=20, y=' + y + ', line =', line.trim());
         ctx.fillText(line, 20, y);
     }
 

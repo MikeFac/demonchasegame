@@ -2258,11 +2258,13 @@ function handleOverlandClick(x, y) {
                 console.log('Loading verses before entering review mode...');
                 loadVerses().then(() => {
                     console.log('Verses loaded, entering review mode');
+                    console.log('[REVIEW DEBUG] loadVerses.then: canvas before startReviewMode =', canvas.width, 'x', canvas.height);
                     ReviewMode.startReviewMode(reviewOptions);
                     setupReviewClickHandler();
                 });
             } else {
                 console.log('Verses already loaded, entering review mode');
+                console.log('[REVIEW DEBUG] Verses already loaded, canvas before startReviewMode =', canvas.width, 'x', canvas.height);
                 ReviewMode.startReviewMode(reviewOptions);
                 setupReviewClickHandler();
             }
@@ -2273,6 +2275,7 @@ function handleOverlandClick(x, y) {
 
 function setupReviewClickHandler() {
     ensureCanvasSize();
+    console.log('[REVIEW DEBUG] setupReviewClickHandler: canvas dimensions =', canvas.width, 'x', canvas.height, 'gameMode =', window.gameMode);
     
     // Remove overland click handler
     if (overlandClickHandler) {
