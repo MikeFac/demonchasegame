@@ -103,21 +103,61 @@ class AuthManager {
      */
     async openSignIn() {
         if (!this.clerk) return;
-        this.clerk.openSignIn({
-            afterSignInUrl: window.location.href,
-            redirectUrl: window.location.href
-        });
+        this._showClerkModal('signIn');
     }
 
     /**
      * Open Clerk Sign-up UI
      */
     async openSignUp() {
-        if (!this.clerk) return;
-        this.clerk.openSignUp({
-            afterSignUpUrl: window.location.href,
-            redirectUrl: window.location.href
-        });
+        console.log('AuthManager.openSignUp called, clerk:', !!this.clerk);
+        if (!this.clerk) {
+            console.warn('AuthManager: cannot open sign-up, clerk not initialized');
+            return;
+        }
+        this._showClerkModal('signUp');
+    }
+
+    /**
+     * Show Clerk modal by mounting into a container
+     */
+    _showClerkModal(type) {
+        const containerId = 'clerk-modal-container';
+        let container = document.getElementById(containerId);
+        
+        if (!container) {
+            container = document.createElement('div');
+            container.id = containerId;
+            container.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:99999;display:flex;align-items:center;justify-content:center;';
+            container.innerHTML = '<div style="background:white;border-radius:8px;max-width:400px;width:90%;max-height:90vh;overflow:auto;position:relative;"><button id="clerk-modal-close" style="position:absolute;top:8px;right:8px;background:none;border:none;font-size:24px;cursor:pointer;">&times;</button><div id="clerk-modal-content"></div></div>';
+            document.body.appendChild(container);
+            
+            document.getElementById('clerk-modal-close').onclick = () => {
+                container.remove();
+            };
+            container.onclick = (e) => {
+                if (e.target === container) container.remove();
+            };
+        }
+        
+        const content = document.getElementById('clerk-modal-content');
+        content.innerHTML = '';
+        
+        try {
+            if (type === 'signIn') {
+                this.clerk.mountSignIn(document.getElementById('clerk-modal-content'), {
+                    afterSignInUrl: window.location.href
+                });
+            } else {
+                this.clerk.mountSignUp(document.getElementById('clerk-modal-content'), {
+                    afterSignUpUrl: window.location.href
+                });
+            }
+        } catch (err) {
+            console.error('Mount failed:', err);
+            container.remove();
+            alert('Sign-in unavailable. Please try again later.');
+        }
     }
 
     /**

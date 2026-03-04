@@ -1758,7 +1758,13 @@
       // Benefits modal: Create Account → actually open Clerk sign-up
       document.getElementById('btnBenefitSignUp').addEventListener('click', () => {
         signupBenefitsModal.classList.remove('open');
-        if (auth.clerk) auth.openSignUp();
+        console.log('Create Account clicked, auth.clerk:', !!auth.clerk, 'auth:', auth);
+        if (auth.clerk) {
+          console.log('Calling auth.openSignUp()...');
+          auth.openSignUp();
+        } else {
+          console.warn('Clerk not initialized');
+        }
       });
 
       // Benefits modal: Maybe Later → just close
