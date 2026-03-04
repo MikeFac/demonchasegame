@@ -11,6 +11,7 @@
     let repeatTimer = null;
     let meditationMode = false; // Toggle for continuous repeat
     let returnToMode = 'game'; // Where to return when exiting review ('game' or 'overland')
+    let lastRenderedVerseIndex = -1; // Track verse changes to trigger new background
 
 
     // Repeat delay options (in milliseconds)
@@ -33,6 +34,25 @@
     // Preloaded SVG icons
     const iconImages = {};
     let iconsLoaded = false;
+
+    // Background images — all 3 preloaded, one selected randomly per verse
+    const BG_SRCS = [
+        'images/backgrounds/forest.png',
+        'images/backgrounds/lake.png',
+        'images/backgrounds/mountains.png'
+    ];
+    const bgImages = BG_SRCS.map(src => {
+        const img = new Image();
+        img.src = src;
+        return img;
+    });
+    let currentBgImage = bgImages[0]; // default until first verse shown
+
+    function pickRandomBackground() {
+        const loaded = bgImages.filter(img => img.complete && img.naturalWidth > 0);
+        if (loaded.length === 0) return;
+        currentBgImage = loaded[Math.floor(Math.random() * loaded.length)];
+    }
 
     function loadIcons() {
         if (iconsLoaded) return;
@@ -248,12 +268,32 @@
 
             ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-            // Dark background
-            ctx.fillStyle = '#0f0f1b';
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            // Background: draw image + gradient overlay for readability
+            if (currentBgImage && currentBgImage.complete && currentBgImage.naturalWidth > 0) {
+                // Draw image scaled to fill canvas
+                const scale = Math.max(canvas.width / currentBgImage.width, canvas.height / currentBgImage.height);
+                const w = currentBgImage.width * scale;
+                const h = currentBgImage.height * scale;
+                ctx.drawImage(currentBgImage, (canvas.width - w) / 2, (canvas.height - h) / 2, w, h);
 
-            // Top bar background
-            ctx.fillStyle = 'rgba(0, 0, 0, 0.6)';
+                // Dark overlay — stronger at top (controls/text) and bottom (nav buttons)
+                // lighter in the middle so the image bleeds through
+                const grad = ctx.createLinearGradient(0, 0, 0, canvas.height);
+                grad.addColorStop(0,    'rgba(10, 10, 25, 0.82)'); // top bar area
+                grad.addColorStop(0.18, 'rgba(10, 10, 25, 0.55)'); // verse text area starts
+                grad.addColorStop(0.6,  'rgba(10, 10, 25, 0.45)'); // mid canvas
+                grad.addColorStop(0.82, 'rgba(10, 10, 25, 0.65)'); // approaching bottom controls
+                grad.addColorStop(1,    'rgba(10, 10, 25, 0.85)'); // bottom nav bar
+                ctx.fillStyle = grad;
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+            } else {
+                // Fallback solid dark background
+                ctx.fillStyle = '#0f0f1b';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+            }
+
+            // Top bar — subtle frosted glass strip
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.45)';
             ctx.fillRect(0, 0, canvas.width, 60);
 
             // Reset hitRects for this frame
@@ -293,7 +333,11 @@
             }
 
             if (verseDetails) {
-                console.log('[REVIEW DEBUG] displayReviewVerseScreen: calling displayReviewVerse, text length =', verseDetails.text.length);
+                // Pick a new random background whenever the verse changes
+                if (currentReviewVerseIndex !== lastRenderedVerseIndex) {
+                    pickRandomBackground();
+                    lastRenderedVerseIndex = currentReviewVerseIndex;
+                }
                 displayReviewVerse(verseDetails.text);
 
                 ctx.font = '20px Arial';

@@ -29,6 +29,39 @@
     const iconImages = {};
     let iconsLoaded = false;
 
+    // Background images — all 3 preloaded, one picked randomly per verse session
+    const bgImages = ['images/backgrounds/forest.png', 'images/backgrounds/lake.png', 'images/backgrounds/mountains.png'].map(src => {
+        const img = new Image();
+        img.src = src;
+        return img;
+    });
+    let currentBgImage = bgImages[0];
+
+    function pickRandomBackground() {
+        const loaded = bgImages.filter(img => img.complete && img.naturalWidth > 0);
+        if (loaded.length > 0) currentBgImage = loaded[Math.floor(Math.random() * loaded.length)];
+    }
+
+    function drawBackground(c) {
+        if (currentBgImage && currentBgImage.complete && currentBgImage.naturalWidth > 0) {
+            const scale = Math.max(CANVAS_WIDTH / currentBgImage.width, CANVAS_HEIGHT / currentBgImage.height);
+            const w = currentBgImage.width * scale;
+            const h = currentBgImage.height * scale;
+            c.drawImage(currentBgImage, (CANVAS_WIDTH - w) / 2, (CANVAS_HEIGHT - h) / 2, w, h);
+            const grad = c.createLinearGradient(0, 0, 0, CANVAS_HEIGHT);
+            grad.addColorStop(0,    'rgba(10, 10, 25, 0.82)');
+            grad.addColorStop(0.18, 'rgba(10, 10, 25, 0.55)');
+            grad.addColorStop(0.6,  'rgba(10, 10, 25, 0.45)');
+            grad.addColorStop(0.82, 'rgba(10, 10, 25, 0.65)');
+            grad.addColorStop(1,    'rgba(10, 10, 25, 0.85)');
+            c.fillStyle = grad;
+            c.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+        } else {
+            c.fillStyle = '#0f0f1b';
+            c.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+        }
+    }
+
     function loadIcons() {
         if (iconsLoaded) return;
         const iconNames = ['back', 'next', 'play', 'repeat', 'share', 'stop'];
@@ -132,6 +165,7 @@
         }
 
         loadIcons();
+        pickRandomBackground();
 
         // Pause music during VOTD
         if (typeof MusicManager !== 'undefined' && MusicManager.getIsPlaying()) {
@@ -324,8 +358,7 @@
         if (!c) return;
 
         c.clearRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
-        c.fillStyle = '#0f0f1b';
-        c.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+        drawBackground(c);
 
         hitRects = [];
 
@@ -439,8 +472,7 @@
         if (!c) return;
 
         c.clearRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
-        c.fillStyle = '#0f0f1b';
-        c.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+        drawBackground(c);
 
         hitRects = [];
 
