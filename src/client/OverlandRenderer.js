@@ -456,7 +456,7 @@
             this.selectedMission = null;
             this.selectedWorld = null;
         }
-    } }
+    }
     
     // Export for browser
     if (typeof window !== 'undefined') {
