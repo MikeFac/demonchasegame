@@ -2101,36 +2101,40 @@ async function init() {
 // ==================== Mission System Functions ====================
 
 async function initializeMissions() {
+    // If missions are loaded and renderer exists, we're good
     if (missionsInitialized && overlandRenderer) return true;
     
     try {
-        // Load mission data
-        const worlds = await missionClient.getWorlds();
-        window.missionWorlds = worlds;
-        
-        console.log('Loaded worlds:', worlds);
-        
-        // Check and update unlocks
-        if (window.progressManager) {
-            await progressManager.checkUnlocks(worlds);
-        }
-        
-        // Load full world data with missions for each world
-        const worldsWithMissions = [];
-        for (const worldMeta of worlds) {
-            const fullWorld = await missionClient.getWorld(worldMeta.id);
-            if (fullWorld) {
-                worldsWithMissions.push(fullWorld);
+        // Load mission data (only if not already loaded)
+        let worlds = window.missionWorlds;
+        if (!worlds || worlds.length === 0) {
+            worlds = await missionClient.getWorlds();
+            window.missionWorlds = worlds;
+            console.log('Loaded worlds:', worlds);
+            
+            // Check and update unlocks
+            if (window.progressManager) {
+                await progressManager.checkUnlocks(worlds);
             }
         }
         
-        window.worldsWithMissions = worldsWithMissions;
+        // Load full world data with missions (only if not already loaded)
+        if (!window.worldsWithMissions || window.worldsWithMissions.length === 0) {
+            const worldsWithMissions = [];
+            for (const worldMeta of worlds) {
+                const fullWorld = await missionClient.getWorld(worldMeta.id);
+                if (fullWorld) {
+                    worldsWithMissions.push(fullWorld);
+                }
+            }
+            window.worldsWithMissions = worldsWithMissions;
+        }
         
         // Initialize overland renderer (always recreate to ensure current canvas/ctx)
         if (window.OverlandRenderer) {
             overlandRenderer = new OverlandRenderer(ctx, canvas);
-            overlandRenderer.setWorlds(worldsWithMissions);
-            console.log('OverlandRenderer created with', worldsWithMissions.length, 'worlds');
+            overlandRenderer.setWorlds(window.worldsWithMissions);
+            console.log('OverlandRenderer created with', window.worldsWithMissions.length, 'worlds');
         } else {
             console.error('OverlandRenderer not available');
         }
