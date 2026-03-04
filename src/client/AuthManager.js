@@ -29,8 +29,14 @@ class AuthManager {
             const script = document.createElement('script');
             script.setAttribute('data-clerk-publishable-key', publishableKey);
             script.async = true;
-            // Use jsdelivr CDN (cdn.clerk.com may not resolve on all servers)
-            script.src = `https://cdn.jsdelivr.net/npm/@clerk/clerk-js@latest/dist/clerk.browser.js`;
+            // Load from custom domain's frontend API to get UI components
+            // Extract domain from publishable key (base64 encoded)
+            let clerkDomain = 'clerk.versebattles.com';
+            try {
+                const decoded = atob(publishableKey.replace(/^pk_(live|test)_/, ''));
+                if (decoded.includes('.')) clerkDomain = decoded.replace(/\$$/, '');
+            } catch (e) {}
+            script.src = `https://${clerkDomain}/npm/@clerk/clerk-js@5/dist/clerk.browser.js`;
             
             script.onload = async () => {
                 try {
