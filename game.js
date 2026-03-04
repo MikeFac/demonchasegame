@@ -2197,6 +2197,14 @@ function handleOverlandClick(x, y) {
     
     console.log('handleOverlandClick:', x, y, 'canvas:', canvas.width, canvas.height);
     
+    // Check for Back to Menu button first
+    if (overlandRenderer.isMenuClicked(x, y)) {
+        console.log('Menu button clicked, returning to menu');
+        window.gameMode = 'game';
+        showMenu();
+        return;
+    }
+    
     // Check for mission node click
     const clickedNode = overlandRenderer.handleClick(x, y, progressManager);
     if (clickedNode) console.log('Clicked node:', clickedNode.missionName);
@@ -2216,11 +2224,9 @@ function handleOverlandClick(x, y) {
     const learnClicked = overlandRenderer.isLearnVersesClicked(x, y);
     console.log('isLearnVersesClicked:', learnClicked, 'selectedMission:', !!overlandRenderer.getSelectedMission(), 'ReviewMode:', !!window.ReviewMode);
     if (learnClicked && overlandRenderer.getSelectedMission()) {
-        // Only allow Learn Verses if a mission is selected
         if (window.ReviewMode) {
             const selected = overlandRenderer.getSelectedMission();
             let reviewQuality = null;
-            // Get verse quality from selected mission
             if (selected && window.worldsWithMissions && window.worldsWithMissions.length > 0) {
                 const world = window.worldsWithMissions.find(w => w.id === selected.worldId);
                 if (world) {
@@ -2236,8 +2242,6 @@ function handleOverlandClick(x, y) {
                 vQuality: reviewQuality
             };
             
-            // Ensure verses are loaded before entering review mode
-            // (they may not be loaded if the user hasn't played a game yet)
             if (typeof organizedVerses === 'undefined' || !organizedVerses || Object.keys(organizedVerses).length === 0) {
                 console.log('Loading verses before entering review mode...');
                 loadVerses().then(() => {

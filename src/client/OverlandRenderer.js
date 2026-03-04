@@ -414,6 +414,19 @@
         }
         
         /**
+         * Check if Back to Menu button was clicked.
+         */
+        isMenuClicked(screenX, screenY) {
+            const menuBtnX = 10;
+            const menuBtnY = 10;
+            const menuBtnW = 80;
+            const menuBtnH = 30;
+            
+            return screenX >= menuBtnX && screenX <= menuBtnX + menuBtnW &&
+                   screenY >= menuBtnY && screenY <= menuBtnY + menuBtnH;
+        }
+        
+        /**
          * Check if Learn Verses button was clicked.
          */
         isLearnVersesClicked(screenX, screenY) {
@@ -443,7 +456,7 @@
             this.selectedMission = null;
             this.selectedWorld = null;
         }
-    }
+    } }
     
     // Export for browser
     if (typeof window !== 'undefined') {
