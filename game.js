@@ -1840,9 +1840,6 @@ async function init() {
             onQuizOptionClick: (selectedOption) => {
                 QuizManager.handleQuizAnswer(selectedOption);
             },
-            onReviewModeClick: (event) => {
-                ReviewMode.handleReviewClick(event);
-            },
             onOverlandClick: (x, y) => {
                 handleOverlandClick(x, y);
             },

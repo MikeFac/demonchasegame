@@ -26,6 +26,7 @@ Thumbs.db
 
 # Private/internal documents
 Marketing-and-Roadmap/
+docs/marketing/
 
 # Test/debug artifacts
 .playwright-cli/

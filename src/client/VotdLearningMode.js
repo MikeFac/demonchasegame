@@ -11,9 +11,104 @@
     let currentPhase = 'presentation'; // 'presentation' | 'learning'
     let cachedVerseDisplay = '';
     let musicWasPlaying = false;
+    
+    // UI State for Upgrade
+    let hoveredButton = null;
+    let isRepeatModeActive = false;
+    let repeatDurationIndex = 1; // Default to 5s
+    const REPEAT_DURATIONS = [2000, 5000, 10000];
+    const REPEAT_LABELS = ['2s', '5s', '10s'];
+    let dropdownOpen = false;
+    let repeatTimer = null;
+    let votdFlashMessage = null;
 
     let CANVAS_WIDTH = 400;
     let CANVAS_HEIGHT = 600;
+
+    // Preloaded SVG icons
+    const iconImages = {};
+    let iconsLoaded = false;
+
+    function loadIcons() {
+        if (iconsLoaded) return;
+        const iconNames = ['back', 'next', 'play', 'repeat', 'share', 'stop'];
+        iconNames.forEach(name => {
+            const img = new Image();
+            img.src = `images/icons/${name}.svg`;
+            iconImages[name] = img;
+        });
+        iconsLoaded = true;
+    }
+
+    function drawSvgIcon(c, name, x, y, size, color) {
+        const img = iconImages[name];
+        if (img && img.complete && img.naturalWidth > 0) {
+            c.save();
+            if (color) {
+                c.globalCompositeOperation = 'source-over';
+            }
+            c.drawImage(img, x, y, size, size);
+            c.restore();
+        } else {
+            c.save();
+            c.strokeStyle = color || '#fff';
+            c.fillStyle = color || '#fff';
+            c.lineWidth = 2;
+            c.lineCap = 'round';
+            c.lineJoin = 'round';
+            const cx = x + size / 2;
+            const cy = y + size / 2;
+            const s = size * 0.6;
+            if (name === 'back') {
+                c.beginPath();
+                c.moveTo(cx + s / 4, cy - s / 2);
+                c.lineTo(cx - s / 4, cy);
+                c.lineTo(cx + s / 4, cy + s / 2);
+                c.stroke();
+            } else if (name === 'next') {
+                c.beginPath();
+                c.moveTo(cx - s / 4, cy - s / 2);
+                c.lineTo(cx + s / 4, cy);
+                c.lineTo(cx - s / 4, cy + s / 2);
+                c.stroke();
+            } else if (name === 'play') {
+                c.beginPath();
+                c.moveTo(cx - s / 4, cy - s / 2);
+                c.lineTo(cx + s / 2, cy);
+                c.lineTo(cx - s / 4, cy + s / 2);
+                c.closePath();
+                c.fill();
+            } else if (name === 'stop') {
+                c.beginPath();
+                c.rect(cx - s / 2, cy - s / 2, s, s);
+                c.fill();
+            } else if (name === 'repeat') {
+                c.beginPath();
+                c.arc(cx, cy, s / 2, -Math.PI / 2, Math.PI, false);
+                c.stroke();
+                c.beginPath();
+                c.moveTo(cx - s / 2 - s / 6, cy - s / 6);
+                c.lineTo(cx - s / 2, cy + s / 6);
+                c.lineTo(cx - s / 2 + s / 6, cy - s / 6);
+                c.stroke();
+            } else if (name === 'share') {
+                c.beginPath();
+                c.arc(cx - s / 3, cy, s / 6, 0, Math.PI * 2);
+                c.moveTo(cx + s / 3, cy - s / 3);
+                c.arc(cx + s / 3, cy - s / 3, s / 6, 0, Math.PI * 2);
+                c.moveTo(cx + s / 3, cy + s / 3);
+                c.arc(cx + s / 3, cy + s / 3, s / 6, 0, Math.PI * 2);
+                c.stroke();
+                c.beginPath();
+                c.moveTo(cx - s / 3 + s / 6, cy);
+                c.lineTo(cx + s / 3 - s / 6, cy - s / 3);
+                c.moveTo(cx - s / 3 + s / 6, cy);
+                c.lineTo(cx + s / 3 - s / 6, cy + s / 3);
+                c.stroke();
+            }
+            c.restore();
+        }
+    }
 
     function getCanvas() {
         return typeof canvas !== 'undefined' ? canvas : { width: 400, height: 600 };
@@ -36,6 +131,8 @@
             return;
         }
 
+        loadIcons();
+
         // Pause music during VOTD
         if (typeof MusicManager !== 'undefined' && MusicManager.getIsPlaying()) {
             musicWasPlaying = true;
@@ -50,6 +147,8 @@
         cachedVerseDisplay = currentVerse.Text;
         currentPhase = 'presentation';
         isAudioPlaying = false;
+        isRepeatModeActive = false;
+        dropdownOpen = false;
 
         const verseWords = currentVerse.Text.split(' ');
         maxWordsHidden = Math.ceil(verseWords.length / 2);
@@ -68,7 +167,17 @@
 
         isAudioPlaying = true;
         currentAudio = new Audio(audioUrl);
-        currentAudio.onended = function () { isAudioPlaying = false; };
+        currentAudio.onended = function () { 
+            isAudioPlaying = false; 
+            if (isRepeatModeActive) {
+                clearTimeout(repeatTimer);
+                repeatTimer = setTimeout(() => {
+                    if (isRepeatModeActive && window.gameMode === 'votd' && votdMode === 'learning') {
+                        playVerseAudio();
+                    }
+                }, REPEAT_DURATIONS[repeatDurationIndex]);
+            }
+        };
         currentAudio.onerror = function () {
             console.warn('Failed to play verse audio:', audioUrl);
             isAudioPlaying = false;
@@ -77,6 +186,78 @@
             console.warn('Audio playback failed:', err);
             isAudioPlaying = false;
         });
+    }
+
+    /**
+     * Draw tooltip for desktop hover
+     */
+    function drawTooltip(c, text, x, y) {
+        c.font = '12px Arial';
+        const textWidth = c.measureText(text).width;
+        const tw = textWidth + 12;
+        const th = 22;
+        
+        let tx = x - tw / 2;
+        let ty = y - th - 10;
+        
+        // Boundaries
+        if (tx < 5) tx = 5;
+        if (tx + tw > CANVAS_WIDTH - 5) tx = CANVAS_WIDTH - tw - 5;
+        if (ty < 5) ty = y + 40;
+
+        c.fillStyle = 'rgba(0, 0, 0, 0.85)';
+        c.beginPath();
+        c.roundRect(tx, ty, tw, th, 4);
+        c.fill();
+        c.strokeStyle = 'rgba(255, 255, 255, 0.2)';
+        c.stroke();
+
+        c.fillStyle = '#fff';
+        c.textAlign = 'center';
+        c.textBaseline = 'middle';
+        c.fillText(text, tx + tw / 2, ty + th / 2);
+        c.textBaseline = 'alphabetic';
+    }
+
+    function drawTimingDropdown(c, x, y) {
+        const h = REPEAT_LABELS.length * 32;
+        const w = 55;
+        
+        c.fillStyle = 'rgba(30, 30, 50, 0.98)';
+        c.beginPath();
+        c.roundRect(x, y, w, h, 8);
+        c.fill();
+        c.strokeStyle = '#4CAF50';
+        c.lineWidth = 2;
+        c.stroke();
+
+        REPEAT_LABELS.forEach((label, i) => {
+            const iy = y + i * 32;
+            if (hoveredButton === `repeatOpt${i}`) {
+                c.fillStyle = 'rgba(76, 175, 80, 0.2)';
+                c.fillRect(x + 2, iy + 2, w - 4, 28);
+            }
+            c.fillStyle = repeatDurationIndex === i ? '#ffd700' : '#fff';
+            c.font = repeatDurationIndex === i ? 'bold 13px Arial' : '13px Arial';
+            c.textAlign = 'center';
+            c.fillText(label, x + w / 2, iy + 21);
+            
+            hitRects.push({ name: `repeatOpt${i}`, x: x, y: iy, w: w, h: 32 });
+        });
+    }
+
+    function handleMouseMove(x, y) {
+        let found = null;
+        for (const rect of hitRects) {
+            if (x >= rect.x && x <= rect.x + rect.w && y >= rect.y && y <= rect.y + rect.h) {
+                found = rect.name;
+                break;
+            }
+        }
+        if (hoveredButton !== found) {
+            hoveredButton = found;
+            render();
+        }
     }
 
     function convertRefToAudioPath(reference) {
@@ -143,66 +324,108 @@
         if (!c) return;
 
         c.clearRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
-        c.fillStyle = '#1a1a2e';
+        c.fillStyle = '#0f0f1b';
         c.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
-
-        c.fillStyle = '#ffd700';
-        c.font = 'bold 24px Arial';
-        c.textAlign = 'center';
-        c.fillText(t('votd.verseOfTheDay'), CANVAS_WIDTH / 2, 40);
-
-        c.fillStyle = '#aaa';
-        c.font = '14px Arial';
-        c.fillText(currentVerse.Reference, CANVAS_WIDTH / 2, 65);
-
-        c.fillStyle = '#fff';
-        c.font = 'bold 18px Arial';
-        c.textAlign = 'left';
-        drawWrappedText(c, currentVerse.Text, 20, 100, CANVAS_WIDTH - 40, 30);
 
         hitRects = [];
 
-        // Play audio button
-        const audioX = CANVAS_WIDTH / 2 - 60;
-        const audioY = CANVAS_HEIGHT - 140;
-        c.fillStyle = isAudioPlaying ? '#00aa00' : '#0066cc';
-        c.fillRect(audioX, audioY, 120, 40);
-        c.fillStyle = '#fff';
-        c.font = '16px Arial';
-        c.textAlign = 'center';
-        c.fillText(isAudioPlaying ? t('votd.playing') : t('votd.playAudio'), audioX + 60, audioY + 28);
-        hitRects.push({ name: 'audio', x: audioX, y: audioY, w: 120, h: 40 });
+        // === TOP BAR ===
+        const topBarHeight = 60;
+        const iconSize = 44;
+        const iconY = 12;
 
-        // Devotional button
-        const devX = CANVAS_WIDTH / 2 - 60;
-        const devY = CANVAS_HEIGHT - 80;
+        // Back Icon (Top Left)
+        const backX = 10;
+        if (hoveredButton === 'exit') {
+            c.fillStyle = 'rgba(255, 255, 255, 0.1)';
+            c.beginPath();
+            c.roundRect(backX, iconY, iconSize, iconSize, 10);
+            c.fill();
+        }
+        drawSvgIcon(c, 'back', backX, iconY, iconSize, '#fff');
+        hitRects.push({ name: 'exit', x: backX, y: iconY, w: iconSize, h: iconSize, tooltip: t('common.back') });
+
+        // Share Icon (Top Right)
+        const shareX = CANVAS_WIDTH - iconSize - 10;
+        if (hoveredButton === 'share') {
+            c.fillStyle = 'rgba(255, 255, 255, 0.1)';
+            c.beginPath();
+            c.roundRect(shareX, iconY, iconSize, iconSize, 10);
+            c.fill();
+        }
+        drawSvgIcon(c, 'share', shareX, iconY, iconSize, '#fff');
+        hitRects.push({ name: 'share', x: shareX, y: iconY, w: iconSize, h: iconSize, tooltip: t('common.share') });
+
+        // Title (Centered)
+        c.fillStyle = '#ffd700';
+        c.font = 'bold 18px "Segoe UI", Arial';
+        c.textAlign = 'center';
+        c.fillText(t('votd.verseOfTheDay'), CANVAS_WIDTH / 2, 32);
+
+        c.fillStyle = 'rgba(255, 215, 0, 0.7)';
+        c.font = '13px Arial';
+        c.fillText(currentVerse.Reference, CANVAS_WIDTH / 2, 52);
+
+        // === VERSE TEXT ===
+        c.fillStyle = '#fff';
+        c.font = 'bold 19px "Segoe UI", Arial';
+        c.textAlign = 'left';
+        drawWrappedText(c, currentVerse.Text, 25, topBarHeight + 40, CANVAS_WIDTH - 50, 30);
+
+        // === BOTTOM CONTROLS ===
+        const bottomY = CANVAS_HEIGHT - 110;
+        
+        // Play Audio Button (Center)
+        const playSize = 56;
+        const playX = CANVAS_WIDTH / 2 - playSize / 2;
+        const playY = bottomY;
+        if (hoveredButton === 'audio') {
+            c.fillStyle = isAudioPlaying ? 'rgba(76, 175, 80, 0.15)' : 'rgba(0, 170, 255, 0.15)';
+            c.beginPath();
+            c.arc(playX + playSize / 2, playY + playSize / 2, playSize / 2 + 6, 0, Math.PI * 2);
+            c.fill();
+        }
+        drawSvgIcon(c, isAudioPlaying ? 'stop' : 'play', playX, playY, playSize, isAudioPlaying ? '#4CAF50' : '#00aaff');
+        hitRects.push({ name: 'audio', x: playX, y: playY, w: playSize, h: playSize, tooltip: isAudioPlaying ? t('votd.stop') : t('votd.playAudio') });
+
+        // Devotional Button (Left of Play)
+        const devW = 90;
+        const devH = 36;
+        const devX = 20;
+        const devY = bottomY + 10;
+        if (hoveredButton === 'devotional') {
+            c.fillStyle = 'rgba(232, 212, 77, 0.2)';
+            c.beginPath();
+            c.roundRect(devX, devY, devW, devH, 18);
+            c.fill();
+        }
+        c.strokeStyle = '#e8d44d';
+        c.lineWidth = 1.5;
+        c.beginPath();
+        c.roundRect(devX, devY, devW, devH, 18);
+        c.stroke();
         c.fillStyle = '#e8d44d';
-        c.fillRect(devX, devY, 120, 36);
-        c.fillStyle = '#333';
-        c.font = 'bold 14px Arial';
-        c.fillText('Devotional', devX + 60, devY + 24);
-        hitRects.push({ name: 'devotional', x: devX, y: devY, w: 120, h: 36 });
-
-        // Share button (left side at bottom)
-        const shareX = 20;
-        const shareY = CANVAS_HEIGHT - 35;
-        c.fillStyle = '#4CAF50';
-        c.fillRect(shareX, shareY, 70, 32);
-        c.fillStyle = '#fff';
-        c.font = '14px Arial';
+        c.font = 'bold 11px Arial';
         c.textAlign = 'center';
-        c.fillText('📤 Share', shareX + 35, shareY + 22);
-        hitRects.push({ name: 'share', x: shareX, y: shareY, w: 70, h: 32 });
+        c.fillText(t('votd.devotional') || 'Devotional', devX + devW / 2, devY + 23);
+        hitRects.push({ name: 'devotional', x: devX, y: devY, w: devW, h: devH });
 
-        // Start Learning button (center)
-        const startX = CANVAS_WIDTH / 2 - 70;
-        const startY = CANVAS_HEIGHT - 35;
+        // Start Learning Button (Right of Play)
+        const startSize = 48;
+        const startX = CANVAS_WIDTH - startSize - 20;
+        const startY = bottomY + 4;
+        if (hoveredButton === 'startLearning') {
+            c.fillStyle = 'rgba(76, 175, 80, 0.15)';
+            c.beginPath();
+            c.arc(startX + startSize / 2, startY + startSize / 2, startSize / 2 + 6, 0, Math.PI * 2);
+            c.fill();
+        }
+        drawSvgIcon(c, 'next', startX, startY, startSize, '#4CAF50');
         c.fillStyle = '#4CAF50';
-        c.fillRect(startX, startY, 140, 32);
-        c.fillStyle = '#fff';
-        c.font = '15px Arial';
-        c.fillText(t('votd.startLearning'), startX + 70, startY + 22);
-        hitRects.push({ name: 'startLearning', x: startX, y: startY, w: 140, h: 32 });
+        c.font = 'bold 9px Arial';
+        c.textAlign = 'center';
+        c.fillText(t('votd.start').toUpperCase(), startX + startSize / 2, startY + startSize + 12);
+        hitRects.push({ name: 'startLearning', x: startX, y: startY, w: startSize, h: startSize, tooltip: t('votd.startLearning') });
 
         c.textAlign = 'left';
     }
@@ -216,70 +439,154 @@
         if (!c) return;
 
         c.clearRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
-        c.fillStyle = '#1a1a2e';
+        c.fillStyle = '#0f0f1b';
         c.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
-
-        // Header
-        c.fillStyle = '#ffd700';
-        c.font = 'bold 20px Arial';
-        c.textAlign = 'center';
-        c.fillText(t('votd.learning', wordsHidden, maxWordsHidden), CANVAS_WIDTH / 2, 30);
-
-        // Reference
-        c.fillStyle = '#aaa';
-        c.font = '13px Arial';
-        c.fillText(currentVerse.Reference, CANVAS_WIDTH / 2, 50);
-
-        // Verse with blanks
-        c.fillStyle = '#fff';
-        c.font = 'bold 16px Arial';
-        c.textAlign = 'left';
-        drawWrappedText(c, cachedVerseDisplay, 20, 80, CANVAS_WIDTH - 40, 26);
-
-        // Instruction
-        c.fillStyle = '#888';
-        c.font = '13px Arial';
-        c.textAlign = 'center';
-        c.fillText(t('votd.readAloud'), CANVAS_WIDTH / 2, CANVAS_HEIGHT - 130);
 
         hitRects = [];
 
-        // Replay audio (top right)
-        const raX = CANVAS_WIDTH - 110;
-        c.fillStyle = '#0066cc';
-        c.fillRect(raX, 5, 100, 28);
+        // === TOP BAR ===
+        const topBarHeight = 60;
+        const iconSize = 44;
+        const iconY = 12;
+
+        // Back Icon (Top Left)
+        const backX = 10;
+        if (hoveredButton === 'backToPresentation') {
+            c.fillStyle = 'rgba(255, 255, 255, 0.1)';
+            c.beginPath();
+            c.roundRect(backX, iconY, iconSize, iconSize, 10);
+            c.fill();
+        }
+        drawSvgIcon(c, 'back', backX, iconY, iconSize, '#fff');
+        hitRects.push({ name: 'backToPresentation', x: backX, y: iconY, w: iconSize, h: iconSize, tooltip: t('common.back') });
+
+        // Share Icon (Top Right)
+        const shareX = CANVAS_WIDTH - iconSize - 10;
+        if (hoveredButton === 'share') {
+            c.fillStyle = 'rgba(255, 255, 255, 0.1)';
+            c.beginPath();
+            c.roundRect(shareX, iconY, iconSize, iconSize, 10);
+            c.fill();
+        }
+        drawSvgIcon(c, 'share', shareX, iconY, iconSize, '#fff');
+        hitRects.push({ name: 'share', x: shareX, y: iconY, w: iconSize, h: iconSize, tooltip: t('common.share') });
+
+        // Title (Centered)
+        c.fillStyle = '#ffd700';
+        c.font = 'bold 18px Arial';
+        c.textAlign = 'center';
+        c.fillText(t('votd.learning', wordsHidden, maxWordsHidden), CANVAS_WIDTH / 2, 32);
+
+        c.fillStyle = 'rgba(255, 215, 0, 0.7)';
+        c.font = '13px Arial';
+        c.fillText(currentVerse.Reference, CANVAS_WIDTH / 2, 52);
+
+        // === VERSE WITH BLANKS ===
         c.fillStyle = '#fff';
-        c.font = '12px Arial';
-        c.fillText(t('votd.replayAudio'), raX + 50, 24);
-        hitRects.push({ name: 'audio', x: raX, y: 5, w: 100, h: 28 });
+        c.font = 'bold 17px "Segoe UI", Arial';
+        c.textAlign = 'left';
+        drawWrappedText(c, cachedVerseDisplay, 20, topBarHeight + 30, CANVAS_WIDTH - 40, 27);
 
-        // Bottom buttons
-        const btnY = CANVAS_HEIGHT - 55;
-        const btnH = 40;
+        // === INSTRUCTION ===
+        c.fillStyle = 'rgba(255, 255, 255, 0.5)';
+        c.font = 'italic 12px Arial';
+        c.textAlign = 'center';
+        c.fillText(t('votd.readAloud'), CANVAS_WIDTH / 2, CANVAS_HEIGHT - 150);
 
-        // Hide Word button (left)
-        if (wordsHidden < maxWordsHidden) {
-            const hwX = 20;
-            const hwW = 120;
-            c.fillStyle = '#e67e22';
-            c.fillRect(hwX, btnY, hwW, btnH);
+        // === BOTTOM CONTROLS ===
+        const bottomY = CANVAS_HEIGHT - 85;
+        const repSize = 46;
+
+        // Repeat Toggle (Left)
+        const repX = 15;
+        const repY = bottomY;
+        if (hoveredButton === 'repeatToggle') {
+            c.fillStyle = 'rgba(76, 175, 80, 0.15)';
+            c.beginPath();
+            c.arc(repX + repSize / 2, repY + repSize / 2, repSize / 2 + 5, 0, Math.PI * 2);
+            c.fill();
+        }
+        drawSvgIcon(c, 'repeat', repX, repY, repSize, isRepeatModeActive ? '#4CAF50' : '#888');
+        hitRects.push({ name: 'repeatToggle', x: repX, y: repY, w: repSize, h: repSize, tooltip: t('votd.repeatMode') });
+
+        // Timing selector (to the RIGHT of repeat, never overlaps Share)
+        if (isRepeatModeActive) {
+            const timeX = repX + repSize + 8;
+            const timeY = repY + 7;
+            const timeW = 48;
+            const timeH = 32;
+            
+            if (hoveredButton === 'timing') {
+                c.fillStyle = 'rgba(76, 175, 80, 0.25)';
+            } else {
+                c.fillStyle = 'rgba(0, 0, 0, 0.4)';
+            }
+            c.beginPath();
+            c.roundRect(timeX, timeY, timeW, timeH, 6);
+            c.fill();
+            c.strokeStyle = isRepeatModeActive ? '#4CAF50' : '#555';
+            c.lineWidth = 1.5;
+            c.stroke();
+            
             c.fillStyle = '#fff';
-            c.font = 'bold 14px Arial';
+            c.font = 'bold 12px Arial';
             c.textAlign = 'center';
-            c.fillText(t('votd.hideWord'), hwX + hwW / 2, btnY + 27);
-            hitRects.push({ name: 'hideWord', x: hwX, y: btnY, w: hwW, h: btnH });
+            c.fillText(REPEAT_LABELS[repeatDurationIndex], timeX + timeW / 2, timeY + 21);
+            hitRects.push({ name: 'timing', x: timeX, y: timeY, w: timeW, h: timeH, tooltip: t('votd.repeatTiming') });
+            
+            // Dropdown opens BELOW the timing button (not above where Share is)
+            if (dropdownOpen) {
+                drawTimingDropdown(c, timeX, timeY + timeH + 4);
+            }
         }
 
-        // Test Now button (right)
-        const tnX = CANVAS_WIDTH - 140;
-        const tnW = 120;
-        c.fillStyle = '#4CAF50';
-        c.fillRect(tnX, btnY, tnW, btnH);
-        c.fillStyle = '#fff';
-        c.font = 'bold 14px Arial';
+        // Hide Word Button (Center)
+        if (wordsHidden < maxWordsHidden) {
+            const hwW = 95;
+            const hwH = 38;
+            const hwX = CANVAS_WIDTH / 2 - hwW / 2;
+            const hwY = bottomY + 4;
+            if (hoveredButton === 'hideWord') {
+                c.fillStyle = 'rgba(230, 126, 34, 0.25)';
+                c.beginPath();
+                c.roundRect(hwX, hwY, hwW, hwH, 19);
+                c.fill();
+            }
+            c.strokeStyle = '#e67e22';
+            c.lineWidth = 2;
+            c.beginPath();
+            c.roundRect(hwX, hwY, hwW, hwH, 19);
+            c.stroke();
+            c.fillStyle = '#e67e22';
+            c.font = 'bold 12px Arial';
+            c.textAlign = 'center';
+            c.fillText(t('votd.hideWord'), hwX + hwW / 2, hwY + 24);
+            hitRects.push({ name: 'hideWord', x: hwX, y: hwY, w: hwW, h: hwH });
+        }
+
+        // Test Now Button (Right)
+        const tnW = 80;
+        const tnH = 38;
+        const tnX = CANVAS_WIDTH - tnW - 15;
+        const tnY = bottomY + 4;
+        if (hoveredButton === 'testNow') {
+            c.fillStyle = '#4CAF50';
+            c.beginPath();
+            c.roundRect(tnX, tnY, tnW, tnH, 19);
+            c.fill();
+            c.fillStyle = '#fff';
+        } else {
+            c.strokeStyle = '#4CAF50';
+            c.lineWidth = 2;
+            c.beginPath();
+            c.roundRect(tnX, tnY, tnW, tnH, 19);
+            c.stroke();
+            c.fillStyle = '#4CAF50';
+        }
+        c.font = 'bold 12px Arial';
         c.textAlign = 'center';
-        c.fillText(t('votd.testNow'), tnX + tnW / 2, btnY + 27);
-        hitRects.push({ name: 'testNow', x: tnX, y: btnY, w: tnW, h: btnH });
+        c.fillText(t('votd.testNow'), tnX + tnW / 2, tnY + 24);
+        hitRects.push({ name: 'testNow', x: tnX, y: tnY, w: tnW, h: tnH });
 
         c.textAlign = 'left';
     }
@@ -321,6 +628,40 @@
         } else if (currentPhase === 'learning') {
             drawLearning();
         }
+
+        // Draw flash message (share feedback)
+        if (votdFlashMessage) {
+            const c = getCtx();
+            const elapsed = Date.now() - votdFlashMessage.startTime;
+            if (elapsed < votdFlashMessage.duration) {
+                const alpha = Math.min(1, 1 - (elapsed / votdFlashMessage.duration) * 0.5);
+                c.save();
+                c.globalAlpha = alpha;
+                c.fillStyle = 'rgba(76, 175, 80, 0.9)';
+                c.font = 'bold 16px Arial';
+                c.textAlign = 'center';
+                const msgW = c.measureText(votdFlashMessage.text).width + 30;
+                const msgX = CANVAS_WIDTH / 2 - msgW / 2;
+                const msgY = 65;
+                c.beginPath();
+                c.roundRect(msgX, msgY, msgW, 32, 8);
+                c.fill();
+                c.fillStyle = '#fff';
+                c.fillText(votdFlashMessage.text, CANVAS_WIDTH / 2, msgY + 22);
+                c.textAlign = 'left';
+                c.restore();
+            } else {
+                votdFlashMessage = null;
+            }
+        }
+
+        // Draw Tooltip (Top Layer)
+        if (hoveredButton) {
+            const rect = hitRects.find(r => r.name === hoveredButton);
+            if (rect && rect.tooltip) {
+                drawTooltip(getCtx(), rect.tooltip, rect.x + rect.w / 2, rect.y);
+            }
+        }
     }
 
     function handleClick(x, y) {
@@ -332,13 +673,36 @@
 
         for (const rect of hitRects) {
             if (x >= rect.x && x <= rect.x + rect.w && y >= rect.y && y <= rect.y + rect.h) {
-                if (rect.name === 'audio') {
-                    playVerseAudio();
+                if (rect.name === 'exit') {
+                    exitLearningMode();
+                } else if (rect.name === 'backToPresentation') {
+                    currentPhase = 'presentation';
+                    stopAudio();
+                } else if (rect.name === 'audio') {
+                    if (isAudioPlaying) stopAudio();
+                    else playVerseAudio();
+                } else if (rect.name === 'repeatToggle') {
+                    isRepeatModeActive = !isRepeatModeActive;
+                    if (!isRepeatModeActive) {
+                        clearTimeout(repeatTimer);
+                        dropdownOpen = false;
+                    }
+                } else if (rect.name === 'timing') {
+                    dropdownOpen = !dropdownOpen;
+                } else if (rect.name.startsWith('repeatOpt')) {
+                    const idx = parseInt(rect.name.replace('repeatOpt', ''));
+                    repeatDurationIndex = idx;
+                    dropdownOpen = false;
                 } else if (rect.name === 'share') {
                     if (window.ShareManager && currentVerse) {
                         ShareManager.shareVotd(currentVerse.Reference).then(result => {
                             if (result.success) {
-                                ShareManager.showShareSuccess(result.method);
+                                votdFlashMessage = {
+                                    text: result.method === 'native' ? '📤 Shared!' : '📋 Copied to clipboard!',
+                                    startTime: Date.now(),
+                                    duration: 2000
+                                };
+                                render();
                             }
                         });
                     }
@@ -352,8 +716,35 @@
                 } else if (rect.name === 'devotional') {
                     openDevotional();
                 }
+                
+                // If we didn't click inside the dropdown but it was open, close it
+                if (dropdownOpen && !rect.name.startsWith('repeatOpt') && rect.name !== 'timing') {
+                    dropdownOpen = false;
+                }
+                
+                render();
                 return;
             }
+        }
+        
+        // Click outside any button closes dropdown
+        if (dropdownOpen) {
+            dropdownOpen = false;
+            render();
+        }
+    }
+
+    function handleMouseMove(x, y) {
+        let found = null;
+        for (const rect of hitRects) {
+            if (x >= rect.x && x <= rect.x + rect.w && y >= rect.y && y <= rect.y + rect.h) {
+                found = rect.name;
+                break;
+            }
+        }
+        if (hoveredButton !== found) {
+            hoveredButton = found;
+            render();
         }
     }
 
@@ -374,6 +765,7 @@
             currentAudio = null;
         }
         isAudioPlaying = false;
+        clearTimeout(repeatTimer);
     }
 
     function exitLearningMode() {
@@ -387,6 +779,7 @@
         start: start,
         render: render,
         handleClick: handleClick,
+        handleMouseMove: handleMouseMove,
         launchTest: launchTest,
         exitLearningMode: exitLearningMode
     };

@@ -11,7 +11,7 @@
     let repeatTimer = null;
     let meditationMode = false; // Toggle for continuous repeat
     let returnToMode = 'game'; // Where to return when exiting review ('game' or 'overland')
-    let ignoreNextClick = false; // Flag to ignore click that triggered review mode
+
 
     // Repeat delay options (in milliseconds)
     const REPEAT_DELAYS = {
@@ -21,6 +21,129 @@
         '5m': 300000,
         '1h': 3600000
     };
+
+    // UI state for icon-based interaction
+    let hitRects = [];
+    let hoveredButton = null;
+    let delayDropdownOpen = false;
+
+    // Local flash message for review mode feedback
+    let reviewFlashMessage = null;
+
+    // Preloaded SVG icons
+    const iconImages = {};
+    let iconsLoaded = false;
+
+    function loadIcons() {
+        if (iconsLoaded) return;
+        const iconNames = ['back', 'next', 'play', 'repeat', 'share', 'stop'];
+        iconNames.forEach(name => {
+            const img = new Image();
+            img.src = `images/icons/${name}.svg`;
+            iconImages[name] = img;
+        });
+        iconsLoaded = true;
+    }
+
+    function drawSvgIcon(c, name, x, y, size, color) {
+        const img = iconImages[name];
+        if (img && img.complete && img.naturalWidth > 0) {
+            c.save();
+            if (color) {
+                c.globalCompositeOperation = 'source-over';
+            }
+            c.drawImage(img, x, y, size, size);
+            c.restore();
+        } else {
+            // Fallback: draw shapes if SVG not loaded yet
+            c.save();
+            c.strokeStyle = color || '#fff';
+            c.fillStyle = color || '#fff';
+            c.lineWidth = 2;
+            c.lineCap = 'round';
+            c.lineJoin = 'round';
+            const cx = x + size / 2;
+            const cy = y + size / 2;
+            const s = size * 0.6;
+            if (name === 'back') {
+                c.beginPath();
+                c.moveTo(cx + s / 4, cy - s / 2);
+                c.lineTo(cx - s / 4, cy);
+                c.lineTo(cx + s / 4, cy + s / 2);
+                c.stroke();
+            } else if (name === 'next') {
+                c.beginPath();
+                c.moveTo(cx - s / 4, cy - s / 2);
+                c.lineTo(cx + s / 4, cy);
+                c.lineTo(cx - s / 4, cy + s / 2);
+                c.stroke();
+            } else if (name === 'play') {
+                c.beginPath();
+                c.moveTo(cx - s / 4, cy - s / 2);
+                c.lineTo(cx + s / 2, cy);
+                c.lineTo(cx - s / 4, cy + s / 2);
+                c.closePath();
+                c.fill();
+            } else if (name === 'stop') {
+                c.beginPath();
+                c.rect(cx - s / 2, cy - s / 2, s, s);
+                c.fill();
+            } else if (name === 'repeat') {
+                c.beginPath();
+                c.arc(cx, cy, s / 2, -Math.PI / 2, Math.PI, false);
+                c.stroke();
+                c.beginPath();
+                c.moveTo(cx - s / 2 - s / 6, cy - s / 6);
+                c.lineTo(cx - s / 2, cy + s / 6);
+                c.lineTo(cx - s / 2 + s / 6, cy - s / 6);
+                c.stroke();
+            } else if (name === 'share') {
+                c.beginPath();
+                c.arc(cx - s / 3, cy, s / 6, 0, Math.PI * 2);
+                c.moveTo(cx + s / 3, cy - s / 3);
+                c.arc(cx + s / 3, cy - s / 3, s / 6, 0, Math.PI * 2);
+                c.moveTo(cx + s / 3, cy + s / 3);
+                c.arc(cx + s / 3, cy + s / 3, s / 6, 0, Math.PI * 2);
+                c.stroke();
+                c.beginPath();
+                c.moveTo(cx - s / 3 + s / 6, cy);
+                c.lineTo(cx + s / 3 - s / 6, cy - s / 3);
+                c.moveTo(cx - s / 3 + s / 6, cy);
+                c.lineTo(cx + s / 3 - s / 6, cy + s / 3);
+                c.stroke();
+            }
+            c.restore();
+        }
+    }
+
+    function drawTooltip(c, text, x, y) {
+        c.font = '12px Arial';
+        const textWidth = c.measureText(text).width;
+        const tw = textWidth + 12;
+        const th = 22;
+
+        let tx = x - tw / 2;
+        let ty = y - th - 10;
+
+        // Boundary clamping
+        if (tx < 5) tx = 5;
+        if (tx + tw > canvas.width - 5) tx = canvas.width - tw - 5;
+        if (ty < 5) ty = y + 40;
+
+        c.fillStyle = 'rgba(0, 0, 0, 0.85)';
+        c.beginPath();
+        c.roundRect(tx, ty, tw, th, 4);
+        c.fill();
+        c.strokeStyle = 'rgba(255, 255, 255, 0.2)';
+        c.stroke();
+
+        c.fillStyle = '#fff';
+        c.textAlign = 'center';
+        c.textBaseline = 'middle';
+        c.fillText(text, tx + tw / 2, ty + th / 2);
+        c.textBaseline = 'alphabetic';
+        c.textAlign = 'left';
+    }
 
     function saveGameState() {
         console.log("Got to save game state - button clicked");
@@ -36,6 +159,8 @@
         options = options || {};
         returnToMode = options.returnTo || 'game';
         
+        loadIcons();
+
         // Force canvas resize BEFORE any rendering
         if (typeof canvas !== 'undefined' && typeof getOptimalCanvasWidth === 'function') {
             canvas.width = getOptimalCanvasWidth();
@@ -59,7 +184,8 @@
         repeatEnabled = false;
         meditationMode = false;
         reviewCategoryPickerOpen = false;
-        ignoreNextClick = true; // Ignore the click that triggered review mode
+        delayDropdownOpen = false;
+
         
         window.gameMode = 'review';
         ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -122,8 +248,16 @@
 
             ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-            ctx.fillStyle = 'black';
+            // Dark background
+            ctx.fillStyle = '#0f0f1b';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Top bar background
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.6)';
             ctx.fillRect(0, 0, canvas.width, 60);
+
+            // Reset hitRects for this frame
+            hitRects = [];
 
             drawReviewModeButtons();
             drawNavigationButtons();
@@ -174,6 +308,39 @@
                     startVerseAudio(verseReference);
                 }
             }
+
+            // Draw flash message (share feedback, etc.)
+            if (reviewFlashMessage) {
+                const elapsed = Date.now() - reviewFlashMessage.startTime;
+                if (elapsed < reviewFlashMessage.duration) {
+                    const alpha = Math.min(1, 1 - (elapsed / reviewFlashMessage.duration) * 0.5);
+                    ctx.save();
+                    ctx.globalAlpha = alpha;
+                    ctx.fillStyle = 'rgba(76, 175, 80, 0.9)';
+                    ctx.font = 'bold 16px Arial';
+                    ctx.textAlign = 'center';
+                    const msgW = ctx.measureText(reviewFlashMessage.text).width + 30;
+                    const msgX = canvas.width / 2 - msgW / 2;
+                    const msgY = 65;
+                    ctx.beginPath();
+                    ctx.roundRect(msgX, msgY, msgW, 32, 8);
+                    ctx.fill();
+                    ctx.fillStyle = '#fff';
+                    ctx.fillText(reviewFlashMessage.text, canvas.width / 2, msgY + 22);
+                    ctx.textAlign = 'left';
+                    ctx.restore();
+                } else {
+                    reviewFlashMessage = null;
+                }
+            }
+
+            // Draw tooltip layer (on top of everything)
+            if (hoveredButton) {
+                const rect = hitRects.find(r => r.name === hoveredButton);
+                if (rect && rect.tooltip) {
+                    drawTooltip(ctx, rect.tooltip, rect.x + rect.w / 2, rect.y);
+                }
+            }
         }
     }
 
@@ -211,64 +378,77 @@
     }
 
     function drawNavigationButtons() {
-        const buttonWidth = 80;
-        const buttonHeight = 40;
-        const buttonY = canvas.height - 60;
-        const prevButtonX = 20;
-        const repeatButtonX = prevButtonX + buttonWidth + 10;
-        const delayDropdownX = repeatButtonX + buttonWidth + 10;
-        const nextButtonX = canvas.width - buttonWidth - 20;
+        const iconSize = 44;
+        const bottomY = canvas.height - iconSize - 15;
 
-        // Previous button
-        ctx.fillStyle = 'lightgray';
-        ctx.fillRect(prevButtonX, buttonY, buttonWidth, buttonHeight);
-        ctx.font = '16px Arial';
-        ctx.fillStyle = 'black';
-        ctx.fillText(t('review.previous'), prevButtonX + 10, buttonY + 25);
+        // === Previous (back) icon - left ===
+        const prevX = 15;
+        if (hoveredButton === 'prev') {
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.1)';
+            ctx.beginPath();
+            ctx.roundRect(prevX, bottomY, iconSize, iconSize, 10);
+            ctx.fill();
+        }
+        drawSvgIcon(ctx, 'back', prevX, bottomY, iconSize, '#fff');
+        hitRects.push({ name: 'prev', x: prevX, y: bottomY, w: iconSize, h: iconSize, tooltip: t('review.previous') });
 
-        // Repeat/Meditation button
-        ctx.fillStyle = meditationMode ? '#4CAF50' : (repeatEnabled ? 'lightblue' : 'lightgray');
-        ctx.fillRect(repeatButtonX, buttonY, buttonWidth, buttonHeight);
-        ctx.font = '14px Arial';
-        ctx.fillStyle = 'black';
-        const repeatLabel = meditationMode ? t('review.meditationOn') : (repeatEnabled ? t('review.repeatOn') : t('review.repeat'));
-        ctx.fillText(repeatLabel, repeatButtonX + 5, buttonY + 25);
+        // === Repeat icon - left-center ===
+        const repeatX = prevX + iconSize + 12;
+        if (hoveredButton === 'repeat') {
+            ctx.fillStyle = meditationMode ? 'rgba(76, 175, 80, 0.15)' : 'rgba(255, 255, 255, 0.1)';
+            ctx.beginPath();
+            ctx.arc(repeatX + iconSize / 2, bottomY + iconSize / 2, iconSize / 2 + 5, 0, Math.PI * 2);
+            ctx.fill();
+        }
+        const repeatColor = meditationMode ? '#4CAF50' : '#888';
+        drawSvgIcon(ctx, 'repeat', repeatX, bottomY, iconSize, repeatColor);
+        hitRects.push({ name: 'repeat', x: repeatX, y: bottomY, w: iconSize, h: iconSize, tooltip: meditationMode ? t('review.meditationOn') : t('review.repeat') });
 
-        // Delay dropdown (only visible when meditation mode is on)
+        // === Timing dropdown button - appears right of repeat when meditation is on ===
         if (meditationMode) {
-            ctx.fillStyle = '#333';
-            ctx.fillRect(delayDropdownX, buttonY, 70, buttonHeight);
+            const timeX = repeatX + iconSize + 8;
+            const timeY = bottomY + 7;
+            const timeW = 48;
+            const timeH = 32;
+
+            if (hoveredButton === 'timing') {
+                ctx.fillStyle = 'rgba(76, 175, 80, 0.25)';
+            } else {
+                ctx.fillStyle = 'rgba(0, 0, 0, 0.4)';
+            }
+            ctx.beginPath();
+            ctx.roundRect(timeX, timeY, timeW, timeH, 6);
+            ctx.fill();
             ctx.strokeStyle = '#4CAF50';
-            ctx.lineWidth = 2;
-            ctx.strokeRect(delayDropdownX, buttonY, 70, buttonHeight);
-            ctx.font = '14px Arial';
-            ctx.fillStyle = 'white';
+            ctx.lineWidth = 1.5;
+            ctx.stroke();
+
+            ctx.fillStyle = '#fff';
+            ctx.font = 'bold 12px Arial';
+            ctx.textAlign = 'center';
             const delayLabel = getDelayLabel(repeatDelay);
-            ctx.fillText(delayLabel, delayDropdownX + 8, buttonY + 25);
-            // Dropdown arrow
-            ctx.fillText('▾', delayDropdownX + 55, buttonY + 25);
+            ctx.fillText(delayLabel, timeX + timeW / 2, timeY + 21);
+            ctx.textAlign = 'left';
+            hitRects.push({ name: 'timing', x: timeX, y: timeY, w: timeW, h: timeH, tooltip: 'Repeat Delay' });
+
+            // Draw dropdown if open (opens ABOVE the timing button to stay on screen)
+            if (delayDropdownOpen) {
+                const options = Object.keys(REPEAT_DELAYS);
+                const dropdownH = options.length * 32;
+                drawDelayDropdown(timeX, timeY - dropdownH - 4);
+            }
         }
 
-        // Share button (between repeat and next)
-        const shareButtonX = meditationMode ? (delayDropdownX + 70 + 10) : (repeatButtonX + buttonWidth + 10);
-        const shareButtonWidth = 70;
-        if (shareButtonX + shareButtonWidth < nextButtonX - 10) {
-            ctx.fillStyle = '#4CAF50';
-            ctx.fillRect(shareButtonX, buttonY, shareButtonWidth, buttonHeight);
-            ctx.strokeStyle = '#388E3C';
-            ctx.lineWidth = 1;
-            ctx.strokeRect(shareButtonX, buttonY, shareButtonWidth, buttonHeight);
-            ctx.font = '16px Arial';
-            ctx.fillStyle = 'white';
-            ctx.fillText('📤 Share', shareButtonX + 5, buttonY + 25);
+        // === Next icon - right ===
+        const nextX = canvas.width - iconSize - 15;
+        if (hoveredButton === 'next') {
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.1)';
+            ctx.beginPath();
+            ctx.roundRect(nextX, bottomY, iconSize, iconSize, 10);
+            ctx.fill();
         }
-
-        // Next button
-        ctx.fillStyle = 'lightgray';
-        ctx.fillRect(nextButtonX, buttonY, buttonWidth, buttonHeight);
-        ctx.font = '16px Arial';
-        ctx.fillStyle = 'black';
-        ctx.fillText(t('review.next'), nextButtonX + 25, buttonY + 25);
+        drawSvgIcon(ctx, 'next', nextX, bottomY, iconSize, '#fff');
+        hitRects.push({ name: 'next', x: nextX, y: bottomY, w: iconSize, h: iconSize, tooltip: t('review.next') });
     }
 
     function getDelayLabel(ms) {
@@ -301,10 +481,12 @@
 
         // Panel background
         ctx.fillStyle = 'rgba(20, 20, 30, 0.95)';
-        ctx.fillRect(panelX, panelY, panelW, panelH);
+        ctx.beginPath();
+        ctx.roundRect(panelX, panelY, panelW, panelH, 12);
+        ctx.fill();
         ctx.strokeStyle = '#4a90e2';
         ctx.lineWidth = 2;
-        ctx.strokeRect(panelX, panelY, panelW, panelH);
+        ctx.stroke();
 
         // Title
         ctx.fillStyle = '#ffffff';
@@ -323,12 +505,16 @@
 
             // Item background
             ctx.fillStyle = isActive ? 'rgba(74, 144, 226, 0.4)' : 'rgba(255, 255, 255, 0.08)';
-            ctx.fillRect(itemX, itemY, colWidth, itemH);
+            ctx.beginPath();
+            ctx.roundRect(itemX, itemY, colWidth, itemH, 6);
+            ctx.fill();
 
             if (isActive) {
                 ctx.strokeStyle = '#4a90e2';
                 ctx.lineWidth = 2;
-                ctx.strokeRect(itemX, itemY, colWidth, itemH);
+                ctx.beginPath();
+                ctx.roundRect(itemX, itemY, colWidth, itemH, 6);
+                ctx.stroke();
             }
 
             // Item text
@@ -339,50 +525,38 @@
         });
     }
 
-    function drawDelayDropdown() {
+    function drawDelayDropdown(dropX, dropY) {
         const options = Object.keys(REPEAT_DELAYS);
-        const buttonWidth = 70;
-        const buttonHeight = 40;
-        const buttonY = canvas.height - 60;
-        const delayDropdownX = 190; // Same as in drawNavigationButtons
+        const itemH = 32;
+        const dropdownW = 55;
+        const dropdownH = options.length * itemH;
 
-        const dropdownW = 70;
-        const itemH = 30;
-        const dropdownH = options.length * itemH + 10;
-
-        // Dropdown background
-        ctx.fillStyle = 'rgba(20, 20, 30, 0.95)';
-        ctx.fillRect(delayDropdownX, buttonY - dropdownH - 5, dropdownW, dropdownH);
+        ctx.fillStyle = 'rgba(30, 30, 50, 0.98)';
+        ctx.beginPath();
+        ctx.roundRect(dropX, dropY, dropdownW, dropdownH, 8);
+        ctx.fill();
         ctx.strokeStyle = '#4CAF50';
-        ctx.lineWidth = 1;
-        ctx.strokeRect(delayDropdownX, buttonY - dropdownH - 5, dropdownW, dropdownH);
+        ctx.lineWidth = 2;
+        ctx.stroke();
 
-        // Options
-        ctx.font = '14px Arial';
         options.forEach((opt, idx) => {
-            const itemY = buttonY - dropdownH - 5 + 5 + idx * itemH;
-            const isSelected = REPEAT_DELAYS[opt] === repeatDelay;
-            
-            if (isSelected) {
-                ctx.fillStyle = 'rgba(76, 175, 80, 0.4)';
-                ctx.fillRect(delayDropdownX + 2, itemY, dropdownW - 4, itemH);
+            const iy = dropY + idx * itemH;
+            if (hoveredButton === `delayOpt${idx}`) {
+                ctx.fillStyle = 'rgba(76, 175, 80, 0.2)';
+                ctx.fillRect(dropX + 2, iy + 2, dropdownW - 4, itemH - 4);
             }
-            
-            ctx.fillStyle = isSelected ? '#4CAF50' : 'white';
-            ctx.fillText(opt, delayDropdownX + 20, itemY + 20);
+            const isSelected = REPEAT_DELAYS[opt] === repeatDelay;
+            ctx.fillStyle = isSelected ? '#ffd700' : 'white';
+            ctx.font = isSelected ? 'bold 13px Arial' : '13px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText(opt, dropX + dropdownW / 2, iy + 21);
+            ctx.textAlign = 'left';
+
+            hitRects.push({ name: `delayOpt${idx}`, x: dropX, y: iy, w: dropdownW, h: itemH });
         });
     }
 
-    function handleReviewClick(event) {
-        // Ignore the click that triggered review mode (prevents double-triggering)
-        if (ignoreNextClick) {
-            ignoreNextClick = false;
-            return;
-        }
-        
-        const rect = canvas.getBoundingClientRect();
-        const clickedX = event.clientX - rect.left;
-        const clickedY = event.clientY - rect.top;
+    function handleReviewClick(clickedX, clickedY) {
 
         // If sermon viewer is open, delegate clicks to it
         if (window.SermonViewer && SermonViewer.isOpen()) {
@@ -425,6 +599,7 @@
                     repeatEnabled = false;
                     meditationMode = false;
                     hasPlayed = false;
+                    delayDropdownOpen = false;
                     displayReviewVerseScreen();
                     return;
                 }
@@ -436,121 +611,141 @@
             return;
         }
 
-        // Check if the click was on the "Devotional" button (center top bar)
-        const devotionalBtnX = Math.floor((canvas.width - 90) / 2);
-        if (clickedX >= devotionalBtnX && clickedX <= devotionalBtnX + 90 && clickedY >= 15 && clickedY <= 45) {
-            const verseRef = getCurrentVerseReference();
-            const verseDetails = getVerseDetails(verseRef);
-            if (verseRef && verseDetails && window.SermonViewer) {
-                stopAudio();
-                clearRepeatTimer();
-                SermonViewer.open(verseRef, verseDetails.text, verseDetails.category, function () {
-                    // Return to review mode when sermon viewer closes
+        // hitRect-based click dispatch
+        for (const rect of hitRects) {
+            if (clickedX >= rect.x && clickedX <= rect.x + rect.w &&
+                clickedY >= rect.y && clickedY <= rect.y + rect.h) {
+
+                if (rect.name === 'back') {
+                    // Exit review mode
+                    stopAudio();
+                    clearRepeatTimer();
+                    repeatEnabled = false;
+                    meditationMode = false;
+                    hasPlayed = false;
+                    delayDropdownOpen = false;
+                    restoreGameState();
+                } else if (rect.name === 'share') {
+                    // Share current verse
+                    const verseRef = getCurrentVerseReference();
+                    const verseDetails = getVerseDetails(verseRef);
+                    if (verseRef && verseDetails && window.ShareManager) {
+                        ShareManager.shareVerse(verseRef, verseDetails.text).then(result => {
+                            if (result.success) {
+                                // Show feedback directly in review mode
+                                reviewFlashMessage = {
+                                    text: result.method === 'native' ? '📤 Shared!' : '📋 Copied to clipboard!',
+                                    startTime: Date.now(),
+                                    duration: 2000
+                                };
+                                displayReviewVerseScreen();
+                            }
+                        });
+                    }
+                } else if (rect.name === 'category') {
+                    // Open category picker
+                    reviewCategoryPickerOpen = true;
+                    delayDropdownOpen = false;
                     displayReviewVerseScreen();
-                });
-            }
-            return;
-        }
-
-        // Check if the click was on the "Game" button
-        if (clickedX >= canvas.width - 100 && clickedX <= canvas.width - 20 && clickedY >= 15 && clickedY <= 45) {
-            stopAudio();
-            clearRepeatTimer();
-            repeatEnabled = false;
-            meditationMode = false;
-            hasPlayed = false;
-            restoreGameState();
-        }
-
-        // Check if the click was on the quality/category button (opens picker)
-        if (clickedX >= 20 && clickedX <= 100 && clickedY >= 15 && clickedY <= 45) {
-            reviewCategoryPickerOpen = true;
-            displayReviewVerseScreen();
-        }
-
-        // Check if the click was on the "Previous" button
-        if (clickedX >= 20 && clickedX <= 100 && clickedY >= canvas.height - 60 && clickedY <= canvas.height - 20) {
-            if (currentReviewMode === 'incorrect') {
-                currentReviewVerseIndex = Math.max(currentReviewVerseIndex - 1, 0);
-            } else if (currentReviewMode === 'quality') {
-                currentReviewVerseIndex = Math.max(currentReviewVerseIndex - 1, 0);
-            }
-            stopAudio();
-            clearRepeatTimer();
-            repeatEnabled = false;
-            meditationMode = false;
-            hasPlayed = false;
-            displayReviewVerseScreen();
-        }
-
-        // Check if the click was on the "Next" button
-        if (clickedX >= canvas.width - 100 && clickedX <= canvas.width - 20 && clickedY >= canvas.height - 60 && clickedY <= canvas.height - 20) {
-            if (currentReviewMode === 'incorrect') {
-                currentReviewVerseIndex = Math.min(currentReviewVerseIndex + 1, incorrectAnswerReferences.length - 1);
-            } else if (currentReviewMode === 'quality') {
-                const qualityVerses = organizedVerses[window.vQuality];
-                currentReviewVerseIndex = Math.min(currentReviewVerseIndex + 1, qualityVerses.length - 1);
-            }
-            stopAudio();
-            clearRepeatTimer();
-            repeatEnabled = false;
-            meditationMode = false;
-            hasPlayed = false;
-            displayReviewVerseScreen();
-        }
-
-        // Check if the click was on the "Repeat/Meditation" button
-        if (clickedX >= 110 && clickedX <= 190 && clickedY >= canvas.height - 60 && clickedY <= canvas.height - 20) {
-            // Cycle through: off -> single repeat -> meditation mode
-            if (!repeatEnabled && !meditationMode) {
-                repeatEnabled = true;
-                hasPlayed = false;
-                startVerseAudio(getCurrentVerseReference());
-            } else if (repeatEnabled && !meditationMode) {
-                meditationMode = true;
-                repeatEnabled = false;
-                hasPlayed = false;
-                startMeditationRepeat();
-            } else {
-                // Turn off meditation mode
-                meditationMode = false;
-                repeatEnabled = false;
-                stopAudio();
-                clearRepeatTimer();
-            }
-            displayReviewVerseScreen();
-        }
-
-        // Check if the click was on the "Share" button
-        const buttonY = canvas.height - 60;
-        const repeatButtonX = 110;
-        const delayDropdownX = repeatButtonX + 80 + 10;
-        const shareButtonX = meditationMode ? (delayDropdownX + 70 + 10) : (repeatButtonX + 80 + 10);
-        const shareButtonWidth = 70;
-        if (shareButtonX + shareButtonWidth < canvas.width - 100 - 10) {
-            if (clickedX >= shareButtonX && clickedX <= shareButtonX + shareButtonWidth &&
-                clickedY >= buttonY && clickedY <= buttonY + 40) {
-                // Share current verse
-                const verseRef = getCurrentVerseReference();
-                const verseDetails = getVerseDetails(verseRef);
-                if (verseRef && verseDetails && window.ShareManager) {
-                    ShareManager.shareVerse(verseRef, verseDetails.text).then(result => {
-                        if (result.success) {
-                            ShareManager.showShareSuccess(result.method);
-                        }
-                    });
+                } else if (rect.name === 'devotional') {
+                    // Open devotional/sermon viewer
+                    const verseRef = getCurrentVerseReference();
+                    const verseDetails = getVerseDetails(verseRef);
+                    if (verseRef && verseDetails && window.SermonViewer) {
+                        stopAudio();
+                        clearRepeatTimer();
+                        delayDropdownOpen = false;
+                        SermonViewer.open(verseRef, verseDetails.text, verseDetails.category, function () {
+                            displayReviewVerseScreen();
+                        });
+                    }
+                } else if (rect.name === 'prev') {
+                    // Previous verse
+                    if (currentReviewMode === 'incorrect') {
+                        currentReviewVerseIndex = Math.max(currentReviewVerseIndex - 1, 0);
+                    } else if (currentReviewMode === 'quality') {
+                        currentReviewVerseIndex = Math.max(currentReviewVerseIndex - 1, 0);
+                    }
+                    stopAudio();
+                    clearRepeatTimer();
+                    repeatEnabled = false;
+                    meditationMode = false;
+                    hasPlayed = false;
+                    delayDropdownOpen = false;
+                    displayReviewVerseScreen();
+                } else if (rect.name === 'next') {
+                    // Next verse
+                    if (currentReviewMode === 'incorrect') {
+                        currentReviewVerseIndex = Math.min(currentReviewVerseIndex + 1, incorrectAnswerReferences.length - 1);
+                    } else if (currentReviewMode === 'quality') {
+                        const qualityVerses = organizedVerses[window.vQuality];
+                        currentReviewVerseIndex = Math.min(currentReviewVerseIndex + 1, qualityVerses.length - 1);
+                    }
+                    stopAudio();
+                    clearRepeatTimer();
+                    repeatEnabled = false;
+                    meditationMode = false;
+                    hasPlayed = false;
+                    delayDropdownOpen = false;
+                    displayReviewVerseScreen();
+                } else if (rect.name === 'repeat') {
+                    // Toggle meditation mode on/off (immediately shows timer)
+                    delayDropdownOpen = false;
+                    if (!meditationMode) {
+                        meditationMode = true;
+                        repeatEnabled = false;
+                        hasPlayed = false;
+                        startMeditationRepeat();
+                    } else {
+                        // Turn off meditation mode
+                        meditationMode = false;
+                        repeatEnabled = false;
+                        stopAudio();
+                        clearRepeatTimer();
+                    }
+                    displayReviewVerseScreen();
+                } else if (rect.name === 'timing') {
+                    // Toggle delay dropdown
+                    delayDropdownOpen = !delayDropdownOpen;
+                    displayReviewVerseScreen();
+                } else if (rect.name.startsWith('delayOpt')) {
+                    // Select a delay option
+                    const options = Object.keys(REPEAT_DELAYS);
+                    const idx = parseInt(rect.name.replace('delayOpt', ''));
+                    if (idx >= 0 && idx < options.length) {
+                        repeatDelay = REPEAT_DELAYS[options[idx]];
+                    }
+                    delayDropdownOpen = false;
+                    displayReviewVerseScreen();
                 }
+
+                // Close dropdown if clicked something other than timing or delay option
+                if (delayDropdownOpen && !rect.name.startsWith('delayOpt') && rect.name !== 'timing') {
+                    delayDropdownOpen = false;
+                }
+
                 return;
             }
         }
 
-        // Check if the click was on the delay dropdown (only in meditation mode)
-        if (meditationMode && clickedX >= 200 && clickedX <= 270 && clickedY >= canvas.height - 60 && clickedY <= canvas.height - 20) {
-            // Show delay dropdown (cycle through options for now)
-            const options = Object.keys(REPEAT_DELAYS);
-            const currentIndex = options.findIndex(opt => REPEAT_DELAYS[opt] === repeatDelay);
-            const nextIndex = (currentIndex + 1) % options.length;
-            repeatDelay = REPEAT_DELAYS[options[nextIndex]];
+        // Click outside any button — close dropdown if open
+        if (delayDropdownOpen) {
+            delayDropdownOpen = false;
+            displayReviewVerseScreen();
+        }
+    }
+
+    function handleMouseMove(mouseX, mouseY) {
+        let found = null;
+        for (const rect of hitRects) {
+            if (mouseX >= rect.x && mouseX <= rect.x + rect.w &&
+                mouseY >= rect.y && mouseY <= rect.y + rect.h) {
+                found = rect.name;
+                break;
+            }
+        }
+        if (hoveredButton !== found) {
+            hoveredButton = found;
             displayReviewVerseScreen();
         }
     }
@@ -723,43 +918,83 @@
     }
 
     function drawReviewModeButtons() {
-        const buttonWidth = 80;
-        const buttonHeight = 30;
-        const buttonY = 15;
-        const qualityButtonX = 20;
-        const devotionalButtonX = Math.floor((canvas.width - 90) / 2);
-        const gameButtonX = canvas.width - buttonWidth - 20;
+        const iconSize = 44;
+        const iconY = 8;
 
-        // Category button (tappable to open picker)
-        ctx.fillStyle = reviewCategoryPickerOpen ? '#4a90e2' : 'lightblue';
-        ctx.fillRect(qualityButtonX, buttonY, buttonWidth, buttonHeight);
-        ctx.strokeStyle = reviewCategoryPickerOpen ? '#4a90e2' : '#aaa';
+        // === Back icon (top-left) ===
+        const backX = 10;
+        if (hoveredButton === 'back') {
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.1)';
+            ctx.beginPath();
+            ctx.roundRect(backX, iconY, iconSize, iconSize, 10);
+            ctx.fill();
+        }
+        drawSvgIcon(ctx, 'back', backX, iconY, iconSize, '#fff');
+        hitRects.push({ name: 'back', x: backX, y: iconY, w: iconSize, h: iconSize, tooltip: 'Back' });
+
+        // === Share icon (top-right) ===
+        const shareX = canvas.width - iconSize - 10;
+        if (hoveredButton === 'share') {
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.1)';
+            ctx.beginPath();
+            ctx.roundRect(shareX, iconY, iconSize, iconSize, 10);
+            ctx.fill();
+        }
+        drawSvgIcon(ctx, 'share', shareX, iconY, iconSize, '#fff');
+        hitRects.push({ name: 'share', x: shareX, y: iconY, w: iconSize, h: iconSize, tooltip: 'Share' });
+
+        // === Category button (left of center) ===
+        const catW = 90;
+        const catH = 30;
+        const catX = backX + iconSize + 12;
+        const catY = iconY + (iconSize - catH) / 2;
+        if (hoveredButton === 'category') {
+            ctx.fillStyle = 'rgba(74, 144, 226, 0.3)';
+        } else {
+            ctx.fillStyle = reviewCategoryPickerOpen ? '#4a90e2' : 'rgba(74, 144, 226, 0.15)';
+        }
+        ctx.beginPath();
+        ctx.roundRect(catX, catY, catW, catH, 15);
+        ctx.fill();
+        ctx.strokeStyle = reviewCategoryPickerOpen ? '#4a90e2' : 'rgba(74, 144, 226, 0.5)';
         ctx.lineWidth = 1;
-        ctx.strokeRect(qualityButtonX, buttonY, buttonWidth, buttonHeight);
+        ctx.beginPath();
+        ctx.roundRect(catX, catY, catW, catH, 15);
+        ctx.stroke();
 
-        ctx.font = '14px Arial';
-        ctx.fillStyle = 'black';
+        ctx.font = '12px Arial';
+        ctx.fillStyle = '#fff';
+        ctx.textAlign = 'center';
         const categoryLabel = (typeof tCategory === 'function') ? tCategory(window.vQuality) : window.vQuality;
-        const displayLabel = categoryLabel.length > 10 ? categoryLabel.substring(0, 10) + '...' : categoryLabel;
-        ctx.fillText(displayLabel + ' ▾', qualityButtonX + 5, buttonY + 20);
+        const displayLabel = categoryLabel.length > 10 ? categoryLabel.substring(0, 10) + '…' : categoryLabel;
+        ctx.fillText(displayLabel + ' ▾', catX + catW / 2, catY + catH / 2 + 4);
+        ctx.textAlign = 'left';
+        hitRects.push({ name: 'category', x: catX, y: catY, w: catW, h: catH, tooltip: t('ui.selectCategory') });
 
-        // Devotional button (center)
-        ctx.fillStyle = '#e8d44d';
-        ctx.fillRect(devotionalButtonX, buttonY, 90, buttonHeight);
-        ctx.strokeStyle = '#c4a000';
+        // === Devotional button (center) ===
+        const devW = 90;
+        const devH = 30;
+        const devX = Math.floor((canvas.width - devW) / 2);
+        const devY = iconY + (iconSize - devH) / 2;
+        if (hoveredButton === 'devotional') {
+            ctx.fillStyle = 'rgba(232, 212, 77, 0.25)';
+        } else {
+            ctx.fillStyle = 'rgba(232, 212, 77, 0.1)';
+        }
+        ctx.beginPath();
+        ctx.roundRect(devX, devY, devW, devH, 15);
+        ctx.fill();
+        ctx.strokeStyle = '#e8d44d';
         ctx.lineWidth = 1;
-        ctx.strokeRect(devotionalButtonX, buttonY, 90, buttonHeight);
-        ctx.font = '13px Arial';
-        ctx.fillStyle = '#333';
-        ctx.fillText('Devotional', devotionalButtonX + 8, buttonY + 20);
-
-        // Back button
-        ctx.fillStyle = 'lightgray';
-        ctx.fillRect(gameButtonX, buttonY, buttonWidth, buttonHeight);
-
-        ctx.font = '14px Arial';
-        ctx.fillStyle = 'black';
-        ctx.fillText('Back', gameButtonX + 25, buttonY + 20);
+        ctx.beginPath();
+        ctx.roundRect(devX, devY, devW, devH, 15);
+        ctx.stroke();
+        ctx.font = 'bold 11px Arial';
+        ctx.fillStyle = '#e8d44d';
+        ctx.textAlign = 'center';
+        ctx.fillText('Devotional', devX + devW / 2, devY + devH / 2 + 4);
+        ctx.textAlign = 'left';
+        hitRects.push({ name: 'devotional', x: devX, y: devY, w: devW, h: devH, tooltip: 'Devotional' });
     }
 
     function getCurrentVerseReference() {
@@ -775,6 +1010,7 @@
     window.ReviewMode = {
         displayReviewVerseScreen,
         handleReviewClick,
+        handleMouseMove,
         startReviewMode,
         saveGameState,
         restoreGameState,

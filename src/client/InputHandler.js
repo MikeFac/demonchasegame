@@ -25,14 +25,17 @@ class InputHandler {
             onOverlandClick: null, // (x, y) => void - Overland mode click handler
             onGameClick: null, // (x, y) => boolean (handled?)
             onHamburgerClick: null,
-            onMenuItemClick: null // (itemId) => void
+            onMenuItemClick: null, // (itemId) => void
+            onMouseMove: null // (x, y) => void
         };
 
         // Bind event handlers
         this._handleClick = this._handleClick.bind(this);
+        this._handleMouseMove = this._handleMouseMove.bind(this);
 
-        // Attach listener
+        // Attach listeners
         canvas.addEventListener('click', this._handleClick);
+        canvas.addEventListener('mousemove', this._handleMouseMove);
     }
 
     /**
@@ -82,8 +85,8 @@ class InputHandler {
         // Dispatch to appropriate handler based on game mode
         // Note: gameMode is a global variable from game.js
         if (typeof gameMode !== 'undefined' && gameMode === 'review') {
-            if (this.callbacks.onReviewModeClick) {
-                this.callbacks.onReviewModeClick(event);
+            if (typeof ReviewMode !== 'undefined' && typeof ReviewMode.handleReviewClick === 'function') {
+                ReviewMode.handleReviewClick(clickedX, clickedY);
             }
             return;
         }
@@ -108,6 +111,32 @@ class InputHandler {
 
         // Game mode clicks
         this._handleGameModeClick(clickedX, clickedY);
+    }
+    
+    /**
+     * Internal mousemove handler
+     * @param {MouseEvent} event
+     */
+    _handleMouseMove(event) {
+        const rect = this.canvas.getBoundingClientRect();
+        const mouseX = event.clientX - rect.left;
+        const mouseY = event.clientY - rect.top;
+
+        if (typeof gameMode !== 'undefined' && gameMode === 'review') {
+            if (typeof ReviewMode !== 'undefined' && typeof ReviewMode.handleMouseMove === 'function') {
+                ReviewMode.handleMouseMove(mouseX, mouseY);
+            }
+        }
+
+        if (typeof gameMode !== 'undefined' && gameMode === 'votd') {
+            if (typeof votdMode !== 'undefined' && votdMode === 'learning' && typeof VotdLearningMode !== 'undefined') {
+                VotdLearningMode.handleMouseMove(mouseX, mouseY);
+            }
+        }
+
+        if (this.callbacks.onMouseMove) {
+            this.callbacks.onMouseMove(mouseX, mouseY);
+        }
     }
 
     /**
@@ -518,5 +547,6 @@ class InputHandler {
      */
     destroy() {
         this.canvas.removeEventListener('click', this._handleClick);
+        this.canvas.removeEventListener('mousemove', this._handleMouseMove);
     }
 }
