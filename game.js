@@ -1094,6 +1094,12 @@ document.addEventListener('DOMContentLoaded', function () {
             window._enterReviewAfterInit = true;
             startGame('solo');
         });
+        
+        // Groups button
+        document.getElementById('btnGroups').addEventListener('click', () => {
+            if (window.Analytics) Analytics.trackMenuClick('groups');
+            showGroupsPanel();
+        });
 
         // Settings Toggle
         const btnSettings = document.getElementById('btnSettings');
@@ -2194,6 +2200,198 @@ window.gameMode = 'overland';
 
     // Start the game loop for overland rendering
     if (!_gameLoopRunning) gameLoop();
+}
+
+let groupsPanelVisible = false;
+let groupsModal = null;
+
+function showGroupsPanel() {
+    if (!window.authManager || !window.authManager.isAuthenticated) {
+        showToast('Please sign in to view your groups', 3000);
+        return;
+    }
+    
+    groupsPanelVisible = true;
+    
+    const menuScreen = document.getElementById('menuScreen');
+    if (menuScreen) menuScreen.style.display = 'none';
+    
+    if (!groupsModal) {
+        groupsModal = document.createElement('div');
+        groupsModal.id = 'groupsModal';
+        groupsModal.style.cssText = 'position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 1000; display: flex; justify-content: center; align-items: center; font-family: "Segoe UI", sans-serif;';
+        
+        const content = document.createElement('div');
+        content.style.cssText = 'background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%); border-radius: 15px; padding: 25px; max-width: 400px; width: 90%; max-height: 85vh; overflow-y: auto; color: #fff; position: relative;';
+        
+        const closeBtn = document.createElement('button');
+        closeBtn.textContent = '×';
+        closeBtn.style.cssText = 'position: absolute; top: 10px; right: 15px; background: none; border: none; color: #fff; font-size: 24px; cursor: pointer;';
+        closeBtn.addEventListener('click', hideGroupsPanel);
+        content.appendChild(closeBtn);
+        
+        const panelContainer = document.createElement('div');
+        panelContainer.id = 'groupsPanelContainer';
+        content.appendChild(panelContainer);
+        
+        groupsModal.appendChild(content);
+        document.body.appendChild(groupsModal);
+        
+        groupsModal.addEventListener('click', (e) => {
+            if (e.target === groupsModal) hideGroupsPanel();
+        });
+    }
+    
+    groupsModal.style.display = 'flex';
+    
+    const groupsPanel = new GroupsPanel(window.authManager);
+    
+    renderGroupsList(groupsPanel, document.getElementById('groupsPanelContainer'));
+}
+
+async function renderGroupsList(groupsPanel, container) {
+    container.innerHTML = '<p style="text-align: center; padding: 20px;">Loading groups...</p>';
+    
+    await groupsPanel.loadMyGroups();
+    
+    groupsPanel.renderGroupsList(container, {
+        onSelect: (group) => {
+            renderGroupLeaderboard(groupsPanel, container, group);
+        },
+        onCreateGroup: () => {
+            showCreateGroupModal(groupsPanel, container);
+        },
+        onJoinGroup: () => {
+            showJoinGroupModal(groupsPanel, container);
+        }
+    });
+}
+
+async function renderGroupLeaderboard(groupsPanel, container, group) {
+    container.innerHTML = '<p style="text-align: center; padding: 20px;">Loading leaderboard...</p>';
+    
+    await groupsPanel.loadLeaderboard(group._id, 'weekly');
+    
+    groupsPanel.renderLeaderboard(container, {
+        onBack: () => {
+            renderGroupsList(groupsPanel, container);
+        }
+    });
+}
+
+function showCreateGroupModal(groupsPanel, container) {
+    const modal = document.createElement('div');
+    modal.style.cssText = 'position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 1001; display: flex; justify-content: center; align-items: center;';
+    
+    const content = document.createElement('div');
+    content.style.cssText = 'background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%); border-radius: 12px; padding: 25px; max-width: 350px; width: 90%; color: #fff;';
+    
+    content.innerHTML = `
+        <h3 style="margin: 0 0 20px; text-align: center;">Create a Group</h3>
+        <div style="margin-bottom: 15px;">
+            <label style="display: block; font-size: 0.85em; margin-bottom: 5px; color: #a8c5e6;">Group Name</label>
+            <input type="text" id="newGroupName" placeholder="e.g. First Baptist Youth" maxlength="50" style="width: 100%; padding: 10px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.2); background: rgba(0,0,0,0.2); color: #fff;">
+        </div>
+        <div style="margin-bottom: 20px;">
+            <label style="display: block; font-size: 0.85em; margin-bottom: 5px; color: #a8c5e6;">Description (optional)</label>
+            <input type="text" id="newGroupDesc" placeholder="Wednesday night Bible study" maxlength="200" style="width: 100%; padding: 10px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.2); background: rgba(0,0,0,0.2); color: #fff;">
+        </div>
+        <div style="display: flex; gap: 10px;">
+            <button id="cancelCreateGroup" style="flex: 1; padding: 12px; border: none; border-radius: 8px; background: rgba(255,255,255,0.1); color: #fff; cursor: pointer;">Cancel</button>
+            <button id="submitCreateGroup" style="flex: 1; padding: 12px; border: none; border-radius: 8px; background: linear-gradient(135deg, #6B4C9A, #4A3572); color: #fff; cursor: pointer; font-weight: bold;">Create</button>
+        </div>
+    `;
+    
+    modal.appendChild(content);
+    document.body.appendChild(modal);
+    
+    document.getElementById('cancelCreateGroup').addEventListener('click', () => {
+        modal.remove();
+    });
+    
+    document.getElementById('submitCreateGroup').addEventListener('click', async () => {
+        const name = document.getElementById('newGroupName').value.trim();
+        const description = document.getElementById('newGroupDesc').value.trim();
+        
+        if (!name) {
+            showToast('Please enter a group name', 3000);
+            return;
+        }
+        
+        const result = await groupsPanel.createGroup(name, description);
+        
+        if (result.success) {
+            modal.remove();
+            showToast('Group created! Code: ' + result.group.code, 4000);
+            await renderGroupsList(groupsPanel, container);
+        } else {
+            showToast(result.error || 'Failed to create group', 3000);
+        }
+    });
+    
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) modal.remove();
+    });
+}
+
+function showJoinGroupModal(groupsPanel, container) {
+    const modal = document.createElement('div');
+    modal.style.cssText = 'position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 1001; display: flex; justify-content: center; align-items: center;';
+    
+    const content = document.createElement('div');
+    content.style.cssText = 'background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%); border-radius: 12px; padding: 25px; max-width: 350px; width: 90%; color: #fff; text-align: center;';
+    
+    content.innerHTML = `
+        <h3 style="margin: 0 0 20px;">Join a Group</h3>
+        <p style="font-size: 0.85em; color: #a8c5e6; margin-bottom: 15px;">Enter the group code provided by your leader</p>
+        <div style="margin-bottom: 20px;">
+            <input type="text" id="joinGroupCode" placeholder="e.g. FIRST2024" maxlength="20" style="width: 100%; padding: 12px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.2); background: rgba(0,0,0,0.2); color: #fff; text-align: center; font-size: 1.1em; letter-spacing: 1px;">
+        </div>
+        <div style="display: flex; gap: 10px;">
+            <button id="cancelJoinGroup" style="flex: 1; padding: 12px; border: none; border-radius: 8px; background: rgba(255,255,255,0.1); color: #fff; cursor: pointer;">Cancel</button>
+            <button id="submitJoinGroup" style="flex: 1; padding: 12px; border: none; border-radius: 8px; background: linear-gradient(135deg, #4a90e2, #357abd); color: #fff; cursor: pointer; font-weight: bold;">Join</button>
+        </div>
+    `;
+    
+    modal.appendChild(content);
+    document.body.appendChild(modal);
+    
+    document.getElementById('cancelJoinGroup').addEventListener('click', () => {
+        modal.remove();
+    });
+    
+    document.getElementById('submitJoinGroup').addEventListener('click', async () => {
+        const code = document.getElementById('joinGroupCode').value.trim().toUpperCase();
+        
+        if (!code) {
+            showToast('Please enter a group code', 3000);
+            return;
+        }
+        
+        const result = await groupsPanel.joinGroup(code);
+        
+        if (result.success) {
+            modal.remove();
+            showToast('Successfully joined ' + result.group.name + '!', 3000);
+            await renderGroupsList(groupsPanel, container);
+        } else {
+            showToast(result.error || 'Failed to join group', 3000);
+        }
+    });
+    
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) modal.remove();
+    });
+}
+
+function hideGroupsPanel() {
+    groupsPanelVisible = false;
+    if (groupsModal) {
+        groupsModal.style.display = 'none';
+    }
+    
+    const menuScreen = document.getElementById('menuScreen');
+    if (menuScreen) menuScreen.style.display = '';
 }
 
 function handleOverlandClick(x, y) {

@@ -12,6 +12,7 @@ const sermonRouter = require('./src/server/routes/sermon');
 const userRouter = require('./src/server/routes/users');
 const progressRouter = require('./src/server/routes/progress');
 const worldRouter = require('./src/server/routes/worlds');
+const groupsRouter = require('./src/server/routes/groups');
 const { retryFailedGenerations } = require('./src/server/jobs/retryFailedGenerations');
 
 const app = express();
@@ -103,6 +104,9 @@ app.use('/api/progress', progressRouter);
 
 // New World Management & Sharing Routes
 app.use('/api/worlds', worldRouter);
+
+// Group Management Routes
+app.use('/api/groups', groupsRouter);
 
 // ==================== Socket.IO ====================
 

@@ -36,6 +36,14 @@
         options = options || {};
         returnToMode = options.returnTo || 'game';
         
+        // Force canvas resize BEFORE any rendering
+        if (typeof canvas !== 'undefined' && typeof getOptimalCanvasWidth === 'function') {
+            canvas.width = getOptimalCanvasWidth();
+            canvas.height = Math.min(600, window.innerHeight - 80);
+            ctx = canvas.getContext('2d');
+            console.log('[REVIEW DEBUG] startReviewMode: forced canvas resize to', canvas.width, 'x', canvas.height);
+        }
+        
         console.log('[REVIEW DEBUG] startReviewMode: options =', options, 'canvas =', (typeof canvas !== 'undefined' ? `${canvas.width}x${canvas.height}` : 'undefined'));
         
         // Set vQuality if provided
@@ -93,6 +101,17 @@
 
     function displayReviewVerseScreen() {
         if (window.gameMode === 'review') {
+            // Force canvas resize before every render to ensure correct dimensions
+            if (typeof canvas !== 'undefined' && typeof getOptimalCanvasWidth === 'function') {
+                const targetWidth = getOptimalCanvasWidth();
+                const targetHeight = Math.min(600, window.innerHeight - 80);
+                if (canvas.width !== targetWidth || canvas.height !== targetHeight) {
+                    canvas.width = targetWidth;
+                    canvas.height = targetHeight;
+                    ctx = canvas.getContext('2d');
+                }
+            }
+            
             console.log('[REVIEW DEBUG] displayReviewVerseScreen: canvas =', (typeof canvas !== 'undefined' ? `${canvas.width}x${canvas.height}` : 'undefined'), 'ctx =', (typeof ctx !== 'undefined' ? 'defined' : 'undefined'));
             
             // If sermon viewer is open, let it render instead

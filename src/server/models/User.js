@@ -39,6 +39,12 @@ const UserSchema = new Schema({
   worldsCreated: [{ type: Schema.Types.ObjectId, ref: 'World' }],
   worldsJoined: [{ type: Schema.Types.ObjectId, ref: 'World' }],
   
+  // Group memberships (one-to-many: user can belong to multiple groups)
+  groups: [{
+    groupId: { type: Schema.Types.ObjectId, ref: 'Group', required: true },
+    joinedAt: { type: Date, default: Date.now }
+  }],
+  
   // Status
   status: { 
     type: String, 
