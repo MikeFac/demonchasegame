@@ -1446,7 +1446,7 @@
   <script src="src/shared/FileContentProvider.js?v=1.1"></script>
   <script src="src/shared/MissionClient.js?v=1.1"></script>
   <script src="src/client/ProgressManager.js?v=1.3"></script>
-  <script src="src/client/AuthManager.js?v=1.0"></script>
+  <script src="src/client/AuthManager.js?v=1.1"></script>
   <script src="src/client/SyncManager.js?v=1.0"></script>
   <script src="src/client/OverlandRenderer.js?v=1.9"></script>
   <script src="src/client/QuizManager.js?v=2.5"></script>
@@ -1618,7 +1618,7 @@
       }
     }
   </script>
-  <script src="game.js?v=2.54"></script>
+  <script src="game.js?v=2.55"></script>
   <script>
     // Register service worker for PWA offline support
     if ('serviceWorker' in navigator) {
@@ -1836,16 +1836,29 @@
 
           // Auth state listener — toggle between buttons and signed-in avatar
           auth.onAuthChange((state) => {
+            console.log('[AUTH] State changed:', {
+              isAuthenticated: state.isAuthenticated,
+              isRegistered: state.isRegistered,
+              hasDbUser: !!state.dbUser,
+              username: state.dbUser?.username
+            });
+            
             if (state.isAuthenticated) {
               authButtons.style.display = 'none';
-              if (state.dbUser) {
+              // Only show registration modal if NOT registered (check both flags)
+              if (state.dbUser && state.isRegistered) {
                 authAvatar.src = state.user.imageUrl || '';
                 authName.textContent = state.dbUser.username || '';
                 authSignedIn.style.display = 'flex';
                 regModal.classList.remove('open');
+                console.log('[AUTH] User fully registered, hiding modal');
               } else {
                 authSignedIn.style.display = 'none';
-                regModal.classList.add('open');
+                // Only show modal if not registered
+                if (!state.isRegistered) {
+                  regModal.classList.add('open');
+                  console.log('[AUTH] User not registered, showing modal');
+                }
               }
             } else {
               authButtons.style.display = '';

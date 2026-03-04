@@ -44,16 +44,21 @@ class AuthManager {
                     await this.clerk.load();
                     
                     this.clerk.addListener(async ({ user }) => {
+                        console.log('[AUTH] Clerk listener fired, user =', !!user);
                         this.user = user;
                         this.isAuthenticated = !!user;
                         
                         if (this.isAuthenticated) {
+                            console.log('[AUTH] User authenticated, syncing with DB...');
                             await this._syncWithDB();
+                            console.log('[AUTH] DB sync complete, isRegistered =', this.isRegistered, 'dbUser =', !!this.dbUser);
                         } else {
                             this.dbUser = null;
                             this.isRegistered = false;
+                            console.log('[AUTH] User signed out');
                         }
                         
+                        // Notify AFTER syncWithDB completes so dbUser is set
                         this._notifyAuthChange();
                     });
                     
@@ -85,22 +90,28 @@ class AuthManager {
     async _syncWithDB() {
         if (!this.isAuthenticated) return;
 
+        console.log('[AUTH] _syncWithDB: starting sync, isAuthenticated =', this.isAuthenticated);
+        
         try {
             const token = await this.getToken();
             const response = await fetch('/api/users/me', {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
 
+            console.log('[AUTH] _syncWithDB: response status =', response.status);
+
             if (response.status === 404) {
                 this.isRegistered = false;
                 this.dbUser = null;
+                console.log('[AUTH] _syncWithDB: user not found in DB, needs registration');
             } else if (response.ok) {
                 const data = await response.json();
                 this.dbUser = data.user;
                 this.isRegistered = true;
+                console.log('[AUTH] _syncWithDB: user found in DB, username =', this.dbUser.username);
             }
         } catch (error) {
-            console.error('Error syncing with DB:', error);
+            console.error('[AUTH] Error syncing with DB:', error);
         }
     }
 
