@@ -2205,7 +2205,15 @@ function handleOverlandClick(x, y) {
     if (overlandRenderer.isMenuClicked(x, y)) {
         console.log('Menu button clicked, returning to menu');
         window.gameMode = 'game';
-        showMenu();
+        // Show menu screen and hide canvas
+        const menuScreen = document.getElementById('menuScreen');
+        if (menuScreen) menuScreen.style.display = '';
+        canvas.style.display = 'none';
+        // Remove overland click handler
+        if (overlandClickHandler) {
+            canvas.removeEventListener('click', overlandClickHandler);
+            overlandClickHandler = null;
+        }
         return;
     }
     
