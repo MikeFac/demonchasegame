@@ -382,5 +382,8 @@ class Network {
     }
 }
 
+// Expose Network class globally for instanceof checks
+window.Network = Network;
+
 // Create global instance (let allows replacement with LocalNetwork for offline mode)
 let network = new Network();

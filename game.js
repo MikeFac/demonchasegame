@@ -903,11 +903,23 @@ function startGame(mode, roomId, missionOpts) {
     if (offlineToggle && mode === 'solo') {
         offlineMode = offlineToggle.checked;
         localStorage.setItem('offlinePreferred', offlineMode.toString());
+    } else if (mode === 'join' || mode === 'host') {
+        // Always disable offline mode for multiplayer
+        offlineMode = false;
+        if (offlineToggle) offlineToggle.checked = false;
+    }
+
+    // Disconnect existing network if needed
+    if (network && typeof network.disconnect === 'function') {
+        network.disconnect();
     }
 
     // In offline mode, replace the global network with a LocalNetwork
     if (offlineMode && mode === 'solo') {
         network = new LocalNetwork();
+    } else {
+        // Create fresh Network instance for multiplayer or online solo
+        network = new Network();
     }
 
     const menuScreen = document.getElementById('menuScreen');

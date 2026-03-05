@@ -231,3 +231,6 @@ class LocalNetwork {
         console.log('LocalNetwork: Disconnected (offline mode)');
     }
 }
+
+// Expose LocalNetwork class globally for instanceof checks
+window.LocalNetwork = LocalNetwork;
