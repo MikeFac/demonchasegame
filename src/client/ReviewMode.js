@@ -186,10 +186,10 @@
             canvas.width = getOptimalCanvasWidth();
             canvas.height = Math.min(600, window.innerHeight - 80);
             ctx = canvas.getContext('2d');
-            console.log('[REVIEW DEBUG] startReviewMode: forced canvas resize to', canvas.width, 'x', canvas.height);
+            // Canvas resize logged only when actually changed
         }
         
-        console.log('[REVIEW DEBUG] startReviewMode: options =', options, 'canvas =', (typeof canvas !== 'undefined' ? `${canvas.width}x${canvas.height}` : 'undefined'));
+
         
         // Set vQuality if provided
         if (options.vQuality) {
@@ -209,7 +209,7 @@
         
         window.gameMode = 'review';
         ctx.clearRect(0, 0, canvas.width, canvas.height);
-        console.log('[REVIEW DEBUG] startReviewMode: cleared canvas, gameMode =', window.gameMode);
+
 
         if (window.Analytics) {
             var verseCount = incorrectAnswerReferences.length > 0 
@@ -258,7 +258,7 @@
                 }
             }
             
-            console.log('[REVIEW DEBUG] displayReviewVerseScreen: canvas =', (typeof canvas !== 'undefined' ? `${canvas.width}x${canvas.height}` : 'undefined'), 'ctx =', (typeof ctx !== 'undefined' ? 'defined' : 'undefined'));
+
             
             // If sermon viewer is open, let it render instead
             if (window.SermonViewer && SermonViewer.isOpen()) {
@@ -393,7 +393,7 @@
         const lineHeight = fontSize * 1.3;
         const maxWidth = canvas.width - 40;
         
-        console.log('[REVIEW DEBUG] displayReviewVerse: maxWidth =', maxWidth, 'canvas.width =', canvas.width, 'starting y =', 100);
+
 
         ctx.font = `${fontSize}px Arial`;
         ctx.fillStyle = 'white';
@@ -408,7 +408,7 @@
             const testWidth = metrics.width;
 
             if (testWidth > maxWidth && i > 0) {
-                console.log('[REVIEW DEBUG] displayReviewVerse: drawing line at x=20, y=' + y + ', line =', line.trim());
+
                 ctx.fillText(line, 20, y);
                 line = words[i] + ' ';
                 y += lineHeight;
@@ -417,7 +417,7 @@
             }
         }
         
-        console.log('[REVIEW DEBUG] displayReviewVerse: final line at x=20, y=' + y + ', line =', line.trim());
+
         ctx.fillText(line, 20, y);
     }
 
@@ -601,6 +601,7 @@
     }
 
     function handleReviewClick(clickedX, clickedY) {
+        console.log('[REVIEW CLICK]', clickedX.toFixed(0), clickedY.toFixed(0), 'hitRects:', hitRects.length, hitRects.map(r => r.name).join(','));
 
         // If sermon viewer is open, delegate clicks to it
         if (window.SermonViewer && SermonViewer.isOpen()) {

@@ -79,8 +79,11 @@ class InputHandler {
      */
     _handleClick(event) {
         const rect = this.canvas.getBoundingClientRect();
-        const clickedX = event.clientX - rect.left;
-        const clickedY = event.clientY - rect.top;
+        // Scale from CSS display coordinates to canvas internal coordinates
+        const scaleX = this.canvas.width / rect.width;
+        const scaleY = this.canvas.height / rect.height;
+        const clickedX = (event.clientX - rect.left) * scaleX;
+        const clickedY = (event.clientY - rect.top) * scaleY;
 
         // Dispatch to appropriate handler based on game mode
         // Note: gameMode is a global variable from game.js
@@ -119,8 +122,10 @@ class InputHandler {
      */
     _handleMouseMove(event) {
         const rect = this.canvas.getBoundingClientRect();
-        const mouseX = event.clientX - rect.left;
-        const mouseY = event.clientY - rect.top;
+        const scaleX = this.canvas.width / rect.width;
+        const scaleY = this.canvas.height / rect.height;
+        const mouseX = (event.clientX - rect.left) * scaleX;
+        const mouseY = (event.clientY - rect.top) * scaleY;
 
         if (typeof gameMode !== 'undefined' && gameMode === 'review') {
             if (typeof ReviewMode !== 'undefined' && typeof ReviewMode.handleMouseMove === 'function') {

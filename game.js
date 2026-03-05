@@ -2152,6 +2152,7 @@ async function initializeMissions() {
 }
 
 let overlandClickHandler = null;
+let reviewClickHandler = null;
 
 async function showOverland() {
 window.gameMode = 'overland';
@@ -2179,7 +2180,9 @@ window.gameMode = 'overland';
     // Make sure canvas is visible
     canvas.style.display = 'block';
     
-    // Set up click handler for overland mode
+    // Note: Click handling for overland mode is done via InputHandler._handleClick
+    // which checks gameMode === 'overland' and calls the onOverlandClick callback
+    // BUT we also need a direct handler for handleOverlandClick
     if (overlandClickHandler) {
         canvas.removeEventListener('click', overlandClickHandler);
     }
@@ -2190,6 +2193,7 @@ window.gameMode = 'overland';
         handleOverlandClick(x, y);
     };
     canvas.addEventListener('click', overlandClickHandler);
+
     
     await initializeMissions();
     
@@ -2453,13 +2457,12 @@ function handleOverlandClick(x, y) {
                 console.log('Loading verses before entering review mode...');
                 loadVerses().then(() => {
                     console.log('Verses loaded, entering review mode');
-                    console.log('[REVIEW DEBUG] loadVerses.then: canvas before startReviewMode =', canvas.width, 'x', canvas.height);
+
                     ReviewMode.startReviewMode(reviewOptions);
                     setupReviewClickHandler();
                 });
             } else {
                 console.log('Verses already loaded, entering review mode');
-                console.log('[REVIEW DEBUG] Verses already loaded, canvas before startReviewMode =', canvas.width, 'x', canvas.height);
                 ReviewMode.startReviewMode(reviewOptions);
                 setupReviewClickHandler();
             }
@@ -2470,22 +2473,26 @@ function handleOverlandClick(x, y) {
 
 function setupReviewClickHandler() {
     ensureCanvasSize();
-    console.log('[REVIEW DEBUG] setupReviewClickHandler: canvas dimensions =', canvas.width, 'x', canvas.height, 'gameMode =', window.gameMode);
     
-    // Remove overland click handler
+    // Remove any legacy overland click handler
     if (overlandClickHandler) {
         canvas.removeEventListener('click', overlandClickHandler);
         overlandClickHandler = null;
     }
-    
-    // Add a small delay before registering handlers to prevent click propagation
-    // from game mode to review mode
-    setTimeout(function() {
-        const reviewClickHandler = function(event) {
-            ReviewMode.handleReviewClick(event);
-        };
-        canvas.addEventListener('click', reviewClickHandler);
-    }, 50);
+    // Remove any previous review click handler
+    if (reviewClickHandler) {
+        canvas.removeEventListener('click', reviewClickHandler);
+    }
+    // Add review click handler with proper canvas coordinate conversion
+    reviewClickHandler = function(event) {
+        const rect = canvas.getBoundingClientRect();
+        const scaleX = canvas.width / rect.width;
+        const scaleY = canvas.height / rect.height;
+        const x = (event.clientX - rect.left) * scaleX;
+        const y = (event.clientY - rect.top) * scaleY;
+        ReviewMode.handleReviewClick(x, y);
+    };
+    canvas.addEventListener('click', reviewClickHandler);
 }
 
 async function startMission(worldId, missionId) {
