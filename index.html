@@ -1201,8 +1201,7 @@
     <!-- Privacy Policy Link -->
     <div style="margin-top: 20px;">
         <a href="#" class="privacy-link" id="privacyLink" data-i18n="config.privacyPolicy">Privacy Policy</a>
-        <span style="color: rgba(255,255,255,0.3); margin: 0 8px;">|</span>
-        <a href="#" class="privacy-link" id="licensingLink" data-i18n="config.licensing">Licensing & Contributing</a>
+        <br><span style="color: rgba(255,255,255,0.4); font-size: 0.75em; margin-top: 8px; display: inline-block;">Copyright &copy; 2026 Michael Fackerell. All Rights Reserved.</span>
     </div>
   </div>
 
@@ -1907,10 +1906,12 @@
       const licensingLink = document.getElementById('licensingLink');
       const btnCloseLicensing = document.getElementById('btnCloseLicensing');
 
-      licensingLink.addEventListener('click', function (e) {
-        e.preventDefault();
-        licensingModal.classList.add('open');
-      });
+      if (licensingLink) {
+        licensingLink.addEventListener('click', function (e) {
+          e.preventDefault();
+          licensingModal.classList.add('open');
+        });
+      }
 
       btnCloseLicensing.addEventListener('click', function () {
         licensingModal.classList.remove('open');
