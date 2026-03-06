@@ -86,7 +86,7 @@
                 this.wallGrid, this.gameConfig.monsterHealthMultiplier
             );
             this.monsterManager.collectibleManager = this.collectibleManager;
-            this.playerManager = new PlayerManager(this.gameState, this.emitter, this.wallGrid);
+            this.playerManager = new PlayerManager(this.gameState, this.emitter, this.wallGrid, this.gameConfig);
             this.bulletManager = new BulletManager(this.emitter, this.monsterManager, this.wallGrid, this.gameState);
 
             // Spawn initial healing points and collectibles
@@ -105,6 +105,9 @@
             // Simulation stays at 60fps; network updates at ~20fps (60/3)
             this._tickCount = 0;
             this.NETWORK_TICK_DIVISOR = 3;
+
+            // Ammo regeneration timer (FUN mode)
+            this._lastAmmoRegenTime = Date.now();
         }
 
         start() {
@@ -205,6 +208,21 @@
         update() {
             this.monsterManager.updateMonsters();
             this.bulletManager.update(this.gameState);
+            
+            // FUN mode: Ammo regeneration
+            if (this.gameConfig && this.gameConfig.ammoRegenRate > 0) {
+                this._lastAmmoRegenTime = this._lastAmmoRegenTime || 0;
+                if (Date.now() - this._lastAmmoRegenTime >= this.gameConfig.ammoRegenRate) {
+                    this._lastAmmoRegenTime = Date.now();
+                    for (var playerId in this.gameState.players) {
+                        var player = this.gameState.players[playerId];
+                        if (player && player.ammo !== undefined && player.ammo < 100) {
+                            player.ammo++;
+                        }
+                    }
+                }
+            }
+
             this._checkGracePeriods();
             this._checkGameEnd();
 

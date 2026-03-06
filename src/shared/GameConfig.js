@@ -63,7 +63,7 @@ const PRESETS = {
   },
   hard: {
     name: 'Hard',
-    description: 'Intense challenge, stronger monsters, scarce resources',
+    description: 'Intense challenge. stronger monsters, scarce resources',
     multipliers: {
       monsterHealth: 1.5,          // 50% more health
       monsterDamage: 1.5,          // 50% more damage
@@ -73,6 +73,24 @@ const PRESETS = {
       maxMonsters: 1.3             // 30% more concurrent monsters
     },
     meleeHitProbabilityNoAnswer: 0.0  // Must answer quiz to hit (current behavior)
+  },
+  fun: {
+    name: 'Fun Mode',
+    description: 'Arcade action! Fast combat, lots of ammo. optional quizzes',
+    multipliers: {
+      monsterHealth: 0.5,          // 50% health (easy to kill)
+      monsterDamage: 0.5,          // 50% damage (forgiving)
+      monsterSpeed: 1.2,           // 20% faster (more exciting)
+      spawnRate: 0.6,              // 40% faster spawning (more enemies)
+      healingSpawnRate: 0.5,       // 50% more frequent healing
+      maxMonsters: 1.5             // 50% more enemies on screen
+    },
+    meleeHitProbabilityNoAnswer: 0.8,  // 80% chance to hit without answering quiz
+    startingAmmo: 50,              // Start with plenty of ammo
+    ammoRegenRate: 1000,           // Regenerate 1 ammo every second
+    bonusHealth: 20,               // Bonus health for correct answers
+    bonusAmmo: 10,                 // Bonus ammo for correct answers
+    noQuizPenalty: true            // No penalty for wrong/ignored answers
   }
 };
 
@@ -142,7 +160,14 @@ function createGameConfig(presetName = 'normal', customQuizSettings = null) {
     quizSettings: quizSettings,
 
     // Melee combat: probability to hit without answering quiz (0.0 - 1.0)
-    meleeHitProbabilityNoAnswer: preset.meleeHitProbabilityNoAnswer || 0.0
+    meleeHitProbabilityNoAnswer: preset.meleeHitProbabilityNoAnswer || 0.0,
+
+    // FUN mode properties (optional)
+    startingAmmo: preset.startingAmmo || 0,
+    ammoRegenRate: preset.ammoRegenRate || 0,
+    bonusHealth: preset.bonusHealth || 0,
+    bonusAmmo: preset.bonusAmmo || 0,
+    noQuizPenalty: preset.noQuizPenalty || false
   };
 }
 

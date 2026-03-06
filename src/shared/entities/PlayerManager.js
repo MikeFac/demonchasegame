@@ -16,10 +16,11 @@
     var generateId = SharedUtils.generateId;
 
     class PlayerManager {
-        constructor(gameState, io, wallGrid) {
+        constructor(gameState, io, wallGrid, gameConfig) {
             this.gameState = gameState;
             this.io = io;
             this.wallGrid = wallGrid || null;
+            this.gameConfig = gameConfig || null;
         }
 
         generatePlayerCode() {
@@ -79,7 +80,7 @@
                 color: 'blue',
                 xp: 0,
                 level: 1,
-                ammo: 0,
+                ammo: (this.gameConfig && this.gameConfig.startingAmmo) || 0,
                 votdDamageBonus: false,
                 state: 'alive',
                 canAttack: true,

@@ -825,6 +825,50 @@ function startGame(mode, roomId, missionOpts) {
         overlandClickHandler = null;
     }
 
+    // ===== FUN MODE: Fast arcade action =====
+    if (mode === 'fun') {
+        console.log('Starting FUN mode - arcade action!');
+        
+        // Reset game state first (prevents undefined variables)
+        resetGameState();
+        
+        // Force offline mode for FUN mode
+        offlineMode = true;
+        localStorage.setItem('offlinePreferred', 'true');
+        
+        if (window.Analytics) {
+            Analytics.trackGameStart('fun', true);
+            Analytics.startSession(true);
+        }
+        
+        network = new LocalNetwork();
+        
+        const menuScreen = document.getElementById('menuScreen');
+        if (menuScreen) menuScreen.style.display = 'none';
+        canvas.style.display = 'block';
+        
+        // Show FUN mode indicator (after canvas is displayed)
+        setTimeout(() => {
+            flashMessages.push({
+                text: '🎮 FUN MODE! 🎮',
+                color: '#FFD700',
+                startTime: Date.now(),
+                duration: 3000
+            });
+        }, 100);
+        
+        init().then(() => {
+            // FUN mode uses the 'fun' preset with balanced quizzes
+            const quizSettings = getQuizSettingsFromSliders();
+            const mapStyle = document.getElementById('mapStyleSelect') ? document.getElementById('mapStyleSelect').value : 'classic';
+            network.sendStartSoloGame('fun', quizSettings, 'normal', mapStyle);
+            if (!_gameLoopRunning) gameLoop();
+        }).catch((error) => {
+            console.error('Error initializing game:', error);
+        });
+        return;
+    }
+
     // Preserve mission state if starting a mission (resetGameState clears it)
     const preservedMission = currentMission;
     const preservedMissionConfig = currentMissionConfig;
@@ -1112,6 +1156,10 @@ document.addEventListener('DOMContentLoaded', function () {
             if (menuScreen) menuScreen.style.display = 'none';
             showOverland();
         });
+        document.getElementById('btnFunMode').addEventListener('click', () => {
+            if (window.Analytics) Analytics.trackMenuClick('fun_mode');
+            startGame('fun');
+        });
         document.getElementById('btnLearnVerses').addEventListener('click', () => {
             if (window.Analytics) Analytics.trackMenuClick('learn_verses');
             // Start a solo game, then immediately enter review mode
@@ -1216,7 +1264,7 @@ function initializeVerseCounter() {
 }
 
 // Callback for QuizManager to notify of correct answers
-window.onQuizCorrectAnswer = function (quizMode, verseReference) {
+ window.onQuizCorrectAnswer = function (quizMode, verseReference) {
     // Store reference for display in UI
     lastAnsweredReference = verseReference;
 
@@ -1226,6 +1274,26 @@ window.onQuizCorrectAnswer = function (quizMode, verseReference) {
 
     if (window.SoundEffects) {
         SoundEffects.playDing();
+    }
+
+    // ===== FUN MODE BONUSES =====
+    if (window.funModeBonusHealth && player) {
+        player.health = Math.min(player.health + window.funModeBonusHealth, player.maxHealth);
+        flashMessages.push({
+            text: `+${window.funModeBonusHealth} HP!`,
+            color: '#44ff44',
+            startTime: Date.now(),
+            duration: 1500
+        });
+    }
+    if (window.funModeBonusAmmo && player) {
+        player.ammo = (player.ammo || 0) + window.funModeBonusAmmo;
+        flashMessages.push({
+            text: `+${window.funModeBonusAmmo} Ammo!`,
+            color: '#4488ff',
+            startTime: Date.now(),
+            duration: 1500
+        });
     }
 
     // ===== FIRST 60 SECONDS: Show "POWERED UP!" on first correct answer =====
@@ -1618,6 +1686,23 @@ async function init() {
                 // Store melee hit probability for attacks without quiz answer
                 if (config.meleeHitProbabilityNoAnswer !== undefined) {
                     meleeHitProbabilityNoAnswer = config.meleeHitProbabilityNoAnswer;
+                }
+
+                // FUN mode properties
+                if (config.startingAmmo !== undefined) {
+                    player.ammo = config.startingAmmo;
+                }
+                if (config.ammoRegenRate !== undefined) {
+                    // Ammo regen handled by server
+                }
+                if (config.bonusHealth !== undefined) {
+                    window.funModeBonusHealth = config.bonusHealth;
+                }
+                if (config.bonusAmmo !== undefined) {
+                    window.funModeBonusAmmo = config.bonusAmmo;
+                }
+                if (config.noQuizPenalty !== undefined) {
+                    window.funModeNoQuizPenalty = config.noQuizPenalty;
                 }
                 // Set currentMission for multiplayer mission games so completeMission() works
                 if (config.missionId && !currentMission) {
