@@ -60,6 +60,12 @@ let isGameLoaded = false;
 // [WallSpawn] Periodic wall-collision diagnostic (check every ~1s, not every frame)
 let _wallSpawnCheckTimer = 0;
 
+// Network position send throttle (~20Hz = 50ms interval)
+let _lastPositionSendTime = 0;
+let _lastSentX = 0;
+let _lastSentY = 0;
+const POSITION_SEND_INTERVAL = 50; // ms between position sends
+
 // Offline mode flag
 let offlineMode = false;
 
@@ -2786,6 +2792,31 @@ function gameLoop(generation) {
             return (Date.now() - fm.startTime) < fm.duration;
         });
 
+        // ===== INTERPOLATION: Lerp monsters and other players toward target positions =====
+        const INTERPOLATION_SPEED = 0.15; // How fast to catch up (0.15 = smooth but responsive)
+
+        // Interpolate monsters toward their target positions
+        for (let i = 0; i < monsters.length; i++) {
+            const m = monsters[i];
+            if (m._targetX !== undefined && m._targetY !== undefined) {
+                m.x = lerp(m.x, m._targetX, INTERPOLATION_SPEED);
+                m.y = lerp(m.y, m._targetY, INTERPOLATION_SPEED);
+            }
+        }
+
+        // Interpolate other players toward their target positions
+        if (gameState.players) {
+            Object.keys(gameState.players).forEach(code => {
+                if (code !== playerCode) {
+                    const otherPlayer = gameState.players[code];
+                    if (otherPlayer && otherPlayer._targetX !== undefined && otherPlayer._targetY !== undefined) {
+                        otherPlayer.x = lerp(otherPlayer.x, otherPlayer._targetX, INTERPOLATION_SPEED);
+                        otherPlayer.y = lerp(otherPlayer.y, otherPlayer._targetY, INTERPOLATION_SPEED);
+                    }
+                }
+            });
+        }
+
         // Update VerseTestScreen timer
         if (VerseTestScreen.isActive()) {
             VerseTestScreen.update(16);
@@ -2995,8 +3026,15 @@ function gameLoop(generation) {
                 player.x = Math.max(0, Math.min(player.x, WORLD_WIDTH));
                 player.y = Math.max(0, Math.min(player.y, WORLD_HEIGHT));
 
-                // Send the player's position to the server
-                network.sendPosition(player.x, player.y);
+                // Send position to server (throttled to ~20Hz)
+                const now = Date.now();
+                if (now - _lastPositionSendTime >= POSITION_SEND_INTERVAL &&
+                    (player.x !== _lastSentX || player.y !== _lastSentY)) {
+                    network.sendPosition(player.x, player.y);
+                    _lastPositionSendTime = now;
+                    _lastSentX = player.x;
+                    _lastSentY = player.y;
+                }
             } else {
                 // Player has arrived at target, clear it
                 inputHandler.clearTarget();
@@ -3453,8 +3491,20 @@ function updateGameState(newGameState) {
                     }
                 }
             } else {
-                // Update other players
-                gameState.players[code] = { ...gameState.players[code], ...newGameState.players[code] };
+                // Update other players — store server position as interpolation target
+                const existing = gameState.players[code];
+                const incoming = newGameState.players[code];
+                if (existing && incoming) {
+                    // Set interpolation targets
+                    existing._targetX = incoming.x;
+                    existing._targetY = incoming.y;
+                    // Update non-position fields
+                    const prevX = existing.x;
+                    const prevY = existing.y;
+                    gameState.players[code] = { ...existing, ...incoming, x: prevX, y: prevY, _targetX: incoming.x, _targetY: incoming.y };
+                } else {
+                    gameState.players[code] = { ...incoming };
+                }
             }
         });
     } else if (!playerCode) {
@@ -3465,21 +3515,40 @@ function updateGameState(newGameState) {
 
     const currentTime = Date.now();
 
-    // Update monsters from server state
+    // Update monsters from server state — interpolate positions for smooth movement
     if (newGameState.monsters && Array.isArray(newGameState.monsters)) {
-        gameState.monsters = newGameState.monsters;
-        monsters = gameState.monsters.map((monsterState) => {
-            return {
-                ...monsterState,
-                healthBar: {
-                    x: 0,
-                    y: 0,
-                    width: 0,
-                    height: 7,
-                    color: 'green'
-                }
-            };
+        // Build lookup of existing monsters by id for interpolation
+        const existingById = {};
+        for (let i = 0; i < monsters.length; i++) {
+            if (monsters[i] && monsters[i].id !== undefined) {
+                existingById[monsters[i].id] = monsters[i];
+            }
+        }
+
+        monsters = newGameState.monsters.map((monsterState) => {
+            const existing = existingById[monsterState.id];
+            if (existing) {
+                // Existing monster: set interpolation targets, keep current display position
+                return {
+                    ...monsterState,
+                    x: existing.x,
+                    y: existing.y,
+                    _targetX: monsterState.x,
+                    _targetY: monsterState.y,
+                    healthBar: existing.healthBar || { x: 0, y: 0, width: 0, height: 7, color: 'green' }
+                };
+            } else {
+                // New monster: appear at server position immediately
+                return {
+                    ...monsterState,
+                    _targetX: monsterState.x,
+                    _targetY: monsterState.y,
+                    healthBar: { x: 0, y: 0, width: 0, height: 7, color: 'green' }
+                };
+            }
         });
+        gameState.monsters = monsters;
+
         if (!player) {
             // Player not created yet, wait for initialization
         } else {

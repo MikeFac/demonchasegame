@@ -17,7 +17,8 @@ const Sermon = require('../src/server/models/Sermon');
 const { generateSermonText } = require('../src/server/services/SermonService');
 const { loadSelectedVerses } = require('../bible-verses');
 
-const TARGET_PER_CATEGORY = 3;
+const START_OFFSET_PER_CATEGORY = 3; // start from the 4th verse (index 3)
+const TARGET_PER_CATEGORY = 3; // how many to generate
 const DELAY_MS = 3000; // 3s between API calls
 
 function sleep(ms) {
@@ -26,7 +27,10 @@ function sleep(ms) {
 
 async function main() {
   try {
-    await mongoose.connect(process.env.MONGODB_URI);
+    await mongoose.connect(process.env.MONGODB_URI, {
+      serverSelectionTimeoutMS: 60000,
+      socketTimeoutMS: 300000 // 5 minutes (sermon generation can take > 1 minute)
+    });
     console.log('✅ Connected to MongoDB\n');
 
     if (!process.env.OPENROUTER_API_KEY) {
@@ -47,7 +51,7 @@ async function main() {
 
     const categories = Object.keys(byCategory).sort();
     console.log(`📊 Categories: ${categories.length}`);
-    console.log(`🎯 Target: first ${TARGET_PER_CATEGORY} verses per category\n`);
+    console.log(`🎯 Target: ${TARGET_PER_CATEGORY} verses per category (starting at offset ${START_OFFSET_PER_CATEGORY})\n`);
     console.log('═'.repeat(60) + '\n');
 
     let totalGenerated = 0;
@@ -56,10 +60,12 @@ async function main() {
 
     for (const category of categories) {
       const verses = byCategory[category];
-      const target = Math.min(TARGET_PER_CATEGORY, verses.length);
-      console.log(`📚 ${category} (${target}/${verses.length} verses)`);
+      const start = Math.min(START_OFFSET_PER_CATEGORY, verses.length);
+      const end = Math.min(START_OFFSET_PER_CATEGORY + TARGET_PER_CATEGORY, verses.length);
+      const targetCount = Math.max(0, end - start);
+      console.log(`📚 ${category} (${targetCount} verses: index ${start} to ${end - 1})`);
 
-      for (let i = 0; i < target; i++) {
+      for (let i = start; i < end; i++) {
         const verse = verses[i];
 
         // Check if already exists
@@ -94,7 +100,7 @@ async function main() {
           totalGenerated++;
 
           // Rate limit
-          if (i < target - 1 || categories.indexOf(category) < categories.length - 1) {
+          if (i < end - 1 || categories.indexOf(category) < categories.length - 1) {
             await sleep(DELAY_MS);
           }
         } catch (err) {

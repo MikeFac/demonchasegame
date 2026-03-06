@@ -100,6 +100,11 @@
             this._gameEnded = false;
             this._disconnectedPlayers = new Map();
             this.intervals = [];
+
+            // Network broadcast throttle: emit gameStateUpdate every Nth tick
+            // Simulation stays at 60fps; network updates at ~20fps (60/3)
+            this._tickCount = 0;
+            this.NETWORK_TICK_DIVISOR = 3;
         }
 
         start() {
@@ -213,7 +218,12 @@
                 }
             }
 
-            this.emitter.emit('gameStateUpdate', this.gameState);
+            // Throttle network broadcasts: emit every Nth tick (~20fps)
+            // Simulation keeps running at 60fps for accurate physics
+            this._tickCount++;
+            if (this._tickCount % this.NETWORK_TICK_DIVISOR === 0) {
+                this.emitter.emit('gameStateUpdate', this.gameState);
+            }
         }
 
         _scheduleNextSpawn() {
