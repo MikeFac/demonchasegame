@@ -1049,9 +1049,11 @@ document.addEventListener('DOMContentLoaded', function () {
     } else if (mode === 'solo') {
         // Lobby "Practice (Solo)" shortcut — skip menu
         startGame('solo');
-    } else if (!hasVisited) {
-        // === FIRST TIME USER EXPERIENCE ===
-        console.log("First time user detected! Starting in offline mode.");
+    } else if (!hasVisited && urlParams.get('play') === '1') {
+        // === FIRST TIME USER EXPERIENCE (AD TRAFFIC ONLY) ===
+        // Auto-start only when ?play=1 is in URL (for ad campaigns)
+        // Regular first-time visitors see the menu instead
+        console.log("Ad traffic detected! Starting in offline mode.");
         
         // Mark as visited so next time they see the menu
         localStorage.setItem('hasVisited', 'true');
@@ -1075,7 +1077,11 @@ document.addEventListener('DOMContentLoaded', function () {
             startGame('solo');
         });
     } else {
-        // === RETURNING USER ===
+        // === RETURNING USER (or first-time without ?play=1) ===
+        // Mark as visited so they see menu on future visits
+        if (!hasVisited) {
+            localStorage.setItem('hasVisited', 'true');
+        }
         // Check if offline (no internet) and apply offline mode
         if (!navigator.onLine || persistedOffline) {
             offlineMode = true;
