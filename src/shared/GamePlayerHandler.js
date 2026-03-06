@@ -49,6 +49,12 @@
                 configMsg.missionName = engine.gameConfig.missionName;
                 configMsg.xpMultiplier = engine.gameConfig.xpMultiplier;
             }
+            // Include FUN mode properties
+            configMsg.startingAmmo = engine.gameConfig.startingAmmo || 0;
+            configMsg.ammoRegenRate = engine.gameConfig.ammoRegenRate || 0;
+            configMsg.bonusHealth = engine.gameConfig.bonusHealth || 0;
+            configMsg.bonusAmmo = engine.gameConfig.bonusAmmo || 0;
+            configMsg.noQuizPenalty = engine.gameConfig.noQuizPenalty || false;
             engine._sendToPlayer[playerId]('gameConfig', configMsg);
         }
 

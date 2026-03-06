@@ -832,7 +832,7 @@ function startGame(mode, roomId, missionOpts) {
         // Reset game state first (prevents undefined variables)
         resetGameState();
         
-        // Force offline mode for FUN mode
+        // FUN mode uses LocalNetwork for fast local gameplay
         offlineMode = true;
         localStorage.setItem('offlinePreferred', 'true');
         
@@ -1276,24 +1276,34 @@ function initializeVerseCounter() {
         SoundEffects.playDing();
     }
 
-    // ===== FUN MODE BONUSES =====
-    if (window.funModeBonusHealth && player) {
-        player.health = Math.min(player.health + window.funModeBonusHealth, player.maxHealth);
-        flashMessages.push({
-            text: `+${window.funModeBonusHealth} HP!`,
-            color: '#44ff44',
-            startTime: Date.now(),
-            duration: 1500
-        });
-    }
-    if (window.funModeBonusAmmo && player) {
-        player.ammo = (player.ammo || 0) + window.funModeBonusAmmo;
-        flashMessages.push({
-            text: `+${window.funModeBonusAmmo} Ammo!`,
-            color: '#4488ff',
-            startTime: Date.now(),
-            duration: 1500
-        });
+    // ===== FUN MODE BONUSES (applied client-side + engine for persistence) =====
+    if ((window.funModeBonusHealth || window.funModeBonusAmmo) && player) {
+        var bonusHealth = window.funModeBonusHealth || 0;
+        var bonusAmmo = window.funModeBonusAmmo || 0;
+        
+        if (bonusHealth > 0) {
+            player.health = Math.min(player.health + bonusHealth, player.maxHealth);
+            flashMessages.push({
+                text: `+${bonusHealth} HP!`,
+                color: '#44ff44',
+                startTime: Date.now(),
+                duration: 1500
+            });
+        }
+        if (bonusAmmo > 0) {
+            player.ammo = (player.ammo || 0) + bonusAmmo;
+            flashMessages.push({
+                text: `+${bonusAmmo} Ammo!`,
+                color: '#4488ff',
+                startTime: Date.now(),
+                duration: 1500
+            });
+        }
+        
+        // Update engine state for persistence (sync, no delay)
+        if (network && network.sendFunModeBonus) {
+            network.sendFunModeBonus(bonusHealth, bonusAmmo);
+        }
     }
 
     // ===== FIRST 60 SECONDS: Show "POWERED UP!" on first correct answer =====
@@ -3549,11 +3559,16 @@ function updateGameState(newGameState) {
             if (code === playerCode) {
                 // In offline mode, always keep local position (server is local too)
                 if (offlineMode) {
-                    // Keep local position, update stats from server
-                    const { x, y } = player;
+                    // Keep local position and dimensions, update stats from server
+                    const { x, y, width, height } = player;
                     const serverX = gameState.players[code].x;
                     const serverY = gameState.players[code].y;
-                    player = { ...player, ...gameState.players[code], x: x, y: y };
+                    const prevHealth = player.health;
+                    player = { ...player, ...gameState.players[code], x: x, y: y, width: width, height: height };
+                    // In FUN mode, preserve health bonus applied locally
+                    if (window.funModeBonusHealth && prevHealth > gameState.players[code].health) {
+                        player.health = prevHealth;
+                    }
                     // Debug: detect if server position drifted far from client
                     if (typeof x === 'number' && typeof serverX === 'number') {
                         const drift = Math.sqrt((serverX - x) ** 2 + (serverY - y) ** 2);
@@ -3645,7 +3660,11 @@ function updateGameState(newGameState) {
         } else {
             const serverPlayer = newGameState.players[playerCode];
             if (serverPlayer) {
-                player.health = serverPlayer.health;
+                // In FUN mode, don't overwrite health (allows bonus HP to persist)
+                // Also preserve XP/level
+                if (!window.funModeBonusHealth) {
+                    player.health = serverPlayer.health;
+                }
                 player.xp = serverPlayer.xp;
                 player.level = serverPlayer.level;
                 // Sync Ammo
@@ -3670,17 +3689,13 @@ function updateGameState(newGameState) {
 
     // Update collectibles
     if (newGameState.collectibles && Array.isArray(newGameState.collectibles)) {
-        collectibles = newGameState.collectibles;
+        gameState.collectibles = newGameState.collectibles;
     } else {
-        collectibles = [];
+        gameState.collectibles = [];
     }
 
-    // Update bullets
-    if (newGameState.bullets && Array.isArray(newGameState.bullets)) {
-        gameState.bullets = newGameState.bullets;
-    } else {
-        gameState.bullets = [];
-    }
+    // Sync collectibles to local variable
+    collectibles = gameState.collectibles || [];
 }
 
 function lerp(a, b, t) {

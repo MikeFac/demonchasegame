@@ -178,6 +178,12 @@ class LocalNetwork {
         }
     }
 
+    sendFunModeBonus(bonusHealth, bonusAmmo) {
+        if (this.engine) {
+            this.engine.handlePlayerInput(this._playerId, 'funModeBonus', { bonusHealth, bonusAmmo });
+        }
+    }
+
     sendCollectCollectible(collectibleId) {
         if (this.engine) {
             this.engine.handlePlayerInput(this._playerId, 'collectCollectible', collectibleId);

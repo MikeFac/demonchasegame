@@ -314,6 +314,17 @@ class Network {
     }
 
     /**
+     * Request fun mode bonus from server (server is source of truth for HP)
+     * @param {number} bonusHealth - Health bonus amount
+     * @param {number} bonusAmmo - Ammo bonus amount
+     */
+    sendFunModeBonus(bonusHealth, bonusAmmo) {
+        if (this.socket) {
+            this.socket.emit('funModeBonus', { bonusHealth, bonusAmmo });
+        }
+    }
+
+    /**
      * Update game state (for level config changes)
      * @param {Object} gameState 
      */

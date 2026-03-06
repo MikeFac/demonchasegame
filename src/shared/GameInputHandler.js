@@ -80,6 +80,18 @@
                 }
                 break;
 
+            case 'funModeBonus':
+                if (player && data && data.bonusHealth) {
+                    player.health = Math.min(player.health + data.bonusHealth, player.maxHealth);
+                    console.log('Player ' + playerCode + ' received fun mode bonus health: ' + data.bonusHealth);
+                }
+                if (player && data && data.bonusAmmo) {
+                    player.ammo = (player.ammo || 0) + data.bonusAmmo;
+                    console.log('Player ' + playerCode + ' received fun mode bonus ammo: ' + data.bonusAmmo);
+                }
+                engine.emitter.emit('gameStateUpdate', engine.gameState);
+                break;
+
             case 'playerAttack':
                 if (player) {
                     var attackProxy = { playerCode: playerCode };
