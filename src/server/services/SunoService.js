@@ -8,6 +8,36 @@ const { normalizeReference } = require('../utils/ReferenceNormalizer');
 const KIE_API_KEY = process.env.KIE_API_KEY;
 const KIE_API_BASE = 'https://api.kie.ai/api/v1';
 
+function buildGenerationPrompt(verseText, repeatCount) {
+  const normalizedVerseText = (verseText || '').trim();
+  const wordCount = normalizedVerseText ? normalizedVerseText.split(/\s+/).length : 0;
+  const minimumWordTarget = 32;
+  const minimumRepeats = wordCount > 0
+    ? Math.max(1, Math.ceil(minimumWordTarget / wordCount))
+    : 1;
+  const totalRepeats = Math.max(repeatCount || 1, minimumRepeats);
+
+  return Array(totalRepeats)
+    .fill(normalizedVerseText)
+    .join('\n\n')
+    .trim();
+}
+
+function buildStylePrompt(baseStyle) {
+  const normalizedStyle = (baseStyle || 'pop').trim();
+  return [
+    normalizedStyle,
+    'cold open with singing',
+    'first lyric begins at 0:00',
+    'no instrumental intro',
+    'repeat the exact supplied lyrics only',
+    'no extra words',
+    'no ad-libs',
+    'no nonsense syllables',
+    'short scripture song'
+  ].join(', ');
+}
+
 /**
  * Generate a song for a verse via Suno/kie.ai
  */
@@ -18,15 +48,23 @@ async function generateVerseSong(verseSongId) {
       throw new Error(`VerseSong not found: ${verseSongId}`);
     }
 
+    // Calculate version number if not already set
+    if (!verseSong.version) {
+      const highestVersion = await VerseSong.findOne({
+        verseReference: verseSong.verseReference
+      }).sort({ version: -1 });
+
+      verseSong.version = (highestVersion?.version || 0) + 1;
+      await verseSong.save();
+      console.log(`   Version: ${verseSong.version}`);
+    }
+
     const categoryStyle = await CategoryStyle.findOne({ category: verseSong.category });
     const style = categoryStyle?.generationStyle || 'pop';
     const repeatCount = categoryStyle?.repeatCount || 3;
 
-    // Build lyrics: verse text repeated 3x
-    const lyrics = Array(repeatCount)
-      .fill(verseSong.verseText)
-      .join('\n\n')
-      .trim();
+    const lyrics = buildGenerationPrompt(verseSong.verseText, repeatCount);
+    const stylePrompt = buildStylePrompt(style);
 
     console.log(`📝 Calling Suno for ${verseSong.verseReference} (${style})...`);
 
@@ -39,7 +77,7 @@ async function generateVerseSong(verseSongId) {
         instrumental: false,
         model: 'V4_5',
         title: `${verseSong.verseReference} - Scripture Learning`,
-        style: style,
+        style: stylePrompt,
         callBackUrl: `${process.env.SERVER_URL || 'http://localhost:3500'}/api/verse-song/callback`
       },
       {
@@ -210,6 +248,8 @@ async function downloadAndStoreAudio(audioUrl, verseReference, sunoId = null) {
 }
 
 module.exports = {
+  buildGenerationPrompt,
+  buildStylePrompt,
   generateVerseSong,
   pollSunoStatus
 };

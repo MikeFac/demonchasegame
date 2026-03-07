@@ -9,6 +9,7 @@ const { normalizeReference } = require('../utils/ReferenceNormalizer');
  * GET /api/verse-song?ref=John+3:16
  *
  * Returns song for a verse, or triggers generation if missing.
+ * Supports multiple versions per verse with random selection for variety.
  * Does NOT block on generation—returns immediately with status.
  */
 router.get('/', async (req, res) => {
@@ -22,54 +23,84 @@ router.get('/', async (req, res) => {
     // Normalize reference for database lookup (e.g., "Psalms 118:6" → "psalms118-6")
     const normalizedRef = normalizeReference(ref);
 
-    // Try to find existing verse song (first try normalized, then original format for backward compatibility)
-    let verseSong = await VerseSong.findOne({ verseReference: normalizedRef });
-    if (!verseSong) {
-      verseSong = await VerseSong.findOne({ verseReference: ref });
-    }
+    // Find ALL active versions for this verse
+    const verseSongs = await VerseSong.find({
+      $or: [
+        { verseReference: normalizedRef },
+        { verseReference: ref }
+      ],
+      status: 'active',
+      isActiveVersion: true,
+      audioUrl: { $exists: true }
+    }).sort({ qualityScore: -1, playCount: 1 }); // Best quality, rotate through less-played
 
-    if (verseSong && verseSong.status === 'active' && verseSong.audioUrl) {
-      // Found a completed song—return it
+    if (verseSongs.length > 0) {
+      // Random selection for variety (can change to weighted by qualityScore later)
+      const selectedIndex = Math.floor(Math.random() * verseSongs.length);
+      const selectedSong = verseSongs[selectedIndex];
+
       return res.json({
         verseReference: ref,
-        audioUrl: verseSong.audioUrl,
+        audioUrl: selectedSong.audioUrl,
         status: 'ready',
-        playCount: verseSong.playCount,
-        learnCount: verseSong.learnCount
+        version: selectedSong.version || 1,
+        totalVersions: verseSongs.length,
+        playCount: selectedSong.playCount,
+        learnCount: selectedSong.learnCount,
+        qualityScore: selectedSong.qualityScore
       });
     }
 
-    if (verseSong && verseSong.generationStatus === 'processing') {
-      // Still generating—tell client to use fallback music
+    // No completed songs found—check if any are processing
+    const processingSong = await VerseSong.findOne({
+      $or: [
+        { verseReference: normalizedRef },
+        { verseReference: ref }
+      ],
+      generationStatus: 'processing'
+    });
+
+    if (processingSong) {
       return res.json({
         verseReference: ref,
         status: 'pending_generation',
-        message: 'Song is being generated. Using fallback music.'
+        message: 'Song is being generated. Using fallback music.',
+        version: processingSong.version || 1
       });
     }
 
-    if (verseSong && verseSong.generationStatus === 'failed') {
-      // Previous generation failed—queue retry
-      verseSong.generationStatus = 'pending';
-      verseSong.generationAttempts = (verseSong.generationAttempts || 0) + 1;
-      await verseSong.save();
+    // Check for failed generations
+    const failedSong = await VerseSong.findOne({
+      $or: [
+        { verseReference: normalizedRef },
+        { verseReference: ref }
+      ],
+      generationStatus: 'failed'
+    });
+
+    if (failedSong) {
+      // Queue retry
+      failedSong.generationStatus = 'pending';
+      failedSong.generationAttempts = (failedSong.generationAttempts || 0) + 1;
+      await failedSong.save();
+
       return res.json({
         verseReference: ref,
         status: 'pending_generation',
-        message: 'Retrying generation. Using fallback music.'
+        message: 'Retrying generation. Using fallback music.',
+        version: failedSong.version || 1
       });
     }
 
     // No record exists—create one and queue generation
-    if (!verseSong) {
-      verseSong = await createAndQueueVerseSong(ref);
-    }
+    const verseSong = await createAndQueueVerseSong(ref);
 
     res.json({
       verseReference: ref,
       status: 'pending_generation',
       message: 'Song queued for generation. Using fallback music.',
-      generationStatus: verseSong.generationStatus
+      generationStatus: verseSong.generationStatus,
+      version: verseSong.version || 1
     });
   } catch (err) {
     console.error('❌ Error in /api/verse-song for', req.query.ref, ':', err.message);
@@ -140,21 +171,47 @@ async function createAndQueueVerseSong(verseReference) {
  * POST /api/verse-song/record-play
  *
  * Track when a verse song is played and whether player learned the verse.
+ * Supports multiple versions - must {version} parameter in request.
  */
 router.post('/record-play', async (req, res) => {
   try {
-    const { verseReference, playDurationMs, wasLearned } = req.body;
+    const { verseReference, playDurationMs, wasLearned, version } = req.body;
 
     if (!verseReference) {
       return res.status(400).json({ error: 'Missing verseReference' });
     }
 
-    // Normalize reference for lookup
+    // Find specific version if provided, otherwise find any active version
     const normalizedRef = normalizeReference(verseReference);
-    let verseSong = await VerseSong.findOne({ verseReference: normalizedRef });
-    if (!verseSong) {
-      verseSong = await VerseSong.findOne({ verseReference });
+    let query = {
+      $or: [
+        { verseReference: normalizedRef },
+        { verseReference: verseReference }
+      ],
+      status: 'active',
+      isActiveVersion: true
+    };
+
+    
+    if (version) {
+      // Find specific version
+      query.version = version;
     }
+
+    let verseSong = await VerseSong.findOne(query);
+
+    if (!verseSong) {
+      // Try to find any version if specific one not found
+      verseSong = await VerseSong.findOne({
+        $or: [
+          { verseReference: normalizedRef },
+          { verseReference: verseReference }
+        ],
+        status: 'active',
+        isActiveVersion: true
+      });
+    }
+
     if (!verseSong) {
       return res.status(404).json({ error: 'Verse song not found' });
     }
@@ -171,14 +228,19 @@ router.post('/record-play', async (req, res) => {
     verseSong.averageRetention =
       (prevRetention * (totalPlays - 1) + (wasLearned ? 1 : 0)) / totalPlays;
 
+    // Calculate quality score (0-100)
+    verseSong.qualityScore = Math.round(verseSong.averageRetention * 100);
+
     verseSong.lastPlayedAt = new Date();
     await verseSong.save();
 
     res.json({
       verseReference,
+      version: verseSong.version || 1,
       playCount: verseSong.playCount,
       learnCount: verseSong.learnCount,
-      averageRetention: verseSong.averageRetention
+      averageRetention: verseSong.averageRetention,
+      qualityScore: verseSong.qualityScore
     });
   } catch (err) {
     console.error('Error recording play:', err);

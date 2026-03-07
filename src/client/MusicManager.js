@@ -16,6 +16,7 @@
     let tracks = [];
     let volume = 0.7;
     let currentVerseReference = null;  // Track current verse song
+    let currentPlaybackType = null;    // 'track' | 'verse'
 
     // Available tracks (will be loaded from music folder)
     // Format: { name: "Display Name", file: "filename.mp3" }
@@ -58,6 +59,7 @@
             currentAudio = new Audio(getTrackPath(track));
             currentAudio.volume = isMuted ? 0 : volume;
             currentAudio.loop = true;
+            currentPlaybackType = 'track';
 
             currentAudio.play()
                 .then(() => {
@@ -91,6 +93,7 @@
             currentAudio = null;
         }
         isPlaying = false;
+        currentPlaybackType = null;
     }
 
     /**
@@ -205,8 +208,23 @@
             const verseTrack = await window.VerseSongService.getSongForVerse(verseReference);
 
             if (verseTrack && verseTrack.status === 'ready' && verseTrack.audioUrl) {
+                // Let the current verse song finish instead of restarting at each verse transition.
+                if (currentPlaybackType === 'verse' && currentAudio && !currentAudio.paused) {
+                    if (currentVerseReference !== verseReference) {
+                        console.log(
+                            `🎵 Keeping current verse song playing until completion: ${currentVerseReference} ` +
+                            `(not interrupting for ${verseReference})`
+                        );
+                    }
+                    return true;
+                }
+
                 // Song is ready—only pause if user explicitly paused (not just stopped)
-                playTrackUrl(verseTrack.audioUrl, userPaused);
+                playTrackUrl(verseTrack.audioUrl, userPaused, {
+                    loop: false,
+                    playbackType: 'verse',
+                    verseReference
+                });
                 currentVerseReference = verseReference;
                 if (!userPaused) {
                     console.log(`🎵 Now playing verse song: ${verseReference}`);
@@ -234,12 +252,37 @@
      * @param {string} audioUrl - URL of the audio to play
      * @param {boolean} shouldPause - If true, load but don't auto-play (respects pause state)
      */
-    function playTrackUrl(audioUrl, shouldPause = false) {
+    function playTrackUrl(audioUrl, shouldPause = false, options = {}) {
+        const loop = options.loop !== undefined ? options.loop : true;
+        const playbackType = options.playbackType || 'track';
+        const verseReference = options.verseReference || null;
+
         stop();
 
         currentAudio = new Audio(audioUrl);
         currentAudio.volume = isMuted ? 0 : volume;
-        currentAudio.loop = true;
+        currentAudio.loop = loop;
+        currentPlaybackType = playbackType;
+        currentVerseReference = playbackType === 'verse' ? verseReference : null;
+
+        currentAudio.onended = () => {
+            isPlaying = false;
+
+            if (playbackType === 'verse') {
+                currentAudio = null;
+                currentPlaybackType = null;
+                currentVerseReference = null;
+                return;
+            }
+
+            if (currentAudio && currentAudio.loop) {
+                currentAudio.currentTime = 0;
+                currentAudio.play().catch((err) => {
+                    console.error('Error replaying audio:', err);
+                    isPlaying = false;
+                });
+            }
+        };
 
         if (!shouldPause) {
             currentAudio.play()
@@ -265,6 +308,10 @@
             return; // No verse song is currently playing
         }
 
+        if (currentVerseReference !== verseReference) {
+            return; // Don't attribute a different verse's answer to the currently playing song
+        }
+
         if (typeof window.VerseSongService === 'undefined') {
             console.warn('VerseSongService not loaded');
             return;
@@ -281,6 +328,7 @@
         stop();
         tracks = [];
         currentVerseReference = null;
+        currentPlaybackType = null;
     }
 
     // Initialize on load

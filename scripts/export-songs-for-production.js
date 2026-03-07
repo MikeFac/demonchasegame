@@ -23,12 +23,16 @@ async function exportSongs() {
 
     const VerseSong = require('../src/server/models/VerseSong');
 
-    // Find all active songs
-    const songs = await VerseSong.find({ status: 'active' })
+    // Export only songs that are actually playable in production.
+    const songs = await VerseSong.find({
+      status: 'active',
+      generationStatus: 'completed',
+      audioUrl: { $exists: true, $ne: null }
+    })
       .lean()
       .exec();
 
-    console.log(`\n📊 Found ${songs.length} active songs\n`);
+    console.log(`\n📊 Found ${songs.length} completed active songs\n`);
 
     // Export metadata as JSON
     const exportData = {
@@ -37,6 +41,8 @@ async function exportSongs() {
       songs: songs.map(s => ({
         verseReference: s.verseReference,
         verseReferenceFull: s.verseReferenceFull || null,
+        version: s.version || 1,
+        sunoId: s.sunoId || null,
         book: s.book,
         chapter: s.chapter,
         startVerse: s.startVerse,
@@ -45,10 +51,13 @@ async function exportSongs() {
         verseText: s.verseText,
         generationStyle: s.generationStyle,
         audioUrl: s.audioUrl,
+        audioPath: s.audioPath || null,
         duration: s.duration || 120,
         playCount: s.playCount || 0,
         learnCount: s.learnCount || 0,
-        averageRetention: s.averageRetention || 0
+        averageRetention: s.averageRetention || 0,
+        qualityScore: s.qualityScore || 50,
+        isActiveVersion: s.isActiveVersion !== undefined ? s.isActiveVersion : true
       }))
     };
 
@@ -70,7 +79,13 @@ async function exportSongs() {
     console.log(`\n📋 PRODUCTION SETUP INSTRUCTIONS:\n`);
     console.log(`1. Copy songs-export.json to production server`);
     console.log(`2. Copy /public/audio/*.mp3 files to production /audio/ directory`);
-    console.log(`3. Run: node scripts/import-songs-from-local.js\n`);
+    console.log(`   Option A (rsync - preserves Suno IDs):`);
+    console.log(`     rsync -avz public/audio/ user@production:/var/www/dcgame.4you.tel/public/audio/`);
+    console.log(`   Option B (tar + scp):`);
+    console.log(`     tar -czf audio-export.tar.gz -C public audio`);
+    console.log(`     scp audio-export.tar.gz user@production:/tmp/`);
+    console.log(`     ssh user@production "cd /var/www/dcgame.4you.tel && tar -xzf /tmp/audio-export.tar.gz"`);
+    console.log(`3. Run: node scripts/import-songs-from-local.js songs-export.json\n`);
 
     // Show distribution by category
     const byCategory = {};
