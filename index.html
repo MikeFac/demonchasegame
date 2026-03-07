@@ -10,8 +10,8 @@
   <meta name="theme-color" content="#16213e">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <link rel="apple-touch-icon" href="/images/VerseBattles-logo.png">
-  <link rel="apple-touch-startup-image" href="/images/VerseBattles-logo.png">
+  <link rel="apple-touch-icon" href="/images/VerseBattles-logo.png?v=final2">
+  <link rel="apple-touch-startup-image" href="/images/VerseBattles-logo.png?v=final2">
   <!-- Google Analytics 4 -->
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-673VQ9VE50"></script>
   <script>
@@ -34,11 +34,11 @@
     body {
       display: flex;
       justify-content: center;
-      align-items: flex-start;
+      align-items: center;
       height: 100dvh;
-      overflow-x: hidden;
-      background-color: #3a4a5e;
-      padding-top: 10px;
+      overflow: hidden;
+      background: radial-gradient(circle, #6a7a8e 0%, #4a5a6e 100%); /* Premium gradient */
+      padding: 5px;
     }
 
     canvas {
@@ -50,15 +50,27 @@
 
     #menuScreen {
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+      background: linear-gradient(135deg, #2e2e4e 0%, #1c1c3c 100%);
       border-radius: 12px;
-      padding: 25px;
+      padding: 10px;
       text-align: center;
       color: #fff;
       max-width: 400px;
-      width: 100%;
-      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+      width: 98%; /* More liquid for ultra-small screens */
+      height: auto;
+      max-height: 98dvh;
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4);
       position: relative;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-start;
+      gap: 2px;
+      overflow-x: hidden; /* Prevent horizontal scroll */
+    }
+    @media (max-height: 800px) {
+      #menuScreen { gap: 0; padding: 5px; }
+      #menuScreen .logo-container img { max-width: 120px; }
+      #menuScreen .menu-grid { gap: 3px; }
     }
 
     #authContainer {
@@ -186,150 +198,105 @@
     }
 
     #menuScreen .logo-container img {
-      max-width: 200px;
+      max-width: 150px;
       height: auto;
+      filter: drop-shadow(0 5px 15px rgba(0,0,0,0.3));
     }
-
-    #menuScreen .settings-row {
-      display: flex;
-      gap: 10px;
-      margin-bottom: 12px;
-    }
-
-    #menuScreen .settings-section {
-      background: rgba(255, 255, 255, 0.05);
-      border-radius: 8px;
-      padding: 12px;
-      margin-bottom: 12px;
-      text-align: left;
-      flex: 1;
-    }
-
-    #menuScreen .settings-section h3 {
-      font-size: 0.7em;
-      font-weight: 600;
-      margin-bottom: 10px;
-      color: #a8c5e6;
+    #menuScreen .menu-title {
+      font-size: min(1.3em, 7vw); /* Fluid typography */
+      font-weight: 800;
+      color: #fff;
       text-transform: uppercase;
-      letter-spacing: 0.5px;
+      letter-spacing: 2px;
+      margin: 5px 0 12px;
+      text-shadow: 0 2px 10px rgba(0,0,0,0.5);
+      font-family: 'Outfit', sans-serif;
+      white-space: nowrap;
     }
 
-    #menuScreen .radio-group {
+    #menuScreen .menu-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 5px;
+      margin-bottom: 2px; /* Reduced */
+      padding: 0 2px;
+    }
+
+    #menuScreen .icon-btn {
+      aspect-ratio: 1 / 1;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 10px;
+      padding: 0;
+      cursor: pointer;
       display: flex;
-      gap: 6px;
-      flex-wrap: wrap;
-    }
-
-    #menuScreen .radio-option {
-      flex: 1;
-      min-width: 50px;
-    }
-
-    #menuScreen .radio-option input[type="radio"] {
-      display: none;
-    }
-
-    #menuScreen .radio-option label {
-      display: block;
-      padding: 6px 2px;
-      background: rgba(255, 255, 255, 0.08);
-      border: 2px solid rgba(255, 255, 255, 0.15);
-      border-radius: 5px;
-      cursor: pointer;
-      transition: all 0.2s;
-      text-align: center;
-      font-size: 0.7em;
-      font-weight: 500;
-    }
-
-    #menuScreen .radio-option input[type="radio"]:checked + label {
-      background: rgba(100, 150, 255, 0.25);
-      border-color: rgba(100, 150, 255, 0.6);
-      box-shadow: 0 0 15px rgba(100, 150, 255, 0.3);
-    }
-
-    #menuScreen .radio-option label:hover {
-      background: rgba(255, 255, 255, 0.12);
-      border-color: rgba(255, 255, 255, 0.3);
-    }
-
-    #menuScreen select {
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      overflow: hidden;
       width: 100%;
-      padding: 8px;
-      background: rgba(255, 255, 255, 0.08);
-      border: 2px solid rgba(255, 255, 255, 0.15);
-      border-radius: 6px;
-      color: #fff;
-      font-size: 0.85em;
-      cursor: pointer;
-      transition: all 0.2s;
+      height: 100%;
     }
 
-    #menuScreen select:hover {
-      background: rgba(255, 255, 255, 0.12);
-      border-color: rgba(255, 255, 255, 0.3);
+    #menuScreen .icon-btn:hover {
+      background: rgba(255, 255, 255, 0.1);
+      transform: scale(1.05);
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+      border-color: rgba(255, 255, 255, 0.2);
     }
 
-    #menuScreen select option {
-      background: #16213e;
-      color: #fff;
+    #menuScreen .icon-btn img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      display: block;
     }
 
-    #menuScreen .btn-row {
+    #menuFooter {
+      margin-top: 5px; /* Reduced */
+      padding-top: 5px; /* Reduced */
+      border-top: 1px solid rgba(255, 255, 255, 0.08);
       display: flex;
-      gap: 10px;
-      margin-bottom: 10px;
+      flex-direction: column;
+      align-items: center;
+      gap: 2px;
     }
 
-    #menuScreen button {
-      flex: 1;
-      padding: 12px;
-      border: none;
-      border-radius: 8px;
-      font-size: 0.9em;
-      font-weight: 600;
-      cursor: pointer;
-      transition: transform 0.1s, box-shadow 0.2s;
+    .footer-links {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 15px;
+      font-size: 0.75em;
     }
 
-    #menuScreen button:hover {
-      transform: scale(1.02);
-    }
-
-    #btnInstructions {
-      width: 100%;
-      background: linear-gradient(135deg, #2d6a4f, #1b4332);
-      color: #fff;
-      box-shadow: 0 4px 15px rgba(45, 106, 79, 0.4);
-      margin-bottom: 0;
-    }
-
-    #btnSolo {
-      background: linear-gradient(135deg, #e94560, #c23152);
-      color: #fff;
-      box-shadow: 0 4px 15px rgba(233, 69, 96, 0.4);
-    }
-
-    #btnMultiplayer {
-      background: linear-gradient(135deg, #0f3460, #16213e);
-      color: #fff;
-      border: 1px solid rgba(255, 255, 255, 0.2);
-      box-shadow: 0 4px 15px rgba(15, 52, 96, 0.4);
-    }
-
-    #menuScreen .privacy-link {
-      display: block;
-      margin-top: 12px;
-      font-size: 0.7em;
-      color: rgba(255, 255, 255, 0.5);
+    .footer-links a, .footer-links span {
+      color: rgba(255, 255, 255, 0.6);
       text-decoration: none;
-      cursor: pointer;
       transition: color 0.2s;
     }
 
-    #menuScreen .privacy-link:hover {
-      color: rgba(255, 255, 255, 0.8);
+    .footer-links a:hover {
+      color: #fff;
       text-decoration: underline;
+    }
+
+    .copyright-text {
+      font-size: 0.65em;
+      color: rgba(255, 255, 255, 0.4);
+    }
+
+    .offline-toggle {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.8em;
+      color: rgba(255, 255, 255, 0.8);
+      cursor: pointer;
+    }
+
+    .offline-toggle input {
+      cursor: pointer;
     }
 
     /* Instructions overlay */
@@ -364,7 +331,7 @@
     }
 
     #instructionsPanel h2 {
-      font-size: 1.6em;
+      font-size: 1.3em;
       margin-bottom: 15px;
       text-shadow: 0 0 10px rgba(100, 200, 255, 0.4);
       text-align: center;
@@ -1053,7 +1020,7 @@
 <body>
   <!-- Splash Screen -->
   <div id="splashScreen">
-    <img src="images/VerseBattles-logo.png" alt="VerseBattles Logo">
+    <img src="images/VerseBattles-logo.png?v=final2" alt="VerseBattles Logo">
   </div>
 
   <div id="menuScreen">
@@ -1068,7 +1035,7 @@
       </div>
     </div>
     <div class="logo-container">
-      <img src="images/VerseBattles-logo.png" alt="VerseBattles: Demon Chase">
+      <h1 class="menu-title">Verse Battles</h1>
     </div>
 
     <!-- Registration Modal -->
@@ -1102,30 +1069,49 @@
       </div>
     </div>
 
-    <!-- Main Menu Buttons (New Layout) -->
-    <div class="main-menu-buttons">
-      <button id="btnLearnVerses" data-i18n="ui.learnVersesHere">📖 LEARN VERSES HERE!</button>
-      <button id="btnSolo" class="primary-btn" style="margin-bottom: 15px; width: 100%;" data-i18n="menu.startSoloGame">Start Solo Game</button>
-      
-      <button id="btnFunMode" class="primary-btn" style="margin-bottom: 15px; width: 100%; background: linear-gradient(135deg, #FF6B35, #F7931E); font-weight: bold; text-shadow: 0 2px 4px rgba(0,0,0,0.3);">🎮 FUN MODE</button>
-      
-      <button id="btnMissions" class="primary-btn" style="margin-bottom: 15px; width: 100%; background: linear-gradient(135deg, #4CAF50, #2E7D32);" data-i18n="menu.missions">⚔️ Missions</button>
+        <!-- Main Menu Icon Grid (3x3) -->
+    <div class="menu-grid">
+      <button id="btnLearnVerses" class="icon-btn" title="Learn">
+        <img src="images/menu/learn_verses_labeled_icon.png?v=final2" alt="Learn">
+      </button>
+      <button id="btnSolo" class="icon-btn" title="Solo Game">
+        <img src="images/menu/solo_game_labeled_icon.png?v=final2" alt="Solo">
+      </button>
+      <button id="btnFunMode" class="icon-btn" title="Fun Mode">
+        <img src="images/menu/fun_mode_labeled_icon.png?v=final2" alt="Fun">
+      </button>
+      <button id="btnMissions" class="icon-btn" title="Missions">
+        <img src="images/menu/missions_labeled_icon.png?v=final2" alt="Missions">
+      </button>
+      <button id="btnCustomGame" class="icon-btn" title="Custom Game">
+        <img src="images/menu/custom_game_labeled_icon.png?v=final2" alt="Custom">
+      </button>
+      <button id="btnGroups" class="icon-btn" title="My Groups">
+        <img src="images/menu/groups_labeled_icon.png?v=final2" alt="Groups">
+      </button>
+      <button id="btnMultiplayer" class="icon-btn" title="Multiplayer">
+        <img src="images/menu/multiplayer_labeled_icon.png?v=final2" alt="Multi">
+      </button>
+      <button id="btnInstructions" class="icon-btn" title="How to Play">
+        <img src="images/menu/instructions_labeled_icon.png?v=final2" alt="Help">
+      </button>
+      <button id="btnSettings" class="icon-btn" title="Options">
+        <img src="images/menu/options_labeled_icon.png?v=final2" alt="Options">
+      </button>
+    </div>
 
-      <button id="btnCustomGame" class="secondary-btn" style="margin-bottom: 15px; width: 100%;" data-i18n="menu.customGame">⚙️ Custom Game</button>
-
-      <button id="btnGroups" class="secondary-btn" style="margin-bottom: 15px; width: 100%; background: linear-gradient(135deg, #6B4C9A, #4A3572);">👥 My Groups</button>
-
-      <button id="btnMultiplayer" class="secondary-btn" style="margin-bottom: 15px; width: 100%;" data-i18n="menu.multiplayerGame">Multiplayer Game</button>
-
-      <div class="btn-row-split" style="display: flex; gap: 15px;">
-        <button id="btnInstructions" style="flex: 1;" data-i18n="menu.howToPlay">How to Play</button>
-        <button id="btnSettings" class="secondary-btn" style="flex: 1;" data-i18n="menu.options">Options ▾</button>
-      </div>
-
-      <label id="offlineModeLabel" style="display: block; text-align: center; margin-top: 15px; color: #a8c5e6; cursor: pointer; font-size: 13px;">
-        <input type="checkbox" id="offlineModeToggle" checked style="margin-right: 6px; cursor: pointer;">
+    <!-- Polished Menu Footer -->
+    <div id="menuFooter">
+      <label class="offline-toggle" id="offlineModeLabel">
+        <input type="checkbox" id="offlineModeToggle" checked>
         <span data-i18n="config.offlineMode">Offline mode</span>
       </label>
+      
+      <div class="footer-links">
+        <a href="#" id="privacyLink" data-i18n="config.privacyPolicy">Privacy Policy</a>
+        <span>&bull;</span>
+        <span class="copyright-text">Copyright &copy; 2026 Michael Fackerell</span>
+      </div>
     </div>
 
     <!-- Hidden Settings Container (All Options) -->
@@ -1200,11 +1186,6 @@
       </div>
     </div>
 
-    <!-- Privacy Policy Link -->
-    <div style="margin-top: 20px;">
-        <a href="#" class="privacy-link" id="privacyLink" data-i18n="config.privacyPolicy">Privacy Policy</a>
-        <br><span style="color: rgba(255,255,255,0.4); font-size: 0.75em; margin-top: 8px; display: inline-block;">Copyright &copy; 2026 Michael Fackerell. All Rights Reserved.</span>
-    </div>
   </div>
 
   <!-- Verse of the Day Modal -->
@@ -1623,7 +1604,7 @@
       }
     }
   </script>
-  <script src="game.js?v=2.73"></script></script>
+  <script src="game.js?v=2.80"></script>
   <script>
     // Register service worker for PWA offline support
     if ('serviceWorker' in navigator) {
