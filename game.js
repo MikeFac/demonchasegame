@@ -1177,6 +1177,14 @@ document.addEventListener('DOMContentLoaded', function () {
             if (window.Analytics) Analytics.trackMenuClick('groups');
             showGroupsPanel();
         });
+        const worldsLink = document.getElementById('worldsLink');
+        if (worldsLink) {
+            worldsLink.addEventListener('click', (event) => {
+                event.preventDefault();
+                if (window.Analytics) Analytics.trackMenuClick('worlds');
+                showWorldBrowserPanel();
+            });
+        }
 
         // Settings Toggle
         const btnSettings = document.getElementById('btnSettings');
@@ -2369,6 +2377,7 @@ window.gameMode = 'overland';
 
 let groupsPanelVisible = false;
 let groupsModal = null;
+let worldBrowserModal = null;
 
 function showGroupsPanel() {
     if (!window.authManager || !window.authManager.isAuthenticated) {
@@ -3742,6 +3751,363 @@ function updateGameState(newGameState) {
 
     // Sync collectibles to local variable
     collectibles = gameState.collectibles || [];
+}
+
+function ensureWorldBrowserModal() {
+    if (worldBrowserModal) {
+        return worldBrowserModal;
+    }
+
+    worldBrowserModal = document.createElement('div');
+    worldBrowserModal.id = 'worldBrowserModal';
+    worldBrowserModal.style.cssText = 'position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.86); z-index: 1000; display: none; justify-content: center; align-items: center; font-family: "Segoe UI", sans-serif;';
+
+    const content = document.createElement('div');
+    content.style.cssText = 'background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%); border-radius: 16px; padding: 24px; max-width: 460px; width: 92%; max-height: 88vh; overflow-y: auto; color: #fff; position: relative; box-shadow: 0 18px 60px rgba(0,0,0,0.35);';
+
+    const closeBtn = document.createElement('button');
+    closeBtn.textContent = '×';
+    closeBtn.style.cssText = 'position: absolute; top: 10px; right: 14px; background: none; border: none; color: #fff; font-size: 24px; cursor: pointer;';
+    closeBtn.addEventListener('click', hideWorldBrowserPanel);
+    content.appendChild(closeBtn);
+
+    const panelContainer = document.createElement('div');
+    panelContainer.id = 'worldBrowserContainer';
+    content.appendChild(panelContainer);
+
+    worldBrowserModal.appendChild(content);
+    document.body.appendChild(worldBrowserModal);
+
+    worldBrowserModal.addEventListener('click', (e) => {
+        if (e.target === worldBrowserModal) hideWorldBrowserPanel();
+    });
+
+    return worldBrowserModal;
+}
+
+function hideWorldBrowserPanel() {
+    if (worldBrowserModal) {
+        worldBrowserModal.style.display = 'none';
+    }
+}
+
+function buildCustomWorldMissionConfig(world, mission) {
+    const spawnRateMs = mission.spawnRate > 1000 ? mission.spawnRate : (mission.spawnRate || 18) * 1000;
+    const monstersToKill = mission.monstersToKill || (mission.objectives && mission.objectives.monstersToKill) || 10;
+    const missionMonsters = Array.isArray(mission.monsters) && mission.monsters.length
+        ? mission.monsters
+        : (Array.isArray(mission.monsterTypes) && mission.monsterTypes.length ? mission.monsterTypes : ['Fear', 'Doubt']);
+    const missionQualities = Array.isArray(mission.qualities) && mission.qualities.length
+        ? mission.qualities
+        : [mission.category || 'Faith'];
+
+    return {
+        balance: {
+            monsterHealth: 1.0,
+            monsterDamage: mission.monsterDamageFactor || 1.0,
+            monsterSpeed: 1.0,
+            spawnRate: 1.0,
+            maxMonsters: 1.0,
+            healingFrequency: 1.0
+        },
+        levels: [{
+            qualities: missionQualities,
+            monsters: missionMonsters,
+            monstersToKill: monstersToKill,
+            maxMonsters: mission.maxMonsters || 20,
+            spawnRate: spawnRateMs / 1000
+        }]
+    };
+}
+
+function startCustomWorldMission(world, mission) {
+    if (!world || !mission) return;
+
+    currentMission = {
+        id: mission.id,
+        name: mission.name,
+        xpMultiplier: mission.xpMultiplier || 1.0,
+        worldId: world.slug || world.id,
+        isCustomWorld: true
+    };
+    currentMissionConfig = buildCustomWorldMissionConfig(world, mission);
+
+    hideWorldBrowserPanel();
+
+    startGame('solo', undefined, {
+        config: currentMissionConfig,
+        mapStyle: mission.mapStyle || 'classic',
+        qualities: Array.isArray(mission.qualities) && mission.qualities.length ? mission.qualities : [mission.category || 'Faith']
+    });
+}
+
+function showEditWorldModal(worldBrowser, world, container, reloadList) {
+    const modal = document.createElement('div');
+    modal.style.cssText = 'position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.92); z-index: 1001; display: flex; justify-content: center; align-items: center;';
+
+    const content = document.createElement('div');
+    content.style.cssText = 'background: linear-gradient(135deg, #1b2334 0%, #101823 100%); border-radius: 14px; padding: 24px; max-width: 400px; width: 92%; color: #fff;';
+    content.innerHTML = `
+        <h3 style="margin: 0 0 10px;">Edit World</h3>
+        <div style="margin-bottom: 14px;">
+            <label style="display: block; font-size: 0.85em; margin-bottom: 5px; color: #a8c5e6;">World Name</label>
+            <input type="text" id="editWorldName" maxlength="100" value="${(world.name || '').replace(/"/g, '&quot;')}" style="width: 100%; padding: 10px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.2); background: rgba(0,0,0,0.2); color: #fff;">
+        </div>
+        <div style="margin-bottom: 14px;">
+            <label style="display: block; font-size: 0.85em; margin-bottom: 5px; color: #a8c5e6;">Description</label>
+            <textarea id="editWorldDescription" maxlength="500" rows="3" style="width: 100%; padding: 10px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.2); background: rgba(0,0,0,0.2); color: #fff; resize: vertical;">${world.description || ''}</textarea>
+        </div>
+        <div style="margin-bottom: 14px;">
+            <label style="display: block; font-size: 0.85em; margin-bottom: 5px; color: #a8c5e6;">Visibility</label>
+            <select id="editWorldVisibility" style="width: 100%; padding: 10px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.2); background: rgba(0,0,0,0.2); color: #fff;">
+                <option value="private" ${world.visibility === 'private' ? 'selected' : ''}>Private</option>
+                <option value="unlisted" ${world.visibility === 'unlisted' ? 'selected' : ''}>Unlisted</option>
+                <option value="public" ${world.visibility === 'public' ? 'selected' : ''}>Public</option>
+            </select>
+        </div>
+        <div style="margin-bottom: 18px;">
+            <label style="display: block; font-size: 0.85em; margin-bottom: 5px; color: #a8c5e6;">Status</label>
+            <select id="editWorldStatus" style="width: 100%; padding: 10px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.2); background: rgba(0,0,0,0.2); color: #fff;">
+                <option value="draft" ${world.status === 'draft' ? 'selected' : ''}>Draft</option>
+                <option value="published" ${world.status === 'published' ? 'selected' : ''}>Published</option>
+                <option value="archived" ${world.status === 'archived' ? 'selected' : ''}>Archived</option>
+            </select>
+        </div>
+        <div style="display: flex; gap: 10px;">
+            <button id="cancelEditWorld" style="flex: 1; padding: 12px; border: none; border-radius: 8px; background: rgba(255,255,255,0.1); color: #fff; cursor: pointer;">Cancel</button>
+            <button id="submitEditWorld" style="flex: 1; padding: 12px; border: none; border-radius: 8px; background: linear-gradient(135deg, #4a90e2, #357abd); color: #fff; cursor: pointer; font-weight: bold;">Save</button>
+        </div>
+    `;
+
+    modal.appendChild(content);
+    document.body.appendChild(modal);
+
+    document.getElementById('cancelEditWorld').addEventListener('click', () => modal.remove());
+
+    document.getElementById('submitEditWorld').addEventListener('click', async () => {
+        const result = await worldBrowser.updateWorld(world.slug, {
+            name: document.getElementById('editWorldName').value.trim(),
+            description: document.getElementById('editWorldDescription').value.trim(),
+            visibility: document.getElementById('editWorldVisibility').value,
+            status: document.getElementById('editWorldStatus').value
+        });
+
+        if (!result.success) {
+            showToast(result.error || 'Failed to update world', 3500);
+            return;
+        }
+
+        modal.remove();
+        showToast('World updated', 2500);
+        const refreshed = await worldBrowser.getWorld(world.slug);
+        if (refreshed) {
+            renderWorldDetailView(worldBrowser, refreshed, container, reloadList);
+        }
+    });
+
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) modal.remove();
+    });
+}
+
+function renderWorldDetailView(worldBrowser, world, container, reloadList) {
+    worldBrowser.renderWorldDetail(world, container, {
+        onPlayMission: function (selectedWorld, mission) {
+            startCustomWorldMission(selectedWorld, mission);
+        },
+        onJoin: async function (selectedWorld) {
+            const result = await worldBrowser.joinWorld(selectedWorld.slug);
+            showToast(result.success ? 'World joined' : (result.error || 'Join failed'), 3000);
+            const refreshed = await worldBrowser.getWorld(selectedWorld.slug);
+            if (refreshed) {
+                renderWorldDetailView(worldBrowser, refreshed, container, reloadList);
+            }
+        },
+        onEditWorld: function (selectedWorld) {
+            showEditWorldModal(worldBrowser, selectedWorld, container, reloadList);
+        },
+        onDeleteWorld: async function (selectedWorld) {
+            if (!window.confirm('Delete this world?')) return;
+            const result = await worldBrowser.deleteWorld(selectedWorld.slug);
+            showToast(result.success ? 'World deleted' : (result.error || 'Delete failed'), 3000);
+            if (result.success) {
+                await reloadList();
+            }
+        },
+        onBack: reloadList
+    });
+}
+
+function showCreateWorldModal(worldBrowser, container, reloadList) {
+    const modal = document.createElement('div');
+    modal.style.cssText = 'position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.92); z-index: 1001; display: flex; justify-content: center; align-items: center;';
+
+    const content = document.createElement('div');
+    content.style.cssText = 'background: linear-gradient(135deg, #1b2334 0%, #101823 100%); border-radius: 14px; padding: 24px; max-width: 380px; width: 92%; color: #fff;';
+    content.innerHTML = `
+        <h3 style="margin: 0 0 10px;">Create a World</h3>
+        <p style="font-size: 0.85em; color: #a8c5e6; margin: 0 0 18px;">This creates a starter world with one chapter and three missions. You can expand it later.</p>
+        <div style="margin-bottom: 14px;">
+            <label style="display: block; font-size: 0.85em; margin-bottom: 5px; color: #a8c5e6;">World Name</label>
+            <input type="text" id="newWorldName" placeholder="e.g. Easter Journey" maxlength="100" style="width: 100%; padding: 10px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.2); background: rgba(0,0,0,0.2); color: #fff;">
+        </div>
+        <div style="margin-bottom: 14px;">
+            <label style="display: block; font-size: 0.85em; margin-bottom: 5px; color: #a8c5e6;">Description</label>
+            <textarea id="newWorldDescription" maxlength="500" rows="3" placeholder="What is this world for?" style="width: 100%; padding: 10px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.2); background: rgba(0,0,0,0.2); color: #fff; resize: vertical;"></textarea>
+        </div>
+        <div style="margin-bottom: 18px;">
+            <label style="display: block; font-size: 0.85em; margin-bottom: 5px; color: #a8c5e6;">Visibility</label>
+            <select id="newWorldVisibility" style="width: 100%; padding: 10px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.2); background: rgba(0,0,0,0.2); color: #fff;">
+                <option value="private">Private</option>
+                <option value="unlisted">Unlisted</option>
+                <option value="public">Public</option>
+            </select>
+        </div>
+        <div style="display: flex; gap: 10px;">
+            <button id="cancelCreateWorld" style="flex: 1; padding: 12px; border: none; border-radius: 8px; background: rgba(255,255,255,0.1); color: #fff; cursor: pointer;">Cancel</button>
+            <button id="submitCreateWorld" style="flex: 1; padding: 12px; border: none; border-radius: 8px; background: linear-gradient(135deg, #4a90e2, #357abd); color: #fff; cursor: pointer; font-weight: bold;">Create</button>
+        </div>
+    `;
+
+    modal.appendChild(content);
+    document.body.appendChild(modal);
+
+    document.getElementById('cancelCreateWorld').addEventListener('click', () => {
+        modal.remove();
+    });
+
+    document.getElementById('submitCreateWorld').addEventListener('click', async () => {
+        const name = document.getElementById('newWorldName').value.trim();
+        const description = document.getElementById('newWorldDescription').value.trim();
+        const visibility = document.getElementById('newWorldVisibility').value;
+
+        if (!name) {
+            showToast('Please enter a world name', 3000);
+            return;
+        }
+
+        const result = await worldBrowser.createWorld({
+            name,
+            description,
+            visibility
+        });
+
+        if (!result.success) {
+            showToast(result.error || 'Failed to create world', 3500);
+            return;
+        }
+
+        modal.remove();
+        showToast('World created', 2500);
+        await reloadList();
+        const createdWorld = await worldBrowser.getWorld(result.world.slug);
+        if (createdWorld) {
+            renderWorldDetailView(worldBrowser, createdWorld, container, reloadList);
+        }
+    });
+
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) modal.remove();
+    });
+}
+
+async function renderWorldBrowserList(worldBrowser, container) {
+    container.innerHTML = '<p style="text-align: center; padding: 20px;">Loading worlds...</p>';
+
+    await worldBrowser.loadWorlds();
+
+    const header = document.createElement('div');
+    header.style.cssText = 'margin-bottom: 16px;';
+
+    const title = document.createElement('h2');
+    title.textContent = 'Worlds';
+    title.style.cssText = 'margin: 0 0 6px;';
+    header.appendChild(title);
+
+    const subtitle = document.createElement('p');
+    subtitle.textContent = 'Browse public worlds, open shared worlds, or create a starter world if you are signed in.';
+    subtitle.style.cssText = 'margin: 0; font-size: 0.9em; color: #a8c5e6;';
+    header.appendChild(subtitle);
+
+    container.innerHTML = '';
+    container.appendChild(header);
+
+    const actions = document.createElement('div');
+    actions.style.cssText = 'display: flex; gap: 10px; margin-bottom: 14px; flex-wrap: wrap;';
+
+    if (window.authManager && window.authManager.isAuthenticated && window.authManager.isRegistered) {
+        const createBtn = document.createElement('button');
+        createBtn.textContent = '+ Create World';
+        createBtn.style.cssText = 'padding: 10px 14px; border: none; border-radius: 8px; background: linear-gradient(135deg, #4a90e2, #357abd); color: #fff; cursor: pointer; font-weight: bold;';
+        createBtn.addEventListener('click', () => {
+            showCreateWorldModal(worldBrowser, container, async function () {
+                await renderWorldBrowserList(worldBrowser, container);
+            });
+        });
+        actions.appendChild(createBtn);
+    }
+
+    const shareBtn = document.createElement('button');
+    shareBtn.textContent = 'Join by Code';
+    shareBtn.style.cssText = 'padding: 10px 14px; border: none; border-radius: 8px; background: rgba(255,255,255,0.12); color: #fff; cursor: pointer;';
+    shareBtn.addEventListener('click', async () => {
+        const code = window.prompt('Enter a world share code');
+        if (!code) return;
+        const result = await worldBrowser.joinByShareCode(code.trim());
+        if (!result.success || !result.world) {
+            showToast(result.error || 'Share code not found', 3000);
+            return;
+        }
+        const world = await worldBrowser.getWorld(result.world.slug);
+        if (!world) {
+            showToast('Could not open that world', 3000);
+            return;
+        }
+        renderWorldDetailView(worldBrowser, world, container, async function () {
+            await renderWorldBrowserList(worldBrowser, container);
+        });
+    });
+    actions.appendChild(shareBtn);
+
+    if (!window.authManager || !window.authManager.isRegistered) {
+        const note = document.createElement('div');
+        note.textContent = window.authManager && window.authManager.isAuthenticated
+            ? 'Complete registration to create and join worlds.'
+            : 'Sign in to create and join worlds.';
+        note.style.cssText = 'width: 100%; font-size: 0.82em; color: rgba(255,255,255,0.64); margin-top: 2px;';
+        actions.appendChild(note);
+    }
+
+    container.appendChild(actions);
+
+    const list = document.createElement('div');
+    container.appendChild(list);
+
+    worldBrowser.renderWorldList(list, {
+        onSelect: async function (worldMeta) {
+            list.innerHTML = '<p style="text-align: center; padding: 20px;">Loading world...</p>';
+            const world = await worldBrowser.getWorld(worldMeta.slug);
+            if (!world) {
+                showToast('Could not load that world', 3000);
+                await renderWorldBrowserList(worldBrowser, container);
+                return;
+            }
+            renderWorldDetailView(worldBrowser, world, container, async function () {
+                await renderWorldBrowserList(worldBrowser, container);
+            });
+        }
+    });
+}
+
+async function showWorldBrowserPanel() {
+    ensureWorldBrowserModal();
+    worldBrowserModal.style.display = 'flex';
+
+    const container = document.getElementById('worldBrowserContainer');
+    if (!container) return;
+
+    const worldBrowser = new WorldBrowser(window.authManager || null);
+    await renderWorldBrowserList(worldBrowser, container);
 }
 
 function lerp(a, b, t) {
