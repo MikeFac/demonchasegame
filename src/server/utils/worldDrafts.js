@@ -19,6 +19,53 @@ function defaultObjectives(monstersToKill) {
     };
 }
 
+function normalizeFixedMonster(entry) {
+    if (!entry || typeof entry !== 'object') {
+        return null;
+    }
+
+    var x = Number(entry.x);
+    var y = Number(entry.y);
+    if (!Number.isFinite(x) || !Number.isFinite(y)) {
+        return null;
+    }
+
+    var patrolPath = Array.isArray(entry.behavior && entry.behavior.patrolPath)
+        ? entry.behavior.patrolPath.map(function (point) {
+            return {
+                x: Number(point.x) || 0,
+                y: Number(point.y) || 0
+            };
+        }).slice(0, 20)
+        : [];
+
+    return {
+        x: x,
+        y: y,
+        demonType: trimString(entry.demonType || 'Fear', 40) || 'Fear',
+        behavior: {
+            type: ['chaser', 'patrol', 'guardian', 'wanderer'].includes(entry.behavior && entry.behavior.type)
+                ? entry.behavior.type
+                : 'chaser',
+            patrolRadius: Number(entry.behavior && entry.behavior.patrolRadius) || 0,
+            patrolPath: patrolPath
+        },
+        stats: {
+            healthMultiplier: Number(entry.stats && entry.stats.healthMultiplier) || 1.0,
+            damageMultiplier: Number(entry.stats && entry.stats.damageMultiplier) || 1.0,
+            speedMultiplier: Number(entry.stats && entry.stats.speedMultiplier) || 1.0
+        },
+        spawnTrigger: {
+            type: ['immediate', 'proximity', 'timer', 'killCount'].includes(entry.spawnTrigger && entry.spawnTrigger.type)
+                ? entry.spawnTrigger.type
+                : 'immediate',
+            value: Number(entry.spawnTrigger && entry.spawnTrigger.value) || 0
+        },
+        isBoss: Boolean(entry.isBoss),
+        label: trimString(entry.label, 80)
+    };
+}
+
 function categoryToQualities(category) {
     return [trimString(category || 'Faith', 60) || 'Faith'];
 }
@@ -133,7 +180,12 @@ function normalizeMission(mission, index) {
         monstersToKill: typeof mission.monstersToKill === 'number' && mission.monstersToKill > 0 ? mission.monstersToKill : 10,
         xpMultiplier: typeof mission.xpMultiplier === 'number' && mission.xpMultiplier > 0 ? mission.xpMultiplier : 1.0,
         objectives: mission.objectives && typeof mission.objectives === 'object' ? mission.objectives : defaultObjectives(10),
-        customVerses: Array.isArray(mission.customVerses) ? mission.customVerses.slice(0, 20) : []
+        customVerses: Array.isArray(mission.customVerses) ? mission.customVerses.slice(0, 20) : [],
+        fixedMonsters: Array.isArray(mission.fixedMonsters) ? mission.fixedMonsters.map(normalizeFixedMonster).filter(Boolean).slice(0, 200) : [],
+        randomSpawnsEnabled: mission.randomSpawnsEnabled !== false,
+        randomSpawnBudget: typeof mission.randomSpawnBudget === 'number' && mission.randomSpawnBudget >= 0
+            ? mission.randomSpawnBudget
+            : undefined
     };
 }
 
@@ -241,5 +293,6 @@ function normalizeWorldPayload(input, options) {
 
 module.exports = {
     createStarterWorldPayload: createStarterWorldPayload,
+    normalizeMission: normalizeMission,
     normalizeWorldPayload: normalizeWorldPayload
 };

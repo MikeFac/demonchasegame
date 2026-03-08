@@ -217,7 +217,7 @@ function applyLevelOverrides(levelData, levels) {
  * @param {Object|null} customQuizSettings - Custom quiz balance, or null for defaults
  * @param {Array|null} levelOverrides - Per-level overrides (qualities, monsters, spawn settings)
  */
-function createFromCustomBalance(balance, customQuizSettings, levelOverrides) {
+function createFromCustomBalance(balance, customQuizSettings, levelOverrides, extraOptions) {
   // Map URL config balance keys to preset multiplier keys
   var m = {
     monsterHealth: balance.monsterHealth || 1.0,
@@ -250,7 +250,7 @@ function createFromCustomBalance(balance, customQuizSettings, levelOverrides) {
     applyLevelOverrides(levelData, levelOverrides);
   }
 
-  return {
+  var config = {
     preset: 'custom',
     presetName: 'Custom',
     description: 'Custom game configuration',
@@ -264,6 +264,26 @@ function createFromCustomBalance(balance, customQuizSettings, levelOverrides) {
     quizSettings: quizSettings,
     meleeHitProbabilityNoAnswer: 0.1  // Default for custom: 10% chance
   };
+
+  if (extraOptions && typeof extraOptions === 'object') {
+    if (Array.isArray(extraOptions.fixedMonsters)) {
+      config.fixedMonsters = extraOptions.fixedMonsters;
+    }
+    if (typeof extraOptions.randomSpawnsEnabled === 'boolean') {
+      config.randomSpawnsEnabled = extraOptions.randomSpawnsEnabled;
+    }
+    if (typeof extraOptions.randomSpawnBudget === 'number') {
+      config.randomSpawnBudget = extraOptions.randomSpawnBudget;
+    }
+    if (extraOptions.mapData) {
+      config.mapData = extraOptions.mapData;
+    }
+    if (extraOptions.playerSpawn) {
+      config.playerSpawn = extraOptions.playerSpawn;
+    }
+  }
+
+  return config;
 }
 
 var GameConfigExports = {

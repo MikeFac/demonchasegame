@@ -34,6 +34,17 @@
             this.levelData = levelData;
             this.wallGrid = wallGrid || null;
             this.healthMultiplier = healthMultiplier;
+            this.pendingFixedSpawns = [];
+            this.fixedSpawnStartedAt = Date.now();
+            this.randomSpawnsEnabled = true;
+            this.randomSpawnBudget = null;
+            this.randomSpawnsUsed = 0;
+        }
+
+        configureSpawner(options) {
+            options = options || {};
+            this.randomSpawnsEnabled = options.randomSpawnsEnabled !== false;
+            this.randomSpawnBudget = typeof options.randomSpawnBudget === 'number' ? options.randomSpawnBudget : null;
         }
 
         spawnMonsterAtDistance(minDistance, maxDistance, isFirst) {
@@ -68,6 +79,9 @@
         spawnMonster() {
             var gameState = this.gameState;
             var levelData = this.levelData;
+
+            if (!this.randomSpawnsEnabled) return;
+            if (this.randomSpawnBudget !== null && this.randomSpawnsUsed >= this.randomSpawnBudget) return;
 
             if (gameState.spawnsLeft === undefined) {
                 gameState.spawnsLeft = levelData[gameState.gameLevel].maxMonsters;
@@ -104,9 +118,28 @@
             var monster = this._createMonster(chosen.x, chosen.y, chaser, baseHealth, hpMult, demonType);
             gameState.monsters.push(monster);
             gameState.spawnsLeft--;
+            this.randomSpawnsUsed++;
             console.log("Monster spawned. Total monsters:", gameState.monsters.length);
 
             this.io.emit('gameStateUpdate', gameState);
+        }
+
+        spawnFixedMonsters(fixedMonsters) {
+            var self = this;
+            (fixedMonsters || []).forEach(function (fixedMonster) {
+                if (!fixedMonster) return;
+                var triggerType = fixedMonster.spawnTrigger && fixedMonster.spawnTrigger.type
+                    ? fixedMonster.spawnTrigger.type
+                    : 'immediate';
+                if (triggerType === 'immediate') {
+                    self._spawnFixedMonster(fixedMonster);
+                } else {
+                    self.pendingFixedSpawns.push({
+                        config: fixedMonster,
+                        queuedAt: Date.now()
+                    });
+                }
+            });
         }
 
         _findSpawnPositions(playerCodes, minDistance, maxDistance) {
@@ -183,7 +216,92 @@
             return monster;
         }
 
+        _spawnFixedMonster(fixedMonster) {
+            if (this.gameState.monsters.length >= this.levelData[this.gameState.gameLevel].maxMonsters) {
+                return null;
+            }
+            if (Physics.isOverlapping(
+                fixedMonster.x,
+                fixedMonster.y,
+                Constants.MONSTER_WIDTH,
+                Constants.MONSTER_HEIGHT,
+                this.gameState,
+                null,
+                this.wallGrid
+            )) {
+                return null;
+            }
+
+            var baseHealth = 10 + (this.gameState.gameLevel - 1) * 5;
+            var behaviorType = fixedMonster.behavior && fixedMonster.behavior.type ? fixedMonster.behavior.type : 'chaser';
+            var chaser = behaviorType === 'chaser';
+            var demonType = fixedMonster.demonType || this._randomDemonType();
+            var hpMult = (fixedMonster.stats && fixedMonster.stats.healthMultiplier) || 1.0;
+            var monster = this._createMonster(fixedMonster.x, fixedMonster.y, chaser, baseHealth, hpMult, demonType);
+
+            monster.behaviorType = behaviorType;
+            monster.fixedSpawn = true;
+            monster.spawnTrigger = fixedMonster.spawnTrigger || { type: 'immediate', value: 0 };
+            monster.label = fixedMonster.label || demonType;
+            if (fixedMonster.behavior) {
+                monster.patrolRadius = fixedMonster.behavior.patrolRadius || 0;
+                monster.patrolPath = fixedMonster.behavior.patrolPath || [];
+            }
+            if (fixedMonster.stats && fixedMonster.stats.damageMultiplier) {
+                monster.maxDamage = Math.max(1, Math.round(monster.maxDamage * fixedMonster.stats.damageMultiplier));
+            }
+            if (fixedMonster.stats && fixedMonster.stats.speedMultiplier) {
+                monster.speedMultiplier = fixedMonster.stats.speedMultiplier;
+            }
+            if (fixedMonster.isBoss) {
+                monster.isBoss = true;
+                monster.width = Math.round(monster.width * 1.5);
+                monster.height = Math.round(monster.height * 1.5);
+                monster.health = Math.round(monster.health * 1.5);
+                monster.maxHealth = monster.health;
+            }
+
+            this.gameState.monsters.push(monster);
+            return monster;
+        }
+
+        _updatePendingFixedSpawns() {
+            if (!this.pendingFixedSpawns.length) return;
+
+            var remaining = [];
+            for (var i = 0; i < this.pendingFixedSpawns.length; i++) {
+                var pending = this.pendingFixedSpawns[i];
+                var config = pending.config;
+                var trigger = config.spawnTrigger || { type: 'immediate', value: 0 };
+                var shouldSpawn = false;
+
+                if (trigger.type === 'timer') {
+                    shouldSpawn = Date.now() - this.fixedSpawnStartedAt >= (trigger.value || 0) * 1000;
+                } else if (trigger.type === 'killCount') {
+                    shouldSpawn = (this.gameState.monstersKilled || 0) >= (trigger.value || 0);
+                } else if (trigger.type === 'proximity') {
+                    var radius = trigger.value || 150;
+                    shouldSpawn = Object.keys(this.gameState.players).some((playerCode) => {
+                        var player = this.gameState.players[playerCode];
+                        if (!player) return false;
+                        var dx = player.x - config.x;
+                        var dy = player.y - config.y;
+                        return Math.sqrt(dx * dx + dy * dy) <= radius;
+                    });
+                }
+
+                if (shouldSpawn) {
+                    this._spawnFixedMonster(config);
+                } else {
+                    remaining.push(pending);
+                }
+            }
+
+            this.pendingFixedSpawns = remaining;
+        }
+
         updateMonsters() {
+            this._updatePendingFixedSpawns();
             var gs = this.gameState;
             MonsterMovement.updateAll(gs.monsters, this.levelData, gs.gameLevel, gs.speedMultiplier, this.wallGrid, gs);
         }

@@ -5,7 +5,9 @@ const World = require('../models/World');
 const WorldMap = require('../models/WorldMap');
 const User = require('../models/User');
 const { requireAuth, optionalAuth } = require('../middleware/clerkAuth');
-const { normalizeWorldPayload } = require('../utils/worldDrafts');
+const MapGeneratorFactory = require('../../shared/map-generators');
+const Constants = require('../../shared/Constants');
+const { normalizeMission, normalizeWorldPayload } = require('../utils/worldDrafts');
 
 /**
  * Helper: generate a short share code (8 alphanumeric chars, uppercase).
@@ -70,6 +72,58 @@ async function resolveOwnedWorld(req, res) {
     }
 
     return { world, user };
+}
+
+function applyWallEdits(baseWalls, customWalls, removedWalls) {
+    var removedSet = new Set(
+        (removedWalls || []).map(function (wall) {
+            return [wall.x, wall.y, wall.width, wall.height].join(':');
+        })
+    );
+
+    var finalWalls = (baseWalls || []).filter(function (wall) {
+        return !removedSet.has([wall.x, wall.y, wall.width, wall.height].join(':'));
+    });
+
+    (customWalls || []).forEach(function (wall) {
+        finalWalls.push({
+            x: Number(wall.x) || 0,
+            y: Number(wall.y) || 0,
+            width: Number(wall.width) || Constants.CELL_SIZE,
+            height: Number(wall.height) || Constants.CELL_SIZE
+        });
+    });
+
+    return finalWalls;
+}
+
+function buildPreviewPayload(mission, overrides) {
+    var mapStyle = (overrides && overrides.mapStyle) || mission.mapStyle || 'classic';
+    var preview = MapGeneratorFactory.generateMap(
+        mapStyle,
+        Constants.WORLD_WIDTH,
+        Constants.WORLD_HEIGHT,
+        Constants.CELL_SIZE
+    );
+
+    var customWalls = Array.isArray(overrides && overrides.customWalls) ? overrides.customWalls : [];
+    var removedWalls = Array.isArray(overrides && overrides.removedWalls) ? overrides.removedWalls : [];
+    var walls = applyWallEdits(preview.walls, customWalls, removedWalls);
+
+    return {
+        mapStyle: mapStyle,
+        walls: walls,
+        grid: preview.grid,
+        rows: preview.rows,
+        cols: preview.cols,
+        cellSize: Constants.CELL_SIZE,
+        spawnX: overrides && overrides.playerSpawn && Number.isFinite(Number(overrides.playerSpawn.x))
+            ? Number(overrides.playerSpawn.x)
+            : preview.spawnX,
+        spawnY: overrides && overrides.playerSpawn && Number.isFinite(Number(overrides.playerSpawn.y))
+            ? Number(overrides.playerSpawn.y)
+            : preview.spawnY
+    };
 }
 
 // ===================================================================
@@ -359,7 +413,7 @@ router.post('/:slug/maps', requireAuth, async (req, res) => {
         if (!result) return;
         const { world } = result;
 
-        const { missionId, name, generatorType, seed, parameters, wallData, terrainData, width, height } = req.body;
+        const { missionId, name, generatorType, seed, parameters, wallData, terrainData, width, height, customWalls, removedWalls, playerSpawn } = req.body;
 
         if (!missionId || !generatorType) {
             return res.status(400).json({ error: 'missionId and generatorType are required' });
@@ -374,6 +428,9 @@ router.post('/:slug/maps', requireAuth, async (req, res) => {
             parameters: parameters || {},
             wallData,
             terrainData,
+            customWalls: customWalls || [],
+            removedWalls: removedWalls || [],
+            playerSpawn: playerSpawn || null,
             width: width || 3200,
             height: height || 3200
         });
@@ -409,6 +466,92 @@ router.get('/:slug/maps/:missionId', optionalAuth, async (req, res) => {
         res.json({ map });
     } catch (error) {
         console.error('Error fetching map:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
+router.get('/:slug/editor', requireAuth, async (req, res) => {
+    try {
+        const result = await resolveOwnedWorld(req, res);
+        if (!result) return;
+        const { world } = result;
+
+        const maps = await WorldMap.find({ worldId: world._id }).lean();
+        res.json({ world, maps });
+    } catch (error) {
+        console.error('Error fetching editor world:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
+router.patch('/:slug/missions/:id', requireAuth, async (req, res) => {
+    try {
+        const result = await resolveOwnedWorld(req, res);
+        if (!result) return;
+        const { world } = result;
+
+        var missionIndex = world.missions.findIndex(function (mission) {
+            return mission.id === req.params.id;
+        });
+
+        if (missionIndex === -1) {
+            return res.status(404).json({ error: 'Mission not found' });
+        }
+
+        const normalizedMission = normalizeMission({
+            ...world.missions[missionIndex].toObject(),
+            ...req.body,
+            id: world.missions[missionIndex].id
+        }, missionIndex);
+
+        world.missions[missionIndex] = normalizedMission;
+
+        var chapterChanged = false;
+        world.chapters.forEach(function (chapter) {
+            if (!Array.isArray(chapter.missionIds)) {
+                chapter.missionIds = [];
+            }
+            if (!chapter.missionIds.includes(normalizedMission.id)) {
+                chapter.missionIds.push(normalizedMission.id);
+                chapterChanged = true;
+            }
+        });
+        if (chapterChanged && world.chapters.length === 0) {
+            world.chapters = [{
+                id: 'chapter-1',
+                name: 'Chapter 1',
+                description: 'Starter chapter for this custom world.',
+                nodeShape: 'shield',
+                theme: 'stone',
+                missionIds: [normalizedMission.id]
+            }];
+        }
+
+        await world.save();
+        res.json({ mission: world.missions[missionIndex], world });
+    } catch (error) {
+        console.error('Error updating world mission:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
+router.post('/:slug/missions/:id/preview', requireAuth, async (req, res) => {
+    try {
+        const result = await resolveOwnedWorld(req, res);
+        if (!result) return;
+        const { world } = result;
+
+        const mission = world.missions.find(function (entry) {
+            return entry.id === req.params.id;
+        });
+        if (!mission) {
+            return res.status(404).json({ error: 'Mission not found' });
+        }
+
+        const preview = buildPreviewPayload(mission, req.body || {});
+        res.json({ preview });
+    } catch (error) {
+        console.error('Error generating mission preview:', error);
         res.status(500).json({ error: 'Internal server error' });
     }
 });

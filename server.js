@@ -135,7 +135,18 @@ io.on('connection', (socket) => {
     // Use custom balance if provided (from URL config), otherwise use preset
     var gameConfig;
     if (options.balance) {
-      gameConfig = GameConfig.createFromCustomBalance(options.balance, quizSettings, options.levels || null);
+      gameConfig = GameConfig.createFromCustomBalance(
+        options.balance,
+        quizSettings,
+        options.levels || null,
+        {
+          fixedMonsters: options.fixedMonsters || null,
+          randomSpawnsEnabled: options.randomSpawnsEnabled,
+          randomSpawnBudget: options.randomSpawnBudget,
+          mapData: options.mapData || null,
+          playerSpawn: options.playerSpawn || null
+        }
+      );
     } else {
       gameConfig = GameConfig.createGameConfig(difficulty, quizSettings);
     }

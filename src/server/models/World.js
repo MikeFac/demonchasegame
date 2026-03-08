@@ -46,8 +46,39 @@ const WorldSchema = new Schema({
     mapStyle: String,
     spawnRate: Number,
     monsterTypes: [String],
+    qualities: [String],
+    monsters: [String],
+    monsterDamageFactor: Number,
+    monsterSpeed: Number,
+    playerSpeed: Number,
+    maxMonsters: Number,
+    monstersToKill: Number,
+    xpMultiplier: Number,
     objectives: Schema.Types.Mixed,
-    customVerses: [Schema.Types.Mixed]  // Optional custom verse sets
+    customVerses: [Schema.Types.Mixed],  // Optional custom verse sets
+    fixedMonsters: [{
+      x: Number,
+      y: Number,
+      demonType: String,
+      behavior: {
+        type: String,
+        patrolRadius: Number,
+        patrolPath: [{ x: Number, y: Number }]
+      },
+      stats: {
+        healthMultiplier: Number,
+        damageMultiplier: Number,
+        speedMultiplier: Number
+      },
+      spawnTrigger: {
+        type: { type: String },
+        value: Number
+      },
+      isBoss: Boolean,
+      label: String
+    }],
+    randomSpawnsEnabled: { type: Boolean, default: true },
+    randomSpawnBudget: Number
   }],
   
   // Reference to physical map data

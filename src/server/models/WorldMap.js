@@ -29,6 +29,22 @@ const WorldMapSchema = new Schema({
   // Saved map data (for custom-edited or stable maps)
   wallData: Schema.Types.Mixed,      // Stored wall array/objects
   terrainData: Schema.Types.Mixed,   // Terrain/decoration data (trees, bushes, etc.)
+  customWalls: [{
+    x: Number,
+    y: Number,
+    width: Number,
+    height: Number
+  }],
+  removedWalls: [{
+    x: Number,
+    y: Number,
+    width: Number,
+    height: Number
+  }],
+  playerSpawn: {
+    x: Number,
+    y: Number
+  },
   
   // Visual Metadata
   width: Number,              // Map width in pixels

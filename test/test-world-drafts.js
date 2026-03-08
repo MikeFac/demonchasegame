@@ -39,7 +39,15 @@ const normalizedPatch = normalizeWorldPayload({
             name: 'Faith Opening',
             category: 'Faith',
             mapStyle: 'classic',
-            monsterTypes: ['Fear', 'Doubt']
+            monsterTypes: ['Fear', 'Doubt'],
+            fixedMonsters: [
+                {
+                    x: 120,
+                    y: 160,
+                    demonType: 'Fear',
+                    spawnTrigger: { type: 'proximity', value: 150 }
+                }
+            ]
         }
     ]
 }, {
@@ -53,6 +61,8 @@ assert.strictEqual(normalizedPatch.value.chapters.length, 1);
 assert.strictEqual(normalizedPatch.value.missions[0].id, 'faith-opening');
 assert.deepStrictEqual(normalizedPatch.value.missions[0].qualities, ['Faith']);
 assert.deepStrictEqual(normalizedPatch.value.missions[0].monsters, ['Fear', 'Doubt']);
+assert.strictEqual(normalizedPatch.value.missions[0].fixedMonsters.length, 1);
+assert.strictEqual(normalizedPatch.value.missions[0].fixedMonsters[0].spawnTrigger.type, 'proximity');
 
 const invalid = normalizeWorldPayload({
     name: 'x',
