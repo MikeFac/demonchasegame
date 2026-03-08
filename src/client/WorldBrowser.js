@@ -207,6 +207,79 @@ class WorldBrowser {
         }
     }
 
+    async getEditorWorld(slug) {
+        try {
+            const token = await this._requireToken();
+            if (!token) return { success: false, error: 'Not authenticated' };
+
+            const response = await fetch(`/api/worlds/${encodeURIComponent(slug)}/editor`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+
+            const data = await response.json();
+            if (!response.ok) {
+                return { success: false, error: data.error || 'Editor load failed' };
+            }
+
+            return { success: true, world: data.world, maps: data.maps || [] };
+        } catch (error) {
+            console.error('WorldBrowser: Error loading editor world', error);
+            return { success: false, error: error.message };
+        }
+    }
+
+    async updateMission(slug, missionId, payload) {
+        try {
+            const token = await this._requireToken();
+            if (!token) return { success: false, error: 'Not authenticated' };
+
+            const response = await fetch(`/api/worlds/${encodeURIComponent(slug)}/missions/${encodeURIComponent(missionId)}`, {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify(payload || {})
+            });
+
+            const data = await response.json();
+            if (!response.ok) {
+                return { success: false, error: data.error || 'Mission update failed' };
+            }
+
+            return { success: true, mission: data.mission, world: data.world };
+        } catch (error) {
+            console.error('WorldBrowser: Error updating mission', error);
+            return { success: false, error: error.message };
+        }
+    }
+
+    async previewMission(slug, missionId, payload) {
+        try {
+            const token = await this._requireToken();
+            if (!token) return { success: false, error: 'Not authenticated' };
+
+            const response = await fetch(`/api/worlds/${encodeURIComponent(slug)}/missions/${encodeURIComponent(missionId)}/preview`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify(payload || {})
+            });
+
+            const data = await response.json();
+            if (!response.ok) {
+                return { success: false, error: data.error || 'Mission preview failed' };
+            }
+
+            return { success: true, preview: data.preview };
+        } catch (error) {
+            console.error('WorldBrowser: Error previewing mission', error);
+            return { success: false, error: error.message };
+        }
+    }
+
     // ==================== Rendering ====================
 
     /**
@@ -360,12 +433,26 @@ class WorldBrowser {
                 row.appendChild(textWrap);
 
                 if (options.onPlayMission) {
+                    const buttonWrap = document.createElement('div');
+                    buttonWrap.style.cssText = 'display:flex;flex-direction:column;gap:8px;';
+
                     const playBtn = document.createElement('button');
                     playBtn.type = 'button';
                     playBtn.textContent = 'Play';
                     playBtn.style.cssText = 'padding:8px 12px;border:none;border-radius:8px;background:#4CAF50;color:#fff;cursor:pointer;font-weight:700;';
                     playBtn.addEventListener('click', () => options.onPlayMission(world, mission));
-                    row.appendChild(playBtn);
+                    buttonWrap.appendChild(playBtn);
+
+                    if (options.onEditMission && world.canEdit) {
+                        const editMissionBtn = document.createElement('button');
+                        editMissionBtn.type = 'button';
+                        editMissionBtn.textContent = 'Edit';
+                        editMissionBtn.style.cssText = 'padding:8px 12px;border:none;border-radius:8px;background:#4a90e2;color:#fff;cursor:pointer;font-weight:700;';
+                        editMissionBtn.addEventListener('click', () => options.onEditMission(world, mission));
+                        buttonWrap.appendChild(editMissionBtn);
+                    }
+
+                    row.appendChild(buttonWrap);
                 }
 
                 missionCard.appendChild(row);

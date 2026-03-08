@@ -3820,7 +3820,7 @@ function buildCustomWorldMissionConfig(world, mission) {
     };
 }
 
-function startCustomWorldMission(world, mission) {
+function startCustomWorldMission(world, mission, previewData) {
     if (!world || !mission) return;
 
     currentMission = {
@@ -3831,6 +3831,16 @@ function startCustomWorldMission(world, mission) {
         isCustomWorld: true
     };
     currentMissionConfig = buildCustomWorldMissionConfig(world, mission);
+    currentMissionConfig.fixedMonsters = Array.isArray(mission.fixedMonsters) ? mission.fixedMonsters : [];
+    currentMissionConfig.randomSpawnsEnabled = mission.randomSpawnsEnabled !== false;
+    currentMissionConfig.randomSpawnBudget = typeof mission.randomSpawnBudget === 'number' ? mission.randomSpawnBudget : undefined;
+    if (previewData) {
+        currentMissionConfig.mapData = previewData;
+        currentMissionConfig.playerSpawn = {
+            x: previewData.spawnX,
+            y: previewData.spawnY
+        };
+    }
 
     hideWorldBrowserPanel();
 
@@ -3839,6 +3849,320 @@ function startCustomWorldMission(world, mission) {
         mapStyle: mission.mapStyle || 'classic',
         qualities: Array.isArray(mission.qualities) && mission.qualities.length ? mission.qualities : [mission.category || 'Faith']
     });
+}
+
+function drawMissionPreviewCanvas(canvasEl, previewState) {
+    const ctx = canvasEl.getContext('2d');
+    const preview = previewState.preview;
+    if (!ctx || !preview) return;
+
+    const mapWidth = (preview.cols || 80) * (preview.cellSize || 40);
+    const mapHeight = (preview.rows || 80) * (preview.cellSize || 40);
+    const scaleX = canvasEl.width / mapWidth;
+    const scaleY = canvasEl.height / mapHeight;
+
+    ctx.fillStyle = '#0e1522';
+    ctx.fillRect(0, 0, canvasEl.width, canvasEl.height);
+
+    ctx.fillStyle = '#516072';
+    (preview.walls || []).forEach((wall) => {
+        ctx.fillRect(
+            wall.x * scaleX,
+            wall.y * scaleY,
+            wall.width * scaleX,
+            wall.height * scaleY
+        );
+    });
+
+    ctx.fillStyle = '#6be585';
+    ctx.beginPath();
+    ctx.arc((preview.spawnX || 0) * scaleX, (preview.spawnY || 0) * scaleY, 5, 0, Math.PI * 2);
+    ctx.fill();
+
+    (previewState.fixedMonsters || []).forEach((monster, index) => {
+        ctx.fillStyle = monster.isBoss ? '#ffcc55' : '#ff6b6b';
+        ctx.beginPath();
+        ctx.arc(monster.x * scaleX, monster.y * scaleY, monster.isBoss ? 7 : 5, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = '#ffffff';
+        ctx.font = '10px Arial';
+        ctx.fillText(String(index + 1), monster.x * scaleX + 6, monster.y * scaleY - 6);
+    });
+}
+
+function buildMissionEditorState(mission) {
+    return {
+        name: mission.name || '',
+        description: mission.description || '',
+        category: mission.category || 'Faith',
+        mapStyle: mission.mapStyle || 'classic',
+        spawnRate: mission.spawnRate || 18,
+        maxMonsters: mission.maxMonsters || 20,
+        monstersToKill: mission.monstersToKill || 10,
+        monsterDamageFactor: mission.monsterDamageFactor || 1.0,
+        qualitiesCsv: Array.isArray(mission.qualities) ? mission.qualities.join(', ') : (mission.category || 'Faith'),
+        monstersCsv: Array.isArray(mission.monsters) ? mission.monsters.join(', ') : (Array.isArray(mission.monsterTypes) ? mission.monsterTypes.join(', ') : ''),
+        randomSpawnsEnabled: mission.randomSpawnsEnabled !== false,
+        randomSpawnBudget: mission.randomSpawnBudget || '',
+        fixedMonsters: Array.isArray(mission.fixedMonsters) ? mission.fixedMonsters.map((entry) => ({ ...entry })) : [],
+        selectedDemonType: 'Fear',
+        selectedTriggerType: 'immediate',
+        selectedTriggerValue: 0,
+        preview: null
+    };
+}
+
+function buildMissionPayloadFromEditor(editorState) {
+    const parseCsv = function (value) {
+        return String(value || '')
+            .split(',')
+            .map((entry) => entry.trim())
+            .filter(Boolean);
+    };
+
+    const spawnRateValue = Number(editorState.spawnRate);
+
+    return {
+        name: editorState.name.trim(),
+        description: editorState.description.trim(),
+        category: editorState.category.trim() || 'Faith',
+        mapStyle: editorState.mapStyle,
+        spawnRate: Number.isFinite(spawnRateValue) && spawnRateValue > 1000 ? spawnRateValue : (Number.isFinite(spawnRateValue) ? spawnRateValue * 1000 : 18000),
+        maxMonsters: Number(editorState.maxMonsters) || 20,
+        monstersToKill: Number(editorState.monstersToKill) || 10,
+        monsterDamageFactor: Number(editorState.monsterDamageFactor) || 1.0,
+        qualities: parseCsv(editorState.qualitiesCsv),
+        monsters: parseCsv(editorState.monstersCsv),
+        monsterTypes: parseCsv(editorState.monstersCsv),
+        randomSpawnsEnabled: !!editorState.randomSpawnsEnabled,
+        randomSpawnBudget: editorState.randomSpawnBudget === '' ? undefined : Number(editorState.randomSpawnBudget) || 0,
+        fixedMonsters: editorState.fixedMonsters
+    };
+}
+
+async function showEditMissionModal(worldBrowser, world, mission, container, reloadList) {
+    const modal = document.createElement('div');
+    modal.style.cssText = 'position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.94); z-index: 1002; display: flex; justify-content: center; align-items: center;';
+
+    const content = document.createElement('div');
+    content.style.cssText = 'background: linear-gradient(135deg, #171f2b 0%, #101823 100%); border-radius: 16px; padding: 20px; width: min(980px, 96vw); max-height: 92vh; overflow: auto; color: #fff;';
+    modal.appendChild(content);
+    document.body.appendChild(modal);
+
+    const editorState = buildMissionEditorState(mission);
+
+    async function refreshPreview() {
+        const result = await worldBrowser.previewMission(world.slug, mission.id, {
+            mapStyle: editorState.mapStyle,
+            customWalls: [],
+            removedWalls: [],
+            playerSpawn: null
+        });
+        if (result.success) {
+            editorState.preview = result.preview;
+            drawMissionPreviewCanvas(document.getElementById('missionPreviewCanvas'), editorState);
+            renderFixedMonsterList();
+        } else {
+            showToast(result.error || 'Preview failed', 3000);
+        }
+    }
+
+    function renderFixedMonsterList() {
+        const list = document.getElementById('fixedMonsterList');
+        if (!list) return;
+        list.innerHTML = '';
+
+        if (!editorState.fixedMonsters.length) {
+            list.innerHTML = '<div style="opacity:0.65;">No fixed monsters placed yet. Click the preview to add one.</div>';
+            drawMissionPreviewCanvas(document.getElementById('missionPreviewCanvas'), editorState);
+            return;
+        }
+
+        editorState.fixedMonsters.forEach((entry, index) => {
+            const row = document.createElement('div');
+            row.style.cssText = 'display:flex;justify-content:space-between;gap:10px;padding:8px 10px;background:rgba(255,255,255,0.06);border-radius:8px;margin-bottom:8px;';
+            row.innerHTML = `<span>${index + 1}. ${entry.demonType} @ (${Math.round(entry.x)}, ${Math.round(entry.y)}) [${entry.spawnTrigger.type}]</span>`;
+
+            const removeBtn = document.createElement('button');
+            removeBtn.textContent = 'Remove';
+            removeBtn.style.cssText = 'border:none;border-radius:6px;background:rgba(255,80,80,0.16);color:#ffd6d6;padding:6px 10px;cursor:pointer;';
+            removeBtn.addEventListener('click', () => {
+                editorState.fixedMonsters.splice(index, 1);
+                renderFixedMonsterList();
+            });
+            row.appendChild(removeBtn);
+            list.appendChild(row);
+        });
+
+        drawMissionPreviewCanvas(document.getElementById('missionPreviewCanvas'), editorState);
+    }
+
+    content.innerHTML = `
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:16px;">
+            <div>
+                <h2 style="margin:0 0 4px;">Edit Mission</h2>
+                <div style="font-size:0.9em;color:#a8c5e6;">Adjust mission rules, place fixed monsters, preview, then test play.</div>
+            </div>
+            <button id="closeMissionEditor" style="border:none;background:none;color:#fff;font-size:24px;cursor:pointer;">×</button>
+        </div>
+        <div style="display:grid;grid-template-columns:minmax(300px, 1fr) minmax(340px, 1.1fr);gap:18px;">
+            <div>
+                <div style="display:grid;gap:10px;">
+                    <input id="missionEditorName" placeholder="Mission name" value="${editorState.name.replace(/"/g, '&quot;')}" style="padding:10px;border-radius:8px;border:1px solid rgba(255,255,255,0.18);background:rgba(0,0,0,0.18);color:#fff;">
+                    <textarea id="missionEditorDescription" rows="3" placeholder="Mission description" style="padding:10px;border-radius:8px;border:1px solid rgba(255,255,255,0.18);background:rgba(0,0,0,0.18);color:#fff;resize:vertical;">${editorState.description}</textarea>
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+                        <input id="missionEditorCategory" placeholder="Category" value="${editorState.category.replace(/"/g, '&quot;')}" style="padding:10px;border-radius:8px;border:1px solid rgba(255,255,255,0.18);background:rgba(0,0,0,0.18);color:#fff;">
+                        <select id="missionEditorMapStyle" style="padding:10px;border-radius:8px;border:1px solid rgba(255,255,255,0.18);background:rgba(0,0,0,0.18);color:#fff;">
+                            <option value="classic">Classic</option>
+                            <option value="narrow">Narrow</option>
+                            <option value="labyrinth">Labyrinth</option>
+                            <option value="open">Open</option>
+                            <option value="city">City</option>
+                        </select>
+                    </div>
+                    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;">
+                        <input id="missionEditorSpawnRate" type="number" min="1" step="1" value="${Math.round((Number(editorState.spawnRate) > 1000 ? Number(editorState.spawnRate) : Number(editorState.spawnRate) * 1000) / 1000)}" style="padding:10px;border-radius:8px;border:1px solid rgba(255,255,255,0.18);background:rgba(0,0,0,0.18);color:#fff;">
+                        <input id="missionEditorMaxMonsters" type="number" min="1" step="1" value="${editorState.maxMonsters}" style="padding:10px;border-radius:8px;border:1px solid rgba(255,255,255,0.18);background:rgba(0,0,0,0.18);color:#fff;">
+                        <input id="missionEditorMonstersToKill" type="number" min="1" step="1" value="${editorState.monstersToKill}" style="padding:10px;border-radius:8px;border:1px solid rgba(255,255,255,0.18);background:rgba(0,0,0,0.18);color:#fff;">
+                    </div>
+                    <input id="missionEditorMonsterDamageFactor" type="number" min="0.5" step="0.1" value="${editorState.monsterDamageFactor}" style="padding:10px;border-radius:8px;border:1px solid rgba(255,255,255,0.18);background:rgba(0,0,0,0.18);color:#fff;">
+                    <input id="missionEditorQualities" placeholder="Qualities CSV" value="${editorState.qualitiesCsv.replace(/"/g, '&quot;')}" style="padding:10px;border-radius:8px;border:1px solid rgba(255,255,255,0.18);background:rgba(0,0,0,0.18);color:#fff;">
+                    <input id="missionEditorMonsters" placeholder="Demons CSV" value="${editorState.monstersCsv.replace(/"/g, '&quot;')}" style="padding:10px;border-radius:8px;border:1px solid rgba(255,255,255,0.18);background:rgba(0,0,0,0.18);color:#fff;">
+                    <label style="display:flex;align-items:center;gap:8px;font-size:0.92em;">
+                        <input id="missionEditorRandomSpawns" type="checkbox" ${editorState.randomSpawnsEnabled ? 'checked' : ''}>
+                        Random spawns enabled
+                    </label>
+                    <input id="missionEditorRandomBudget" type="number" min="0" step="1" placeholder="Random spawn budget (optional)" value="${editorState.randomSpawnBudget}" style="padding:10px;border-radius:8px;border:1px solid rgba(255,255,255,0.18);background:rgba(0,0,0,0.18);color:#fff;">
+                </div>
+                <div style="margin-top:16px;padding:12px;background:rgba(255,255,255,0.04);border-radius:12px;">
+                    <div style="font-weight:700;margin-bottom:10px;">Fixed Monster Tool</div>
+                    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;">
+                        <select id="missionEditorDemonType" style="padding:10px;border-radius:8px;border:1px solid rgba(255,255,255,0.18);background:rgba(0,0,0,0.18);color:#fff;">
+                            <option>Fear</option><option>Doubt</option><option>Confusion</option><option>Deception</option><option>Ignorance</option><option>Blindness</option><option>Condemnation</option><option>Unbelief</option><option>Depression</option><option>Despair</option><option>Pride</option><option>Poverty</option><option>Shame</option><option>Strife</option><option>Infirmity</option><option>Temptation</option><option>Swarm</option>
+                        </select>
+                        <select id="missionEditorTriggerType" style="padding:10px;border-radius:8px;border:1px solid rgba(255,255,255,0.18);background:rgba(0,0,0,0.18);color:#fff;">
+                            <option value="immediate">Immediate</option>
+                            <option value="timer">Timer</option>
+                            <option value="proximity">Proximity</option>
+                            <option value="killCount">Kill Count</option>
+                        </select>
+                        <input id="missionEditorTriggerValue" type="number" min="0" step="1" value="0" style="padding:10px;border-radius:8px;border:1px solid rgba(255,255,255,0.18);background:rgba(0,0,0,0.18);color:#fff;">
+                    </div>
+                    <div style="font-size:0.82em;color:#a8c5e6;margin-top:8px;">Click on the preview map to place the selected demon. Right click the preview to remove the nearest one.</div>
+                </div>
+            </div>
+            <div>
+                <canvas id="missionPreviewCanvas" width="420" height="420" style="width:100%;max-width:420px;border-radius:12px;background:#0e1522;border:1px solid rgba(255,255,255,0.12);display:block;"></canvas>
+                <div style="display:flex;gap:10px;margin-top:12px;flex-wrap:wrap;">
+                    <button id="refreshMissionPreview" style="padding:10px 14px;border:none;border-radius:8px;background:#4a90e2;color:#fff;cursor:pointer;">Refresh Preview</button>
+                    <button id="saveMissionEdits" style="padding:10px 14px;border:none;border-radius:8px;background:#4CAF50;color:#fff;cursor:pointer;">Save Mission</button>
+                    <button id="testPlayMission" style="padding:10px 14px;border:none;border-radius:8px;background:#FFD166;color:#1a1a1a;cursor:pointer;font-weight:700;">Test Play</button>
+                </div>
+                <div id="fixedMonsterList" style="margin-top:14px;"></div>
+            </div>
+        </div>
+    `;
+
+    document.getElementById('missionEditorMapStyle').value = editorState.mapStyle;
+
+    const syncFormState = function () {
+        editorState.name = document.getElementById('missionEditorName').value;
+        editorState.description = document.getElementById('missionEditorDescription').value;
+        editorState.category = document.getElementById('missionEditorCategory').value;
+        editorState.mapStyle = document.getElementById('missionEditorMapStyle').value;
+        editorState.spawnRate = Number(document.getElementById('missionEditorSpawnRate').value) || 18;
+        editorState.maxMonsters = Number(document.getElementById('missionEditorMaxMonsters').value) || 20;
+        editorState.monstersToKill = Number(document.getElementById('missionEditorMonstersToKill').value) || 10;
+        editorState.monsterDamageFactor = Number(document.getElementById('missionEditorMonsterDamageFactor').value) || 1.0;
+        editorState.qualitiesCsv = document.getElementById('missionEditorQualities').value;
+        editorState.monstersCsv = document.getElementById('missionEditorMonsters').value;
+        editorState.randomSpawnsEnabled = document.getElementById('missionEditorRandomSpawns').checked;
+        editorState.randomSpawnBudget = document.getElementById('missionEditorRandomBudget').value;
+        editorState.selectedDemonType = document.getElementById('missionEditorDemonType').value;
+        editorState.selectedTriggerType = document.getElementById('missionEditorTriggerType').value;
+        editorState.selectedTriggerValue = Number(document.getElementById('missionEditorTriggerValue').value) || 0;
+    };
+
+    const previewCanvas = document.getElementById('missionPreviewCanvas');
+    previewCanvas.addEventListener('click', (event) => {
+        if (!editorState.preview) return;
+        syncFormState();
+        const rect = previewCanvas.getBoundingClientRect();
+        const x = ((event.clientX - rect.left) / rect.width) * ((editorState.preview.cols || 80) * (editorState.preview.cellSize || 40));
+        const y = ((event.clientY - rect.top) / rect.height) * ((editorState.preview.rows || 80) * (editorState.preview.cellSize || 40));
+        editorState.fixedMonsters.push({
+            x: Math.round(x),
+            y: Math.round(y),
+            demonType: editorState.selectedDemonType,
+            behavior: { type: 'chaser', patrolRadius: 0, patrolPath: [] },
+            stats: { healthMultiplier: 1.0, damageMultiplier: 1.0, speedMultiplier: 1.0 },
+            spawnTrigger: {
+                type: editorState.selectedTriggerType,
+                value: editorState.selectedTriggerValue
+            },
+            isBoss: false,
+            label: ''
+        });
+        renderFixedMonsterList();
+    });
+    previewCanvas.addEventListener('contextmenu', (event) => {
+        event.preventDefault();
+        if (!editorState.preview || !editorState.fixedMonsters.length) return;
+        const rect = previewCanvas.getBoundingClientRect();
+        const x = ((event.clientX - rect.left) / rect.width) * ((editorState.preview.cols || 80) * (editorState.preview.cellSize || 40));
+        const y = ((event.clientY - rect.top) / rect.height) * ((editorState.preview.rows || 80) * (editorState.preview.cellSize || 40));
+        let closestIndex = 0;
+        let closestDist = Infinity;
+        editorState.fixedMonsters.forEach((entry, index) => {
+            const dx = entry.x - x;
+            const dy = entry.y - y;
+            const dist = Math.sqrt(dx * dx + dy * dy);
+            if (dist < closestDist) {
+                closestDist = dist;
+                closestIndex = index;
+            }
+        });
+        if (closestDist < 180) {
+            editorState.fixedMonsters.splice(closestIndex, 1);
+            renderFixedMonsterList();
+        }
+    });
+
+    document.getElementById('closeMissionEditor').addEventListener('click', () => modal.remove());
+    document.getElementById('refreshMissionPreview').addEventListener('click', async () => {
+        syncFormState();
+        await refreshPreview();
+    });
+    document.getElementById('saveMissionEdits').addEventListener('click', async () => {
+        syncFormState();
+        const payload = buildMissionPayloadFromEditor(editorState);
+        const result = await worldBrowser.updateMission(world.slug, mission.id, payload);
+        if (!result.success) {
+            showToast(result.error || 'Failed to save mission', 3500);
+            return;
+        }
+        showToast('Mission saved', 2500);
+        const refreshedWorld = await worldBrowser.getWorld(world.slug);
+        if (refreshedWorld) {
+            renderWorldDetailView(worldBrowser, refreshedWorld, container, reloadList);
+        }
+        modal.remove();
+    });
+    document.getElementById('testPlayMission').addEventListener('click', async () => {
+        syncFormState();
+        if (!editorState.preview) {
+            await refreshPreview();
+        }
+        const testMission = buildMissionPayloadFromEditor(editorState);
+        startCustomWorldMission(world, testMission, editorState.preview);
+        modal.remove();
+    });
+
+    modal.addEventListener('click', (event) => {
+        if (event.target === modal) modal.remove();
+    });
+
+    await refreshPreview();
 }
 
 function showEditWorldModal(worldBrowser, world, container, reloadList) {
@@ -3914,6 +4238,9 @@ function renderWorldDetailView(worldBrowser, world, container, reloadList) {
     worldBrowser.renderWorldDetail(world, container, {
         onPlayMission: function (selectedWorld, mission) {
             startCustomWorldMission(selectedWorld, mission);
+        },
+        onEditMission: function (selectedWorld, mission) {
+            showEditMissionModal(worldBrowser, selectedWorld, mission, container, reloadList);
         },
         onJoin: async function (selectedWorld) {
             const result = await worldBrowser.joinWorld(selectedWorld.slug);
