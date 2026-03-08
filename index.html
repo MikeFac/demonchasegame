@@ -12,6 +12,10 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <link rel="apple-touch-icon" href="/images/VerseBattles-logo.png?v=final2">
   <link rel="apple-touch-startup-image" href="/images/VerseBattles-logo.png?v=final2">
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Cinzel:wght@400;700;900&family=Inter:wght@400;700&family=Outfit:wght@400;700;900&display=swap" rel="stylesheet">
   <!-- Google Analytics 4 -->
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-673VQ9VE50"></script>
   <script>
@@ -203,14 +207,14 @@
       filter: drop-shadow(0 5px 15px rgba(0,0,0,0.3));
     }
     #menuScreen .menu-title {
-      font-size: min(1.3em, 7vw); /* Fluid typography */
-      font-weight: 800;
+      font-size: min(1.8em, 9vw); /* Increased for impact */
+      font-weight: 400; /* Bebas Neue is already bold */
       color: #fff;
       text-transform: uppercase;
-      letter-spacing: 2px;
+      letter-spacing: 4px; /* More spacing for Bebas */
       margin: 5px 0 12px;
       text-shadow: 0 2px 10px rgba(0,0,0,0.5);
-      font-family: 'Outfit', sans-serif;
+      font-family: 'Bebas Neue', sans-serif;
       white-space: nowrap;
     }
 
@@ -883,22 +887,104 @@
       left: 0;
       width: 100%;
       height: 100%;
-      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+      background: #000;
       display: flex;
       justify-content: center;
       align-items: center;
-      z-index: 9999;
-      transition: opacity 0.5s ease-out;
+      z-index: 10000;
+      overflow: hidden;
+      transition: opacity 0.8s ease-in-out;
+    }
+
+    .splash-inner {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    #splashImg {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: center 35%; /* Shifting focus to move image 'down' in the frame */
+      filter: brightness(0.8);
+      animation: strike-zoom 2s cubic-bezier(0.1, 0.7, 0.1, 1) forwards;
+    }
+
+    .splash-overlay-flash {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: #fff;
+      opacity: 0;
+      pointer-events: none;
+      z-index: 10001;
+      animation: flash-effect 0.4s ease-out 0.5s;
+    }
+
+    .splash-text-top {
+      position: absolute;
+      top: 40%;
+      width: 100%;
+      text-align: center;
+      color: #fff;
+      font-family: 'Cinzel', serif; /* Biblical/Epic feel */
+      font-size: min(1.5em, 6vw); /* Reduced size as requested */
+      font-weight: 700;
+      text-transform: uppercase;
+      text-shadow: 0 0 20px rgba(0,0,0,0.8), 2px 2px 15px rgba(0,0,0,1);
+      opacity: 0;
+      padding: 0 40px;
+      z-index: 10002;
+      animation: text-reveal 0.6s ease-out 0.9s forwards, text-pulse 2s ease-in-out 1.5s infinite;
+    }
+
+    .splash-text-bottom {
+      position: absolute;
+      bottom: 20%;
+      width: 100%;
+      text-align: center;
+      color: #ffd700;
+      font-family: 'Outfit', sans-serif;
+      font-size: 1.4em;
+      font-weight: 700;
+      letter-spacing: 6px;
+      text-transform: uppercase;
+      text-shadow: 0 2px 10px rgba(0,0,0,0.5);
+      opacity: 0;
+      z-index: 10002;
+      animation: text-reveal 0.6s ease-out 1.4s forwards;
+    }
+
+    @keyframes strike-zoom {
+      0% { transform: scale(1.4); filter: brightness(0.4); }
+      15% { transform: scale(1.5); filter: brightness(1.8); }
+      100% { transform: scale(1.3); filter: brightness(1); }
+    }
+
+    @keyframes flash-effect {
+      0% { opacity: 0; }
+      40% { opacity: 0.9; }
+      100% { opacity: 0; }
+    }
+
+    @keyframes text-reveal {
+      0% { opacity: 0; transform: translateY(30px) scale(0.8); filter: blur(15px); }
+      100% { opacity: 1; transform: translateY(0) scale(1); filter: blur(0); }
+    }
+
+    @keyframes text-pulse {
+      0%, 100% { text-shadow: 0 0 20px rgba(255,255,255,0.2), 2px 2px 15px rgba(0,0,0,1); }
+      50% { text-shadow: 0 0 40px rgba(255,255,255,0.6), 2px 2px 15px rgba(0,0,0,1); }
     }
 
     #splashScreen.fade-out {
       opacity: 0;
-    }
-
-    #splashScreen img {
-      max-width: 90%;
-      max-height: 90%;
-      object-fit: contain;
     }
 
     /* Options Screen Logo state */
@@ -1020,7 +1106,12 @@
 <body>
   <!-- Splash Screen -->
   <div id="splashScreen">
-    <img src="images/VerseBattles-logo.png?v=final2" alt="VerseBattles Logo">
+    <div class="splash-inner">
+      <img src="images/splash_strike.png" id="splashImg" alt="VerseBattles Splash">
+      <div class="splash-overlay-flash"></div>
+      <div class="splash-text-top">Resist the devil and he will flee from you</div>
+      <div class="splash-text-bottom">VerseBattles.com</div>
+    </div>
   </div>
 
   <div id="menuScreen">
@@ -1035,7 +1126,7 @@
       </div>
     </div>
     <div class="logo-container">
-      <h1 class="menu-title">Verse Battles</h1>
+      <h1 class="menu-title">VerseBattles</h1>
     </div>
 
     <!-- Registration Modal -->
@@ -1924,14 +2015,16 @@
       }
     });
 
-    // Splash Screen - fade out after 2 seconds
+    // Splash Screen - fade out after 2.5 seconds (Extended by 0.5s)
     setTimeout(function() {
       var splash = document.getElementById('splashScreen');
-      splash.classList.add('fade-out');
-      setTimeout(function() {
-        splash.style.display = 'none';
-      }, 500);
-    }, 2000);
+      if (splash) {
+        splash.classList.add('fade-out');
+        setTimeout(function() {
+          splash.style.display = 'none';
+        }, 500);
+      }
+    }, 2500);
   </script>
 </body>
 

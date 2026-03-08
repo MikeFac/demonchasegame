@@ -116,8 +116,8 @@
             console.error('votdDismissBtn not found in DOM');
         }
 
-        // Always show VOTD on page load
-        setTimeout(showVOTDOverlay, 500);
+        // Show VOTD after splash screen (Splash at 2500ms + 500ms fade + 0.5s hold)
+        setTimeout(showVOTDOverlay, 3500);
     }
 
     /**
