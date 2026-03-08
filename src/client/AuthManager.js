@@ -10,6 +10,7 @@ class AuthManager {
         this.dbUser = null;         // MongoDB user profile
         this.isAuthenticated = false;
         this.isRegistered = false;   // User has completed registration (consent + DB entry)
+        this.registrationKnown = false; // Only true after profile sync definitively answers registration state
         this.publishableKey = '';    // Set during init
         this._authChangeCallbacks = [];
     }
@@ -55,6 +56,7 @@ class AuthManager {
                         } else {
                             this.dbUser = null;
                             this.isRegistered = false;
+                            this.registrationKnown = false;
                             console.log('[AUTH] User signed out');
                         }
                         
@@ -94,6 +96,11 @@ class AuthManager {
         
         try {
             const token = await this.getToken();
+            if (!token) {
+                console.warn('[AUTH] _syncWithDB: no token available yet, deferring registration state');
+                this.registrationKnown = false;
+                return;
+            }
             const response = await fetch('/api/users/me', {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
@@ -103,15 +110,21 @@ class AuthManager {
             if (response.status === 404) {
                 this.isRegistered = false;
                 this.dbUser = null;
+                this.registrationKnown = true;
                 console.log('[AUTH] _syncWithDB: user not found in DB, needs registration');
             } else if (response.ok) {
                 const data = await response.json();
                 this.dbUser = data.user;
                 this.isRegistered = true;
+                this.registrationKnown = true;
                 console.log('[AUTH] _syncWithDB: user found in DB, username =', this.dbUser.username);
+            } else {
+                console.warn('[AUTH] _syncWithDB: unexpected response, preserving existing registration state');
+                this.registrationKnown = false;
             }
         } catch (error) {
             console.error('[AUTH] Error syncing with DB:', error);
+            this.registrationKnown = false;
         }
     }
 
@@ -187,6 +200,7 @@ class AuthManager {
         this.dbUser = null;
         this.isAuthenticated = false;
         this.isRegistered = false;
+        this.registrationKnown = false;
         this._notifyAuthChange();
         // Then clear the Clerk session
         await this.clerk.signOut();
@@ -229,6 +243,7 @@ class AuthManager {
         const data = await response.json();
         this.dbUser = data.user;
         this.isRegistered = true;
+        this.registrationKnown = true;
         this._notifyAuthChange();
         return data;
     }
@@ -242,6 +257,7 @@ class AuthManager {
         callback({
             isAuthenticated: this.isAuthenticated,
             isRegistered: this.isRegistered,
+            registrationKnown: this.registrationKnown,
             user: this.user,
             dbUser: this.dbUser
         });
@@ -251,6 +267,7 @@ class AuthManager {
         const state = {
             isAuthenticated: this.isAuthenticated,
             isRegistered: this.isRegistered,
+            registrationKnown: this.registrationKnown,
             user: this.user,
             dbUser: this.dbUser
         };

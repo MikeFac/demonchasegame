@@ -104,8 +104,8 @@ const styles = [
   },
   {
     category: 'Identity',
-    generationStyle: 'indie rock',
-    description: 'Honest indie rock with introspective vocals—authentic and direct',
+    generationStyle: '1970s soft rock California pop-rock, dreamy mid-tempo groove around 120 BPM, gentle brushed snare and soft kick drum with subtle hi-hat, warm pulsating bassline, shimmering clean electric guitar arpeggios and muted picking, atmospheric Fender Rhodes electric piano chords, airy female lead vocals with breathy intimate delivery (mystical husky tone), lush layered harmony backing vocals in chorus, minimal percussion with light shaker and tambourine, reverb-drenched spacious production, hypnotic repetitive riff, smooth dynamic builds with swelling organ pads, bittersweet melancholic romantic vibe, effortless laid-back 1970s-era sound, ethereal and flowing texture',
+    description: 'Dreamy 1970s California soft rock with airy vocals and flowing warmth—reflective and identity-shaping',
     generationDuration: 75,
     repeatCount: 1
   },
@@ -125,15 +125,15 @@ const styles = [
   },
   {
     category: 'Power',
-    generationStyle: 'anthemic pop',
-    description: 'Big uplifting pop with punch and confidence—strong without harshness',
+    generationStyle: 'Progressive Rock, orchestral, strings, dynamic',
+    description: 'Dynamic progressive rock with orchestral lift and strings—strong, expansive, and cinematic',
     generationDuration: 75,
     repeatCount: 1
   },
   {
     category: 'Good News',
-    generationStyle: 'pop rock',
-    description: 'Energetic pop rock with hooky melodies—exciting and spreading',
+    generationStyle: 'soft rock',
+    description: 'Warm soft rock with hooky melodies—uplifting and welcoming',
     generationDuration: 75,
     repeatCount: 1
   },
@@ -146,8 +146,8 @@ const styles = [
   },
   {
     category: 'Prayer',
-    generationStyle: 'worship',
-    description: 'Reverent worship with spacious arrangement—prayerful and intimate',
+    generationStyle: 'contemporary soft Christian worship',
+    description: 'Contemporary soft Christian worship with gentle intimacy—prayerful and reverent',
     generationDuration: 75,
     repeatCount: 1
   },

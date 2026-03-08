@@ -136,6 +136,38 @@
         }
     }
 
+    function drawMusicLibraryIcon(c, x, y, size, color) {
+        c.save();
+        c.strokeStyle = color || '#fff';
+        c.fillStyle = color || '#fff';
+        c.lineWidth = 2.4;
+        c.lineCap = 'round';
+
+        const stemBottom = y + size * 0.72;
+        const leftStemX = x + size * 0.34;
+        const rightStemX = x + size * 0.58;
+        const stemTopY = y + size * 0.20;
+        const beamY = y + size * 0.18;
+
+        c.beginPath();
+        c.moveTo(leftStemX, stemBottom);
+        c.lineTo(leftStemX, stemTopY);
+        c.lineTo(rightStemX, stemTopY + size * 0.08);
+        c.lineTo(rightStemX, stemBottom - size * 0.02);
+        c.stroke();
+
+        c.beginPath();
+        c.moveTo(leftStemX, beamY);
+        c.lineTo(rightStemX, beamY + size * 0.08);
+        c.stroke();
+
+        c.beginPath();
+        c.ellipse(leftStemX - size * 0.10, stemBottom, size * 0.11, size * 0.08, -0.35, 0, Math.PI * 2);
+        c.ellipse(rightStemX - size * 0.10, stemBottom - size * 0.02, size * 0.11, size * 0.08, -0.35, 0, Math.PI * 2);
+        c.fill();
+        c.restore();
+    }
+
     function drawTooltip(c, text, x, y) {
         c.font = '12px Arial';
         const textWidth = c.measureText(text).width;
@@ -348,7 +380,11 @@
                 ctx.fillStyle = 'white';
                 ctx.fillText(t('review.reference', verseReference), 20, canvas.height - 120);
 
-                if (!isAudioPlaying && !repeatEnabled && !meditationMode) {
+                const songBrowsingMode = window.MusicManager &&
+                    typeof window.MusicManager.getSongBrowsingMode === 'function' &&
+                    window.MusicManager.getSongBrowsingMode();
+
+                if (!songBrowsingMode && !isAudioPlaying && !repeatEnabled && !meditationMode) {
                     startVerseAudio(verseReference);
                 }
             }
@@ -687,6 +723,13 @@
                             }
                         });
                     }
+                } else if (rect.name === 'songLibrary') {
+                    const verseRef = getCurrentVerseReference();
+                    if (window.SongLibraryOverlay) {
+                        window.SongLibraryOverlay.open({
+                            currentReference: verseRef
+                        });
+                    }
                 } else if (rect.name === 'category') {
                     // Open category picker
                     reviewCategoryPickerOpen = true;
@@ -915,6 +958,12 @@
     };
 
     function startVerseAudio(verseReference) {
+        if (window.MusicManager &&
+            typeof window.MusicManager.getSongBrowsingMode === 'function' &&
+            window.MusicManager.getSongBrowsingMode()) {
+            return;
+        }
+
         if (isAudioPlaying || (hasPlayed && !repeatEnabled && !meditationMode)) {
             return;
         }
@@ -987,6 +1036,17 @@
         }
         drawSvgIcon(ctx, 'share', shareX, iconY, iconSize, '#fff');
         hitRects.push({ name: 'share', x: shareX, y: iconY, w: iconSize, h: iconSize, tooltip: 'Share' });
+
+        // === Song library icon (left of share) ===
+        const musicX = shareX - iconSize - 10;
+        if (hoveredButton === 'songLibrary') {
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.1)';
+            ctx.beginPath();
+            ctx.roundRect(musicX, iconY, iconSize, iconSize, 10);
+            ctx.fill();
+        }
+        drawMusicLibraryIcon(ctx, musicX, iconY, iconSize, '#9bd2ff');
+        hitRects.push({ name: 'songLibrary', x: musicX, y: iconY, w: iconSize, h: iconSize, tooltip: 'Song Library' });
 
         // === Category button (left of center) ===
         const catW = 90;

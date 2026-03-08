@@ -1436,7 +1436,8 @@
   <script src="src/client/QuizManager.js?v=2.5"></script>
   <script src="src/client/VerseTestScreen.js"></script>
   <script src="src/client/VersOfTheDayManager.js?v=2.2"></script>
-  <script src="src/client/VotdLearningMode.js?v=2.8"></script>
+  <script src="src/client/SongLibraryOverlay.js?v=1.1"></script>
+  <script src="src/client/VotdLearningMode.js?v=2.9"></script>
   <script src="src/client/VotdTestMode.js?v=2.3"></script>
   <script src="src/client/VotdMenuOverlay.js?v=2.3"></script>
   <script src="src/client/SermonViewer.js?v=1.1"></script>
@@ -1825,6 +1826,7 @@
             console.log('[AUTH] State changed:', {
               isAuthenticated: state.isAuthenticated,
               isRegistered: state.isRegistered,
+              registrationKnown: state.registrationKnown,
               hasDbUser: !!state.dbUser,
               username: state.dbUser?.username
             });
@@ -1840,10 +1842,12 @@
                 console.log('[AUTH] User fully registered, hiding modal');
               } else {
                 authSignedIn.style.display = 'none';
-                // Only show modal if not registered
-                if (!state.isRegistered) {
+                // Only show modal after profile sync definitively says registration is missing
+                if (state.registrationKnown && !state.isRegistered) {
                   regModal.classList.add('open');
                   console.log('[AUTH] User not registered, showing modal');
+                } else {
+                  regModal.classList.remove('open');
                 }
               }
             } else {

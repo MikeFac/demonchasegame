@@ -17,6 +17,8 @@
     let volume = 0.7;
     let currentVerseReference = null;  // Track current verse song
     let currentPlaybackType = null;    // 'track' | 'verse'
+    let songBrowsingMode = false;      // Prevent game/quiz auto-play while browsing library
+    const MIN_VERSE_PLAY_SECONDS_BEFORE_SWITCH = 60;
 
     // Available tracks (will be loaded from music folder)
     // Format: { name: "Display Name", file: "filename.mp3" }
@@ -44,6 +46,11 @@
      * Play a specific track by index
      */
     function playTrack(index) {
+        if (songBrowsingMode) {
+            console.log('MusicManager: ignoring track play while song browsing mode is active');
+            return;
+        }
+
         if (index < 0 || index >= tracks.length) {
             console.warn('Invalid track index:', index);
             return;
@@ -100,6 +107,11 @@
      * Toggle play/pause
      */
     function togglePlay() {
+        if (songBrowsingMode) {
+            console.log('MusicManager: ignoring togglePlay while song browsing mode is active');
+            return;
+        }
+
         if (isPlaying) {
             pause();
         } else {
@@ -198,6 +210,10 @@
      * Respects pause state: won't auto-play if user explicitly paused
      */
     async function playVerseTrack(verseReference) {
+        if (songBrowsingMode) {
+            return false;
+        }
+
         try {
             // Check if VerseSongService is available
             if (typeof window.VerseSongService === 'undefined') {
@@ -208,15 +224,25 @@
             const verseTrack = await window.VerseSongService.getSongForVerse(verseReference);
 
             if (verseTrack && verseTrack.status === 'ready' && verseTrack.audioUrl) {
-                // Let the current verse song finish instead of restarting at each verse transition.
+                // Let the current verse song continue during fast verse changes, but allow a switch
+                // once the listener has already heard about a minute of it.
                 if (currentPlaybackType === 'verse' && currentAudio && !currentAudio.paused) {
-                    if (currentVerseReference !== verseReference) {
+                    if (currentVerseReference === verseReference) {
+                        return true;
+                    }
+
+                    if (currentAudio.currentTime < MIN_VERSE_PLAY_SECONDS_BEFORE_SWITCH) {
                         console.log(
                             `🎵 Keeping current verse song playing until completion: ${currentVerseReference} ` +
                             `(not interrupting for ${verseReference})`
                         );
+                        return true;
                     }
-                    return true;
+
+                    console.log(
+                        `🎵 Switching verse song after ${Math.floor(currentAudio.currentTime)}s: ` +
+                        `${currentVerseReference} -> ${verseReference}`
+                    );
                 }
 
                 // Song is ready—only pause if user explicitly paused (not just stopped)
@@ -253,6 +279,11 @@
      * @param {boolean} shouldPause - If true, load but don't auto-play (respects pause state)
      */
     function playTrackUrl(audioUrl, shouldPause = false, options = {}) {
+        if (songBrowsingMode && options.playbackType !== 'library') {
+            console.log('MusicManager: ignoring playTrackUrl while song browsing mode is active');
+            return;
+        }
+
         const loop = options.loop !== undefined ? options.loop : true;
         const playbackType = options.playbackType || 'track';
         const verseReference = options.verseReference || null;
@@ -331,6 +362,17 @@
         currentPlaybackType = null;
     }
 
+    function setSongBrowsingMode(isBrowsing) {
+        songBrowsingMode = Boolean(isBrowsing);
+        if (songBrowsingMode) {
+            stop();
+        }
+    }
+
+    function getSongBrowsingMode() {
+        return songBrowsingMode;
+    }
+
     // Initialize on load
     init();
 
@@ -349,6 +391,8 @@
         getTracks,
         getIsPlaying,
         getIsMuted,
+        setSongBrowsingMode,
+        getSongBrowsingMode,
         recordVerseLearned,       // NEW: Track learning outcomes
         destroy
     };

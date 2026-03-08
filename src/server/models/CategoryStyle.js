@@ -14,7 +14,7 @@ const CategoryStyleSchema = new Schema({
   generationStyle: {
     type: String,
     required: true
-    // e.g. "pop", "rock", "acoustic", "disco", "celtic", "yacht rock"
+    // e.g. "pop", "soft rock", "acoustic", "disco", "celtic", "yacht rock"
   },
 
   // Human-readable description

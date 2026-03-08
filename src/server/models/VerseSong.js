@@ -41,7 +41,7 @@ const VerseSongSchema = new Schema({
   duration: Number,       // Seconds
 
   // Generation Metadata
-  generationStyle: String,  // "pop", "rock", "acoustic", etc.
+  generationStyle: String,  // "pop", "soft rock", "acoustic", etc.
   generationPrompt: String, // Exact lyrics sent to Suno
   generationRequestId: {
     type: String,
