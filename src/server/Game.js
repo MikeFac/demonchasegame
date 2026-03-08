@@ -108,7 +108,7 @@ class Game {
             'collectHealingPoint', 'collectCollectible',
             'activateItem', 'consumeItem', 'playerHit',
             'votdBonusEarned', 'verseTestPassed', 'playerAttack',
-            'levelCompleted', 'funModeBonus'
+            'levelCompleted', 'funModeBonus', 'setCombatCategory'
         ];
 
         for (const event of events) {

@@ -165,6 +165,7 @@ document.addEventListener('DOMContentLoaded', function () {
     if (canvas) {
         // Get the 2D rendering context
         ctx = canvas.getContext('2d');
+        canvas.style.touchAction = 'none';
 
         // Initialize canvas size for mobile browsers
         handleResize();
@@ -397,6 +398,7 @@ let currentVerseIndex = null; // Index of the currently displayed verse
 let verseTimer = null; // Timer for displaying the next verse
 let incorrectAnswerReferences = [];
 let currentReviewMode = 'quality'; // Possible values: 'incorrect', 'quality'
+let lastStrongHitAt = 0;
 
 // Daily Challenge State
 let dailyChallengeGoal = 5;  // Answer 5 first-letter quizzes correctly
@@ -787,6 +789,9 @@ function resetGameState() {
         inputHandler.clearTarget();
         inputHandler.setCamera(camera);
     }
+    _lastPositionSendTime = 0;
+    _lastSentX = 0;
+    _lastSentY = 0;
 
     // Quiz state
     currentQuiz = null;
@@ -1264,9 +1269,13 @@ function initializeVerseCounter() {
 }
 
 // Callback for QuizManager to notify of correct answers
- window.onQuizCorrectAnswer = function (quizMode, verseReference) {
+ window.onQuizCorrectAnswer = function (quizMode, verseReference, combatCategory) {
     // Store reference for display in UI
     lastAnsweredReference = verseReference;
+
+    if (player && combatCategory) {
+        player.currentCombatCategory = combatCategory;
+    }
 
     if (window.Analytics) {
         Analytics.trackQuizCorrect(quizMode, verseReference);
@@ -1514,9 +1523,30 @@ async function init() {
                     lastAttackedMonster = null;
                 }
             },
-            onBulletHit: ({ x, y }) => {
+            onBulletHit: ({ x, y, damage, multiplier, category, monsterType }) => {
                 // Play bullet impact sound
                 bulletImpact.play();
+
+                if (typeof damage === 'number') {
+                    damageNumbers.push({
+                        x: x,
+                        y: y - 20,
+                        damage: damage,
+                        color: multiplier > 1 ? '#ffd166' : '#ff8888',
+                        startTime: Date.now(),
+                        duration: 900
+                    });
+                }
+
+                if (multiplier > 1 && Date.now() - lastStrongHitAt > 250) {
+                    lastStrongHitAt = Date.now();
+                    flashMessages.push({
+                        text: category && monsterType ? `${category} strong vs ${monsterType}!` : 'STRONG!',
+                        color: '#ffd166',
+                        startTime: Date.now(),
+                        duration: 1200
+                    });
+                }
             },
             onArmorAbsorb: ({ monsterId, armorLeft }) => {
                 // Find monster and show armor absorb visual
@@ -1602,14 +1632,18 @@ async function init() {
                 }
                 clientWallGrid = new WallGrid(grid, data.rows, data.cols, data.cellSize);
 
-                // Move player to spawn point if available
-                if (data.spawnX !== undefined && data.spawnY !== undefined) {
+                // Prefer the server-assigned player position. In multiplayer, later
+                // joins may be spawned away from the shared room spawn to avoid overlap.
+                const serverPlayer = playerCode && gameState.players ? gameState.players[playerCode] : null;
+                const targetX = serverPlayer && typeof serverPlayer.x === 'number' ? serverPlayer.x : data.spawnX;
+                const targetY = serverPlayer && typeof serverPlayer.y === 'number' ? serverPlayer.y : data.spawnY;
+
+                if (targetX !== undefined && targetY !== undefined) {
                     const oldX = player.x, oldY = player.y;
-                    dbg('WALLS', `onWalls: spawn teleport from (${oldX.toFixed(0)},${oldY.toFixed(0)}) to (${data.spawnX},${data.spawnY})`);
-                    player.x = data.spawnX;
-                    player.y = data.spawnY;
-                    // Sync position to engine so it matches client
-                    network.sendPosition(player.x, player.y);
+                    const source = serverPlayer ? 'server-player' : 'spawn';
+                    dbg('WALLS', `onWalls: ${source} position from (${oldX.toFixed(0)},${oldY.toFixed(0)}) to (${targetX},${targetY})`);
+                    player.x = targetX;
+                    player.y = targetY;
                     // Clear any movement target so player doesn't walk back to old position
                     if (inputHandler) inputHandler.clearTarget();
                     const spawnCollides = clientWallGrid.collides(player.x, player.y, player.width, player.height);
@@ -2796,6 +2830,7 @@ function gameLoop(generation) {
     if (window.gameMode === 'game') {
         const uiState = {
             vQuality: window.vQuality,
+            currentCombatCategory: player ? player.currentCombatCategory : null,
             categoryPickerOpen,
             allCategories: QUALITIES,
             gameOverFlag,

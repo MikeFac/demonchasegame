@@ -1,4 +1,13 @@
 const LevelConfig = {
+    combatMatrix: {
+        affinities: {
+            Faith: { Fear: 1.5, Doubt: 1.5, Confusion: 1.2 },
+            Wisdom: { Confusion: 1.5, Deception: 1.5, Ignorance: 1.3 },
+            Healing: { Infirmity: 1.5, Shame: 1.3, Poverty: 1.2 },
+            Power: { Pride: 1.5, Swarm: 1.4, Condemnation: 1.2 }
+        },
+        defaultMultiplier: 1.0
+    },
     levelData: {
         1: {
             qualities: ['Faith', 'Courage', 'Knowledge'],
@@ -17,9 +26,9 @@ const LevelConfig = {
             monsterDamageFactor: 1.5,
             playerSpeed: 6,
             monsterSpeed: 7,
-            spawnRate: 7000, // 7s interval
-            maxMonsters: 30,
-            monstersToKill: 23, // Increased by 50% (was 15)
+            spawnRate: 8400, // 20% slower spawn pace than previous 7s interval
+            maxMonsters: 26, // 10% up from the reduced 24, still below the old 30
+            monstersToKill: 21, // Reduced clear target to make the level shorter overall
             terrainTheme: 'earth'
         },
         3: {
@@ -64,7 +73,19 @@ const LevelConfig = {
         200,  // Level 4
         350,  // Level 5
         500   // Level 6
-    ]
+    ],
+
+    getCombatAffinityMultiplier: function (category, monsterType) {
+        var matrix = this.combatMatrix || {};
+        var affinities = matrix.affinities || {};
+        var defaultMultiplier = typeof matrix.defaultMultiplier === 'number' ? matrix.defaultMultiplier : 1.0;
+
+        if (!category || !monsterType) return defaultMultiplier;
+        if (!affinities[category]) return defaultMultiplier;
+
+        var multiplier = affinities[category][monsterType];
+        return typeof multiplier === 'number' ? multiplier : defaultMultiplier;
+    }
 };
 
 if (typeof module !== 'undefined' && module.exports) {

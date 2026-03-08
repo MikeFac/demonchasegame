@@ -160,9 +160,15 @@ class LocalNetwork {
         }
     }
 
-    sendQuizCorrect() {
+    sendQuizCorrect(category) {
         if (this.engine) {
-            this.engine.handlePlayerInput(this._playerId, 'quizCorrect', null);
+            this.engine.handlePlayerInput(this._playerId, 'quizCorrect', category ? { category: category } : null);
+        }
+    }
+
+    sendCombatCategory(category) {
+        if (this.engine) {
+            this.engine.handlePlayerInput(this._playerId, 'setCombatCategory', { category: category });
         }
     }
 

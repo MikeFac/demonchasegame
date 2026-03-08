@@ -28,7 +28,9 @@ console.warn = function () { if (!suppressLogs) origWarn.apply(console, argument
 origLog('\n=== Test: GameEngine loads ===');
 
 const GameEngine = require('../src/shared/GameEngine');
+const LevelConfig = require('../src/shared/LevelConfig');
 assert(typeof GameEngine === 'function', 'GameEngine is a constructor');
+assert(typeof LevelConfig.getCombatAffinityMultiplier === 'function', 'LevelConfig exposes combat affinity helper');
 
 // ---- Test: Instantiation with mock emitter ----
 origLog('\n=== Test: GameEngine instantiation ===');
@@ -85,14 +87,46 @@ assert(player.x === 200, 'Player x updated to 200');
 assert(player.y === 300, 'Player y updated to 300');
 
 // ---- Test: handlePlayerInput - quizCorrect ----
-engine.handlePlayerInput('player1', 'quizCorrect', null);
+engine.handlePlayerInput('player1', 'quizCorrect', { category: 'Faith' });
 assert(player.ammo > 0, 'Player gained ammo from quiz');
+assert(player.currentCombatCategory === 'Faith', 'Player combat category updates from correct quiz');
+
+// ---- Test: affinity lookup ----
+assert(LevelConfig.getCombatAffinityMultiplier('Faith', 'Fear') === 1.5, 'Affinity matrix returns configured multiplier');
+assert(LevelConfig.getCombatAffinityMultiplier('Faith', 'Blindness') === 1.0, 'Affinity matrix falls back to default multiplier');
 
 // ---- Test: handlePlayerInput - playerShoot ----
 const ammo = player.ammo;
 engine.handlePlayerInput('player1', 'playerShoot', { x: 500, y: 300 });
 assert(player.ammo === ammo - 1, 'Ammo decremented after shooting');
 assert(engine.bulletManager.bullets.length === 1, 'Bullet created');
+
+// ---- Test: bullet affinity damage ----
+emittedEvents.length = 0;
+const originalWallGrid = engine.bulletManager.wallGrid;
+engine.bulletManager.wallGrid = null;
+engine.gameState.walls = [];
+engine.gameState.monsters = [{
+    id: 'fear-1',
+    x: player.x + 15,
+    y: player.y,
+    width: 48,
+    height: 48,
+    health: 10,
+    maxHealth: 10,
+    monsterType: 'Fear',
+    demonType: 'Fear',
+    armorHits: 0
+}];
+engine.bulletManager.bullets = [];
+engine.bulletManager.addBullet(playerCode, { x: player.x, y: player.y }, { x: player.x + 100, y: player.y });
+engine.bulletManager.update(engine.gameState);
+const bulletHitEvent = emittedEvents.find(function (e) { return e.event === 'bulletHit'; });
+assert(!!bulletHitEvent, 'bulletHit emitted when bullet collides');
+assert(bulletHitEvent && bulletHitEvent.data.multiplier === 1.5, 'Bullet hit uses combat affinity multiplier');
+assert(engine.gameState.monsters[0].health === 7, 'Affinity damage increased bullet damage from 2 to 3');
+engine.gameState.monsters = [];
+engine.bulletManager.wallGrid = originalWallGrid;
 
 // ---- Test: handlePlayerInput - votdBonusEarned ----
 engine.handlePlayerInput('player1', 'votdBonusEarned', null);
@@ -102,8 +136,10 @@ assert(player.votdDamageBonus === true, 'VOTD bonus set');
 origLog('\n=== Test: update ===');
 
 emittedEvents.length = 0;
-engine.update();
-assert(emittedEvents.some(function (e) { return e.event === 'gameStateUpdate'; }), 'gameStateUpdate emitted during update');
+for (let i = 0; i < engine.NETWORK_TICK_DIVISOR; i++) {
+    engine.update();
+}
+assert(emittedEvents.some(function (e) { return e.event === 'gameStateUpdate'; }), 'gameStateUpdate emitted during throttled update cadence');
 
 // ---- Test: start/stop ----
 origLog('\n=== Test: start/stop ===');

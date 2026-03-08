@@ -40,6 +40,15 @@
             case 'quizCorrect':
                 if (player) {
                     player.ammo = (player.ammo || 0) + Constants.AMMO_REWARD;
+                    if (data && typeof data.category === 'string' && data.category) {
+                        player.currentCombatCategory = data.category;
+                    }
+                }
+                break;
+
+            case 'setCombatCategory':
+                if (player && data && typeof data.category === 'string' && data.category) {
+                    player.currentCombatCategory = data.category;
                 }
                 break;
 

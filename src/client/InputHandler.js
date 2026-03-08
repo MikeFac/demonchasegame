@@ -32,10 +32,16 @@ class InputHandler {
         // Bind event handlers
         this._handleClick = this._handleClick.bind(this);
         this._handleMouseMove = this._handleMouseMove.bind(this);
+        this._handleTouchStart = this._handleTouchStart.bind(this);
+        this._handleTouchMove = this._handleTouchMove.bind(this);
+        this._handleTouchEnd = this._handleTouchEnd.bind(this);
 
         // Attach listeners
         canvas.addEventListener('click', this._handleClick);
         canvas.addEventListener('mousemove', this._handleMouseMove);
+        canvas.addEventListener('touchstart', this._handleTouchStart, { passive: false });
+        canvas.addEventListener('touchmove', this._handleTouchMove, { passive: false });
+        canvas.addEventListener('touchend', this._handleTouchEnd, { passive: false });
     }
 
     /**
@@ -78,12 +84,9 @@ class InputHandler {
      * @param {MouseEvent} event 
      */
     _handleClick(event) {
-        const rect = this.canvas.getBoundingClientRect();
-        // Scale from CSS display coordinates to canvas internal coordinates
-        const scaleX = this.canvas.width / rect.width;
-        const scaleY = this.canvas.height / rect.height;
-        const clickedX = (event.clientX - rect.left) * scaleX;
-        const clickedY = (event.clientY - rect.top) * scaleY;
+        const point = this._getCanvasPoint(event.clientX, event.clientY);
+        const clickedX = point.x;
+        const clickedY = point.y;
 
         // Dispatch to appropriate handler based on game mode
         // Note: gameMode is a global variable from game.js
@@ -121,11 +124,9 @@ class InputHandler {
      * @param {MouseEvent} event
      */
     _handleMouseMove(event) {
-        const rect = this.canvas.getBoundingClientRect();
-        const scaleX = this.canvas.width / rect.width;
-        const scaleY = this.canvas.height / rect.height;
-        const mouseX = (event.clientX - rect.left) * scaleX;
-        const mouseY = (event.clientY - rect.top) * scaleY;
+        const point = this._getCanvasPoint(event.clientX, event.clientY);
+        const mouseX = point.x;
+        const mouseY = point.y;
 
         if (typeof gameMode !== 'undefined' && gameMode === 'review') {
             if (typeof ReviewMode !== 'undefined' && typeof ReviewMode.handleMouseMove === 'function') {
@@ -142,6 +143,63 @@ class InputHandler {
         if (this.callbacks.onMouseMove) {
             this.callbacks.onMouseMove(mouseX, mouseY);
         }
+    }
+
+    _handleTouchStart(event) {
+        if (!event.changedTouches || event.changedTouches.length === 0) return;
+        event.preventDefault();
+        const touch = event.changedTouches[0];
+        const point = this._getCanvasPoint(touch.clientX, touch.clientY);
+        this._handleGameModeTouch(point.x, point.y, false);
+    }
+
+    _handleTouchMove(event) {
+        if (!event.changedTouches || event.changedTouches.length === 0) return;
+        event.preventDefault();
+        const touch = event.changedTouches[0];
+        const point = this._getCanvasPoint(touch.clientX, touch.clientY);
+        this._handleGameModeTouch(point.x, point.y, true);
+    }
+
+    _handleTouchEnd(event) {
+        if (event) event.preventDefault();
+    }
+
+    _handleGameModeTouch(x, y, isDrag) {
+        if (typeof gameMode !== 'undefined' && gameMode === 'review') {
+            if (!isDrag && typeof ReviewMode !== 'undefined' && typeof ReviewMode.handleReviewClick === 'function') {
+                ReviewMode.handleReviewClick(x, y);
+            }
+            return;
+        }
+
+        if (typeof gameMode !== 'undefined' && gameMode === 'votd') {
+            if (!isDrag && typeof votdMode !== 'undefined' && votdMode === 'learning' && typeof VotdLearningMode !== 'undefined') {
+                VotdLearningMode.handleClick(x, y);
+            } else if (!isDrag && typeof votdMode !== 'undefined' && votdMode === 'test' && typeof VotdTestMode !== 'undefined') {
+                VotdTestMode.handleClick(x, y);
+            }
+            return;
+        }
+
+        if (typeof gameMode !== 'undefined' && gameMode === 'overland') {
+            if (!isDrag && this.callbacks.onOverlandClick) {
+                this.callbacks.onOverlandClick(x, y);
+            }
+            return;
+        }
+
+        this._handleGameModeClick(x, y);
+    }
+
+    _getCanvasPoint(clientX, clientY) {
+        const rect = this.canvas.getBoundingClientRect();
+        const scaleX = this.canvas.width / rect.width;
+        const scaleY = this.canvas.height / rect.height;
+        return {
+            x: (clientX - rect.left) * scaleX,
+            y: (clientY - rect.top) * scaleY
+        };
     }
 
     /**
@@ -553,5 +611,8 @@ class InputHandler {
     destroy() {
         this.canvas.removeEventListener('click', this._handleClick);
         this.canvas.removeEventListener('mousemove', this._handleMouseMove);
+        this.canvas.removeEventListener('touchstart', this._handleTouchStart);
+        this.canvas.removeEventListener('touchmove', this._handleTouchMove);
+        this.canvas.removeEventListener('touchend', this._handleTouchEnd);
     }
 }

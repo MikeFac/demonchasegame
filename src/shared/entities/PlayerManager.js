@@ -82,6 +82,7 @@
                 level: 1,
                 ammo: (this.gameConfig && this.gameConfig.startingAmmo) || 0,
                 votdDamageBonus: false,
+                currentCombatCategory: null,
                 state: 'alive',
                 canAttack: true,
                 username: socket.username || null

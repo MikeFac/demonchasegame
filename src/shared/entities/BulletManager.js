@@ -1,12 +1,14 @@
 (function () {
-    var Constants, Physics;
+    var Constants, Physics, LevelConfig;
 
     if (typeof module !== 'undefined' && module.exports) {
         Constants = require('../Constants');
         Physics = require('../Physics');
+        LevelConfig = require('../LevelConfig');
     } else if (typeof window !== 'undefined') {
         Constants = window.Constants;
         Physics = window.Physics;
+        LevelConfig = window.LevelConfig;
     }
 
     class BulletManager {
@@ -93,6 +95,7 @@
                 if (player && player.votdDamageBonus) {
                     damage = Math.ceil(damage * Constants.VOTD_DAMAGE_MULTIPLIER);
                 }
+                var baseDamage = damage;
                 var maxHits = hasSword ? Constants.SWORD_PIERCE_COUNT : 1;
 
                 if (!bullet.hitCount) bullet.hitCount = 0;
@@ -106,10 +109,24 @@
                         if (!bullet.hitMonsters) bullet.hitMonsters = [];
                         if (bullet.hitMonsters.includes(monster.id)) continue;
 
+                        var attackerCategory = player && player.currentCombatCategory ? player.currentCombatCategory : null;
+                        var monsterType = monster.monsterType || monster.demonType || null;
+                        var affinityMultiplier = LevelConfig.getCombatAffinityMultiplier(attackerCategory, monsterType);
+                        var finalDamage = Math.max(1, Math.ceil(baseDamage * affinityMultiplier));
+
                         bullet.hitMonsters.push(monster.id);
                         bullet.hitCount++;
-                        monsterManager.damageMonster(monster.id, damage, bullet.playerCode);
-                        io.emit('bulletHit', { x: bullet.x, y: bullet.y });
+                        monsterManager.damageMonster(monster.id, finalDamage, bullet.playerCode);
+                        io.emit('bulletHit', {
+                            x: bullet.x,
+                            y: bullet.y,
+                            monsterId: monster.id,
+                            monsterType: monsterType,
+                            damage: finalDamage,
+                            baseDamage: baseDamage,
+                            multiplier: affinityMultiplier,
+                            category: attackerCategory
+                        });
 
                         if (bullet.hitCount >= maxHits) {
                             bullet.active = false;

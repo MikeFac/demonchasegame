@@ -612,6 +612,7 @@
         const isCorrect = selectedOption.isCorrect;
         const verseEntry = organizedVerses[vQuality] && organizedVerses[vQuality][currentVerseIndex];
         const currentReference = verseEntry ? verseEntry.Reference : '';
+        const currentCategory = verseEntry ? (verseEntry.Category || vQuality) : vQuality;
 
         if (isCorrect) {
             isAnswerCorrect = true;
@@ -635,7 +636,7 @@
             }
 
             player.ammo = (player.ammo || 0) + Constants.AMMO_REWARD;
-            network.sendQuizCorrect();
+            network.sendQuizCorrect(currentCategory);
 
             const correctVerse = organizedVerses[vQuality] && organizedVerses[vQuality][currentVerseIndex];
             answerFullVerse = correctVerse ? correctVerse.Text : '';
@@ -648,7 +649,7 @@
 
             // Notify game.js of correct answer (for daily challenge & verse tracking)
             if (typeof window.onQuizCorrectAnswer === 'function') {
-                window.onQuizCorrectAnswer(currentQuiz.mode, currentReference);
+                window.onQuizCorrectAnswer(currentQuiz.mode, currentReference, currentCategory);
             }
         } else {
             isAnswerCorrect = false;
