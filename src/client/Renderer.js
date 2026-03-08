@@ -1104,11 +1104,23 @@ class Renderer {
 
     drawHealingPoints(healingPoints, camera) {
         healingPoints.forEach(hp => {
-            if (this.assets.healingPointImg) {
-                const screenX = hp.x - camera.x;
-                const screenY = hp.y - camera.y;
-                this.ctx.drawImage(this.assets.healingPointImg, screenX - hp.width / 2, screenY - hp.height / 2);
-            }
+            const screenX = hp.x - camera.x;
+            const screenY = hp.y - camera.y;
+            const w = hp.width || 16;
+            const h = hp.height || 16;
+            const thickness = Math.max(2, Math.floor(w / 4));
+
+            this.ctx.fillStyle = '#00ff00';
+            // Vertical bar
+            this.ctx.fillRect(screenX - thickness / 2, screenY - h / 2, thickness, h);
+            // Horizontal bar
+            this.ctx.fillRect(screenX - w / 2, screenY - thickness / 2, w, thickness);
+            
+            // Optional: slight glow
+            this.ctx.shadowBlur = 5;
+            this.ctx.shadowColor = '#00ff00';
+            this.ctx.strokeRect(screenX - w / 2, screenY - thickness / 2, w, thickness);
+            this.ctx.shadowBlur = 0;
         });
     }
 
