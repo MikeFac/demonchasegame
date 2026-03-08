@@ -34,7 +34,9 @@ const I18n = (function () {
             solo: "Solo Game",
             multiplayer: "Multiplayer",
             options: "Options",
-            back: "Back"
+            back: "Back",
+            songs: "🎵 Songs",
+            affinityHelp: "📘 Affinity Help"
         },
         toasts: {
             offlineMode: "Offline mode enabled",

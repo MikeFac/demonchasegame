@@ -59,6 +59,8 @@
     "verseTest": "✏️ Verse Test",
     "testShieldOn": "🛡️ Test Shield: ON",
     "testShieldOff": "🛡️ Test Shield: OFF",
+    "songs": "🎵 Songs",
+    "affinityHelp": "📘 Affinity Help",
     "leaveGame": "🚪 Leave Game",
     "options": "Options",
     "back": "Back",
@@ -298,11 +300,15 @@
       },
       {
         "title": "Bible Verse Quizzes",
-        "content": "<h3>How Quizzes Work</h3><p>A Bible verse is always shown at the bottom of the screen with some words blanked out. Tap the button showing the <span class=\"highlight\">correct first letters</span> of the missing words.</p><h3>Why It Matters</h3><ul><li><span class=\"highlight\">Correct answer:</span> Your melee attacks deal damage, and you earn +5 Ammo</li><li><span class=\"highlight\">Wrong answer:</span> Your attacks do nothing until you get the next one right</li></ul><h3>Verse Categories</h3><p>Verses are grouped by categories like Faith, Courage, and Love. <span class=\"highlight\">Tap the category name</span> at the top of the screen to open the category picker and choose which verses you want to study.</p>"
-      },
-      {
-        "title": "Items - Part 1",
-        "content": "<h3>Healing Points</h3><p>Green crosses appear in the dungeon. Walk over them to <span class=\"highlight\">restore 25 health</span>. Up to 2 exist at a time.</p><h3>Shield of Faith</h3><p>A golden diamond appears once per level. Walk over it to collect it into your inventory.</p><ul><li>Tap the <span class=\"key\">i</span> button (top-left) to open your inventory</li><li>Tap <span class=\"highlight\">Use</span> to activate the shield</li><li>While active (10 seconds), you take <span class=\"highlight\">zero damage</span> from demons</li><li>A golden glow surrounds your character and a timer shows remaining time</li></ul>"
+      "content": "<h3>How Quizzes Work</h3><p>A Bible verse is always shown at the bottom of the screen with some words blanked out. Tap the button showing the <span class=\"highlight\">correct first letters</span> of the missing words.</p><h3>Why It Matters</h3><ul><li><span class=\"highlight\">Correct answer:</span> Your melee attacks deal damage, and you earn +5 Ammo</li><li><span class=\"highlight\">Wrong answer:</span> Your attacks do nothing until you get the next one right</li></ul><h3>Verse Categories</h3><p>Verses are grouped by categories like Faith, Courage, and Love. <span class=\"highlight\">Tap the category name</span> at the top of the screen to open the category picker and choose which verses you want to study.</p>"
+    },
+    {
+      "title": "Affinity Help",
+      "content": "<h3>Match Qualities to Demons</h3><p>Your current combat quality affects how much damage you deal to each demon type. Some pairings hit much harder, and some are slightly weaker.</p><ul><li><span class=\"highlight\">Faith</span> is strong against Fear, Doubt, and Unbelief</li><li><span class=\"highlight\">Healing</span> is best against Infirmity and helps against Depression</li><li><span class=\"highlight\">Wisdom</span> works well against Confusion, Deception, and Ignorance</li></ul><p>During a run, open the <span class=\"highlight\">hamburger menu</span> and tap <span class=\"highlight\">Affinity Help</span> to see the full matchup guide.</p>"
+    },
+    {
+      "title": "Items - Part 1",
+      "content": "<h3>Healing Points</h3><p>Green crosses appear in the dungeon. Walk over them to <span class=\"highlight\">restore 25 health</span>. Up to 2 exist at a time.</p><h3>Shield of Faith</h3><p>A golden diamond appears once per level. Walk over it to collect it into your inventory.</p><ul><li>Tap the <span class=\"key\">i</span> button (top-left) to open your inventory</li><li>Tap <span class=\"highlight\">Use</span> to activate the shield</li><li>While active (10 seconds), you take <span class=\"highlight\">zero damage</span> from demons</li><li>A golden glow surrounds your character and a timer shows remaining time</li></ul>"
       },
       {
         "title": "Items - Part 2",

@@ -2043,6 +2043,17 @@ async function init() {
                         startTime: Date.now(),
                         duration: 1500
                     });
+                } else if (itemId === 'songs') {
+                    if (window.SongLibraryOverlay) {
+                        const currentVerse = organizedVerses[window.vQuality] && organizedVerses[window.vQuality][currentVerseIndex];
+                        window.SongLibraryOverlay.open({
+                            currentReference: currentVerse ? currentVerse.Reference : null
+                        });
+                    }
+                } else if (itemId === 'affinityHelp') {
+                    if (window.AffinityHelpOverlay) {
+                        window.AffinityHelpOverlay.open();
+                    }
                 } else if (itemId === 'shareGame') {
                     if (window.ShareManager) {
                         ShareManager.shareInvite().then(result => {

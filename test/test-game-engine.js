@@ -92,8 +92,13 @@ assert(player.ammo > 0, 'Player gained ammo from quiz');
 assert(player.currentCombatCategory === 'Faith', 'Player combat category updates from correct quiz');
 
 // ---- Test: affinity lookup ----
-assert(LevelConfig.getCombatAffinityMultiplier('Faith', 'Fear') === 1.5, 'Affinity matrix returns configured multiplier');
-assert(LevelConfig.getCombatAffinityMultiplier('Faith', 'Blindness') === 1.0, 'Affinity matrix falls back to default multiplier');
+assert(LevelConfig.getCombatAffinityMultiplier('Faith', 'Fear') === 1.6, 'Affinity matrix returns configured multiplier');
+assert(LevelConfig.getCombatAffinityMultiplier('Faith', 'Blindness') === 1.0, 'Affinity matrix still falls back to neutral matchups');
+assert(LevelConfig.getCombatAffinityMultiplier('Healing', 'Pride') === 0.95, 'Affinity matrix supports slight penalties below 1.0');
+assert(LevelConfig.getCombatAffinityMultiplier('Hope', 'Temptation') === 0.9, 'Affinity matrix supports clearer off-theme penalties');
+assert(Object.keys(LevelConfig.combatMatrix.affinities).every(function (category) {
+    return Object.keys(LevelConfig.combatMatrix.affinities[category]).length === 17;
+}), 'Every quality has explicit affinity coverage for all demon types');
 
 // ---- Test: handlePlayerInput - playerShoot ----
 const ammo = player.ammo;
@@ -123,8 +128,8 @@ engine.bulletManager.addBullet(playerCode, { x: player.x, y: player.y }, { x: pl
 engine.bulletManager.update(engine.gameState);
 const bulletHitEvent = emittedEvents.find(function (e) { return e.event === 'bulletHit'; });
 assert(!!bulletHitEvent, 'bulletHit emitted when bullet collides');
-assert(bulletHitEvent && bulletHitEvent.data.multiplier === 1.5, 'Bullet hit uses combat affinity multiplier');
-assert(engine.gameState.monsters[0].health === 7, 'Affinity damage increased bullet damage from 2 to 3');
+assert(bulletHitEvent && bulletHitEvent.data.multiplier === 1.6, 'Bullet hit uses combat affinity multiplier');
+assert(engine.gameState.monsters[0].health === 6, 'Affinity damage increased bullet damage from 2 to 4');
 engine.gameState.monsters = [];
 engine.bulletManager.wallGrid = originalWallGrid;
 

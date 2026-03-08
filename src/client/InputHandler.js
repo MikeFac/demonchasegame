@@ -284,134 +284,37 @@ class InputHandler {
             const itemH = mp.itemHeight;
             const padding = mp.padding;
 
-            // Review button area (first item)
-            const reviewY = panelY + padding;
-            if (
-                clickedX >= panelX + padding &&
-                clickedX <= panelX + mp.width - padding &&
-                clickedY >= reviewY &&
-                clickedY <= reviewY + itemH
-            ) {
-                if (this.callbacks.onMenuItemClick) {
-                    this.callbacks.onMenuItemClick('review');
-                }
-                return;
-            }
+            const menuItems = [
+                'review',
+                'playPause',
+                'nextSong',
+                'goals',
+                'verseCotD',
+                'verseTest',
+                'toggleTestShield',
+                'songs',
+                'affinityHelp',
+                'shareGame',
+                'leave'
+            ];
 
-            // Play/Pause button area (second item)
-            const playPauseY = panelY + padding + itemH + padding / 2;
-            if (
-                clickedX >= panelX + padding &&
-                clickedX <= panelX + mp.width - padding &&
-                clickedY >= playPauseY &&
-                clickedY <= playPauseY + itemH
-            ) {
-                if (this.callbacks.onMenuItemClick) {
-                    this.callbacks.onMenuItemClick('playPause');
+            for (let index = 0; index < menuItems.length; index++) {
+                const itemY = panelY + padding + (itemH + padding / 2) * index;
+                if (
+                    clickedX >= panelX + padding &&
+                    clickedX <= panelX + mp.width - padding &&
+                    clickedY >= itemY &&
+                    clickedY <= itemY + itemH
+                ) {
+                    if (this.callbacks.onMenuItemClick) {
+                        this.callbacks.onMenuItemClick(menuItems[index]);
+                    }
+                    return;
                 }
-                return;
-            }
-
-            // Next Song button area (third item)
-            const nextSongY = panelY + padding + (itemH + padding / 2) * 2;
-            if (
-                clickedX >= panelX + padding &&
-                clickedX <= panelX + mp.width - padding &&
-                clickedY >= nextSongY &&
-                clickedY <= nextSongY + itemH
-            ) {
-                if (this.callbacks.onMenuItemClick) {
-                    this.callbacks.onMenuItemClick('nextSong');
-                }
-                return;
-            }
-
-            // Goals button area (fourth item)
-            const goalsY = panelY + padding + (itemH + padding / 2) * 3;
-            if (
-                clickedX >= panelX + padding &&
-                clickedX <= panelX + mp.width - padding &&
-                clickedY >= goalsY &&
-                clickedY <= goalsY + itemH
-            ) {
-                if (this.callbacks.onMenuItemClick) {
-                    this.callbacks.onMenuItemClick('goals');
-                }
-                return;
-            }
-
-            // Verse of the Day button area (fifth item)
-            const verseCotDY = panelY + padding + (itemH + padding / 2) * 4;
-            if (
-                clickedX >= panelX + padding &&
-                clickedX <= panelX + mp.width - padding &&
-                clickedY >= verseCotDY &&
-                clickedY <= verseCotDY + itemH
-            ) {
-                if (this.callbacks.onMenuItemClick) {
-                    this.callbacks.onMenuItemClick('verseCotD');
-                }
-                return;
-            }
-
-            // Verse Test button area (sixth item)
-            const verseTestY = panelY + padding + (itemH + padding / 2) * 5;
-            if (
-                clickedX >= panelX + padding &&
-                clickedX <= panelX + mp.width - padding &&
-                clickedY >= verseTestY &&
-                clickedY <= verseTestY + itemH
-            ) {
-                if (this.callbacks.onMenuItemClick) {
-                    this.callbacks.onMenuItemClick('verseTest');
-                }
-                return;
-            }
-
-            // Toggle Test Shield button area (seventh item)
-            const toggleShieldY = panelY + padding + (itemH + padding / 2) * 6;
-            if (
-                clickedX >= panelX + padding &&
-                clickedX <= panelX + mp.width - padding &&
-                clickedY >= toggleShieldY &&
-                clickedY <= toggleShieldY + itemH
-            ) {
-                if (this.callbacks.onMenuItemClick) {
-                    this.callbacks.onMenuItemClick('toggleTestShield');
-                }
-                return;
-            }
-
-            // Share Game button area (eighth item)
-            const shareGameY = panelY + padding + (itemH + padding / 2) * 7;
-            if (
-                clickedX >= panelX + padding &&
-                clickedX <= panelX + mp.width - padding &&
-                clickedY >= shareGameY &&
-                clickedY <= shareGameY + itemH
-            ) {
-                if (this.callbacks.onMenuItemClick) {
-                    this.callbacks.onMenuItemClick('shareGame');
-                }
-                return;
-            }
-
-            // Leave Game button area (ninth item)
-            const leaveY = panelY + padding + (itemH + padding / 2) * 8;
-            if (
-                clickedX >= panelX + padding &&
-                clickedX <= panelX + mp.width - padding &&
-                clickedY >= leaveY &&
-                clickedY <= leaveY + itemH
-            ) {
-                if (this.callbacks.onMenuItemClick) {
-                    this.callbacks.onMenuItemClick('leave');
-                }
-                return;
             }
 
             // Click outside menu items but inside panel - just close menu
-            const itemCount = 9;
+            const itemCount = menuItems.length;
             if (
                 clickedX >= panelX &&
                 clickedX <= panelX + mp.width &&

@@ -59,6 +59,8 @@
     "verseTest": "✏️ Prueba de versículo",
     "testShieldOn": "🛡️ Escudo de prueba: ACTIVADO",
     "testShieldOff": "🛡️ Escudo de prueba: DESACTIVADO",
+    "songs": "🎵 Canciones",
+    "affinityHelp": "📘 Ayuda de afinidad",
     "leaveGame": "🚪 Salir del juego",
     "options": "Opciones",
     "back": "Atrás",
@@ -303,12 +305,16 @@
         "title": "Combate",
         "content": "<h3>Combate cuerpo a cuerpo</h3><p>Cuando te acercas a un demonio, el combate comienza automáticamente. Tú y el demonio intercambiáis golpes cada 0,7 segundos.</p><ul><li>Solo infliges daño si tu <span class=\"highlight\">última respuesta fue correcta</span></li><li>El demonio siempre devuelve el golpe (a menos que tengas un escudo)</li><li>Cada tipo de demonio tiene un daño máximo diferente</li></ul><h3>Disparar</h3><p><span class=\"highlight\">Toca un demonio</span> para dispararle un proyectil. Cada disparo cuesta 1 de munición. Gana más munición respondiendo correctamente a las preguntas (+5 por respuesta correcta).</p>"
       },
-      {
-        "title": "Preguntas de versículos bíblicos",
-        "content": "<h3>Cómo funcionan las preguntas</h3><p>Siempre se muestra un versículo bíblico en la parte inferior de la pantalla con algunas palabras en blanco. Toca el botón que muestra las <span class=\"highlight\">primeras letras correctas</span> de las palabras que faltan.</p><h3>Por qué es importante</h3><ul><li><span class=\"highlight\">Respuesta correcta:</span> Tus ataques cuerpo a cuerpo infligen daño y ganas +5 de munición</li><li><span class=\"highlight\">Respuesta incorrecta:</span> Tus ataques no hacen nada hasta que aciertes la siguiente</li></ul><h3>Categorías de versículos</h3><p>Los versículos se agrupan por categorías como Fe, Valentía y Amor. <span class=\"highlight\">Toca el nombre de la categoría</span> en la parte superior de la pantalla para abrir el selector de categorías y elegir qué versículos quieres estudiar.</p>"
-      },
-      {
-        "title": "Objetos - Parte 1",
+    {
+      "title": "Preguntas de versículos bíblicos",
+      "content": "<h3>Cómo funcionan las preguntas</h3><p>Siempre se muestra un versículo bíblico en la parte inferior de la pantalla con algunas palabras en blanco. Toca el botón que muestra las <span class=\"highlight\">primeras letras correctas</span> de las palabras que faltan.</p><h3>Por qué es importante</h3><ul><li><span class=\"highlight\">Respuesta correcta:</span> Tus ataques cuerpo a cuerpo infligen daño y ganas +5 de munición</li><li><span class=\"highlight\">Respuesta incorrecta:</span> Tus ataques no hacen nada hasta que aciertes la siguiente</li></ul><h3>Categorías de versículos</h3><p>Los versículos se agrupan por categorías como Fe, Valentía y Amor. <span class=\"highlight\">Toca el nombre de la categoría</span> en la parte superior de la pantalla para abrir el selector de categorías y elegir qué versículos quieres estudiar.</p>"
+    },
+    {
+      "title": "Ayuda de afinidad",
+      "content": "<h3>Relaciona cualidades con demonios</h3><p>Tu cualidad de combate actual afecta cuánto daño haces a cada tipo de demonio. Algunas combinaciones pegan mucho más fuerte y otras son un poco más débiles.</p><ul><li><span class=\"highlight\">Fe</span> es fuerte contra Miedo, Duda e Incredulidad</li><li><span class=\"highlight\">Sanidad</span> es mejor contra Enfermedad y ayuda contra Depresión</li><li><span class=\"highlight\">Sabiduría</span> funciona bien contra Confusión, Engaño e Ignorancia</li></ul><p>Durante una partida, abre el <span class=\"highlight\">menú hamburguesa</span> y toca <span class=\"highlight\">Ayuda de afinidad</span> para ver toda la guía de emparejamientos.</p>"
+    },
+    {
+      "title": "Objetos - Parte 1",
         "content": "<h3>Puntos de curación</h3><p>Aparecen cruces verdes en la mazmorra. Pasa sobre ellas para <span class=\"highlight\">restaurar 25 de salud</span>. Pueden existir hasta 2 a la vez.</p><h3>Escudo de la Fe</h3><p>Aparece un diamante dorado una vez por nivel. Recógelo para añadirlo a tu inventario.</p><ul><li>Toca el botón <span class=\"key\">i</span> (arriba a la izquierda) para abrir tu inventario</li><li>Toca <span class=\"highlight\">Usar</span> para activar el escudo</li><li>Mientras esté activo (10 segundos), recibes <span class=\"highlight\">cero daño</span> de los demonios</li><li>Un resplandor dorado rodeará a tu personaje y un temporizador mostrará el tiempo restante</li></ul>"
       },
       {

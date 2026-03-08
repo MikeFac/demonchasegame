@@ -1,10 +1,85 @@
+const ALL_DEMON_TYPES = [
+    'Blindness', 'Condemnation', 'Confusion', 'Deception', 'Depression', 'Despair',
+    'Doubt', 'Fear', 'Ignorance', 'Infirmity', 'Poverty', 'Pride',
+    'Shame', 'Strife', 'Swarm', 'Temptation', 'Unbelief'
+];
+
+function buildAffinityRow(boosts, penalties) {
+    var row = {};
+    ALL_DEMON_TYPES.forEach(function (demonType) {
+        row[demonType] = 1.0;
+    });
+
+    Object.keys(boosts).forEach(function (demonType) {
+        row[demonType] = boosts[demonType];
+    });
+
+    Object.keys(penalties).forEach(function (demonType) {
+        row[demonType] = penalties[demonType];
+    });
+
+    return row;
+}
+
 const LevelConfig = {
     combatMatrix: {
         affinities: {
-            Faith: { Fear: 1.5, Doubt: 1.5, Confusion: 1.2 },
-            Wisdom: { Confusion: 1.5, Deception: 1.5, Ignorance: 1.3 },
-            Healing: { Infirmity: 1.5, Shame: 1.3, Poverty: 1.2 },
-            Power: { Pride: 1.5, Swarm: 1.4, Condemnation: 1.2 }
+            Courage: buildAffinityRow(
+                { Fear: 1.6, Shame: 1.3, Despair: 1.25, Strife: 1.2 },
+                { Deception: 0.9, Temptation: 0.95 }
+            ),
+            Endurance: buildAffinityRow(
+                { Despair: 1.5, Depression: 1.35, Poverty: 1.2, Strife: 1.15 },
+                { Deception: 0.9, Blindness: 0.95 }
+            ),
+            Faith: buildAffinityRow(
+                { Fear: 1.6, Doubt: 1.5, Unbelief: 1.4, Despair: 1.2 },
+                { Pride: 0.95, Strife: 0.9 }
+            ),
+            Focus: buildAffinityRow(
+                { Confusion: 1.45, Temptation: 1.35, Swarm: 1.25, Deception: 1.2 },
+                { Poverty: 0.9, Shame: 0.95 }
+            ),
+            Forgiveness: buildAffinityRow(
+                { Condemnation: 1.55, Shame: 1.35, Pride: 1.2, Strife: 1.15 },
+                { Swarm: 0.9, Blindness: 0.95 }
+            ),
+            'Good News': buildAffinityRow(
+                { Unbelief: 1.45, Condemnation: 1.35, Fear: 1.2, Despair: 1.2 },
+                { Temptation: 0.9, Pride: 0.95 }
+            ),
+            Healing: buildAffinityRow(
+                { Infirmity: 1.6, Depression: 1.25, Shame: 1.25, Poverty: 1.2 },
+                { Pride: 0.95, Strife: 0.9 }
+            ),
+            Hope: buildAffinityRow(
+                { Despair: 1.6, Depression: 1.35, Fear: 1.2, Poverty: 1.15 },
+                { Pride: 0.95, Temptation: 0.9 }
+            ),
+            Identity: buildAffinityRow(
+                { Shame: 1.55, Condemnation: 1.35, Pride: 1.25, Fear: 1.15 },
+                { Swarm: 0.9, Poverty: 0.95 }
+            ),
+            Knowledge: buildAffinityRow(
+                { Ignorance: 1.6, Blindness: 1.35, Deception: 1.2, Confusion: 1.15 },
+                { Poverty: 0.9, Despair: 0.95 }
+            ),
+            Love: buildAffinityRow(
+                { Shame: 1.35, Strife: 1.3, Condemnation: 1.2, Poverty: 1.15 },
+                { Pride: 0.9, Temptation: 0.95 }
+            ),
+            Power: buildAffinityRow(
+                { Pride: 1.55, Swarm: 1.4, Condemnation: 1.25, Fear: 1.15 },
+                { Deception: 0.9, Doubt: 0.95 }
+            ),
+            Prophecy: buildAffinityRow(
+                { Deception: 1.45, Blindness: 1.3, Unbelief: 1.25, Temptation: 1.2 },
+                { Strife: 0.9, Poverty: 0.95 }
+            ),
+            Wisdom: buildAffinityRow(
+                { Confusion: 1.55, Deception: 1.45, Ignorance: 1.35, Temptation: 1.15 },
+                { Swarm: 0.9, Fear: 0.95 }
+            )
         },
         defaultMultiplier: 1.0
     },
