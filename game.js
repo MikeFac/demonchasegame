@@ -2153,6 +2153,9 @@ async function init() {
         };
 
         // Initialize InputHandler
+        if (inputHandler && typeof inputHandler.destroy === 'function') {
+            inputHandler.destroy();
+        }
         const InputHandlerClass = getInputHandlerClassForViewMode(viewMode);
         inputHandler = new InputHandlerClass(canvas, {
             QUALITY_LINE_HEIGHT,
