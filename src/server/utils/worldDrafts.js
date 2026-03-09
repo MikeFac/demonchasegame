@@ -44,7 +44,7 @@ function normalizeFixedMonster(entry) {
         y: y,
         demonType: trimString(entry.demonType || 'Fear', 40) || 'Fear',
         behavior: {
-            type: ['chaser', 'patrol', 'guardian', 'wanderer'].includes(entry.behavior && entry.behavior.type)
+            type: ['chaser', 'patrol', 'guardian', 'guard', 'wanderer'].includes(entry.behavior && entry.behavior.type)
                 ? entry.behavior.type
                 : 'chaser',
             patrolRadius: Number(entry.behavior && entry.behavior.patrolRadius) || 0,

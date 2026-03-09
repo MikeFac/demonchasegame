@@ -498,25 +498,24 @@ router.patch('/:slug/missions/:id', requireAuth, async (req, res) => {
             return res.status(404).json({ error: 'Mission not found' });
         }
 
+        const existingMission = typeof world.missions[missionIndex].toObject === 'function'
+            ? world.missions[missionIndex].toObject()
+            : world.missions[missionIndex];
+
         const normalizedMission = normalizeMission({
-            ...world.missions[missionIndex].toObject(),
+            ...existingMission,
             ...req.body,
             id: world.missions[missionIndex].id
         }, missionIndex);
+        if (!normalizedMission) {
+            return res.status(400).json({ error: 'Invalid mission payload' });
+        }
 
-        world.missions[missionIndex] = normalizedMission;
+        if (!Array.isArray(world.chapters)) {
+            world.chapters = [];
+        }
 
-        var chapterChanged = false;
-        world.chapters.forEach(function (chapter) {
-            if (!Array.isArray(chapter.missionIds)) {
-                chapter.missionIds = [];
-            }
-            if (!chapter.missionIds.includes(normalizedMission.id)) {
-                chapter.missionIds.push(normalizedMission.id);
-                chapterChanged = true;
-            }
-        });
-        if (chapterChanged && world.chapters.length === 0) {
+        if (world.chapters.length === 0) {
             world.chapters = [{
                 id: 'chapter-1',
                 name: 'Chapter 1',
@@ -525,10 +524,33 @@ router.patch('/:slug/missions/:id', requireAuth, async (req, res) => {
                 theme: 'stone',
                 missionIds: [normalizedMission.id]
             }];
+        } else {
+            world.chapters.forEach(function (chapter) {
+                if (!Array.isArray(chapter.missionIds)) {
+                    chapter.missionIds = [];
+                }
+                if (!chapter.missionIds.includes(normalizedMission.id)) {
+                    chapter.missionIds.push(normalizedMission.id);
+                }
+            });
         }
 
+        world.set('missions.' + missionIndex, normalizedMission);
+        world.markModified('missions');
+        world.chapters.forEach(function (chapter) {
+            if (!Array.isArray(chapter.missionIds)) {
+                chapter.missionIds = [];
+            }
+            if (!chapter.missionIds.includes(normalizedMission.id)) {
+                chapter.missionIds.push(normalizedMission.id);
+            }
+        });
+
         await world.save();
-        res.json({ mission: world.missions[missionIndex], world });
+        const savedMission = typeof world.missions[missionIndex].toObject === 'function'
+            ? world.missions[missionIndex].toObject()
+            : world.missions[missionIndex];
+        res.json({ mission: savedMission, world });
     } catch (error) {
         console.error('Error updating world mission:', error);
         res.status(500).json({ error: 'Internal server error' });
