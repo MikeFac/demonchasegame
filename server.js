@@ -37,6 +37,18 @@ app.get('/config', (req, res) => {
   res.sendFile(path.join(__dirname, 'config.html'));
 });
 
+app.get('/youth-pastors', (req, res) => {
+  res.sendFile(path.join(__dirname, 'youth-pastors.html'));
+});
+
+app.get('/parents', (req, res) => {
+  res.sendFile(path.join(__dirname, 'parents.html'));
+});
+
+app.get('/players', (req, res) => {
+  res.sendFile(path.join(__dirname, 'players.html'));
+});
+
 // Initialize Managers
 const roomManager = new RoomManager(io);
 const gameInstances = new Map(); // roomId -> Game instance

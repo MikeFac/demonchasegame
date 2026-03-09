@@ -1,0 +1,87 @@
+Original prompt: Check the implementation of docs/multi-version-songs-implementation-plan.md and test it. Make 2 new songs in each category for the first 2 verses and create a log of what was created so we can also migrate later to production.
+
+2026-03-08:
+- Updated Suno prompt instructions to start singing within 3 seconds and use the full verse text exactly as provided.
+- Added targeted scripts for batch generation, retry from batch log, waiting for batch completion, and exporting a batch-only production payload.
+- Applied the local MongoDB multi-version migration after confirming the old unique verseReference index was still present.
+- Generated and completed the tracked 42-song batch for the first two verses in each category.
+- Current testing goal: verify local backend behavior and do a lightweight browser smoke pass before production migration.
+
+- Use ./restart-server.sh for all local server restarts; do not invoke node server.js directly.
+- Investigating learn-mode verse-song playback first before the planned song browser feature.
+- Implemented first pass fix in MusicManager: verse songs no longer loop like background tracks and active verse songs are no longer interrupted on every quiz verse transition.
+- Reworked verse-song prompt generation so only verse text is sent as lyrics; generation guidance now goes in the style field to avoid sung instructions.
+- Shifted category styles toward shorter one-pass songs and replaced metal with a softer style; rock categories now use 80s rock.
+- Added batch deletion support and changed the category batch generator to one-per-category with an optional --onesong mode.
+- Added a saved plan for a Learn Mode song library and admin archive/delete workflow in docs/song-library-and-admin-delete-plan.md.
+- Started the read-only implementation: new /api/verse-song/library endpoint with optional auth-admin flag, a SongLibraryOverlay client, and a new Learn Mode music icon entry point that opens the library.
+- Polished the read-only overlay: added search/filter, collapsible categories, current-verse highlighting, clearer playback state, and a stop-audio control.
+- Added the admin-only archive/delete path:
+  - server route `POST /api/verse-song/:id/archive-delete`
+  - filesystem-first archive into `archived/deleted-songs/YYYY-MM-DD/`
+  - manifest + JSONL deletion log
+  - client delete control only when `isSongAdmin` is true
+- Corrected the music entry point location after user feedback: the quavers icon is now also on the Review/Learn screen in `ReviewMode.js`, not just the VOTD learning screen.
+- Verification:
+  - `node --check src/server/routes/verseSong.js`
+  - `node --check src/client/SongLibraryOverlay.js`
+  - `node --check src/client/VotdLearningMode.js`
+  - Browser-verified `/api/verse-song/library` via headless Chrome dump-dom; endpoint returned grouped song JSON (`totalCategories: 22`, `totalSongs: 211`).
+  - Browser screenshot of the main menu/VOTD modal captured at `logs/browser-captures/song-library-home.png`.
+  - End-to-end Learn Mode smoke test via Playwright:
+    - entered VOTD Learn Mode
+    - clicked the quavers icon
+    - verified overlay open state
+    - filtered to `Romans 10:17`
+    - clicked play and confirmed one row switched to `Stop`
+  - Guest auth smoke:
+    - overlay showed `0` delete buttons when unauthenticated
+    - `POST /api/verse-song/fake-song-id/archive-delete` returned `401`
+  - Review/Learn screen smoke:
+    - opened the same screen the user screenshotted
+    - clicked the new quavers icon there
+    - verified the song library overlay opened with `22` category sections
+  - Browser artifacts:
+    - `logs/browser-captures/votd-learning-before-library.png`
+    - `logs/browser-captures/song-library-overlay-attempt.png`
+    - `logs/browser-captures/song-library-filtered-play.png`
+    - `logs/browser-captures/review-mode-song-library.png`
+- Follow-up TODO:
+  - Test the archive/delete path end-to-end while logged in as `michaelfackerell@gmail.com`.
+
+2026-03-08:
+- Started implementing `plans/CombatAffinitySystem.md` core combat-category path.
+- Added a shared combat affinity matrix in `src/shared/LevelConfig.js`.
+- Wired `quizCorrect` to persist the answered category on the server/offline engine player state as `currentCombatCategory`.
+- Updated bullet collision to apply affinity multipliers and emit richer `bulletHit` payloads for client feedback.
+- Added initial engine coverage in `test/test-game-engine.js`.
+- Investigated multiplayer movement for non-host players and found the client `onWalls` handler was force-teleporting every player to the shared spawn instead of the server-assigned per-player position. Patched `game.js` to prefer the authoritative player position and stop pushing the wrong spawn back to the server.
+
+2026-03-09:
+- Added audience-specific landing pages:
+  - `youth-pastors.html`
+  - `parents.html`
+  - `players.html`
+- Added dedicated routes in `server.js`:
+  - `/youth-pastors`
+  - `/parents`
+  - `/players`
+- Reused `public/landing-pages.css` as a shared marketing stylesheet and extended it for screenshot cards.
+- Added landing analytics in `public/landing-analytics.js` using the existing GA4 measurement ID `G-673VQ9VE50`.
+- Landing analytics now emit:
+  - `landing_page_view`
+  - `landing_cta_click`
+- Added screenshot-only query helpers that do not affect normal gameplay:
+  - `/?capture=tutorial`
+  - `/?capture=worlds`
+- Captured and saved landing assets:
+  - `public/landing/menu-screen.png`
+  - `public/landing/tutorial-screen.png`
+  - `public/landing/worlds-screen.png`
+  - `public/landing/gameplay-screen.png`
+- Verification:
+  - `node --check server.js`
+  - `node --check game.js`
+- Follow-up TODO:
+  - browser-smoke the three landing-page routes once the local server is running in a stable foreground/background session again
+  - decide whether to add a fourth audience page for Christian schools or homeschool groups

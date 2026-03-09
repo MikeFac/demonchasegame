@@ -1359,13 +1359,14 @@
       <p><strong>VerseBattles is committed to protecting your privacy.</strong></p>
 
       <h3>Age Requirement</h3>
-      <p>You must be <strong>16 years of age or older</strong> to create an account or use the registration features of VerseBattles. The game can be played without an account by users of any age under parental supervision.</p>
+      <p>You must be <strong>16 years of age or older</strong> to create an account or use the registration features of VerseBattles. Users under 13 should not create an account or submit personal information through the service. Guest play should be used only under parental or guardian supervision.</p>
 
       <h3>Data Collection</h3>
       <ul>
         <li><strong>Without an account:</strong> We use Google Analytics 4 to collect anonymous gameplay events (correct answers, levels completed), device type, browser, and general location (country/region). No personal information is collected.</li>
         <li><strong>With an account:</strong> If you register, we store your chosen username, email address (provided via Clerk authentication), gameplay progress, and any worlds you create. Authentication is handled securely by <a href="https://clerk.com/privacy" target="_blank">Clerk</a>.</li>
         <li>We do <strong>not</strong> collect or store passwords — authentication is handled entirely by Clerk's secure service.</li>
+        <li>Guest and offline play may still involve technical data collection needed to operate, secure, and measure the service.</li>
       </ul>
 
       <h3>Data Use</h3>
@@ -1392,12 +1393,12 @@
       </ul>
 
       <h3>Children's Privacy</h3>
-      <p>VerseBattles does not knowingly collect personal information from children under 16. If we discover that a child under 16 has created an account, we will promptly delete it. Parents and guardians can contact us to request removal of their child's data.</p>
+      <p>VerseBattles is not intended for children under 13 to create accounts or provide personal information directly. If we discover that a child has provided personal information in violation of this policy, we will investigate and, where appropriate, delete it. Parents and guardians can contact us to request review or removal of their child's data.</p>
 
       <h3>Contact</h3>
       <p>Questions about our privacy practices? Email us at <strong><a href="mailto:michaelfackerell@gmail.com">michaelfackerell@gmail.com</a></strong></p>
 
-      <p style="font-size: 0.9em; opacity: 0.8; margin-top: 30px;">Last updated: March 2026</p>
+      <p style="font-size: 0.9em; opacity: 0.8; margin-top: 30px;">Last updated: March 9, 2026</p>
 
       <button id="btnClosePrivacy">Close</button>
     </div>
@@ -1803,6 +1804,11 @@
       // Pulse the How to Play button to indicate it's available
       // (Don't auto-open - FTUE has its own quick-start overlay)
       btnInstructions.classList.add('pulse');
+
+      const captureParams = new URLSearchParams(window.location.search);
+      if (captureParams.get('capture') === 'tutorial') {
+        setTimeout(open, 250);
+      }
     })();
 
     // --- Authentication & Sync Integration ---

@@ -1092,6 +1092,8 @@ document.addEventListener('DOMContentLoaded', function () {
         offlineMode = true;
     }
 
+    const captureMode = urlParams.get('capture');
+
     if (roomId) {
         // Coming from lobby redirect — skip menu, join game
         startGame('join', roomId);
@@ -1184,6 +1186,14 @@ document.addEventListener('DOMContentLoaded', function () {
                 if (window.Analytics) Analytics.trackMenuClick('worlds');
                 showWorldBrowserPanel();
             });
+        }
+
+        if (captureMode === 'worlds') {
+            window.setTimeout(() => {
+                showWorldBrowserPanel().catch((error) => {
+                    console.error('Failed to auto-open worlds capture panel', error);
+                });
+            }, 250);
         }
 
         // Settings Toggle
