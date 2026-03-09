@@ -39,13 +39,18 @@ function normalizeFixedMonster(entry) {
         }).slice(0, 20)
         : [];
 
+    var rawBehaviorType = entry.behavior && entry.behavior.type;
+    if (rawBehaviorType === 'guardian') {
+        rawBehaviorType = 'guard';
+    }
+
     return {
         x: x,
         y: y,
         demonType: trimString(entry.demonType || 'Fear', 40) || 'Fear',
         behavior: {
-            type: ['chaser', 'patrol', 'guardian', 'guard', 'wanderer'].includes(entry.behavior && entry.behavior.type)
-                ? entry.behavior.type
+            type: ['chaser', 'patrol', 'guard', 'wanderer'].includes(rawBehaviorType)
+                ? rawBehaviorType
                 : 'chaser',
             patrolRadius: Number(entry.behavior && entry.behavior.patrolRadius) || 0,
             patrolPath: patrolPath

@@ -76,8 +76,8 @@ Add to the existing `missions[]` array inside the World model:
     y: Number,
     demonType: String,            // One of the 18 types (Fear, Pride, etc.)
     behavior: {
-      type: String,               // 'chaser' | 'patrol' | 'guardian' | 'wanderer'
-      patrolRadius: Number,       // pixels (for patrol/guardian)
+      type: String,               // 'chaser' | 'patrol' | 'guard' | 'wanderer'
+      patrolRadius: Number,       // pixels (for patrol/guard)
       patrolPath: [{x: Number, y: Number}], // optional waypoints
     },
     stats: {
