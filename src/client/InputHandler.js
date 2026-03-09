@@ -299,6 +299,7 @@ class InputHandler {
                 'toggleTestShield',
                 'songs',
                 'affinityHelp',
+                'switchViewMode',
                 'shareGame',
                 'leave'
             ];

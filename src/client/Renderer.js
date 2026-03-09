@@ -213,7 +213,7 @@ class Renderer {
         const isPlaying = musicState.isPlaying;
 
         const testShieldOn = menuState.verseTestShielded || false;
-        const itemCount = 11;
+        const itemCount = 12;
 
         // Panel background
         this.ctx.fillStyle = 'rgba(0, 0, 0, 0.9)';
@@ -233,6 +233,7 @@ class Renderer {
             { id: 'toggleTestShield', label: testShieldOn ? t('menu.testShieldOn') : t('menu.testShieldOff') },
             { id: 'songs', label: t('menu.songs') },
             { id: 'affinityHelp', label: t('menu.affinityHelp') },
+            { id: 'switchViewMode', label: menuState.viewMode === '3d' ? t('menu.switchTo2d') : t('menu.switchTo3d') },
             { id: 'shareGame', label: '📤 Share Game', color: '#4CAF50' },
             { id: 'leave', label: t('menu.leaveGame'), color: '#ff4444' }
         ];

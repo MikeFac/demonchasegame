@@ -67,6 +67,12 @@
     "howToPlay": "Cómo jugar",
     "startSoloGame": "Juego en solitario",
     "language": "🌐 Idioma",
+    "languageCompact": "Idioma",
+    "viewMode": "Vista",
+    "view2d": "2D clásica",
+    "view3d": "3D experimental",
+    "switchTo2d": "🧭 Cambiar a 2D",
+    "switchTo3d": "🧭 Cambiar a 3D",
     "customGame": "⚙️ Juego personalizado",
     "multiplayerGame": "Juego multijugador",
     "missions": "⚔️ Misiones"

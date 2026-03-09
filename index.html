@@ -266,6 +266,44 @@
       gap: 2px;
     }
 
+    .menu-utility-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      width: 100%;
+      margin-top: 4px;
+      margin-bottom: 2px;
+    }
+
+    .utility-select {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 4px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 8px;
+      padding: 6px 8px;
+      min-width: 0;
+    }
+
+    .utility-select label {
+      font-size: 0.68em;
+      color: rgba(255, 255, 255, 0.78);
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+    }
+
+    .utility-select select {
+      width: 100%;
+      padding: 6px 8px;
+      border-radius: 6px;
+      background: #182235;
+      color: #fff;
+      border: 1px solid rgba(255, 255, 255, 0.16);
+      font-size: 0.8em;
+    }
+
     .footer-links {
       display: flex;
       justify-content: center;
@@ -1193,6 +1231,23 @@
 
     <!-- Polished Menu Footer -->
     <div id="menuFooter">
+      <div class="menu-utility-row">
+        <div class="utility-select">
+          <label for="mainMenuLanguageSelect" data-i18n="menu.languageCompact">Language</label>
+          <select id="mainMenuLanguageSelect">
+            <option value="en">English</option>
+            <option value="es">Español</option>
+          </select>
+        </div>
+        <div class="utility-select">
+          <label for="mainMenuViewModeSelect" data-i18n="menu.viewMode">View</label>
+          <select id="mainMenuViewModeSelect">
+            <option value="2d" data-i18n="menu.view2d">2D Classic</option>
+            <option value="3d" data-i18n="menu.view3d">3D Experimental</option>
+          </select>
+        </div>
+      </div>
+
       <label class="offline-toggle" id="offlineModeLabel">
         <input type="checkbox" id="offlineModeToggle" checked>
         <span data-i18n="config.offlineMode">Offline mode</span>
@@ -1276,6 +1331,14 @@
           <!-- <option value="tl">Tagalog</option> -->
         </select>
         <p style="color: #888; font-size: 11px; margin-top: 5px;" data-i18n="config.comingSoon">More languages coming soon!</p>
+      </div>
+
+      <h4 style="color: #a8c5e6; margin: 15px 0 10px 0; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 5px;" data-i18n="menu.viewMode">View</h4>
+      <div class="settings-section">
+        <select id="viewModeSelect" style="width: 100%; padding: 8px; border-radius: 5px; background: #1a1a2e; color: white; border: 1px solid #444; font-size: 14px;">
+          <option value="2d" data-i18n="menu.view2d">2D Classic</option>
+          <option value="3d" data-i18n="menu.view3d">3D Experimental</option>
+        </select>
       </div>
     </div>
 

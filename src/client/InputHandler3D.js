@@ -29,7 +29,6 @@ class InputHandler3D extends InputHandler {
 
     clearTarget() {
         super.clearTarget();
-        this.forwardPressed = false;
     }
 
     destroy() {
@@ -42,12 +41,12 @@ class InputHandler3D extends InputHandler {
         const controls = this._getControlRects();
 
         if (this._pointInRect(clickedX, clickedY, controls.left)) {
-            this.clearTarget();
+            this._stopAndClearTarget();
             this._queueTurn(-1);
             return;
         }
         if (this._pointInRect(clickedX, clickedY, controls.right)) {
-            this.clearTarget();
+            this._stopAndClearTarget();
             this._queueTurn(1);
             return;
         }
@@ -56,7 +55,7 @@ class InputHandler3D extends InputHandler {
             return;
         }
         if (this._pointInRect(clickedX, clickedY, controls.stop)) {
-            this.clearTarget();
+            this._stopAndClearTarget();
             return;
         }
         if (this._pointInRect(clickedX, clickedY, controls.fire)) {
@@ -75,12 +74,12 @@ class InputHandler3D extends InputHandler {
             const point = this._getCanvasPoint(touch.clientX, touch.clientY);
             const controls = this._getControlRects();
             if (this._pointInRect(point.x, point.y, controls.left)) {
-                this.clearTarget();
+                this._stopAndClearTarget();
                 this._queueTurn(-1);
                 continue;
             }
             if (this._pointInRect(point.x, point.y, controls.right)) {
-                this.clearTarget();
+                this._stopAndClearTarget();
                 this._queueTurn(1);
                 continue;
             }
@@ -89,7 +88,7 @@ class InputHandler3D extends InputHandler {
                 continue;
             }
             if (this._pointInRect(point.x, point.y, controls.stop)) {
-                this.clearTarget();
+                this._stopAndClearTarget();
                 continue;
             }
             if (this._pointInRect(point.x, point.y, controls.fire)) {
@@ -116,15 +115,15 @@ class InputHandler3D extends InputHandler {
         }
         if (event.repeat) return;
         if (event.code === 'ArrowLeft' || event.code === 'KeyA') {
-            this.clearTarget();
+            this._stopAndClearTarget();
             this._queueTurn(-1);
         } else if (event.code === 'ArrowRight' || event.code === 'KeyD') {
-            this.clearTarget();
+            this._stopAndClearTarget();
             this._queueTurn(1);
         } else if (event.code === 'ArrowUp' || event.code === 'KeyW') {
             this.forwardPressed = true;
         } else if (event.code === 'ArrowDown' || event.code === 'KeyS' || event.code === 'Space') {
-            this.clearTarget();
+            this._stopAndClearTarget();
         } else if (event.code === 'Enter' || event.code === 'KeyF') {
             this._queueFire();
         }
@@ -156,6 +155,11 @@ class InputHandler3D extends InputHandler {
 
     _pointInRect(x, y, rect) {
         return x >= rect.x && x <= rect.x + rect.width && y >= rect.y && y <= rect.y + rect.height;
+    }
+
+    _stopAndClearTarget() {
+        super.clearTarget();
+        this.forwardPressed = false;
     }
 
     _getControlRects() {

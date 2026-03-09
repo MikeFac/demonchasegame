@@ -286,6 +286,33 @@ function resolveInitialViewMode(urlParams) {
     return persistedMode;
 }
 
+function persistViewMode(nextMode) {
+    viewMode = normalizeViewMode(nextMode);
+    window.viewMode = viewMode;
+    localStorage.setItem('preferredViewMode', viewMode);
+}
+
+function updateViewModeControls(selectedMode) {
+    const normalized = normalizeViewMode(selectedMode);
+    const mainMenuSelect = document.getElementById('mainMenuViewModeSelect');
+    const settingsSelect = document.getElementById('viewModeSelect');
+    if (mainMenuSelect) mainMenuSelect.value = normalized;
+    if (settingsSelect) settingsSelect.value = normalized;
+}
+
+function reloadWithViewMode(nextMode) {
+    const normalized = normalizeViewMode(nextMode);
+    persistViewMode(normalized);
+
+    const nextUrl = new URL(window.location.href);
+    if (normalized === '3d') {
+        nextUrl.searchParams.set('viewMode', '3d');
+    } else {
+        nextUrl.searchParams.delete('viewMode');
+    }
+    window.location.href = nextUrl.toString();
+}
+
 function getRendererClassForViewMode(mode) {
     if (mode === '3d' && typeof Renderer3D === 'function') {
         return Renderer3D;
@@ -886,6 +913,9 @@ function resetGameState() {
     // Input
     if (inputHandler) {
         inputHandler.clearTarget();
+        if (inputHandler.viewMode === '3d' && typeof inputHandler.stopForwardMovement === 'function') {
+            inputHandler.stopForwardMovement();
+        }
         inputHandler.setCamera(camera);
     }
     _lastPositionSendTime = 0;
@@ -1181,8 +1211,7 @@ document.addEventListener('DOMContentLoaded', function () {
     // Parse URL params
     const roomId = urlParams.get('room');
     const mode = urlParams.get('mode');
-    viewMode = resolveInitialViewMode(urlParams);
-    window.viewMode = viewMode;
+    persistViewMode(resolveInitialViewMode(urlParams));
     console.log('View mode:', viewMode);
 
     // Check for first-time visit
@@ -1345,15 +1374,43 @@ document.addEventListener('DOMContentLoaded', function () {
             });
         }
 
-        // Language selector
         const languageSelect = document.getElementById('languageSelect');
+        const mainMenuLanguageSelect = document.getElementById('mainMenuLanguageSelect');
+        const mainMenuViewModeSelect = document.getElementById('mainMenuViewModeSelect');
+        const viewModeSelect = document.getElementById('viewModeSelect');
+
+        const applyLanguageChange = (newLang) => {
+            localStorage.setItem('lang', newLang);
+            if (languageSelect) languageSelect.value = newLang;
+            if (mainMenuLanguageSelect) mainMenuLanguageSelect.value = newLang;
+            window.location.reload();
+        };
+
+        const currentLang = I18n.getLang();
         if (languageSelect) {
-            // Set current language
-            languageSelect.value = I18n.getLang();
+            languageSelect.value = currentLang;
             languageSelect.addEventListener('change', () => {
-                const newLang = languageSelect.value;
-                localStorage.setItem('lang', newLang);
-                window.location.reload();
+                applyLanguageChange(languageSelect.value);
+            });
+        }
+        if (mainMenuLanguageSelect) {
+            mainMenuLanguageSelect.value = currentLang;
+            mainMenuLanguageSelect.addEventListener('change', () => {
+                applyLanguageChange(mainMenuLanguageSelect.value);
+            });
+        }
+
+        updateViewModeControls(viewMode);
+        if (mainMenuViewModeSelect) {
+            mainMenuViewModeSelect.addEventListener('change', () => {
+                persistViewMode(mainMenuViewModeSelect.value);
+                updateViewModeControls(viewMode);
+            });
+        }
+        if (viewModeSelect) {
+            viewModeSelect.addEventListener('change', () => {
+                persistViewMode(viewModeSelect.value);
+                updateViewModeControls(viewMode);
             });
         }
     }
@@ -1766,7 +1823,12 @@ async function init() {
                     player.x = targetX;
                     player.y = targetY;
                     // Clear any movement target so player doesn't walk back to old position
-                    if (inputHandler) inputHandler.clearTarget();
+                    if (inputHandler) {
+                        inputHandler.clearTarget();
+                        if (inputHandler.viewMode === '3d' && typeof inputHandler.stopForwardMovement === 'function') {
+                            inputHandler.stopForwardMovement();
+                        }
+                    }
                     const spawnCollides = clientWallGrid.collides(player.x, player.y, player.width, player.height);
                     console.log(`[WallSpawn] onWalls: moved player from (${oldX.toFixed(1)}, ${oldY.toFixed(1)}) to spawn (${player.x}, ${player.y}) wallCollides=${spawnCollides} w=${player.width} h=${player.height}`);
                     if (spawnCollides) {
@@ -2176,6 +2238,8 @@ async function init() {
                     if (window.AffinityHelpOverlay) {
                         window.AffinityHelpOverlay.open();
                     }
+                } else if (itemId === 'switchViewMode') {
+                    reloadWithViewMode(viewMode === '3d' ? '2d' : '3d');
                 } else if (itemId === 'shareGame') {
                     if (window.ShareManager) {
                         ShareManager.shareInvite().then(result => {
@@ -2982,7 +3046,8 @@ function gameLoop(generation) {
                 menuOpen,
                 musicState: MusicManager.getState(),
                 reviewActive: window.gameMode === 'review',
-                verseTestShielded
+                verseTestShielded,
+                viewMode
             },
             dailyChallengeProgress,
             dailyChallengeGoal,
@@ -3220,6 +3285,9 @@ function gameLoop(generation) {
             // Clear any pending movement target so player doesn't auto-move when unfrozen
             if (inputHandler) {
                 inputHandler.clearTarget();
+                if (inputHandler.viewMode === '3d' && typeof inputHandler.stopForwardMovement === 'function') {
+                    inputHandler.stopForwardMovement();
+                }
             }
             // Reset moving state
             player.isMoving = false;
