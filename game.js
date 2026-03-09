@@ -3890,6 +3890,26 @@ function drawMissionPreviewCanvas(canvasEl, previewState) {
     });
 }
 
+function isPreviewPositionBlocked(preview, x, y) {
+    if (!preview || !Array.isArray(preview.walls)) {
+        return false;
+    }
+
+    const halfWidth = Constants.MONSTER_WIDTH / 2;
+    const halfHeight = Constants.MONSTER_HEIGHT / 2;
+    const left = x - halfWidth;
+    const right = x + halfWidth;
+    const top = y - halfHeight;
+    const bottom = y + halfHeight;
+
+    return preview.walls.some((wall) => (
+        left < wall.x + wall.width &&
+        right > wall.x &&
+        top < wall.y + wall.height &&
+        bottom > wall.y
+    ));
+}
+
 function buildMissionEditorState(mission) {
     return {
         name: mission.name || '',
@@ -4090,6 +4110,10 @@ async function showEditMissionModal(worldBrowser, world, mission, container, rel
         const rect = previewCanvas.getBoundingClientRect();
         const x = ((event.clientX - rect.left) / rect.width) * ((editorState.preview.cols || 80) * (editorState.preview.cellSize || 40));
         const y = ((event.clientY - rect.top) / rect.height) * ((editorState.preview.rows || 80) * (editorState.preview.cellSize || 40));
+        if (isPreviewPositionBlocked(editorState.preview, x, y)) {
+            showToast('Cannot place a demon inside a wall', 2500);
+            return;
+        }
         editorState.fixedMonsters.push({
             x: Math.round(x),
             y: Math.round(y),
