@@ -3,6 +3,7 @@ class Renderer {
         this.canvas = canvas;
         this.ctx = ctx;
         this.assets = assets;
+        this.viewMode = '2d';
 
         // UI constants from centralized UILayout
         const UI = window.UILayout;

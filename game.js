@@ -25,6 +25,7 @@ window.debugWin = () => {
 let currentTime = Date.now();
 let socket;
 let playerCode = null;  // code to access player information for the current player
+let viewMode = '2d';
 
 // Declare the canvas variable globally
 let canvas;
@@ -202,6 +203,32 @@ let player = {
 
 // Game variables
 let ctx, monsters, healingPoints, chaseTrigger, lastAttackedMonster;
+
+function normalizeViewMode(value) {
+    return value === '3d' ? '3d' : '2d';
+}
+
+function resolveInitialViewMode(urlParams) {
+    const urlMode = normalizeViewMode(urlParams.get('viewMode'));
+    if (urlMode === '3d') return urlMode;
+
+    const persistedMode = normalizeViewMode(localStorage.getItem('preferredViewMode'));
+    return persistedMode;
+}
+
+function getRendererClassForViewMode(mode) {
+    if (mode === '3d' && typeof Renderer3D === 'function') {
+        return Renderer3D;
+    }
+    return Renderer;
+}
+
+function getInputHandlerClassForViewMode(mode) {
+    if (mode === '3d' && typeof InputHandler3D === 'function') {
+        return InputHandler3D;
+    }
+    return InputHandler;
+}
 let playerImg, otherPlayerImg, healingPointImg, demonImages, explosionImg;
 let buildingTilesImg, terrainTilesImg; // Tile sprite sheets (8x8 grids, 32x32 tiles)
 
@@ -1082,6 +1109,9 @@ document.addEventListener('DOMContentLoaded', function () {
     // Parse URL params
     const roomId = urlParams.get('room');
     const mode = urlParams.get('mode');
+    viewMode = resolveInitialViewMode(urlParams);
+    window.viewMode = viewMode;
+    console.log('View mode:', viewMode);
 
     // Check for first-time visit
     const hasVisited = localStorage.getItem('hasVisited');
@@ -1988,7 +2018,8 @@ async function init() {
         };
 
         // Initialize InputHandler
-        inputHandler = new InputHandler(canvas, {
+        const InputHandlerClass = getInputHandlerClassForViewMode(viewMode);
+        inputHandler = new InputHandlerClass(canvas, {
             QUALITY_LINE_HEIGHT,
             BUTTON_HEIGHT,
             BUTTON_WIDTH,
@@ -2906,8 +2937,9 @@ function gameLoop(generation) {
         };
 
         // Instantiate renderer if not already (hack for now, should be in init)
-        if (!window.renderer) {
-            window.renderer = new Renderer(canvas, ctx, assets);
+        const RendererClass = getRendererClassForViewMode(viewMode);
+        if (!window.renderer || window.renderer.viewMode !== viewMode) {
+            window.renderer = new RendererClass(canvas, ctx, assets);
         }
         window.renderer.assets = assets; // Update assets in case they loaded late
 

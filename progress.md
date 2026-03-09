@@ -85,3 +85,4 @@ Original prompt: Check the implementation of docs/multi-version-songs-implementa
 - Follow-up TODO:
   - browser-smoke the three landing-page routes once the local server is running in a stable foreground/background session again
   - decide whether to add a fourth audience page for Christian schools or homeschool groups
+  - simple 3D mode technical plan added at `docs/plans/SIMPLE_3D_MODE_IMPLEMENTATION_PLAN.md`

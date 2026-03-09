@@ -6,6 +6,7 @@ class InputHandler {
     constructor(canvas, constants) {
         this.canvas = canvas;
         this.constants = constants;
+        this.viewMode = '2d';
 
         // Movement target in WORLD coordinates (where player should move towards)
         this.worldTargetX = null;
