@@ -105,3 +105,20 @@ Original prompt: Check the implementation of docs/multi-version-songs-implementa
   - browser-capture a scene with a visible healing pickup after movement so the new cross rendering is visually confirmed in-frame
   - browser-capture a confirmed demon kill in 3D mode to visually confirm the death burst
   - if the 3D fire interaction still feels unreliable on device, add a small muzzle-flash or "NO TARGET" feedback cue rather than loosening aiming much further
+
+2026-03-10:
+- Adjusted learn-mode music handoff:
+  - entering `ReviewMode` now pauses active `MusicManager` playback and remembers whether it was active
+  - leaving `ReviewMode` resumes music only when returning to actual `game`
+  - entering `VotdLearningMode` still pauses active music, but now resumes it on exit back to `game`
+  - added `MusicManager.resume()` so paused tracks/verse songs resume in place rather than restarting from the beginning
+- Verification:
+  - `node --check src/client/MusicManager.js`
+  - `node --check src/client/ReviewMode.js`
+  - `node --check src/client/VotdLearningMode.js`
+  - browser automation from `?mode=solo` confirmed:
+    - background music plays in `game`
+    - music pauses in `review`
+    - music resumes on return to `game`
+    - music pauses in `votd` learning mode
+    - music resumes on return to `game`

@@ -12,6 +12,7 @@
     let meditationMode = false; // Toggle for continuous repeat
     let returnToMode = 'game'; // Where to return when exiting review ('game' or 'overland')
     let lastRenderedVerseIndex = -1; // Track verse changes to trigger new background
+    let musicWasPlayingOnEntry = false;
 
 
     // Repeat delay options (in milliseconds)
@@ -237,6 +238,15 @@
         meditationMode = false;
         reviewCategoryPickerOpen = false;
         delayDropdownOpen = false;
+        musicWasPlayingOnEntry = Boolean(
+            window.MusicManager &&
+            typeof window.MusicManager.getIsPlaying === 'function' &&
+            window.MusicManager.getIsPlaying()
+        );
+
+        if (musicWasPlayingOnEntry && typeof window.MusicManager.pause === 'function') {
+            window.MusicManager.pause();
+        }
 
         
         window.gameMode = 'review';
@@ -259,7 +269,14 @@
             showOverland();
         } else {
             window.gameMode = 'game';
+            if (musicWasPlayingOnEntry &&
+                window.MusicManager &&
+                typeof window.MusicManager.resume === 'function') {
+                window.MusicManager.resume();
+            }
         }
+
+        musicWasPlayingOnEntry = false;
     }
 
     function getVerseDetails(reference) {
