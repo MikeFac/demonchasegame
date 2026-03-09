@@ -30,8 +30,10 @@ class Renderer3D extends Renderer {
         const viewAngle = this._getViewAngle(player);
         const bobOffset = this._getCameraBob(player);
         const depthBuffer = this._drawWorld3D(player, walls, viewAngle, bobOffset);
+        this._drawHealingPointSprites(healingPoints, player, depthBuffer, viewAngle);
         this._drawMonsterSprites(monsters, player, depthBuffer, viewAngle);
         this._drawBulletSprites(gameState.bullets || [], player, depthBuffer, viewAngle);
+        this._drawDeathParticles3D(deathParticles, player, depthBuffer, viewAngle);
         this._drawWeaponFrame(player, bobOffset);
         this.ctx.restore();
 
@@ -85,7 +87,7 @@ class Renderer3D extends Renderer {
         this.ctx.fillStyle = floorGradient;
         this.ctx.fillRect(0, horizon, this.canvas.width, this.canvas.height - horizon);
 
-        this._drawAtmosphere(horizon, worldTop);
+        this._drawAtmosphere(horizon, worldTop, viewAngle);
         this._rebuildWallCache(walls || []);
 
         const depthBuffer = new Array(sceneWidth);
@@ -132,7 +134,7 @@ class Renderer3D extends Renderer {
         return Math.sin(this.bobPhase) * 5;
     }
 
-    _drawAtmosphere(horizon, worldTop) {
+    _drawAtmosphere(horizon, worldTop, viewAngle) {
         this.ctx.fillStyle = 'rgba(245, 197, 66, 0.08)';
         this.ctx.beginPath();
         this.ctx.arc(this.canvas.width * 0.72, worldTop + 80, 60, 0, Math.PI * 2);
@@ -145,6 +147,48 @@ class Renderer3D extends Renderer {
             this.ctx.beginPath();
             this.ctx.moveTo(0, y);
             this.ctx.lineTo(this.canvas.width, y);
+            this.ctx.stroke();
+        }
+
+        this._drawFloorDepthGuides(horizon);
+        this._drawCeilingRibs(worldTop, horizon, viewAngle);
+    }
+
+    _drawFloorDepthGuides(horizon) {
+        const vanishingX = this.canvas.width / 2;
+        const floorTop = horizon + 12;
+        const floorBottom = this.canvas.height;
+
+        this.ctx.strokeStyle = 'rgba(225, 206, 156, 0.08)';
+        this.ctx.lineWidth = 1;
+        for (let i = -4; i <= 4; i++) {
+            const x = vanishingX + i * (this.canvas.width * 0.07);
+            this.ctx.beginPath();
+            this.ctx.moveTo(vanishingX + i * 4, floorTop);
+            this.ctx.lineTo(x * 1.55, floorBottom);
+            this.ctx.stroke();
+        }
+
+        this.ctx.strokeStyle = 'rgba(255,255,255,0.04)';
+        for (let i = 1; i <= 6; i++) {
+            const t = i / 6;
+            const y = floorTop + (floorBottom - floorTop) * t * t;
+            this.ctx.beginPath();
+            this.ctx.moveTo(0, y);
+            this.ctx.lineTo(this.canvas.width, y);
+            this.ctx.stroke();
+        }
+    }
+
+    _drawCeilingRibs(worldTop, horizon, viewAngle) {
+        const vanishingX = this.canvas.width / 2 + Math.sin(viewAngle) * 28;
+        this.ctx.strokeStyle = 'rgba(255,255,255,0.035)';
+        this.ctx.lineWidth = 2;
+        for (let i = 0; i < 5; i++) {
+            const xOffset = (i - 2) * (this.canvas.width * 0.18);
+            this.ctx.beginPath();
+            this.ctx.moveTo(vanishingX + xOffset * 0.3, worldTop + 18);
+            this.ctx.lineTo(vanishingX + xOffset, horizon - 12);
             this.ctx.stroke();
         }
     }
@@ -183,6 +227,10 @@ class Renderer3D extends Renderer {
             this.ctx.fillRect(screenX, sliceTop, sliceWidth, sliceHeight);
         }
 
+        this._drawInsetPanel(screenX, sliceWidth, sliceTop, sliceHeight, brightness, rayHit);
+        this._drawArchSilhouette(screenX, sliceWidth, sliceTop, sliceHeight, brightness, rayHit);
+        this._drawWallBaseShadow(screenX, sliceWidth, sliceBottom, sliceHeight, brightness);
+
         if (this._isRuneWall(rayHit.cellX, rayHit.cellY)) {
             const runeHeight = Math.max(18, sliceHeight * 0.14);
             const runeY = sliceTop + sliceHeight * 0.36;
@@ -193,6 +241,102 @@ class Renderer3D extends Renderer {
             this.ctx.lineTo(screenX + sliceWidth * 0.75, runeY + runeHeight * 0.5);
             this.ctx.lineTo(screenX + sliceWidth * 0.35, runeY + runeHeight);
             this.ctx.stroke();
+        }
+
+        this._drawWallDecal(screenX, sliceWidth, sliceTop, sliceHeight, brightness, rayHit);
+
+        if (this._isTorchWall(rayHit.cellX, rayHit.cellY) && sliceHeight > 50) {
+            const torchY = sliceTop + sliceHeight * 0.42;
+            const glow = Math.max(10, sliceHeight * 0.08);
+            const flicker = this._getTorchFlicker(rayHit.cellX, rayHit.cellY);
+            this.ctx.fillStyle = `rgba(255, 177, 92, ${0.05 + brightness * (0.09 + flicker * 0.08)})`;
+            this.ctx.fillRect(screenX - sliceWidth, torchY - glow, sliceWidth * 3, glow * 2);
+            this.ctx.fillStyle = `rgba(255, 220, 155, ${0.1 + brightness * (0.12 + flicker * 0.1)})`;
+            this.ctx.fillRect(screenX, torchY, sliceWidth, Math.max(6, sliceHeight * 0.06));
+        }
+    }
+
+    _drawInsetPanel(screenX, sliceWidth, sliceTop, sliceHeight, brightness, rayHit) {
+        if (!this._isInsetWall(rayHit.cellX, rayHit.cellY) || sliceHeight < 42) return;
+
+        const insetX = screenX + sliceWidth * 0.14;
+        const insetY = sliceTop + sliceHeight * 0.18;
+        const insetW = Math.max(1, sliceWidth * 0.72);
+        const insetH = sliceHeight * 0.54;
+
+        this.ctx.fillStyle = `rgba(16, 22, 30, ${0.12 + (1 - brightness) * 0.14})`;
+        this.ctx.fillRect(insetX, insetY, insetW, insetH);
+        this.ctx.strokeStyle = `rgba(205, 216, 228, ${0.04 + brightness * 0.08})`;
+        this.ctx.lineWidth = 1;
+        this.ctx.strokeRect(insetX, insetY, insetW, insetH);
+    }
+
+    _drawWallBaseShadow(screenX, sliceWidth, sliceBottom, sliceHeight, brightness) {
+        const shadowHeight = Math.max(4, sliceHeight * 0.08);
+        this.ctx.fillStyle = `rgba(0, 0, 0, ${0.1 + (1 - brightness) * 0.16})`;
+        this.ctx.fillRect(screenX, sliceBottom - shadowHeight, sliceWidth, shadowHeight);
+    }
+
+    _drawArchSilhouette(screenX, sliceWidth, sliceTop, sliceHeight, brightness, rayHit) {
+        if (sliceHeight < 68 || !this._isArchWall(rayHit.cellX, rayHit.cellY)) return;
+
+        const archWidth = sliceWidth * 0.78;
+        const archX = screenX + (sliceWidth - archWidth) / 2;
+        const archTop = sliceTop + sliceHeight * 0.14;
+        const archBottom = sliceTop + sliceHeight * 0.88;
+        const archRadius = archWidth * 0.5;
+        const sideWidth = Math.max(1, sliceWidth * 0.16);
+        const darkness = 0.16 + (1 - brightness) * 0.18;
+
+        this.ctx.fillStyle = `rgba(0, 0, 0, ${darkness})`;
+        this.ctx.fillRect(archX, archTop + archRadius * 0.5, archWidth, archBottom - (archTop + archRadius * 0.5));
+
+        this.ctx.save();
+        this.ctx.beginPath();
+        this.ctx.rect(archX, archTop, archWidth, archBottom - archTop);
+        this.ctx.clip();
+        this.ctx.beginPath();
+        this.ctx.arc(archX + archWidth / 2, archTop + archRadius, archRadius, Math.PI, 0, false);
+        this.ctx.lineTo(archX + archWidth, archTop + archRadius);
+        this.ctx.lineTo(archX, archTop + archRadius);
+        this.ctx.closePath();
+        this.ctx.fill();
+        this.ctx.restore();
+
+        this.ctx.fillStyle = `rgba(255, 255, 255, ${0.03 + brightness * 0.05})`;
+        this.ctx.fillRect(archX, archTop, sideWidth, archBottom - archTop);
+        this.ctx.fillRect(archX + archWidth - sideWidth, archTop, sideWidth, archBottom - archTop);
+        this.ctx.fillRect(archX + sideWidth, archTop, archWidth - sideWidth * 2, Math.max(1, sliceHeight * 0.035));
+    }
+
+    _drawWallDecal(screenX, sliceWidth, sliceTop, sliceHeight, brightness, rayHit) {
+        if (sliceHeight < 54) return;
+
+        if (this._isBannerWall(rayHit.cellX, rayHit.cellY)) {
+            const bannerY = sliceTop + sliceHeight * 0.22;
+            const bannerH = sliceHeight * 0.34;
+            this.ctx.fillStyle = `rgba(93, 24, 24, ${0.18 + brightness * 0.2})`;
+            this.ctx.fillRect(screenX + sliceWidth * 0.18, bannerY, sliceWidth * 0.64, bannerH);
+            this.ctx.strokeStyle = `rgba(236, 203, 145, ${0.12 + brightness * 0.12})`;
+            this.ctx.lineWidth = 1;
+            this.ctx.beginPath();
+            this.ctx.moveTo(screenX + sliceWidth * 0.5, bannerY + bannerH * 0.15);
+            this.ctx.lineTo(screenX + sliceWidth * 0.64, bannerY + bannerH * 0.46);
+            this.ctx.lineTo(screenX + sliceWidth * 0.5, bannerY + bannerH * 0.78);
+            this.ctx.lineTo(screenX + sliceWidth * 0.36, bannerY + bannerH * 0.46);
+            this.ctx.closePath();
+            this.ctx.stroke();
+        } else if (this._isChainWall(rayHit.cellX, rayHit.cellY)) {
+            const chainX = screenX + sliceWidth * 0.5;
+            const chainTop = sliceTop + sliceHeight * 0.16;
+            const chainBottom = sliceTop + sliceHeight * 0.74;
+            this.ctx.strokeStyle = `rgba(172, 176, 184, ${0.12 + brightness * 0.14})`;
+            this.ctx.lineWidth = 1.5;
+            for (let y = chainTop; y < chainBottom; y += Math.max(6, sliceHeight * 0.07)) {
+                this.ctx.beginPath();
+                this.ctx.arc(chainX, y, Math.max(2, sliceWidth * 0.18), 0, Math.PI * 2);
+                this.ctx.stroke();
+            }
         }
     }
 
@@ -377,15 +521,90 @@ class Renderer3D extends Renderer {
         });
     }
 
+    _drawHealingPointSprites(healingPoints, player, depthBuffer, viewAngle) {
+        (healingPoints || []).forEach((healingPoint) => {
+            const projected = this._projectBillboard(healingPoint, player, depthBuffer, viewAngle, {
+                widthScale: 0.72,
+                heightScale: 0.95,
+                lift: 0.08
+            });
+            if (!projected) return;
+
+            this._drawCrossPickup(projected);
+            this._drawCrossAura(projected.screenX, projected.spriteTop + projected.spriteHeight * 0.54, projected.spriteWidth * 0.42, 0.22);
+        });
+    }
+
+    _drawDeathParticles3D(deathParticles, player, depthBuffer, viewAngle) {
+        (deathParticles || []).forEach((particle) => {
+            const projected = this._projectBillboard(particle, player, depthBuffer, viewAngle, {
+                widthScale: 0.85,
+                heightScale: 0.85,
+                lift: 0.04,
+                baseHeight: 60 + Math.min(24, (particle.frame || 0) * 2)
+            });
+            if (!projected) return;
+
+            const frame = Math.max(0, Math.min(23, particle.frame || 0));
+            const alpha = Math.max(0.08, 1 - frame / 24);
+            const burstRadius = projected.spriteWidth * (0.3 + frame * 0.03);
+            const centerY = projected.spriteTop + projected.spriteHeight * 0.5;
+
+            this._drawExplosionBurst(projected.screenX, centerY, burstRadius, alpha);
+        });
+    }
+
     _drawBillboard(entity, player, depthBuffer, viewAngle, options) {
+        const projected = this._projectBillboard(entity, player, depthBuffer, viewAngle, options);
+        if (!projected) return;
+
+        if (options.image && options.image.complete) {
+            const srcX = ((projected.clipLeft - projected.spriteLeft) / projected.spriteWidth) * options.image.width;
+            const srcWidth = ((projected.clipRight - projected.clipLeft) / projected.spriteWidth) * options.image.width;
+            this.ctx.drawImage(
+                options.image,
+                srcX,
+                0,
+                Math.max(1, srcWidth),
+                options.image.height,
+                projected.clipLeft,
+                projected.spriteTop,
+                projected.clipRight - projected.clipLeft,
+                projected.spriteHeight
+            );
+        } else {
+            this.ctx.fillStyle = options.tint || 'rgba(220, 70, 70, 0.85)';
+            this.ctx.beginPath();
+            this.ctx.ellipse(projected.screenX, projected.spriteTop + projected.spriteHeight / 2, projected.spriteWidth / 2, projected.spriteHeight / 2, 0, 0, Math.PI * 2);
+            this.ctx.fill();
+        }
+
+        if (options.tint && options.image && options.image.complete) {
+            this.ctx.fillStyle = options.tint;
+            this.ctx.fillRect(projected.clipLeft, projected.spriteTop, projected.clipRight - projected.clipLeft, projected.spriteHeight);
+        }
+
+        if (!options.circular && entity.health && entity.maxHealth) {
+            const healthPct = Math.max(0, entity.health / entity.maxHealth);
+            const barWidth = projected.spriteWidth * 0.8;
+            const barX = projected.screenX - barWidth / 2;
+            const barY = projected.spriteTop - 10;
+            this.ctx.fillStyle = 'rgba(0,0,0,0.55)';
+            this.ctx.fillRect(barX, barY, barWidth, 5);
+            this.ctx.fillStyle = healthPct > 0.5 ? '#70d070' : (healthPct > 0.25 ? '#e7c252' : '#d94b4b');
+            this.ctx.fillRect(barX, barY, barWidth * healthPct, 5);
+        }
+    }
+
+    _projectBillboard(entity, player, depthBuffer, viewAngle, options = {}) {
         const dx = entity.x - player.x;
         const dy = entity.y - player.y;
         const distance = Math.sqrt(dx * dx + dy * dy);
-        if (distance < 10 || distance > this.maxViewDistance) return;
+        if (distance < 10 || distance > this.maxViewDistance) return null;
 
         const entityAngle = Math.atan2(dy, dx);
         const relativeAngle = this._normalizeAngle(entityAngle - viewAngle);
-        if (Math.abs(relativeAngle) > this.fov * 0.65) return;
+        if (Math.abs(relativeAngle) > this.fov * 0.65) return null;
 
         const sceneWidth = this.canvas.width;
         const sceneHeight = this.canvas.height - this.QUALITY_LINE_HEIGHT;
@@ -393,7 +612,8 @@ class Renderer3D extends Renderer {
         const projectionPlane = (sceneWidth / 2) / Math.tan(this.fov / 2);
         const heightScale = options.heightScale || 1.0;
         const widthScale = options.widthScale || 0.7;
-        const spriteHeight = Math.max(8, (entity.height || 28) * projectionPlane / distance * heightScale);
+        const baseHeight = options.baseHeight || entity.height || 28;
+        const spriteHeight = Math.max(8, baseHeight * projectionPlane / distance * heightScale);
         const spriteWidth = Math.max(8, spriteHeight * widthScale);
         const screenX = sceneWidth / 2 + Math.tan(relativeAngle) * projectionPlane;
         const spriteLeft = Math.round(screenX - spriteWidth / 2);
@@ -403,55 +623,81 @@ class Renderer3D extends Renderer {
 
         const centerColumn = Math.max(0, Math.min(sceneWidth - 1, Math.round(screenX)));
         if (depthBuffer[centerColumn] !== undefined && distance > depthBuffer[centerColumn]) {
-            return;
+            return null;
         }
 
-        const visibleColumns = [];
+        let clipLeft = null;
+        let clipRight = null;
         for (let x = Math.max(0, spriteLeft); x < Math.min(sceneWidth, spriteRight); x++) {
             const wallDistance = depthBuffer[x];
             if (wallDistance === undefined || distance <= wallDistance) {
-                visibleColumns.push(x);
+                if (clipLeft === null) clipLeft = x;
+                clipRight = x + 1;
             }
         }
-        if (visibleColumns.length === 0) return;
 
-        if (options.image && options.image.complete) {
-            const clipLeft = visibleColumns[0];
-            const clipRight = visibleColumns[visibleColumns.length - 1] + 1;
-            const srcX = ((clipLeft - spriteLeft) / spriteWidth) * options.image.width;
-            const srcWidth = ((clipRight - clipLeft) / spriteWidth) * options.image.width;
-            this.ctx.drawImage(
-                options.image,
-                srcX,
-                0,
-                Math.max(1, srcWidth),
-                options.image.height,
-                clipLeft,
-                spriteTop,
-                clipRight - clipLeft,
-                spriteHeight
-            );
-        } else {
-            this.ctx.fillStyle = options.tint || 'rgba(220, 70, 70, 0.85)';
+        if (clipLeft === null || clipRight === null || clipRight <= clipLeft) return null;
+
+        return {
+            distance,
+            screenX,
+            spriteLeft,
+            spriteRight,
+            spriteTop,
+            spriteWidth,
+            spriteHeight,
+            clipLeft,
+            clipRight
+        };
+    }
+
+    _drawCrossPickup(projected) {
+        const centerX = projected.screenX;
+        const centerY = projected.spriteTop + projected.spriteHeight * 0.54;
+        const bodyW = Math.max(8, projected.spriteWidth * 0.22);
+        const bodyH = projected.spriteHeight * 0.76;
+        const armW = projected.spriteWidth * 0.72;
+        const armH = Math.max(8, projected.spriteHeight * 0.2);
+
+        this.ctx.fillStyle = 'rgba(255,255,255,0.94)';
+        this.ctx.fillRect(centerX - bodyW / 2, centerY - bodyH / 2, bodyW, bodyH);
+        this.ctx.fillRect(centerX - armW / 2, centerY - armH / 2, armW, armH);
+        this.ctx.strokeStyle = 'rgba(122, 41, 41, 0.18)';
+        this.ctx.lineWidth = 2;
+        this.ctx.strokeRect(centerX - bodyW / 2, centerY - bodyH / 2, bodyW, bodyH);
+        this.ctx.strokeRect(centerX - armW / 2, centerY - armH / 2, armW, armH);
+    }
+
+    _drawCrossAura(x, y, radius, alpha) {
+        const glow = this.ctx.createRadialGradient(x, y, radius * 0.15, x, y, radius);
+        glow.addColorStop(0, `rgba(255,255,255,${alpha})`);
+        glow.addColorStop(1, 'rgba(99, 193, 255, 0)');
+        this.ctx.fillStyle = glow;
+        this.ctx.beginPath();
+        this.ctx.arc(x, y, radius, 0, Math.PI * 2);
+        this.ctx.fill();
+    }
+
+    _drawExplosionBurst(x, y, radius, alpha) {
+        const glow = this.ctx.createRadialGradient(x, y, radius * 0.15, x, y, radius);
+        glow.addColorStop(0, `rgba(255, 244, 205, ${alpha})`);
+        glow.addColorStop(0.45, `rgba(255, 152, 71, ${alpha * 0.9})`);
+        glow.addColorStop(1, 'rgba(120, 18, 0, 0)');
+        this.ctx.fillStyle = glow;
+        this.ctx.beginPath();
+        this.ctx.arc(x, y, radius, 0, Math.PI * 2);
+        this.ctx.fill();
+
+        this.ctx.strokeStyle = `rgba(255, 216, 140, ${alpha * 0.9})`;
+        this.ctx.lineWidth = 2;
+        for (let i = 0; i < 6; i++) {
+            const angle = (Math.PI * 2 * i) / 6;
+            const inner = radius * 0.25;
+            const outer = radius * 0.95;
             this.ctx.beginPath();
-            this.ctx.ellipse(screenX, spriteTop + spriteHeight / 2, spriteWidth / 2, spriteHeight / 2, 0, 0, Math.PI * 2);
-            this.ctx.fill();
-        }
-
-        if (options.tint && options.image && options.image.complete) {
-            this.ctx.fillStyle = options.tint;
-            this.ctx.fillRect(visibleColumns[0], spriteTop, visibleColumns[visibleColumns.length - 1] - visibleColumns[0] + 1, spriteHeight);
-        }
-
-        if (!options.circular && entity.health && entity.maxHealth) {
-            const healthPct = Math.max(0, entity.health / entity.maxHealth);
-            const barWidth = spriteWidth * 0.8;
-            const barX = screenX - barWidth / 2;
-            const barY = spriteTop - 10;
-            this.ctx.fillStyle = 'rgba(0,0,0,0.55)';
-            this.ctx.fillRect(barX, barY, barWidth, 5);
-            this.ctx.fillStyle = healthPct > 0.5 ? '#70d070' : (healthPct > 0.25 ? '#e7c252' : '#d94b4b');
-            this.ctx.fillRect(barX, barY, barWidth * healthPct, 5);
+            this.ctx.moveTo(x + Math.cos(angle) * inner, y + Math.sin(angle) * inner);
+            this.ctx.lineTo(x + Math.cos(angle) * outer, y + Math.sin(angle) * outer);
+            this.ctx.stroke();
         }
     }
 
@@ -515,6 +761,37 @@ class Renderer3D extends Renderer {
     _isRuneWall(cellX, cellY) {
         if (cellX < 0 || cellY < 0) return false;
         return ((cellX * 31 + cellY * 17) % 23) === 0;
+    }
+
+    _isTorchWall(cellX, cellY) {
+        if (cellX < 0 || cellY < 0) return false;
+        return ((cellX * 19 + cellY * 11) % 17) === 0;
+    }
+
+    _isInsetWall(cellX, cellY) {
+        if (cellX < 0 || cellY < 0) return false;
+        return ((cellX * 13 + cellY * 29) % 7) === 0;
+    }
+
+    _isBannerWall(cellX, cellY) {
+        if (cellX < 0 || cellY < 0) return false;
+        return ((cellX * 23 + cellY * 7) % 19) === 0;
+    }
+
+    _isChainWall(cellX, cellY) {
+        if (cellX < 0 || cellY < 0) return false;
+        return ((cellX * 17 + cellY * 37) % 21) === 0;
+    }
+
+    _isArchWall(cellX, cellY) {
+        if (cellX < 0 || cellY < 0) return false;
+        return ((cellX * 29 + cellY * 13) % 16) === 0;
+    }
+
+    _getTorchFlicker(cellX, cellY) {
+        const t = performance.now() * 0.005;
+        const seed = (cellX * 0.91) + (cellY * 1.37);
+        return 0.5 + 0.5 * Math.sin(t + seed) * (0.7 + 0.3 * Math.sin(t * 1.7 + seed * 0.6));
     }
 }
 

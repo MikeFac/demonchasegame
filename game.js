@@ -179,7 +179,7 @@ function find3DTargetMonster(monsters, player) {
         const normDx = dx / Math.max(distance, 1);
         const normDy = dy / Math.max(distance, 1);
         const forwardDot = normDx * facingX + normDy * facingY;
-        if (forwardDot < 0.94) continue;
+        if (forwardDot < 0.9) continue;
 
         const angleToMonster = Math.atan2(dy, dx);
         const angleDelta = Math.abs(normalizeAngleDelta(angleToMonster - facing));
@@ -200,19 +200,7 @@ function tryHandle3DFire(monsters, now) {
     if (!monster) return false;
 
     lastAttackTime = now;
-
-    let attackHits = false;
-    if (isAnswerCorrect === true) {
-        attackHits = true;
-    } else if (meleeHitProbabilityNoAnswer > 0 && Math.random() < meleeHitProbabilityNoAnswer) {
-        attackHits = true;
-    }
-
     lastAttackedMonster = monster;
-
-    if (!attackHits) {
-        return true;
-    }
 
     attackSound.play();
     monster.isAttacked = true;
@@ -351,7 +339,7 @@ let gameSpeedMultiplier = 1.0; // Controlled by server (0.5 = slow, 1.0 = normal
 
 const ATTACK_RATE = 700; // milliseconds (0.5 seconds)
 const THREE_D_FIRE_RANGE = 520;
-const THREE_D_FIRE_CONE = Math.PI / 12;
+const THREE_D_FIRE_CONE = Math.PI / 10;
 const MAX_HEALING_POINTS = 2; // Maximum number of healing points on the screen
 const MIN_HEALING_POINT_DISTANCE = 50; // Minimum distance between healing points and other objects
 const COMBAT_DISTANCE = 60; // Distance for combat to happen
@@ -3291,12 +3279,10 @@ function gameLoop(generation) {
                     }
                 }
 
-                if (!monsterCollision && !checkWallCollision(newX, newY, player.width, player.height)) {
+                const blocked = monsterCollision || checkWallCollision(newX, newY, player.width, player.height);
+
+                if (!blocked) {
                     player.x = newX;
-                    player.y = newY;
-                } else if (!monsterCollision && !checkWallCollision(newX, player.y, player.width, player.height)) {
-                    player.x = newX;
-                } else if (!monsterCollision && !checkWallCollision(player.x, newY, player.width, player.height)) {
                     player.y = newY;
                 } else {
                     if (typeof inputHandler.stopForwardMovement === 'function') {

@@ -86,3 +86,22 @@ Original prompt: Check the implementation of docs/multi-version-songs-implementa
   - browser-smoke the three landing-page routes once the local server is running in a stable foreground/background session again
   - decide whether to add a fourth audience page for Christian schools or homeschool groups
   - simple 3D mode technical plan added at `docs/plans/SIMPLE_3D_MODE_IMPLEMENTATION_PLAN.md`
+
+2026-03-09:
+- Advanced optional `viewMode=3d` without touching the default 2D path:
+  - 3D fire helper now applies damage whenever a demon is clearly in front of the player, instead of reusing the 2D melee hit-chance gate.
+  - Relaxed the 3D targeting cone slightly to make the `FIRE` button more usable while still requiring the player to face the demon.
+  - Added world-space 3D rendering for healing pickups as explicit glowing crosses.
+  - Added cheap projected death-burst rendering for demon deaths in 3D mode.
+- Verification:
+  - `node --check game.js`
+  - `node --check src/client/Renderer3D.js`
+  - `node --check src/client/InputHandler3D.js`
+  - Local server restart via `./restart-server.sh`
+  - Headless browser smoke on `http://localhost:3500/?mode=solo&viewMode=3d`
+    - screenshots captured under `output/web-game/3d-smoke/`, `output/web-game/3d-fire/`, and `output/web-game/3d-healcheck/`
+    - browser run showed only expected autoplay-audio `NotAllowedError` noise after scripted load
+- Follow-up TODO:
+  - browser-capture a scene with a visible healing pickup after movement so the new cross rendering is visually confirmed in-frame
+  - browser-capture a confirmed demon kill in 3D mode to visually confirm the death burst
+  - if the 3D fire interaction still feels unreliable on device, add a small muzzle-flash or "NO TARGET" feedback cue rather than loosening aiming much further
