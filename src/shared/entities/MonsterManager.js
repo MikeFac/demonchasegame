@@ -178,8 +178,9 @@
             return monsters[Math.floor(Math.random() * monsters.length)];
         }
 
-        _createMonster(x, y, chaser, baseHealth, hpMult, demonType) {
+        _createMonster(x, y, chaser, baseHealth, hpMult, demonType, behaviorType) {
             if (!demonType) demonType = this._randomDemonType();
+            if (!behaviorType) behaviorType = chaser ? 'chaser' : 'wanderer';
             var finalHealth = Math.round(baseHealth * this.healthMultiplier * (hpMult || 1.0));
 
             var monster = {
@@ -188,6 +189,7 @@
                 width: Constants.MONSTER_WIDTH,
                 height: Constants.MONSTER_HEIGHT,
                 chaser: chaser,
+                behaviorType: behaviorType,
                 maxDamage: DEMON_MAX_DAMAGE[demonType] || DEFAULT_DEMON_DAMAGE,
                 demonType: demonType,
                 monsterType: demonType,
@@ -204,7 +206,10 @@
                 erratic: Constants.MISLEADER_DEMONS.includes(demonType),
                 isDashing: false,
                 dashCooldownEnd: 0,
-                specialAbilities: {}
+                specialAbilities: {},
+                homeX: x,
+                homeY: y,
+                guardRadius: Constants.GUARD_RADIUS_MULTIPLIER * Math.max(Constants.MONSTER_WIDTH, Constants.MONSTER_HEIGHT)
             };
 
             if (demonType === 'Confusion') {
@@ -237,7 +242,10 @@
             var chaser = behaviorType === 'chaser';
             var demonType = fixedMonster.demonType || this._randomDemonType();
             var hpMult = (fixedMonster.stats && fixedMonster.stats.healthMultiplier) || 1.0;
-            var monster = this._createMonster(fixedMonster.x, fixedMonster.y, chaser, baseHealth, hpMult, demonType);
+            if (behaviorType === 'guard') {
+                hpMult *= Constants.GUARD_HP_MULTIPLIER;
+            }
+            var monster = this._createMonster(fixedMonster.x, fixedMonster.y, chaser, baseHealth, hpMult, demonType, behaviorType);
 
             monster.behaviorType = behaviorType;
             monster.fixedSpawn = true;
@@ -260,6 +268,10 @@
                 monster.health = Math.round(monster.health * 1.5);
                 monster.maxHealth = monster.health;
             }
+            monster.guardRadius = Math.max(
+                Constants.GUARD_RADIUS_MULTIPLIER * Math.max(monster.width, monster.height),
+                fixedMonster.behavior && fixedMonster.behavior.patrolRadius ? fixedMonster.behavior.patrolRadius : 0
+            );
 
             this.gameState.monsters.push(monster);
             return monster;

@@ -36,14 +36,21 @@ const config = GameConfig.createFromCustomBalance(
                 isBoss: true,
                 spawnTrigger: { type: 'immediate', value: 0 }
             },
-            {
-                x: mapData.spawnX + 180,
-                y: mapData.spawnY,
-                demonType: 'Doubt',
-                spawnTrigger: { type: 'timer', value: 1 }
-            }
-        ],
-        randomSpawnsEnabled: false
+        {
+            x: mapData.spawnX + 180,
+            y: mapData.spawnY,
+            demonType: 'Doubt',
+            spawnTrigger: { type: 'timer', value: 1 }
+        },
+        {
+            x: mapData.spawnX + 260,
+            y: mapData.spawnY,
+            demonType: 'Fear',
+            behavior: { type: 'guard', patrolRadius: 0, patrolPath: [] },
+            spawnTrigger: { type: 'immediate', value: 0 }
+        }
+    ],
+    randomSpawnsEnabled: false
     }
 );
 
@@ -57,14 +64,22 @@ const engine = new GameEngine({
 engine.registerPlayerSend('player1', function () {});
 engine.addPlayer('player1', 'Tester');
 
-assert.strictEqual(engine.gameState.monsters.length, 1, 'Immediate fixed monster spawns at game start');
-assert.strictEqual(engine.gameState.monsters[0].fixedSpawn, true, 'Immediate spawn is marked as fixed');
-assert.strictEqual(engine.gameState.monsters[0].isBoss, true, 'Boss flag is preserved on fixed monster');
+const fixedMonstersAtStart = engine.gameState.monsters.filter((monster) => monster.fixedSpawn);
+assert.strictEqual(fixedMonstersAtStart.length, 2, 'Immediate fixed monsters spawn at game start alongside normal initial spawns');
+assert.strictEqual(fixedMonstersAtStart[0].isBoss, true, 'Boss flag is preserved on fixed monster');
+assert.strictEqual(fixedMonstersAtStart[1].behaviorType, 'guard', 'Guard behavior is preserved on fixed monster');
+assert.strictEqual(
+    fixedMonstersAtStart[1].guardRadius,
+    4 * Math.max(fixedMonstersAtStart[1].width, fixedMonstersAtStart[1].height),
+    'Guard monsters get a default territory radius based on monster size'
+);
+assert.strictEqual(fixedMonstersAtStart[1].health, 13, 'Guard monsters receive the configured HP bonus');
 assert.strictEqual(engine.monsterManager.randomSpawnsEnabled, false, 'Random spawns can be disabled for authored missions');
 
 engine.monsterManager.fixedSpawnStartedAt = Date.now() - 2000;
 engine.monsterManager.updateMonsters();
 
-assert.strictEqual(engine.gameState.monsters.length, 2, 'Timer-triggered fixed monster spawns after threshold');
+const fixedMonstersAfterTimer = engine.gameState.monsters.filter((monster) => monster.fixedSpawn);
+assert.strictEqual(fixedMonstersAfterTimer.length, 3, 'Timer-triggered fixed monster spawns after threshold');
 
 console.log('test-fixed-monster-spawns passed');

@@ -44,6 +44,7 @@
 
         _moveMonster: function (monster, speed, gameState, wallGrid) {
             var now = Date.now();
+            var behaviorType = monster.behaviorType || (monster.chaser ? 'chaser' : 'wanderer');
 
             if (monster.demonType === 'Strife') {
                 if (monster.isDashing && now < monster.dashEndTime) {
@@ -62,7 +63,9 @@
 
             if (monster.isDashing) return;
 
-            if (monster.chaser) {
+            if (behaviorType === 'guard') {
+                MonsterMovement._moveGuard(monster, speed, gameState, wallGrid);
+            } else if (monster.chaser) {
                 MonsterMovement._moveChaser(monster, speed, gameState, wallGrid);
             } else {
                 MonsterMovement._moveWalker(monster, speed, gameState, wallGrid);
@@ -98,6 +101,93 @@
             if (!Physics.isOverlapping(newX, newY, Constants.MONSTER_WIDTH, Constants.MONSTER_HEIGHT, gameState, monster.id, wallGrid)) {
                 monster.x = newX;
                 monster.y = newY;
+            }
+        },
+
+        _moveGuard: function (monster, speed, gameState, wallGrid) {
+            var homeX = typeof monster.homeX === 'number' ? monster.homeX : monster.x;
+            var homeY = typeof monster.homeY === 'number' ? monster.homeY : monster.y;
+            var guardRadius = monster.guardRadius || (Constants.GUARD_RADIUS_MULTIPLIER * Math.max(monster.width || Constants.MONSTER_WIDTH, monster.height || Constants.MONSTER_HEIGHT));
+            var nearest = Physics.findNearestPlayer(monster, gameState);
+            var hasTargetInTerritory = false;
+
+            if (nearest) {
+                var homeDx = nearest.x - homeX;
+                var homeDy = nearest.y - homeY;
+                hasTargetInTerritory = Math.sqrt(homeDx * homeDx + homeDy * homeDy) <= guardRadius;
+            }
+
+            if (hasTargetInTerritory) {
+                MonsterMovement._moveTowards(monster, speed, nearest.x, nearest.y, gameState, wallGrid);
+                return;
+            }
+
+            var dxHome = homeX - monster.x;
+            var dyHome = homeY - monster.y;
+            var distanceFromHome = Math.sqrt(dxHome * dxHome + dyHome * dyHome);
+
+            if (distanceFromHome > Constants.GUARD_RETURN_THRESHOLD) {
+                MonsterMovement._moveTowards(monster, speed, homeX, homeY, gameState, wallGrid);
+                return;
+            }
+
+            MonsterMovement._moveGuardPatrol(monster, speed, gameState, wallGrid, homeX, homeY, guardRadius);
+        },
+
+        _moveTowards: function (monster, speed, targetX, targetY, gameState, wallGrid) {
+            var dx = targetX - monster.x;
+            var dy = targetY - monster.y;
+            var distance = Math.sqrt(dx * dx + dy * dy);
+            if (!distance) return;
+
+            var moveAngle = Math.atan2(dy, dx);
+            if (monster.erratic && Math.random() < Constants.ERRATIC_CHANCE) {
+                moveAngle += (Math.random() - 0.5) * 2 * Constants.ERRATIC_ANGLE_OFFSET;
+            }
+
+            var newX = monster.x + Math.cos(moveAngle) * speed;
+            var newY = monster.y + Math.sin(moveAngle) * speed;
+            if (!Physics.isOverlapping(newX, newY, Constants.MONSTER_WIDTH, Constants.MONSTER_HEIGHT, gameState, monster.id, wallGrid)) {
+                monster.x = newX;
+                monster.y = newY;
+            }
+        },
+
+        _moveGuardPatrol: function (monster, speed, gameState, wallGrid, homeX, homeY, guardRadius) {
+            if (monster.walkingDistance === undefined) {
+                monster.walkingDistance = Math.random() * (Constants.MAX_WALK_DISTANCE - Constants.MIN_WALK_DISTANCE) + Constants.MIN_WALK_DISTANCE;
+                monster.angle = Math.random() * 2 * Math.PI;
+            }
+
+            var walkAngle = monster.angle;
+            if (monster.erratic && Math.random() < Constants.ERRATIC_CHANCE) {
+                walkAngle += (Math.random() - 0.5) * 2 * Constants.ERRATIC_ANGLE_OFFSET;
+            }
+
+            var newX = monster.x + Math.cos(walkAngle) * speed;
+            var newY = monster.y + Math.sin(walkAngle) * speed;
+            var homeDx = newX - homeX;
+            var homeDy = newY - homeY;
+            var wouldLeaveTerritory = Math.sqrt(homeDx * homeDx + homeDy * homeDy) > guardRadius;
+
+            if (wouldLeaveTerritory) {
+                monster.walkingDistance = undefined;
+                monster.angle = undefined;
+                return;
+            }
+
+            if (!Physics.isOverlapping(newX, newY, Constants.MONSTER_WIDTH, Constants.MONSTER_HEIGHT, gameState, monster.id, wallGrid)) {
+                monster.x = newX;
+                monster.y = newY;
+                monster.walkingDistance -= speed;
+            } else {
+                monster.walkingDistance = undefined;
+                monster.angle = undefined;
+            }
+
+            if (monster.walkingDistance <= 0) {
+                monster.walkingDistance = undefined;
+                monster.angle = undefined;
             }
         },
 
