@@ -157,6 +157,88 @@ function drawLoadingScreen() {
     ctx.fillText('Loading...', canvas.width / 2 - 50, canvas.height / 2);
 }
 
+function normalizeAngleDelta(angle) {
+    while (angle > Math.PI) angle -= Math.PI * 2;
+    while (angle < -Math.PI) angle += Math.PI * 2;
+    return angle;
+}
+
+function find3DTargetMonster(monsters, player) {
+    let bestMonster = null;
+    let bestDistance = Infinity;
+    const facing = typeof player.viewAngle === 'number' ? player.viewAngle : 0;
+    const facingX = Math.cos(facing);
+    const facingY = Math.sin(facing);
+
+    for (const monster of monsters) {
+        const dx = monster.x - player.x;
+        const dy = monster.y - player.y;
+        const distance = Math.sqrt(dx * dx + dy * dy);
+        if (distance > THREE_D_FIRE_RANGE) continue;
+
+        const normDx = dx / Math.max(distance, 1);
+        const normDy = dy / Math.max(distance, 1);
+        const forwardDot = normDx * facingX + normDy * facingY;
+        if (forwardDot < 0.94) continue;
+
+        const angleToMonster = Math.atan2(dy, dx);
+        const angleDelta = Math.abs(normalizeAngleDelta(angleToMonster - facing));
+        if (angleDelta > THREE_D_FIRE_CONE) continue;
+
+        if (distance < bestDistance) {
+            bestMonster = monster;
+            bestDistance = distance;
+        }
+    }
+
+    return bestMonster;
+}
+
+function tryHandle3DFire(monsters, now) {
+    if (now - lastAttackTime <= ATTACK_RATE) return false;
+    const monster = find3DTargetMonster(monsters, player);
+    if (!monster) return false;
+
+    lastAttackTime = now;
+
+    let attackHits = false;
+    if (isAnswerCorrect === true) {
+        attackHits = true;
+    } else if (meleeHitProbabilityNoAnswer > 0 && Math.random() < meleeHitProbabilityNoAnswer) {
+        attackHits = true;
+    }
+
+    lastAttackedMonster = monster;
+
+    if (!attackHits) {
+        return true;
+    }
+
+    attackSound.play();
+    monster.isAttacked = true;
+    setTimeout(() => {
+        monster.isAttacked = false;
+    }, 200);
+
+    screenShake = {
+        x: (Math.random() - 0.5) * 8,
+        y: (Math.random() - 0.5) * 8,
+        intensity: 8,
+        duration: 150
+    };
+
+    damageNumbers.push({
+        x: monster.x,
+        y: monster.y - 20,
+        damage: 1,
+        startTime: Date.now(),
+        duration: 1000
+    });
+
+    handlePlayerAttack(monster);
+    return true;
+}
+
 // Wait for the DOM content to load
 document.addEventListener('DOMContentLoaded', function () {
     // Get the canvas element by its ID
@@ -268,6 +350,8 @@ let gameSpeedMultiplier = 1.0; // Controlled by server (0.5 = slow, 1.0 = normal
 
 
 const ATTACK_RATE = 700; // milliseconds (0.5 seconds)
+const THREE_D_FIRE_RANGE = 520;
+const THREE_D_FIRE_CONE = Math.PI / 12;
 const MAX_HEALING_POINTS = 2; // Maximum number of healing points on the screen
 const MIN_HEALING_POINT_DISTANCE = 50; // Minimum distance between healing points and other objects
 const COMBAT_DISTANCE = 60; // Distance for combat to happen
@@ -752,7 +836,7 @@ function resetGameState() {
         network = null;
     }
     playerCode = null;
-    player = { x: 0, y: 0, health: 100, maxHealth: 100, width: 48, height: 48, xp: 0, level: 1, ammo: 0 };
+    player = { x: 0, y: 0, health: 100, maxHealth: 100, width: 48, height: 48, xp: 0, level: 1, ammo: 0, viewAngle: 0 };
 
     // Game flags
     gameOverFlag = false;
@@ -1490,7 +1574,8 @@ async function init() {
                         height: 48,
                         xp: 0,
                         level: 1,
-                        ammo: 0 // Must earn ammo by answering quizzes correctly
+                        ammo: 0, // Must earn ammo by answering quizzes correctly
+                        viewAngle: 0
                     };
                     gameState.players[playerCode] = player;
                 } else {
@@ -3131,8 +3216,10 @@ function gameLoop(generation) {
         */
 
         // Move the player
-        // Get movement target from InputHandler
         const worldTarget = inputHandler ? inputHandler.getWorldTarget() : null;
+        const movementIntent = inputHandler && typeof inputHandler.getMovementIntent === 'function'
+            ? inputHandler.getMovementIntent()
+            : null;
 
         // Safety timeout: auto-unfreeze if walls never arrive
         if (movementFrozen && Date.now() - levelTransitionStartTime > MAX_TRANSITION_FREEZE_MS) {
@@ -3150,6 +3237,87 @@ function gameLoop(generation) {
             player.isMoving = false;
             player.currentFrame = 0;
             player.frameTimer = 0;
+        } else if (movementIntent && inputHandler && inputHandler.viewMode === '3d') {
+            const turnSteps = movementIntent.turnSteps || 0;
+            if (turnSteps) {
+                if (typeof inputHandler.stopForwardMovement === 'function') {
+                    inputHandler.stopForwardMovement();
+                }
+                movementIntent.forward = false;
+                player.viewAngle = (player.viewAngle || 0) + turnSteps * (Math.PI / 6);
+                if (player.viewAngle > Math.PI) player.viewAngle -= Math.PI * 2;
+                if (player.viewAngle < -Math.PI) player.viewAngle += Math.PI * 2;
+            }
+            if (movementIntent.fire) {
+                tryHandle3DFire(monsters, Date.now());
+            }
+
+            const wasMoving = player.isMoving;
+            player.isMoving = !!movementIntent.forward;
+            if (wasMoving && !player.isMoving) {
+                player.currentFrame = 0;
+                player.frameTimer = 0;
+            }
+
+            if (movementIntent.forward) {
+                const baseSpeed = activeBuffs.sandals.active ? PLAYER_SPEED * Constants.SANDALS_SPEED_BOOST : PLAYER_SPEED;
+                let moveSpeed = baseSpeed * gameSpeedMultiplier;
+
+                for (const monster of monsters) {
+                    if (monster.freezeAura) {
+                        const mdx = monster.x - player.x;
+                        const mdy = monster.y - player.y;
+                        const mdist = Math.sqrt(mdx * mdx + mdy * mdy);
+                        if (mdist < Constants.FREEZE_AURA_RADIUS) {
+                            moveSpeed *= Constants.FREEZE_AURA_SLOW;
+                            break;
+                        }
+                    }
+                }
+
+                const dx = Math.cos(player.viewAngle || 0) * moveSpeed;
+                const dy = Math.sin(player.viewAngle || 0) * moveSpeed;
+                const newX = player.x + dx;
+                const newY = player.y + dy;
+
+                let monsterCollision = false;
+                for (const monster of monsters) {
+                    const monsterDx = newX - monster.x;
+                    const monsterDy = newY - monster.y;
+                    const monsterDist = Math.sqrt(monsterDx * monsterDx + monsterDy * monsterDy);
+                    if (monsterDist < (player.width / 2 + monster.width / 2)) {
+                        monsterCollision = true;
+                        break;
+                    }
+                }
+
+                if (!monsterCollision && !checkWallCollision(newX, newY, player.width, player.height)) {
+                    player.x = newX;
+                    player.y = newY;
+                } else if (!monsterCollision && !checkWallCollision(newX, player.y, player.width, player.height)) {
+                    player.x = newX;
+                } else if (!monsterCollision && !checkWallCollision(player.x, newY, player.width, player.height)) {
+                    player.y = newY;
+                } else {
+                    if (typeof inputHandler.stopForwardMovement === 'function') {
+                        inputHandler.stopForwardMovement();
+                    }
+                    player.isMoving = false;
+                }
+
+                player.facingDirection = Math.cos(player.viewAngle || 0) >= 0 ? 'right' : 'left';
+                player.x = Math.max(0, Math.min(player.x, WORLD_WIDTH));
+                player.y = Math.max(0, Math.min(player.y, WORLD_HEIGHT));
+
+                const now = Date.now();
+                if (now - _lastPositionSendTime >= POSITION_SEND_INTERVAL &&
+                    (player.x !== _lastSentX || player.y !== _lastSentY)) {
+                    network.sendPosition(player.x, player.y);
+                    _lastPositionSendTime = now;
+                    _lastSentX = player.x;
+                    _lastSentY = player.y;
+                }
+            }
         } else if (worldTarget) {
             let dx = worldTarget.x - player.x;
             let dy = worldTarget.y - player.y;
@@ -3164,6 +3332,9 @@ function gameLoop(generation) {
             // Determine facing direction based on horizontal movement
             if (Math.abs(dx) > 2) {  // Only change direction if significant horizontal movement
                 player.facingDirection = dx > 0 ? 'right' : 'left';
+            }
+            if (distance > THRESHOLD_DISTANCE) {
+                player.viewAngle = Math.atan2(dy, dx);
             }
 
             // If player stopped moving, reset to idle frame

@@ -72,6 +72,10 @@ class InputHandler {
         return { x: this.worldTargetX, y: this.worldTargetY };
     }
 
+    getMovementIntent() {
+        return null;
+    }
+
     /**
      * Clear the movement target (player has arrived)
      */
@@ -411,29 +415,7 @@ class InputHandler {
             }
         }
 
-        // Update movement target for playable area clicks
-        {
-            const playableTop = QUALITY_LINE_HEIGHT + BUTTON_HEIGHT;
-            const playableBottom = this.canvas.height - ANSWER_SECTION_HEIGHT - 14;
-
-            if (clickedY > playableTop && clickedY < playableBottom) {
-                // Check if external handler wants to process this click first (e.g., shooting)
-                let handled = false;
-                if (this.callbacks.onGameClick) {
-                    handled = this.callbacks.onGameClick(clickedX, clickedY);
-                }
-
-                // Only update movement target if not handled
-                if (!handled) {
-                    // Convert screen coords to world coords at click time
-                    this.worldTargetX = clickedX + this.camera.x;
-                    this.worldTargetY = clickedY + this.camera.y;
-                    if (typeof dbg === 'function') dbg('CLICK', `move target set world=(${this.worldTargetX.toFixed(0)},${this.worldTargetY.toFixed(0)}) screen=(${clickedX.toFixed(0)},${clickedY.toFixed(0)}) playArea=${playableTop}-${playableBottom}`);
-                }
-            } else {
-                if (typeof dbg === 'function') dbg('CLICK', `outside playable area screen=(${clickedX.toFixed(0)},${clickedY.toFixed(0)}) playArea=${playableTop}-${playableBottom}`);
-            }
-        }
+        this._handlePlayableAreaClick(clickedX, clickedY, QUALITY_LINE_HEIGHT, BUTTON_HEIGHT, ANSWER_SECTION_HEIGHT);
 
         // Check quiz option buttons (reads from currentQuiz global)
         if (typeof currentQuiz !== 'undefined' && currentQuiz && currentQuiz.options && typeof ctx !== 'undefined') {
@@ -518,5 +500,25 @@ class InputHandler {
         this.canvas.removeEventListener('touchstart', this._handleTouchStart);
         this.canvas.removeEventListener('touchmove', this._handleTouchMove);
         this.canvas.removeEventListener('touchend', this._handleTouchEnd);
+    }
+
+    _handlePlayableAreaClick(clickedX, clickedY, qualityLineHeight, buttonHeight, answerSectionHeight) {
+        const playableTop = qualityLineHeight + buttonHeight;
+        const playableBottom = this.canvas.height - answerSectionHeight - 14;
+
+        if (clickedY > playableTop && clickedY < playableBottom) {
+            let handled = false;
+            if (this.callbacks.onGameClick) {
+                handled = this.callbacks.onGameClick(clickedX, clickedY);
+            }
+
+            if (!handled) {
+                this.worldTargetX = clickedX + this.camera.x;
+                this.worldTargetY = clickedY + this.camera.y;
+                if (typeof dbg === 'function') dbg('CLICK', `move target set world=(${this.worldTargetX.toFixed(0)},${this.worldTargetY.toFixed(0)}) screen=(${clickedX.toFixed(0)},${clickedY.toFixed(0)}) playArea=${playableTop}-${playableBottom}`);
+            }
+        } else {
+            if (typeof dbg === 'function') dbg('CLICK', `outside playable area screen=(${clickedX.toFixed(0)},${clickedY.toFixed(0)}) playArea=${playableTop}-${playableBottom}`);
+        }
     }
 }
