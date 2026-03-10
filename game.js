@@ -1336,6 +1336,16 @@ document.addEventListener('DOMContentLoaded', function () {
             if (menuScreen) menuScreen.style.display = 'none';
             showOverland();
         });
+        const discipleshipTrackLink = document.getElementById('discipleshipTrackLink');
+        if (discipleshipTrackLink) {
+            discipleshipTrackLink.addEventListener('click', (event) => {
+                event.preventDefault();
+                if (window.Analytics) Analytics.trackMenuClick('discipleship_track');
+                openDiscipleshipTrackMenu().catch((error) => {
+                    console.error('Failed to open discipleship track', error);
+                });
+            });
+        }
         document.getElementById('btnFunMode').addEventListener('click', () => {
             if (window.Analytics) Analytics.trackMenuClick('fun_mode');
             startGame('fun');
@@ -2620,6 +2630,13 @@ window.gameMode = 'overland';
 
     // Start the game loop for overland rendering
     if (!_gameLoopRunning) gameLoop();
+}
+
+async function openDiscipleshipTrackMenu() {
+    await showOverland();
+    if (overlandRenderer && typeof overlandRenderer.selectMission === 'function') {
+        overlandRenderer.selectMission('chapter4', 'jesus-01');
+    }
 }
 
 let groupsPanelVisible = false;

@@ -448,6 +448,26 @@
         getSelectedMission() {
             return this.selectedMission;
         }
+
+        /**
+         * Programmatically select a mission by world and mission id.
+         * @param {string} worldId
+         * @param {string} missionId
+         * @returns {Object|null}
+         */
+        selectMission(worldId, missionId) {
+            for (const chapterData of this.nodePositions) {
+                if (chapterData.worldId !== worldId) continue;
+                for (const node of chapterData.nodes) {
+                    if (node.missionId === missionId) {
+                        this.selectedMission = node;
+                        this.selectedWorld = worldId;
+                        return node;
+                    }
+                }
+            }
+            return null;
+        }
         
         /**
          * Clear selection.
