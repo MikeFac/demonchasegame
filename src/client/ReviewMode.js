@@ -13,6 +13,7 @@
     let returnToMode = 'game'; // Where to return when exiting review ('game' or 'overland')
     let lastRenderedVerseIndex = -1; // Track verse changes to trigger new background
     let musicWasPlayingOnEntry = false;
+    let currentDiscipleshipPageIndex = 0;
 
 
     // Repeat delay options (in milliseconds)
@@ -234,6 +235,7 @@
         }
         
         currentReviewVerseIndex = 0;
+        currentDiscipleshipPageIndex = 0;
         repeatEnabled = false;
         meditationMode = false;
         reviewCategoryPickerOpen = false;
@@ -299,6 +301,29 @@
         return null;
     }
 
+    function getReviewItemsForCurrentCategory() {
+        const qualityVerses = organizedVerses[window.vQuality];
+        if (!qualityVerses || qualityVerses.length === 0) {
+            return [];
+        }
+
+        const items = [];
+        const seenContentIds = new Set();
+
+        qualityVerses.forEach(function (entry) {
+            if (entry && entry.discipleshipContent) {
+                const contentId = entry.discipleshipContent.contentId || entry.Reference;
+                if (seenContentIds.has(contentId)) {
+                    return;
+                }
+                seenContentIds.add(contentId);
+            }
+            items.push(entry);
+        });
+
+        return items;
+    }
+
     function drawWrappedParagraph(text, x, startY, maxWidth, font, color, lineHeight, maxLines) {
         if (!text) return startY;
         const words = String(text).split(' ');
@@ -330,58 +355,100 @@
         return y;
     }
 
-    function displayReviewDiscipleshipEntry(verseReference, verseDetails) {
+    function getDiscipleshipPages(verseReference, verseDetails) {
         const entry = verseDetails && verseDetails.entry;
         const content = verseDetails && verseDetails.discipleshipContent;
         if (!entry || !content) {
-            displayReviewVerse(verseDetails ? verseDetails.text : '');
-            return;
+            return [];
         }
 
+        const passages = Array.isArray(content.passages) ? content.passages : [];
+        const pages = [];
+
+        pages.push({
+            pageLabel: 'Overview',
+            badge: content.type ? content.type.toUpperCase() : 'DISCIPLESHIP',
+            title: content.title || verseReference,
+            sections: [
+                content.summary ? { body: content.summary, font: '20px Arial', color: '#e7edf6', lineHeight: 28, maxLines: 4 } : null,
+                content.focus && content.focus.statement ? { heading: 'Focus', body: content.focus.statement, font: '18px Arial', color: '#fff6d9', lineHeight: 24, maxLines: 4 } : null
+            ].filter(Boolean)
+        });
+
+        if (passages.length > 0) {
+            pages.push({
+                pageLabel: 'Passage',
+                badge: 'PASSAGE',
+                title: passages[0].reference || verseReference,
+                sections: [
+                    { body: passages[0].text || verseDetails.text, font: '22px Arial', color: '#ffffff', lineHeight: 30, maxLines: 7 }
+                ]
+            });
+        }
+
+        if (content.contextCard && content.contextCard.body) {
+            pages.push({
+                pageLabel: 'Context',
+                badge: 'CONTEXT',
+                title: content.contextCard.title || 'Context',
+                sections: [
+                    { body: content.contextCard.body, font: '18px Arial', color: '#d8e4f2', lineHeight: 24, maxLines: 8 }
+                ]
+            });
+        }
+
+        if (content.reflection && content.reflection.prompt) {
+            pages.push({
+                pageLabel: 'Reflect',
+                badge: 'REFLECT',
+                title: 'Reflect',
+                sections: [
+                    { body: content.reflection.prompt, font: '20px Arial', color: '#fff6d9', lineHeight: 28, maxLines: 7 }
+                ]
+            });
+        }
+
+        return pages;
+    }
+
+    function displayReviewDiscipleshipEntry(verseReference, verseDetails) {
+        const pages = getDiscipleshipPages(verseReference, verseDetails);
+        if (pages.length === 0) {
+            displayReviewVerse(verseDetails ? verseDetails.text : '');
+            return { pageCount: 1, pageIndex: 0, pageLabel: '' };
+        }
+
+        if (currentDiscipleshipPageIndex < 0) currentDiscipleshipPageIndex = 0;
+        if (currentDiscipleshipPageIndex >= pages.length) currentDiscipleshipPageIndex = pages.length - 1;
+
+        const page = pages[currentDiscipleshipPageIndex];
         let y = 96;
         const maxWidth = canvas.width - 40;
-        const passages = Array.isArray(content.passages) ? content.passages : [];
 
         ctx.fillStyle = '#f5c542';
         ctx.font = 'bold 16px Arial';
-        ctx.fillText(content.type ? content.type.toUpperCase() : 'DISCIPLESHIP', 20, y);
+        ctx.fillText(page.badge, 20, y);
         y += 30;
 
         ctx.fillStyle = '#ffffff';
         ctx.font = 'bold 30px Arial';
-        y = drawWrappedParagraph(content.title || verseReference, 20, y, maxWidth, 'bold 30px Arial', '#ffffff', 34, 2) + 6;
+        y = drawWrappedParagraph(page.title || verseReference, 20, y, maxWidth, 'bold 30px Arial', '#ffffff', 34, 3) + 8;
 
-        if (content.summary) {
-            y = drawWrappedParagraph(content.summary, 20, y, maxWidth, '20px Arial', '#e7edf6', 28, 3) + 10;
-        }
+        page.sections.forEach(function (section) {
+            if (section.heading) {
+                ctx.fillStyle = '#9fd0ff';
+                ctx.font = 'bold 18px Arial';
+                ctx.fillText(section.heading, 20, y);
+                y += 26;
+            }
+            y = drawWrappedParagraph(section.body, 20, y, maxWidth, section.font, section.color, section.lineHeight, section.maxLines) + 14;
+        });
 
-        if (passages.length > 0) {
-            ctx.fillStyle = '#9fd0ff';
-            ctx.font = 'bold 18px Arial';
-            ctx.fillText('Passage', 20, y);
-            y += 26;
-            ctx.fillStyle = '#ffffff';
-            ctx.font = '18px Arial';
-            ctx.fillText(passages[0].reference || verseReference, 20, y);
-            y += 28;
-            y = drawWrappedParagraph(passages[0].text || verseDetails.text, 20, y, maxWidth, '22px Arial', '#ffffff', 30, 5) + 8;
-        }
-
-        if (content.contextCard && content.contextCard.body) {
-            ctx.fillStyle = '#9fd0ff';
-            ctx.font = 'bold 18px Arial';
-            ctx.fillText(content.contextCard.title || 'Context', 20, y);
-            y += 26;
-            y = drawWrappedParagraph(content.contextCard.body, 20, y, maxWidth, '18px Arial', '#d8e4f2', 24, 4) + 8;
-        }
-
-        if (content.reflection && content.reflection.prompt) {
-            ctx.fillStyle = '#f5c542';
-            ctx.font = 'bold 18px Arial';
-            ctx.fillText('Reflect', 20, y);
-            y += 26;
-            drawWrappedParagraph(content.reflection.prompt, 20, y, maxWidth, '18px Arial', '#fff6d9', 24, 3);
-        }
+        return {
+            pageCount: pages.length,
+            pageIndex: currentDiscipleshipPageIndex,
+            pageLabel: page.pageLabel
+        };
     }
 
     function displayReviewVerseScreen() {
@@ -457,19 +524,22 @@
                 verseReference = incorrectAnswerReferences[currentReviewVerseIndex];
                 verseDetails = getVerseDetails(verseReference);
             } else if (currentReviewMode === 'quality') {
-                const qualityVerses = organizedVerses[window.vQuality];
-                if (!qualityVerses || qualityVerses.length === 0) {
+                const reviewItems = getReviewItemsForCurrentCategory();
+                if (!reviewItems || reviewItems.length === 0) {
                     ctx.font = '18px Arial';
                     ctx.fillStyle = 'red';
                     ctx.fillText('No verses in this category', 10, 150);
                     return;
                 }
-                verseReference = qualityVerses[currentReviewVerseIndex].Reference;
+                if (currentReviewVerseIndex >= reviewItems.length) {
+                    currentReviewVerseIndex = reviewItems.length - 1;
+                }
+                verseReference = reviewItems[currentReviewVerseIndex].Reference;
                 verseDetails = {
-                    text: qualityVerses[currentReviewVerseIndex].Text,
+                    text: reviewItems[currentReviewVerseIndex].Text,
                     category: window.vQuality,
-                    entry: qualityVerses[currentReviewVerseIndex],
-                    discipleshipContent: qualityVerses[currentReviewVerseIndex].discipleshipContent || null
+                    entry: reviewItems[currentReviewVerseIndex],
+                    discipleshipContent: reviewItems[currentReviewVerseIndex].discipleshipContent || null
                 };
             }
 
@@ -478,20 +548,43 @@
                 if (currentReviewVerseIndex !== lastRenderedVerseIndex) {
                     pickRandomBackground();
                     lastRenderedVerseIndex = currentReviewVerseIndex;
+                    currentDiscipleshipPageIndex = 0;
                 }
+                let discipleshipPageState = null;
                 if (verseDetails.discipleshipContent) {
-                    displayReviewDiscipleshipEntry(verseReference, verseDetails);
+                    discipleshipPageState = displayReviewDiscipleshipEntry(verseReference, verseDetails);
                 } else {
                     displayReviewVerse(verseDetails.text);
                 }
 
-                ctx.font = '20px Arial';
-                ctx.fillStyle = 'white';
-                ctx.fillText(t('review.learn', tCategory(verseDetails.category)), 20, canvas.height - 90);
+                if (verseDetails.discipleshipContent) {
+                    ctx.font = '16px Arial';
+                    ctx.fillStyle = '#ffffff';
+                    ctx.fillText(t('review.reference', verseReference), 20, canvas.height - 94);
 
-                ctx.font = '20px Arial';
-                ctx.fillStyle = 'white';
-                ctx.fillText(t('review.reference', verseReference), 20, canvas.height - 120);
+                    ctx.font = '16px Arial';
+                    ctx.fillStyle = '#ffffff';
+                    ctx.fillText(t('review.learn', tCategory(verseDetails.category)), 20, canvas.height - 68);
+
+                    if (discipleshipPageState && discipleshipPageState.pageCount > 1) {
+                        ctx.textAlign = 'right';
+                        ctx.fillStyle = '#e8d44d';
+                        ctx.fillText(
+                            `${discipleshipPageState.pageLabel} ${discipleshipPageState.pageIndex + 1}/${discipleshipPageState.pageCount}`,
+                            canvas.width - 20,
+                            canvas.height - 68
+                        );
+                        ctx.textAlign = 'left';
+                    }
+                } else {
+                    ctx.font = '20px Arial';
+                    ctx.fillStyle = 'white';
+                    ctx.fillText(t('review.learn', tCategory(verseDetails.category)), 20, canvas.height - 90);
+
+                    ctx.font = '20px Arial';
+                    ctx.fillStyle = 'white';
+                    ctx.fillText(t('review.reference', verseReference), 20, canvas.height - 120);
+                }
 
                 const songBrowsingMode = window.MusicManager &&
                     typeof window.MusicManager.getSongBrowsingMode === 'function' &&
@@ -787,6 +880,7 @@
                     // Category selected
                     window.vQuality = categories[idx];
                     currentReviewVerseIndex = 0;
+                    currentDiscipleshipPageIndex = 0;
                     reviewCategoryPickerOpen = false;
                     stopAudio();
                     clearRepeatTimer();
@@ -861,11 +955,20 @@
                         });
                     }
                 } else if (rect.name === 'prev') {
-                    // Previous verse
-                    if (currentReviewMode === 'incorrect') {
+                    const verseRef = getCurrentVerseReference();
+                    const verseInfo = verseRef ? getVerseDetails(verseRef) : null;
+                    const pageCount = verseInfo && verseInfo.discipleshipContent
+                        ? getDiscipleshipPages(verseRef, verseInfo).length
+                        : 0;
+
+                    if (pageCount > 1 && currentDiscipleshipPageIndex > 0) {
+                        currentDiscipleshipPageIndex--;
+                    } else if (currentReviewMode === 'incorrect') {
                         currentReviewVerseIndex = Math.max(currentReviewVerseIndex - 1, 0);
+                        currentDiscipleshipPageIndex = 0;
                     } else if (currentReviewMode === 'quality') {
                         currentReviewVerseIndex = Math.max(currentReviewVerseIndex - 1, 0);
+                        currentDiscipleshipPageIndex = 0;
                     }
                     stopAudio();
                     clearRepeatTimer();
@@ -875,12 +978,21 @@
                     delayDropdownOpen = false;
                     displayReviewVerseScreen();
                 } else if (rect.name === 'next') {
-                    // Next verse
-                    if (currentReviewMode === 'incorrect') {
+                    const verseRef = getCurrentVerseReference();
+                    const verseInfo = verseRef ? getVerseDetails(verseRef) : null;
+                    const pageCount = verseInfo && verseInfo.discipleshipContent
+                        ? getDiscipleshipPages(verseRef, verseInfo).length
+                        : 0;
+
+                    if (pageCount > 1 && currentDiscipleshipPageIndex < pageCount - 1) {
+                        currentDiscipleshipPageIndex++;
+                    } else if (currentReviewMode === 'incorrect') {
                         currentReviewVerseIndex = Math.min(currentReviewVerseIndex + 1, incorrectAnswerReferences.length - 1);
+                        currentDiscipleshipPageIndex = 0;
                     } else if (currentReviewMode === 'quality') {
-                        const qualityVerses = organizedVerses[window.vQuality];
-                        currentReviewVerseIndex = Math.min(currentReviewVerseIndex + 1, qualityVerses.length - 1);
+                        const reviewItems = getReviewItemsForCurrentCategory();
+                        currentReviewVerseIndex = Math.min(currentReviewVerseIndex + 1, reviewItems.length - 1);
+                        currentDiscipleshipPageIndex = 0;
                     }
                     stopAudio();
                     clearRepeatTimer();
@@ -1219,8 +1331,8 @@
         if (currentReviewMode === 'incorrect') {
             return incorrectAnswerReferences[currentReviewVerseIndex];
         } else if (currentReviewMode === 'quality') {
-            const qualityVerses = organizedVerses[window.vQuality];
-            return qualityVerses ? qualityVerses[currentReviewVerseIndex].Reference : null;
+            const reviewItems = getReviewItemsForCurrentCategory();
+            return reviewItems[currentReviewVerseIndex] ? reviewItems[currentReviewVerseIndex].Reference : null;
         }
     }
 
