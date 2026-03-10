@@ -13,6 +13,7 @@ const userRouter = require('./src/server/routes/users');
 const progressRouter = require('./src/server/routes/progress');
 const worldRouter = require('./src/server/routes/worlds');
 const groupsRouter = require('./src/server/routes/groups');
+const contentMakerRouter = require('./src/server/routes/contentMaker');
 const { retryFailedGenerations } = require('./src/server/jobs/retryFailedGenerations');
 
 const app = express();
@@ -55,6 +56,15 @@ app.get('/parents', (req, res) => {
 
 app.get('/players', (req, res) => {
   res.sendFile(path.join(__dirname, 'players.html'));
+});
+
+app.get('/missions', (req, res) => {
+  res.sendFile(path.join(__dirname, 'missions.html'));
+});
+
+app.get('/content-maker', (req, res) => {
+  res.set('X-Robots-Tag', 'noindex, nofollow');
+  res.sendFile(path.join(__dirname, 'content-maker.html'));
 });
 
 // Initialize Managers
@@ -127,6 +137,9 @@ app.use('/api/worlds', worldRouter);
 
 // Group Management Routes
 app.use('/api/groups', groupsRouter);
+
+// Content Maker Routes
+app.use('/api/content-maker', contentMakerRouter);
 
 // ==================== Socket.IO ====================
 

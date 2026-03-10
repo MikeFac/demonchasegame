@@ -122,3 +122,32 @@ Original prompt: Check the implementation of docs/multi-version-songs-implementa
     - music resumes on return to `game`
     - music pauses in `votd` learning mode
     - music resumes on return to `game`
+
+2026-03-10:
+- Added a first-pass internal content workflow:
+  - new `/content-maker` route with `X-Robots-Tag: noindex, nofollow`
+  - new protected `/api/content-maker/*` endpoints gated by Clerk auth plus the allowlisted email `michaelfackerell@gmail.com`
+  - internal draft storage under `content-maker/drafts/`
+  - first UI for brief fields, starter generation, draft loading, and draft saving
+- Added an initial missions-leader article draft at:
+  - `content-maker/drafts/missions-browser-based-scripture-memory-tools.json`
+- Verification:
+  - `node --check server.js`
+  - `node --check src/server/routes/contentMaker.js`
+  - headless browser smoke of `/content-maker` while signed out
+    - confirmed the route renders the gated shell rather than draft content
+    - confirmed the signed-out state settles to `Signed out` with a `Sign In` button
+    - screenshot captured at `output/web-game/shot-0.png`
+- Follow-up TODO:
+  - browser-smoke `/content-maker` while signed in as the allowlisted Clerk account
+
+2026-03-10:
+- Added a dedicated missions audience landing page:
+  - `missions.html`
+  - new route `/missions`
+- Updated the internal missions draft and content-maker defaults to point at `/missions` as the primary missions CTA
+- Verification:
+  - `node --check server.js`
+  - headless browser smoke of `/missions`
+    - page rendered correctly with hero, CTA buttons, and missions-specific framing
+    - screenshot captured at `output/web-game/shot-0.png`
