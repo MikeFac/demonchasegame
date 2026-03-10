@@ -1379,6 +1379,13 @@ class Renderer {
             return;
         }
 
+        const effectiveVerseText = (quiz && quiz.discipleshipContent)
+            ? (quiz.promptText || verseText || '')
+            : (verseText || (quiz ? quiz.promptText : '') || '');
+        const effectiveReference = (quiz && quiz.verseReference)
+            ? quiz.verseReference
+            : (verseReference || '');
+
         const leftPadding = 14;
         const rightPadding = 7;
         const maxWidth = this.canvas.width - leftPadding - rightPadding;
@@ -1388,7 +1395,7 @@ class Renderer {
         this.ctx.font = 'bold 16px Arial';
 
         let lines = [];
-        let words = verseText.split(' ');
+        let words = effectiveVerseText.split(' ');
         let currentLine = '';
 
         for (let i = 0; i < words.length; i++) {
@@ -1417,7 +1424,7 @@ class Renderer {
 
         this.ctx.fillStyle = '#cccccc';
         this.ctx.font = '14px Arial';
-        this.ctx.fillText(verseReference, leftPadding, this.canvas.height - 118 + lines.length * lineHeight);
+        this.ctx.fillText(effectiveReference, leftPadding, this.canvas.height - 118 + lines.length * lineHeight);
 
         if (quiz) {
             this.displayQuizOptions(quiz);
@@ -1528,7 +1535,128 @@ class Renderer {
         return lines;
     }
 
+    _isDiscipleshipGridQuiz(quiz) {
+        return !!(quiz && quiz.discipleshipContent && Array.isArray(quiz.options) && quiz.options.length > 2);
+    }
+
+    _wrapTextWithLimit(text, maxWidth, maxLines, font) {
+        const previousFont = this.ctx.font;
+        if (font) {
+            this.ctx.font = font;
+        }
+
+        const words = String(text || '').split(/\s+/).filter(Boolean);
+        const lines = [];
+        let currentLine = '';
+
+        for (let i = 0; i < words.length; i++) {
+            const testLine = currentLine ? currentLine + ' ' + words[i] : words[i];
+            if (this.ctx.measureText(testLine).width > maxWidth && currentLine) {
+                lines.push(currentLine);
+                currentLine = words[i];
+                if (lines.length === maxLines - 1) {
+                    break;
+                }
+            } else {
+                currentLine = testLine;
+            }
+        }
+
+        if (currentLine) {
+            const remainingWords = words.slice(lines.join(' ').split(/\s+/).filter(Boolean).length);
+            let finalLine = remainingWords.length ? remainingWords.join(' ') : currentLine;
+            if (lines.length === maxLines - 1) {
+                while (finalLine && this.ctx.measureText(finalLine + '...').width > maxWidth) {
+                    const parts = finalLine.split(' ');
+                    parts.pop();
+                    finalLine = parts.join(' ');
+                }
+                if (finalLine !== currentLine || remainingWords.length > currentLine.split(/\s+/).filter(Boolean).length) {
+                    finalLine = (finalLine || currentLine) + '...';
+                }
+            }
+            lines.push(finalLine);
+        }
+
+        this.ctx.font = previousFont;
+        return lines.slice(0, maxLines);
+    }
+
+    _getDiscipleshipQuizLayout(quiz) {
+        const optionCount = quiz.options.length;
+        const columns = Math.min(2, optionCount);
+        const rows = Math.ceil(optionCount / columns);
+        const leftMargin = 14;
+        const rightMargin = this.viewMode === '3d' ? 108 : 14;
+        const topGap = 8;
+        const rowGap = 8;
+        const columnGap = 10;
+        const buttonHeight = optionCount >= 4 ? 38 : 34;
+        const buttonWidth = Math.floor((this.canvas.width - leftMargin - rightMargin - columnGap) / columns);
+        const optionFont = '11px Arial';
+        const labelLineHeight = 16;
+        const labelLines = [];
+        const labelHeight = labelLines.length * labelLineHeight;
+        const totalHeight = labelHeight + topGap + rows * buttonHeight + (rows - 1) * rowGap;
+        const topY = this.canvas.height - totalHeight - 10;
+        const buttons = [];
+
+        for (let i = 0; i < optionCount; i++) {
+            const column = i % columns;
+            const row = Math.floor(i / columns);
+            const x = leftMargin + column * (buttonWidth + columnGap);
+            const y = topY + labelHeight + topGap + row * (buttonHeight + rowGap);
+            buttons.push({
+                x: x,
+                y: y,
+                width: buttonWidth,
+                height: buttonHeight,
+                textLines: this._wrapTextWithLimit(quiz.options[i].text, buttonWidth - 10, 2, optionFont)
+            });
+        }
+
+        return {
+            labelLines: labelLines,
+            labelX: leftMargin,
+            labelY: topY,
+            labelLineHeight: labelLineHeight,
+            buttons: buttons
+        };
+    }
+
     displayQuizOptions(quiz) {
+        if (this._isDiscipleshipGridQuiz(quiz)) {
+            const layout = this._getDiscipleshipQuizLayout(quiz);
+            this.ctx.fillStyle = '#ffffff';
+            this.ctx.font = 'bold 16px Arial';
+
+            layout.labelLines.forEach((line, index) => {
+                this.ctx.fillText(line, layout.labelX, layout.labelY + 2 + index * layout.labelLineHeight);
+            });
+
+            this.ctx.font = '11px Arial';
+            this.ctx.textAlign = 'center';
+            this.ctx.textBaseline = 'middle';
+
+            layout.buttons.forEach((button, index) => {
+                this.ctx.fillStyle = 'lightgray';
+                this.ctx.fillRect(button.x, button.y, button.width, button.height);
+
+                this.ctx.fillStyle = '#333';
+                const lineHeight = 11;
+                const lineBlockHeight = button.textLines.length * lineHeight;
+                const startY = button.y + (button.height - lineBlockHeight) / 2 + lineHeight / 2;
+
+                button.textLines.forEach((line, lineIndex) => {
+                    this.ctx.fillText(line, button.x + button.width / 2, startY + lineIndex * lineHeight);
+                });
+            });
+
+            this.ctx.textAlign = 'left';
+            this.ctx.textBaseline = 'alphabetic';
+            return;
+        }
+
         const qo = UILayout.quizOptions;
         const buttonHeight = qo.height;
         const buttonSpacing = qo.spacing;

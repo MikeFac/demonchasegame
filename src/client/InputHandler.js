@@ -416,79 +416,98 @@ class InputHandler {
             }
         }
 
-        this._handlePlayableAreaClick(clickedX, clickedY, QUALITY_LINE_HEIGHT, BUTTON_HEIGHT, ANSWER_SECTION_HEIGHT);
-
-        // Check quiz option buttons (reads from currentQuiz global)
+        // Check quiz option buttons before movement so bottom-row UI taps are not
+        // interpreted as movement targets.
         if (typeof currentQuiz !== 'undefined' && currentQuiz && currentQuiz.options && typeof ctx !== 'undefined') {
-            const qo = UILayout.quizOptions;
-            const optionStartX = qo.startX;
-            const buttonHeight = qo.height;
-            const buttonSpacing = qo.spacing;
-            const buttonY = UILayout.getQuizButtonY(this.canvas.height);
-
-            const optionCount = currentQuiz.options.length;
-
-            // Button sizing: true/false=70px, missing word=65px, others=49px (must match Renderer)
-            let buttonWidth;
-            if (optionCount === 2) {
-                buttonWidth = 70;  // True/false
-            } else if (optionCount === 4) {
-                buttonWidth = 65;  // Missing word
-            } else {
-                buttonWidth = qo.width;  // Default
-            }
-
-            ctx.font = 'bold 16px Arial'; // Must match Renderer.displayQuizOptions font for label
-            const labelText = currentQuiz.questionLabel || '';
-            const labelTextWidth = ctx.measureText(labelText).width;
-            const maxLabelWidth = this.canvas.width - optionStartX - (qo.rightPadding || 7) - (optionCount * buttonWidth + (optionCount - 1) * buttonSpacing) - 14;
-
-
-            // Calculate label width (accounting for possible 2-line wrapping)
-            let labelWidth = labelTextWidth;
-            if (labelTextWidth > maxLabelWidth) {
-                // Label wraps to 2 lines, calculate actual width
-                const words = labelText.split(' ');
-                let line1 = '';
-                let currentLine = '';
-
-                for (let i = 0; i < words.length; i++) {
-                    const testLine = currentLine ? currentLine + ' ' + words[i] : words[i];
-                    const testWidth = ctx.measureText(testLine).width;
-
-                    if (testWidth > maxLabelWidth && currentLine.length > 0) {
-                        line1 = currentLine;
-                        currentLine = words[i];
-                    } else {
-                        currentLine = testLine;
+            if (this._isDiscipleshipGridQuiz(currentQuiz)) {
+                const buttons = this._getDiscipleshipQuizButtons(currentQuiz);
+                for (let i = 0; i < buttons.length; i++) {
+                    const button = buttons[i];
+                    if (
+                        clickedX >= button.x &&
+                        clickedX <= button.x + button.width &&
+                        clickedY >= button.y &&
+                        clickedY <= button.y + button.height
+                    ) {
+                        if (this.callbacks.onQuizOptionClick) {
+                            this.callbacks.onQuizOptionClick(currentQuiz.options[i], i);
+                        }
+                        return;
                     }
                 }
+            } else {
+                const qo = UILayout.quizOptions;
+                const optionStartX = qo.startX;
+                const buttonHeight = qo.height;
+                const buttonSpacing = qo.spacing;
+                const buttonY = UILayout.getQuizButtonY(this.canvas.height);
 
-                const line2 = currentLine;
-                labelWidth = Math.max(
-                    ctx.measureText(line1).width,
-                    ctx.measureText(line2).width
-                );
-            }
+                const optionCount = currentQuiz.options.length;
 
-            for (let i = 0; i < optionCount; i++) {
-                const buttonX = optionStartX + labelWidth + 14 + i * (buttonWidth + buttonSpacing);
+                // Button sizing: true/false=70px, missing word=65px, others=49px (must match Renderer)
+                let buttonWidth;
+                if (optionCount === 2) {
+                    buttonWidth = 70;  // True/false
+                } else if (optionCount === 4) {
+                    buttonWidth = 65;  // Missing word
+                } else {
+                    buttonWidth = qo.width;  // Default
+                }
+
+                ctx.font = 'bold 16px Arial'; // Must match Renderer.displayQuizOptions font for label
+                const labelText = currentQuiz.questionLabel || '';
+                const labelTextWidth = ctx.measureText(labelText).width;
+                const maxLabelWidth = this.canvas.width - optionStartX - (qo.rightPadding || 7) - (optionCount * buttonWidth + (optionCount - 1) * buttonSpacing) - 14;
 
 
-                if (
-                    clickedX >= buttonX &&
-                    clickedX <= buttonX + buttonWidth &&
-                    clickedY >= buttonY &&
-                    clickedY <= buttonY + buttonHeight
-                ) {
-                    if (typeof dbg === 'function') dbg('CLICK', `quiz option '${currentQuiz.options[i]}' at (${clickedX.toFixed(0)},${clickedY.toFixed(0)}) btnY=${buttonY}`);
-                    if (this.callbacks.onQuizOptionClick) {
-                        this.callbacks.onQuizOptionClick(currentQuiz.options[i], i);
+                // Calculate label width (accounting for possible 2-line wrapping)
+                let labelWidth = labelTextWidth;
+                if (labelTextWidth > maxLabelWidth) {
+                    // Label wraps to 2 lines, calculate actual width
+                    const words = labelText.split(' ');
+                    let line1 = '';
+                    let currentLine = '';
+
+                    for (let i = 0; i < words.length; i++) {
+                        const testLine = currentLine ? currentLine + ' ' + words[i] : words[i];
+                        const testWidth = ctx.measureText(testLine).width;
+
+                        if (testWidth > maxLabelWidth && currentLine.length > 0) {
+                            line1 = currentLine;
+                            currentLine = words[i];
+                        } else {
+                            currentLine = testLine;
+                        }
                     }
-                    return;
+
+                    const line2 = currentLine;
+                    labelWidth = Math.max(
+                        ctx.measureText(line1).width,
+                        ctx.measureText(line2).width
+                    );
+                }
+
+                for (let i = 0; i < optionCount; i++) {
+                    const buttonX = optionStartX + labelWidth + 14 + i * (buttonWidth + buttonSpacing);
+
+
+                    if (
+                        clickedX >= buttonX &&
+                        clickedX <= buttonX + buttonWidth &&
+                        clickedY >= buttonY &&
+                        clickedY <= buttonY + buttonHeight
+                    ) {
+                        if (typeof dbg === 'function') dbg('CLICK', `quiz option '${currentQuiz.options[i]}' at (${clickedX.toFixed(0)},${clickedY.toFixed(0)}) btnY=${buttonY}`);
+                        if (this.callbacks.onQuizOptionClick) {
+                            this.callbacks.onQuizOptionClick(currentQuiz.options[i], i);
+                        }
+                        return;
+                    }
                 }
             }
         }
+
+        this._handlePlayableAreaClick(clickedX, clickedY, QUALITY_LINE_HEIGHT, BUTTON_HEIGHT, ANSWER_SECTION_HEIGHT);
 
     }
 
@@ -501,6 +520,40 @@ class InputHandler {
         this.canvas.removeEventListener('touchstart', this._handleTouchStart);
         this.canvas.removeEventListener('touchmove', this._handleTouchMove);
         this.canvas.removeEventListener('touchend', this._handleTouchEnd);
+    }
+
+    _isDiscipleshipGridQuiz(quiz) {
+        return !!(quiz && quiz.discipleshipContent && Array.isArray(quiz.options) && quiz.options.length > 2);
+    }
+
+    _getDiscipleshipQuizButtons(quiz) {
+        const optionCount = quiz.options.length;
+        const columns = Math.min(2, optionCount);
+        const rows = Math.ceil(optionCount / columns);
+        const leftMargin = 14;
+        const rightMargin = this.viewMode === '3d' ? 108 : 14;
+        const topGap = 8;
+        const rowGap = 8;
+        const columnGap = 10;
+        const buttonHeight = optionCount >= 4 ? 38 : 34;
+        const buttonWidth = Math.floor((this.canvas.width - leftMargin - rightMargin - columnGap) / columns);
+        const labelHeight = 0;
+        const totalHeight = labelHeight + topGap + rows * buttonHeight + (rows - 1) * rowGap;
+        const topY = this.canvas.height - totalHeight - 10;
+        const buttons = [];
+
+        for (let i = 0; i < optionCount; i++) {
+            const column = i % columns;
+            const row = Math.floor(i / columns);
+            buttons.push({
+                x: leftMargin + column * (buttonWidth + columnGap),
+                y: topY + labelHeight + topGap + row * (buttonHeight + rowGap),
+                width: buttonWidth,
+                height: buttonHeight
+            });
+        }
+
+        return buttons;
     }
 
     _handlePlayableAreaClick(clickedX, clickedY, qualityLineHeight, buttonHeight, answerSectionHeight) {

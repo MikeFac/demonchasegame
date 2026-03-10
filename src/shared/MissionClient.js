@@ -106,6 +106,9 @@
                 missionDescription: mission.description,
                 worldId: mission.worldId,
                 worldTheme: mission.worldTheme,
+                missionType: mission.type || 'verse',
+                packId: mission.packId || null,
+                unitIds: Array.isArray(mission.unitIds) ? mission.unitIds.slice() : null,
                 
                 // Level config (single level for mission)
                 levelData: {

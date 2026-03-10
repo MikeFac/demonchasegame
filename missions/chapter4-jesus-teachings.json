@@ -1,0 +1,60 @@
+{
+  "schemaVersion": 1,
+  "id": "chapter4",
+  "missions": [
+    {
+      "id": "jesus-01",
+      "name": "Kingdom Call",
+      "description": "Face the first demands of discipleship through the commandments of Jesus.",
+      "type": "discipleship",
+      "packId": "commandments-promises-of-jesus",
+      "unitIds": ["repent-and-believe", "follow-me", "seek-first-the-kingdom"],
+      "mapStyle": "classic",
+      "qualities": ["Obedience"],
+      "monsters": ["Fear", "Doubt", "Confusion"],
+      "monsterDamageFactor": 1.0,
+      "monsterSpeed": 5,
+      "playerSpeed": 5,
+      "maxMonsters": 20,
+      "monstersToKill": 12,
+      "spawnRate": 18,
+      "xpMultiplier": 1.2
+    },
+    {
+      "id": "jesus-02",
+      "name": "Mercy and Prayer",
+      "description": "Learn enemy-love, forgiveness, and persistent prayer in the way of Jesus.",
+      "type": "discipleship",
+      "packId": "commandments-promises-of-jesus",
+      "unitIds": ["love-your-enemies", "forgive-one-another", "ask-seek-knock"],
+      "mapStyle": "narrow",
+      "qualities": ["Obedience", "Trust", "Hope"],
+      "monsters": ["Strife", "Condemnation", "Deception"],
+      "monsterDamageFactor": 1.15,
+      "monsterSpeed": 6,
+      "playerSpeed": 5,
+      "maxMonsters": 24,
+      "monstersToKill": 15,
+      "spawnRate": 16,
+      "xpMultiplier": 1.3
+    },
+    {
+      "id": "jesus-03",
+      "name": "Abide and Go",
+      "description": "Hold to Jesus' promises, remain in him, and take up the Great Commission.",
+      "type": "discipleship",
+      "packId": "commandments-promises-of-jesus",
+      "unitIds": ["come-to-me-and-rest", "abide-in-me", "do-not-be-afraid", "make-disciples"],
+      "mapStyle": "open",
+      "qualities": ["Trust", "Hope", "Obedience"],
+      "monsters": ["Blindness", "Discouragement", "Unbelief"],
+      "monsterDamageFactor": 1.2,
+      "monsterSpeed": 6,
+      "playerSpeed": 5,
+      "maxMonsters": 26,
+      "monstersToKill": 18,
+      "spawnRate": 15,
+      "xpMultiplier": 1.4
+    }
+  ]
+}

@@ -403,6 +403,7 @@ const LOCAL_STORAGE_CONFIG_KEY = 'versebattles_custom_config';
 
 let QUALITIES;
 let ALL_QUALITIES;
+let organizedVerses = {};
 // gameCategory variable is taken from index.php?category=Whatever
 
 let currentQuiz = null; // Unified quiz object from QuizManager
@@ -457,8 +458,13 @@ let meleeHitProbabilityNoAnswer = 0.1; // Probability to hit in melee without an
 let overlandRenderer = null;
 let currentMission = null;
 let currentMissionConfig = null;
+let pendingMissionContentOverride = null;
+let baseOrganizedVerses = null;
+let baseAllQualities = null;
 window.missionWorlds = [];
 let missionsInitialized = false;
+
+window.currentMission = null;
 
 // Verse Test shield setting (Option A/B)
 let verseTestShielded = localStorage.getItem('verseTestShielded') === 'true';
@@ -750,6 +756,37 @@ function loadVersesFromBundle() {
     organizedVerses = QuizManager.organizeByCategory2(filteredVerses);
 }
 
+function captureBaseContentState() {
+    if (!baseOrganizedVerses && organizedVerses) {
+        baseOrganizedVerses = organizedVerses;
+    }
+    if (!baseAllQualities && Array.isArray(ALL_QUALITIES)) {
+        baseAllQualities = ALL_QUALITIES.slice();
+    }
+}
+
+function applyMissionContentOverride(override) {
+    if (!override || !override.organizedVerses) return false;
+    captureBaseContentState();
+    organizedVerses = override.organizedVerses;
+    ALL_QUALITIES = override.allQualities.slice();
+    QUALITIES = override.allQualities.slice();
+    window._discipleshipMissionContent = override;
+    return true;
+}
+
+function clearMissionContentOverride() {
+    pendingMissionContentOverride = null;
+    window._discipleshipMissionContent = null;
+    if (baseOrganizedVerses) {
+        organizedVerses = baseOrganizedVerses;
+    }
+    if (baseAllQualities) {
+        ALL_QUALITIES = baseAllQualities.slice();
+        QUALITIES = baseAllQualities.slice();
+    }
+}
+
 // === Custom Config Loading (from URL or localStorage) ===
 
 function loadUrlConfig() {
@@ -1014,7 +1051,12 @@ function startGame(mode, roomId, missionOpts) {
     if (missionOpts && mode === 'solo') {
         currentMission = preservedMission;
         currentMissionConfig = preservedMissionConfig;
+        window.currentMission = currentMission;
         console.log('[MISSION] Restored mission state after resetGameState:', currentMission?.name);
+    } else {
+        currentMission = null;
+        currentMissionConfig = null;
+        window.currentMission = null;
     }
 
     // Handle mission config passed directly from startMission()
@@ -1446,9 +1488,10 @@ function initializeVerseCounter() {
 }
 
 // Callback for QuizManager to notify of correct answers
- window.onQuizCorrectAnswer = function (quizMode, verseReference, combatCategory) {
+window.onQuizCorrectAnswer = function (quizMode, verseReference, combatCategory) {
     // Store reference for display in UI
     lastAnsweredReference = verseReference;
+    const isDiscipleshipMission = currentMission && currentMission.type === 'discipleship';
 
     if (player && combatCategory) {
         player.currentCombatCategory = combatCategory;
@@ -1516,7 +1559,7 @@ function initializeVerseCounter() {
     }
 
     // Track daily challenge progress (only first_letter mode)
-    if (quizMode === 'first_letter') {
+    if (quizMode === 'first_letter' && !isDiscipleshipMission) {
         if (!dailyChallengeCompleted && dailyChallengeProgress < dailyChallengeGoal) {
             dailyChallengeProgress++;
             localStorage.setItem('dailyChallengeProgress', dailyChallengeProgress.toString());
@@ -1553,7 +1596,7 @@ function initializeVerseCounter() {
         }
 
         // Track unique verses learned (first_letter and cloze modes count)
-        if (quizMode === 'first_letter' || quizMode === 'cloze') {
+        if ((quizMode === 'first_letter' || quizMode === 'cloze') && !isDiscipleshipMission) {
             if (window.progressManager) {
                 const isNew = progressManager.addVerseLearned(verseReference);
                 if (isNew) {
@@ -1937,9 +1980,27 @@ async function init() {
                         id: config.missionId,
                         name: config.missionName || config.missionId,
                         worldId: config.worldId,
-                        xpMultiplier: config.xpMultiplier || 1.0
+                        xpMultiplier: config.xpMultiplier || 1.0,
+                        type: config.missionType || 'verse',
+                        packId: config.packId || null,
+                        unitIds: config.unitIds || null
                     };
+                    window.currentMission = currentMission;
                     console.log('[MISSION] Set currentMission from server config:', currentMission.name);
+                    if (currentMission.type === 'discipleship' && window.discipleshipMissionManager) {
+                        window.discipleshipMissionManager.buildMissionOverride(currentMission).then(function (override) {
+                            pendingMissionContentOverride = override;
+                            applyMissionContentOverride(override);
+                            if (override && override.allQualities && override.allQualities.length > 0) {
+                                window.vQuality = override.allQualities[0];
+                                if (window.QuizManager && typeof QuizManager.pickQualityVerse === 'function') {
+                                    QuizManager.pickQualityVerse();
+                                }
+                            }
+                        }).catch(function (error) {
+                            console.error('Failed to load discipleship mission content from server config:', error);
+                        });
+                    }
                 }
                 // Override local quiz settings with server-authoritative values
                 if (config.quizSettings) {
@@ -2049,6 +2110,11 @@ async function init() {
             // Add any categories in verse data that weren't in the hardcoded list
             availableCats.forEach(c => { if (!ALL_QUALITIES.includes(c)) ALL_QUALITIES.push(c); });
             QUALITIES = ALL_QUALITIES;
+        }
+
+        captureBaseContentState();
+        if (pendingMissionContentOverride) {
+            applyMissionContentOverride(pendingMissionContentOverride);
         }
 
         // Apply level 1 qualities from custom config (if present)
@@ -2792,12 +2858,13 @@ function handleOverlandClick(x, y) {
         if (window.ReviewMode) {
             const selected = overlandRenderer.getSelectedMission();
             let reviewQuality = null;
+            let selectedMission = null;
             if (selected && window.worldsWithMissions && window.worldsWithMissions.length > 0) {
                 const world = window.worldsWithMissions.find(w => w.id === selected.worldId);
                 if (world) {
-                    const mission = world.missions.find(m => m.id === selected.missionId);
-                    if (mission && mission.qualities && mission.qualities.length > 0) {
-                        reviewQuality = mission.qualities[0];
+                    selectedMission = world.missions.find(m => m.id === selected.missionId);
+                    if (selectedMission && selectedMission.qualities && selectedMission.qualities.length > 0) {
+                        reviewQuality = selectedMission.qualities[0];
                     }
                 }
             }
@@ -2806,19 +2873,32 @@ function handleOverlandClick(x, y) {
                 returnTo: 'overland',
                 vQuality: reviewQuality
             };
+
+            const startReview = function () {
+                ReviewMode.startReviewMode(reviewOptions);
+                setupReviewClickHandler();
+            };
+
+            if (selectedMission && selectedMission.type === 'discipleship' && window.discipleshipMissionManager) {
+                window.discipleshipMissionManager.buildMissionOverride(selectedMission).then(function (override) {
+                    pendingMissionContentOverride = override;
+                    applyMissionContentOverride(override);
+                    startReview();
+                }).catch(function (error) {
+                    console.error('Failed to prepare discipleship review content:', error);
+                });
+                return;
+            }
             
             if (typeof organizedVerses === 'undefined' || !organizedVerses || Object.keys(organizedVerses).length === 0) {
                 console.log('Loading verses before entering review mode...');
                 loadVerses().then(() => {
                     console.log('Verses loaded, entering review mode');
-
-                    ReviewMode.startReviewMode(reviewOptions);
-                    setupReviewClickHandler();
+                    startReview();
                 });
             } else {
                 console.log('Verses already loaded, entering review mode');
-                ReviewMode.startReviewMode(reviewOptions);
-                setupReviewClickHandler();
+                startReview();
             }
         }
         return;
@@ -2860,7 +2940,13 @@ async function startMission(worldId, missionId) {
         }
 
         currentMission = mission;
+        window.currentMission = currentMission;
         currentMissionConfig = missionClient.missionToGameConfig(mission);
+        if (mission.type === 'discipleship' && window.discipleshipMissionManager) {
+            pendingMissionContentOverride = await window.discipleshipMissionManager.buildMissionOverride(mission);
+        } else {
+            pendingMissionContentOverride = null;
+        }
 
         console.log('Starting mission:', mission.name);
 
@@ -2927,11 +3013,15 @@ function completeMission(stars) {
     
     currentMission = null;
     currentMissionConfig = null;
+    window.currentMission = null;
+    clearMissionContentOverride();
 }
 
 function returnToOverland() {
     currentMission = null;
     currentMissionConfig = null;
+    window.currentMission = null;
+    clearMissionContentOverride();
     showOverland();
 }
 
@@ -3030,7 +3120,7 @@ function gameLoop(generation) {
 
     if (window.gameMode === 'game') {
         const uiState = {
-            vQuality: window.vQuality,
+            vQuality: (currentQuiz && currentQuiz.contentCategory) ? currentQuiz.contentCategory : window.vQuality,
             currentCombatCategory: player ? player.currentCombatCategory : null,
             categoryPickerOpen,
             allCategories: QUALITIES,
@@ -3041,8 +3131,10 @@ function gameLoop(generation) {
             lastAttackedMonster,
             explosionTimer,
             currentVerse: {
-                text: answerFullVerse || (currentQuiz ? currentQuiz.promptText : ''),
-                reference: (organizedVerses[window.vQuality] && organizedVerses[window.vQuality][currentVerseIndex]) ? organizedVerses[window.vQuality][currentVerseIndex].Reference : ''
+                text: answerFullVerse || (currentQuiz ? (currentQuiz.promptText || currentQuiz.answerRevealText || '') : ''),
+                reference: (currentQuiz && currentQuiz.verseReference)
+                    ? currentQuiz.verseReference
+                    : ((organizedVerses[window.vQuality] && organizedVerses[window.vQuality][currentVerseIndex]) ? organizedVerses[window.vQuality][currentVerseIndex].Reference : '')
             },
             quiz: answerFullVerse ? null : currentQuiz,
             menuState: {

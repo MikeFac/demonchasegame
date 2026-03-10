@@ -265,6 +265,9 @@
         clearRepeatTimer();
         
         if (returnToMode === 'overland' && typeof showOverland === 'function') {
+            if (typeof clearMissionContentOverride === 'function' && !window.currentMission) {
+                clearMissionContentOverride();
+            }
             window.gameMode = 'overland';
             showOverland();
         } else {
@@ -286,12 +289,99 @@
                 if (verse.Reference === reference) {
                     return {
                         text: verse.Text,
-                        category: category
+                        category: category,
+                        entry: verse,
+                        discipleshipContent: verse.discipleshipContent || null
                     };
                 }
             }
         }
         return null;
+    }
+
+    function drawWrappedParagraph(text, x, startY, maxWidth, font, color, lineHeight, maxLines) {
+        if (!text) return startY;
+        const words = String(text).split(' ');
+        let line = '';
+        let y = startY;
+        let linesDrawn = 0;
+
+        ctx.font = font;
+        ctx.fillStyle = color;
+
+        for (let i = 0; i < words.length; i++) {
+            const testLine = line + words[i] + ' ';
+            const testWidth = ctx.measureText(testLine).width;
+            if (testWidth > maxWidth && line && (!maxLines || linesDrawn < maxLines - 1)) {
+                ctx.fillText(line.trim(), x, y);
+                y += lineHeight;
+                line = words[i] + ' ';
+                linesDrawn++;
+            } else {
+                line = testLine;
+            }
+        }
+
+        if (line && (!maxLines || linesDrawn < maxLines)) {
+            ctx.fillText(line.trim(), x, y);
+            y += lineHeight;
+        }
+
+        return y;
+    }
+
+    function displayReviewDiscipleshipEntry(verseReference, verseDetails) {
+        const entry = verseDetails && verseDetails.entry;
+        const content = verseDetails && verseDetails.discipleshipContent;
+        if (!entry || !content) {
+            displayReviewVerse(verseDetails ? verseDetails.text : '');
+            return;
+        }
+
+        let y = 96;
+        const maxWidth = canvas.width - 40;
+        const passages = Array.isArray(content.passages) ? content.passages : [];
+
+        ctx.fillStyle = '#f5c542';
+        ctx.font = 'bold 16px Arial';
+        ctx.fillText(content.type ? content.type.toUpperCase() : 'DISCIPLESHIP', 20, y);
+        y += 30;
+
+        ctx.fillStyle = '#ffffff';
+        ctx.font = 'bold 30px Arial';
+        y = drawWrappedParagraph(content.title || verseReference, 20, y, maxWidth, 'bold 30px Arial', '#ffffff', 34, 2) + 6;
+
+        if (content.summary) {
+            y = drawWrappedParagraph(content.summary, 20, y, maxWidth, '20px Arial', '#e7edf6', 28, 3) + 10;
+        }
+
+        if (passages.length > 0) {
+            ctx.fillStyle = '#9fd0ff';
+            ctx.font = 'bold 18px Arial';
+            ctx.fillText('Passage', 20, y);
+            y += 26;
+            ctx.fillStyle = '#ffffff';
+            ctx.font = '18px Arial';
+            ctx.fillText(passages[0].reference || verseReference, 20, y);
+            y += 28;
+            y = drawWrappedParagraph(passages[0].text || verseDetails.text, 20, y, maxWidth, '22px Arial', '#ffffff', 30, 5) + 8;
+        }
+
+        if (content.contextCard && content.contextCard.body) {
+            ctx.fillStyle = '#9fd0ff';
+            ctx.font = 'bold 18px Arial';
+            ctx.fillText(content.contextCard.title || 'Context', 20, y);
+            y += 26;
+            y = drawWrappedParagraph(content.contextCard.body, 20, y, maxWidth, '18px Arial', '#d8e4f2', 24, 4) + 8;
+        }
+
+        if (content.reflection && content.reflection.prompt) {
+            ctx.fillStyle = '#f5c542';
+            ctx.font = 'bold 18px Arial';
+            ctx.fillText('Reflect', 20, y);
+            y += 26;
+            drawWrappedParagraph(content.reflection.prompt, 20, y, maxWidth, '18px Arial', '#fff6d9', 24, 3);
+        }
     }
 
     function displayReviewVerseScreen() {
@@ -377,7 +467,9 @@
                 verseReference = qualityVerses[currentReviewVerseIndex].Reference;
                 verseDetails = {
                     text: qualityVerses[currentReviewVerseIndex].Text,
-                    category: window.vQuality
+                    category: window.vQuality,
+                    entry: qualityVerses[currentReviewVerseIndex],
+                    discipleshipContent: qualityVerses[currentReviewVerseIndex].discipleshipContent || null
                 };
             }
 
@@ -387,7 +479,11 @@
                     pickRandomBackground();
                     lastRenderedVerseIndex = currentReviewVerseIndex;
                 }
-                displayReviewVerse(verseDetails.text);
+                if (verseDetails.discipleshipContent) {
+                    displayReviewDiscipleshipEntry(verseReference, verseDetails);
+                } else {
+                    displayReviewVerse(verseDetails.text);
+                }
 
                 ctx.font = '20px Arial';
                 ctx.fillStyle = 'white';
@@ -401,7 +497,7 @@
                     typeof window.MusicManager.getSongBrowsingMode === 'function' &&
                     window.MusicManager.getSongBrowsingMode();
 
-                if (!songBrowsingMode && !isAudioPlaying && !repeatEnabled && !meditationMode) {
+                if (!verseDetails.discipleshipContent && !songBrowsingMode && !isAudioPlaying && !repeatEnabled && !meditationMode) {
                     startVerseAudio(verseReference);
                 }
             }

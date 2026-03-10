@@ -151,3 +151,108 @@ Original prompt: Check the implementation of docs/multi-version-songs-implementa
   - headless browser smoke of `/missions`
     - page rendered correctly with hero, CTA buttons, and missions-specific framing
     - screenshot captured at `output/web-game/shot-0.png`
+
+2026-03-10:
+- Added a first structured discipleship content-pack example:
+  - `content-maker/packs/commandments-promises-of-jesus.json`
+- The pack stays within the narrow-extension model:
+  - Jesus-centered
+  - mobile-friendly question types only
+  - context cards, reflections, and mission framing without turning Learn mode into a full LMS
+
+2026-03-10:
+- Created branch `hybrid-discipleship-pack` and started the parallel mission-type implementation.
+- Added a first-pass discipleship mission adapter:
+  - `src/client/DiscipleshipMissionManager.js`
+  - converts pack units into pseudo-verse entries for shared gameplay compatibility
+- Added a new discipleship mission chapter:
+  - `missions/chapter4-jesus-teachings.json`
+  - chapter metadata added to `missions/chapters.json`
+- Threaded `missionType`, `packId`, and `unitIds` through:
+  - `src/shared/MissionClient.js`
+  - `src/server/missionLoader.js`
+  - `src/shared/GamePlayerHandler.js`
+- Updated runtime behavior:
+  - `game.js` now supports mission-specific content overrides for discipleship missions
+  - `QuizManager.js` can build gameplay quizzes directly from pack question entries
+  - `ReviewMode.js` can render discipleship context/reflection content instead of only verse text
+- Verification:
+  - `node --check game.js`
+  - `node --check src/client/QuizManager.js`
+  - `node --check src/client/ReviewMode.js`
+  - `node --check src/client/DiscipleshipMissionManager.js`
+  - JSON parse checks for `missions/chapters.json` and `missions/chapter4-jesus-teachings.json`
+  - browser smoke still reaches the app shell, but no end-to-end discipleship mission launch has been confirmed yet
+- Follow-up TODO:
+  - test launching `chapter4` missions from overland
+  - verify question rotation and answer reveal behavior in an actual discipleship mission
+  - verify Review mode next/prev/category behavior on discipleship entries
+  - decide whether to hide verse-audio/devotional actions for discipleship entries
+
+2026-03-10:
+- Regression smoke after the discipleship branch changes:
+  - restarted local server via `./restart-server.sh`
+  - headless browser smoke of standard solo play still reaches active gameplay from `/`
+    - screenshot showed normal verse-question combat HUD with no launch regression
+  - headless browser smoke of overland via `#btnMissions` still renders chapters/missions correctly
+    - chapter4 `The Teachings of Jesus` appears as a separate locked chapter beneath the existing three
+  - headless browser smoke of starting the first standard verse mission still reaches gameplay
+    - screenshot showed `Faith` mission combat with the expected cloze verse question
+  - headless browser smoke of `Learn Verses` on the same standard verse mission still opens Review/Learn mode correctly
+    - screenshot showed the normal devotional verse screen for `Romans 10:17`
+- Current confidence:
+  - existing solo play works
+  - existing overland/verse mission start works
+  - existing overland `Learn Verses` path for verse missions works
+- Still unverified:
+  - actual launch/playthrough of a new `discipleship` mission
+  - completion/return-to-overland flow after a discipleship mission
+
+2026-03-10:
+- Tested the new discipleship path directly and via the overland screen.
+- Direct launch check:
+  - browser-evaluated `startMission('chapter4', 'jesus-01')`
+  - mission entered gameplay successfully with discipleship content
+  - screenshot: `output/web-game/discipleship-direct-start.png`
+- Overland accessibility:
+  - chapter4 is intentionally locked until chapter3 progress is complete
+  - with seeded local `missionProgress`, overland showed `The Teachings of Jesus` unlocked and selectable
+  - selected `Kingdom Call`, and both `Start Mission` / `Learn Verses` buttons appeared as expected
+- Found and fixed a regression in the discipleship `Learn Verses` path:
+  - error: `ReferenceError: organizedVerses is not defined`
+  - cause: `organizedVerses` had been used as an implicit global in the legacy flow, but the new discipleship review path reached it earlier
+  - fix: declared `let organizedVerses = {};` near the shared content state in `game.js`
+- Post-fix verification:
+  - overland `Learn Verses` for `Kingdom Call` now opens Review/Learn correctly
+  - screenshot: `output/web-game/discipleship-overland-learn.png`
+- Remaining TODO:
+  - play through a discipleship mission far enough to confirm completion and return-to-overland behavior
+
+2026-03-10:
+- Changed chapter4 `The Teachings of Jesus` from a progression-gated chapter to an independent track.
+- Updated `missions/chapters.json` so chapter4 now has `unlockRequirement: null`.
+- Verification:
+  - `chapters.json` parses successfully
+  - browser smoke with fresh local progress shows:
+    - chapter1 unlocked
+    - chapter2 and chapter3 still locked
+    - chapter4 unlocked and selectable as a separate track
+  - screenshot: `output/web-game/discipleship-track-unlocked.png`
+
+2026-03-10:
+- Adjusted discipleship-mission answer UI without affecting standard verse missions.
+- Implemented a discipleship-only multi-choice layout in:
+  - `src/client/Renderer.js`
+  - `src/client/InputHandler.js`
+- New behavior for discipleship questions with more than 2 options:
+  - 2-column grid instead of a single cramped row
+  - taller buttons
+  - wrapped answer text inside each button
+  - removed the redundant `Choose the best answer` label to avoid fighting the prompt text
+- Also hardened `QuizManager.pickQualityVerse()` for injected discipleship categories so missing `qualityIndex` entries no longer crash mission startup.
+- Verification:
+  - `node --check src/client/Renderer.js`
+  - `node --check src/client/InputHandler.js`
+  - `node --check src/client/QuizManager.js`
+  - browser smoke of `startMission('chapter4', 'jesus-01')`
+  - screenshot: `output/web-game/discipleship-grid-layout.png`
