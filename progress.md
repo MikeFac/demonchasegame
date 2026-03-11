@@ -275,6 +275,19 @@ Original prompt: Check the implementation of docs/multi-version-songs-implementa
     - `output/web-game/missions-scroll-small-before.png`
     - `output/web-game/missions-scroll-small-after.png`
 
+2026-03-11:
+- Reworked the Three Circles pack into a brokenness-first version after reviewing alternative public trainings that start from brokenness rather than God's design.
+- Added a new discipleship mission:
+  - `jesus-05`
+  - `Three Circles: Brokenness to Gospel`
+  - backed by `content-maker/packs/three-circles-gospel-conversation.json`
+- Verification:
+  - mission manifests parse successfully
+  - browser screenshot confirms the mission appears in the discipleship list:
+    - `output/web-game/three-circles-mission-list.png`
+  - browser screenshot confirms the mission starts correctly:
+    - `output/web-game/three-circles-mission-start.png`
+
 2026-03-10:
 - Adjusted discipleship-mission answer UI without affecting standard verse missions.
 - Implemented a discipleship-only multi-choice layout in:

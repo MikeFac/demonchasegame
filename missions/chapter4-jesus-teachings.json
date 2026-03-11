@@ -85,6 +85,34 @@
       "monstersToKill": 24,
       "spawnRate": 13,
       "xpMultiplier": 1.5
+    },
+    {
+      "id": "jesus-05",
+      "name": "Three Circles: Brokenness to Gospel",
+      "description": "Learn a brokenness-first gospel presentation covering brokenness, God's design, the gospel, repentance, and new life.",
+      "type": "discipleship",
+      "packId": "three-circles-gospel-conversation",
+      "unitIds": [
+        "three-circles-overview",
+        "brokenness-first",
+        "gods-design-contrast",
+        "sin-and-false-escapes",
+        "the-gospel-circle",
+        "repent-and-believe",
+        "recover-and-pursue",
+        "drawing-the-diagram",
+        "conversation-and-invitation"
+      ],
+      "mapStyle": "classic",
+      "qualities": ["Discernment", "Trust", "Obedience", "Hope"],
+      "monsters": ["Deception", "Fear", "Shame", "Unbelief"],
+      "monsterDamageFactor": 1.3,
+      "monsterSpeed": 6,
+      "playerSpeed": 5,
+      "maxMonsters": 30,
+      "monstersToKill": 22,
+      "spawnRate": 14,
+      "xpMultiplier": 1.5
     }
   ]
 }

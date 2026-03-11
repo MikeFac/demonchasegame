@@ -1,4 +1,4 @@
-var CACHE_NAME = 'versebattles-v11';
+var CACHE_NAME = 'versebattles-v12';
 
 // HTML routes that should behave like part of the installable app.
 var APP_NAVIGATION_PATHS = {
@@ -166,6 +166,10 @@ self.addEventListener('fetch', function (event) {
     if (url.pathname.startsWith('/lobby')) return;
     if (url.pathname.startsWith('/audio/')) return;  // Verse songs - managed by VerseSongService
     if (url.pathname.startsWith('/public/audio')) return;
+    if (url.pathname.startsWith('/missions/') && url.pathname.endsWith('.json')) {
+        event.respondWith(fetch(event.request));
+        return;
+    }
     
     // Cache-first for local sounds (game sound effects only)
     if (url.pathname.startsWith('/sounds/') && url.pathname.endsWith('.mp3')) {
