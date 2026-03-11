@@ -1,5 +1,7 @@
 # Spawning into Walls Problem Analysis
 
+> **Status note (2026-03-08):** This document describes one real transition-ordering bug, but a later multiplayer issue also existed: clients could overwrite the server-assigned player position with the shared room spawn when `walls` arrived. `game.js` now prefers the authoritative per-player server position when available.
+
 ## Problem Description
 
 When players level up and transition to a new maze, they sometimes spawn inside walls (green areas), making them stuck and unable to move until they take damage or the game resets.

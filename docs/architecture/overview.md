@@ -1,9 +1,19 @@
 # Demon Chase Game - Project Overview
 
-**Last Updated:** 2026-02-27
+**Last Updated:** 2026-03-08
 
 ## Introduction
 Demon Chase Game is a multiplayer web-based Bible verse quiz game with top-down dungeon combat. Players fight demons representing negative concepts (Fear, Doubt, Condemnation, etc.) by answering Bible verse quizzes to earn ammo and deal damage. Features a chapter-based mission system with overland campaign map, AI devotional sermons, and progressive verse memorization.
+
+## Current Implementation Notes
+
+- Combat currently includes category-based bullet affinity using shared `LevelConfig` multipliers.
+- The same shared engine powers server multiplayer and offline/local solo.
+- Canvas gameplay input now supports touch as well as mouse.
+- Multiplayer spawn reconciliation now prefers the authoritative per-player server position during wall updates.
+- Current baseline balance:
+  - Level 1: 30 max monsters, 16s spawn interval, 15 kills to advance
+  - Level 2: 26 max monsters, 8.4s spawn interval, 21 kills to advance
 
 ## Technology Stack
 

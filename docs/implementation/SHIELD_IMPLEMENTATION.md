@@ -1,5 +1,7 @@
 # Shield of Faith Implementation Plan
 
+> **Status note (2026-03-08):** Historical implementation notes. Shield-style protection exists in the current game, but this file is not the current source of truth for the exact code paths.
+
 ## Overview
 Add a "Shield of Faith" collectible item that provides temporary invincibility. The shield spawns once per level and can be collected and stored in an inventory.
 

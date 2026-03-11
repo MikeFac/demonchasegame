@@ -76,14 +76,16 @@ class Renderer3D extends Renderer {
         const projectionPlane = (sceneWidth / 2) / Math.tan(this.fov / 2);
 
         const skyGradient = this.ctx.createLinearGradient(0, worldTop, 0, horizon);
-        skyGradient.addColorStop(0, '#081018');
-        skyGradient.addColorStop(1, '#1d3346');
+        skyGradient.addColorStop(0, '#7ec8ff');
+        skyGradient.addColorStop(0.55, '#bfe6ff');
+        skyGradient.addColorStop(1, '#eef8ff');
         this.ctx.fillStyle = skyGradient;
         this.ctx.fillRect(0, worldTop, this.canvas.width, horizon - worldTop);
 
         const floorGradient = this.ctx.createLinearGradient(0, horizon, 0, this.canvas.height);
-        floorGradient.addColorStop(0, '#2b2b24');
-        floorGradient.addColorStop(1, '#0d0d0a');
+        floorGradient.addColorStop(0, '#bcae8a');
+        floorGradient.addColorStop(0.55, '#927f5d');
+        floorGradient.addColorStop(1, '#62523c');
         this.ctx.fillStyle = floorGradient;
         this.ctx.fillRect(0, horizon, this.canvas.width, this.canvas.height - horizon);
 
@@ -102,14 +104,14 @@ class Renderer3D extends Renderer {
             const sliceBottom = sliceTop + sliceHeight;
             const wallVariation = this._wallVariation(rayHit.cellX, rayHit.cellY);
 
-            const brightness = Math.max(0.18, 1 - correctedDistance / this.maxViewDistance);
-            const baseR = Math.round((118 + wallVariation * 22) * brightness);
-            const baseG = Math.round((142 + wallVariation * 18) * brightness);
-            const baseB = Math.round((166 + wallVariation * 14) * brightness);
+            const brightness = Math.max(0.42, 1.08 - correctedDistance / (this.maxViewDistance * 1.12));
+            const baseR = Math.round((176 + wallVariation * 18) * brightness);
+            const baseG = Math.round((190 + wallVariation * 14) * brightness);
+            const baseB = Math.round((205 + wallVariation * 12) * brightness);
             this.ctx.fillStyle = `rgba(${baseR}, ${baseG}, ${baseB}, 1)`;
             this.ctx.fillRect(screenX, sliceTop, this.columnWidth + 1, sliceHeight);
 
-            this.ctx.fillStyle = `rgba(255,255,255,${Math.max(0.02, brightness * 0.12)})`;
+            this.ctx.fillStyle = `rgba(255,255,255,${Math.max(0.08, brightness * 0.18)})`;
             this.ctx.fillRect(screenX, sliceTop, this.columnWidth + 1, Math.max(1, sliceHeight * 0.05));
             this._drawWallSlicePattern(screenX, this.columnWidth + 1, sliceTop, sliceBottom, sliceHeight, brightness, rayHit);
 
@@ -135,12 +137,12 @@ class Renderer3D extends Renderer {
     }
 
     _drawAtmosphere(horizon, worldTop, viewAngle) {
-        this.ctx.fillStyle = 'rgba(245, 197, 66, 0.08)';
+        this.ctx.fillStyle = 'rgba(255, 238, 170, 0.34)';
         this.ctx.beginPath();
-        this.ctx.arc(this.canvas.width * 0.72, worldTop + 80, 60, 0, Math.PI * 2);
+        this.ctx.arc(this.canvas.width * 0.72, worldTop + 74, 96, 0, Math.PI * 2);
         this.ctx.fill();
 
-        this.ctx.strokeStyle = 'rgba(255,255,255,0.05)';
+        this.ctx.strokeStyle = 'rgba(255,255,255,0.11)';
         this.ctx.lineWidth = 1;
         for (let i = 0; i < 7; i++) {
             const y = horizon + i * 28;
@@ -159,7 +161,7 @@ class Renderer3D extends Renderer {
         const floorTop = horizon + 12;
         const floorBottom = this.canvas.height;
 
-        this.ctx.strokeStyle = 'rgba(225, 206, 156, 0.08)';
+        this.ctx.strokeStyle = 'rgba(255, 241, 205, 0.16)';
         this.ctx.lineWidth = 1;
         for (let i = -4; i <= 4; i++) {
             const x = vanishingX + i * (this.canvas.width * 0.07);
@@ -169,7 +171,7 @@ class Renderer3D extends Renderer {
             this.ctx.stroke();
         }
 
-        this.ctx.strokeStyle = 'rgba(255,255,255,0.04)';
+        this.ctx.strokeStyle = 'rgba(255,255,255,0.09)';
         for (let i = 1; i <= 6; i++) {
             const t = i / 6;
             const y = floorTop + (floorBottom - floorTop) * t * t;
@@ -182,7 +184,7 @@ class Renderer3D extends Renderer {
 
     _drawCeilingRibs(worldTop, horizon, viewAngle) {
         const vanishingX = this.canvas.width / 2 + Math.sin(viewAngle) * 28;
-        this.ctx.strokeStyle = 'rgba(255,255,255,0.035)';
+        this.ctx.strokeStyle = 'rgba(255,255,255,0.08)';
         this.ctx.lineWidth = 2;
         for (let i = 0; i < 5; i++) {
             const xOffset = (i - 2) * (this.canvas.width * 0.18);
@@ -208,7 +210,7 @@ class Renderer3D extends Renderer {
 
     _drawWallSlicePattern(screenX, sliceWidth, sliceTop, sliceBottom, sliceHeight, brightness, rayHit) {
         const blockHeight = Math.max(12, sliceHeight / 5);
-        this.ctx.strokeStyle = `rgba(18, 24, 30, ${0.22 * brightness + 0.08})`;
+        this.ctx.strokeStyle = `rgba(72, 82, 92, ${0.12 * brightness + 0.05})`;
         this.ctx.lineWidth = 1;
         for (let y = sliceTop + blockHeight; y < sliceBottom; y += blockHeight) {
             this.ctx.beginPath();
@@ -218,12 +220,12 @@ class Renderer3D extends Renderer {
         }
 
         if (((rayHit.cellX + rayHit.cellY) & 1) === 0) {
-            this.ctx.fillStyle = `rgba(255,255,255,${0.03 + brightness * 0.03})`;
+            this.ctx.fillStyle = `rgba(255,255,255,${0.07 + brightness * 0.05})`;
             this.ctx.fillRect(screenX, sliceTop, sliceWidth, sliceHeight);
         }
 
         if (rayHit.hitVertical) {
-            this.ctx.fillStyle = `rgba(0,0,0,${0.08 + (1 - brightness) * 0.12})`;
+            this.ctx.fillStyle = `rgba(50,58,68,${0.04 + (1 - brightness) * 0.08})`;
             this.ctx.fillRect(screenX, sliceTop, sliceWidth, sliceHeight);
         }
 
@@ -264,16 +266,16 @@ class Renderer3D extends Renderer {
         const insetW = Math.max(1, sliceWidth * 0.72);
         const insetH = sliceHeight * 0.54;
 
-        this.ctx.fillStyle = `rgba(16, 22, 30, ${0.12 + (1 - brightness) * 0.14})`;
+        this.ctx.fillStyle = `rgba(109, 123, 138, ${0.08 + (1 - brightness) * 0.08})`;
         this.ctx.fillRect(insetX, insetY, insetW, insetH);
-        this.ctx.strokeStyle = `rgba(205, 216, 228, ${0.04 + brightness * 0.08})`;
+        this.ctx.strokeStyle = `rgba(255, 255, 255, ${0.08 + brightness * 0.1})`;
         this.ctx.lineWidth = 1;
         this.ctx.strokeRect(insetX, insetY, insetW, insetH);
     }
 
     _drawWallBaseShadow(screenX, sliceWidth, sliceBottom, sliceHeight, brightness) {
         const shadowHeight = Math.max(4, sliceHeight * 0.08);
-        this.ctx.fillStyle = `rgba(0, 0, 0, ${0.1 + (1 - brightness) * 0.16})`;
+        this.ctx.fillStyle = `rgba(54, 48, 36, ${0.06 + (1 - brightness) * 0.08})`;
         this.ctx.fillRect(screenX, sliceBottom - shadowHeight, sliceWidth, shadowHeight);
     }
 
@@ -286,7 +288,7 @@ class Renderer3D extends Renderer {
         const archBottom = sliceTop + sliceHeight * 0.88;
         const archRadius = archWidth * 0.5;
         const sideWidth = Math.max(1, sliceWidth * 0.16);
-        const darkness = 0.16 + (1 - brightness) * 0.18;
+        const darkness = 0.07 + (1 - brightness) * 0.1;
 
         this.ctx.fillStyle = `rgba(0, 0, 0, ${darkness})`;
         this.ctx.fillRect(archX, archTop + archRadius * 0.5, archWidth, archBottom - (archTop + archRadius * 0.5));
@@ -350,7 +352,7 @@ class Renderer3D extends Renderer {
             this.canvas.width * 0.78
         );
         edgeShade.addColorStop(0, 'rgba(0,0,0,0)');
-        edgeShade.addColorStop(1, 'rgba(0,0,0,0.32)');
+        edgeShade.addColorStop(1, 'rgba(88,110,132,0.14)');
         this.ctx.fillStyle = edgeShade;
         this.ctx.fillRect(0, worldTop, this.canvas.width, this.canvas.height - worldTop);
     }
@@ -378,8 +380,8 @@ class Renderer3D extends Renderer {
         const radius = 18;
         const gradient = this.ctx.createLinearGradient(x, y, x, y + height);
         const warm = spec.type === 'fire';
-        gradient.addColorStop(0, warm ? 'rgba(131, 51, 27, 0.78)' : 'rgba(19, 28, 40, 0.76)');
-        gradient.addColorStop(1, warm ? 'rgba(72, 18, 10, 0.86)' : 'rgba(7, 10, 16, 0.84)');
+        gradient.addColorStop(0, warm ? 'rgba(193, 102, 55, 0.84)' : 'rgba(204, 224, 242, 0.84)');
+        gradient.addColorStop(1, warm ? 'rgba(124, 46, 18, 0.9)' : 'rgba(120, 151, 179, 0.88)');
 
         this.ctx.beginPath();
         this.ctx.moveTo(x + radius, y);
@@ -395,11 +397,11 @@ class Renderer3D extends Renderer {
         this.ctx.fillStyle = gradient;
         this.ctx.fill();
 
-        this.ctx.strokeStyle = warm ? 'rgba(255, 188, 121, 0.58)' : 'rgba(255, 255, 255, 0.22)';
+        this.ctx.strokeStyle = warm ? 'rgba(255, 214, 168, 0.72)' : 'rgba(255, 255, 255, 0.4)';
         this.ctx.lineWidth = 2;
         this.ctx.stroke();
 
-        this.ctx.fillStyle = 'rgba(255,255,255,0.06)';
+        this.ctx.fillStyle = 'rgba(255,255,255,0.18)';
         this.ctx.fillRect(x + 8, y + 8, width - 16, Math.max(10, height * 0.18));
 
         this.ctx.save();

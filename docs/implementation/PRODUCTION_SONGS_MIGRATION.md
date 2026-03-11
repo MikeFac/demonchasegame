@@ -1,5 +1,7 @@
 # Production Songs Migration Guide
 
+> **Status note (2026-03-08):** Historical migration guide for an earlier batch. Verify current batch tooling and export scripts before using this as a live runbook.
+
 ## Overview
 
 This guide walks through migrating 79 locally-generated verse songs to production, including both the MongoDB database records and audio files.

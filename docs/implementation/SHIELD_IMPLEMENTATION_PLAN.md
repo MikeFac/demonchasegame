@@ -1,5 +1,7 @@
 # Shield of Faith Implementation Plan
 
+> **Status note (2026-03-08):** Historical planning document. Keep for design context only.
+
 ## Overview
 Add an inventory system with collectible treasures, starting with the "Shield of Faith" that provides temporary invincibility.
 

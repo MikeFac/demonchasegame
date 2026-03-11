@@ -318,3 +318,20 @@ Original prompt: Check the implementation of docs/multi-version-songs-implementa
   - `node --check src/client/QuizManager.js`
   - browser smoke of `startMission('chapter4', 'jesus-01')`
   - screenshot: `output/web-game/discipleship-grid-layout.png`
+
+2026-03-12:
+- Brightened 3D gameplay visuals in `src/client/Renderer3D.js` to favor a high-visibility daylight look over the previous darker dungeon presentation.
+- Increased sky and floor brightness, reduced heavy shadowing, lifted wall lighting, and made 3D touch controls easier to read against the brighter scene.
+- Created a retrievable backup bundle for the current demon-strike splash:
+  - `backups/dcgame/splash-automation-2026-03-12/splash_strike.png`
+  - `backups/dcgame/splash-automation-2026-03-12/antigravity-source/`
+  - `backups/dcgame/splash-automation-2026-03-12/README.md`
+
+2026-03-12:
+- Increased the startup splash visible duration by another 0.5s in `index.html` by moving the fade start from `2500ms` to `3000ms`.
+- Kept the downstream menu/VOTD timing aligned by moving the `VotdMenuOverlay` auto-show delay from `3500ms` to `4000ms`.
+- Verification:
+  - `node --check src/client/Renderer3D.js`
+  - restarted app with `./restart-server.sh`
+  - Playwright smoke on `http://localhost:3500/?viewMode=3d` clicking `#btnSolo`
+  - screenshot confirmed brightened 3D scene: `output/web-game/shot-0.png`

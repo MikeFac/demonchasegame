@@ -1,5 +1,7 @@
 # Quiz Settings GameConfig Integration Plan
 
+> **Status note (2026-03-08):** Historical planning doc. Quiz settings are now part of the live GameConfig flow, so this file should be read as design history rather than an exact implementation map.
+
 ## Problem Statement
 
 Quiz settings are currently client-side globals that vary per-player, creating inconsistent difficulty in multiplayer games. They should be part of GameConfig to ensure all players in a game experience the same quiz difficulty.

@@ -1,5 +1,7 @@
 # Solo Game Configuration - Implementation Summary
 
+> **Status note (2026-03-08):** Still broadly accurate for solo difficulty and quiz-balance capture, but solo/offline play now also runs through the shared engine path and current level defaults have changed in `src/shared/LevelConfig.js`.
+
 ## Problem Solved
 
 ✅ **Before**: Solo games ignored quiz slider settings. Server always used defaults (30/30/25/15).
