@@ -113,6 +113,31 @@
       "monstersToKill": 22,
       "spawnRate": 14,
       "xpMultiplier": 1.5
+    },
+    {
+      "id": "jesus-06",
+      "name": "411: Why, Who, What, When",
+      "description": "Learn the 411 disciple-making tool focused on why, who, what, and when of making disciples.",
+      "type": "discipleship",
+      "packId": "411-disciple-making-training",
+      "unitIds": [
+        "what-is-411",
+        "why-make-disciples",
+        "who-to-reach",
+        "what-to-say",
+        "when-to-start",
+        "passing-on-411"
+      ],
+      "mapStyle": "open",
+      "qualities": ["Obedience", "Discernment", "Trust", "Hope"],
+      "monsters": ["Fear", "Deception", "Shame", "Ignorance"],
+      "monsterDamageFactor": 1.3,
+      "monsterSpeed": 6,
+      "playerSpeed": 5,
+      "maxMonsters": 28,
+      "monstersToKill": 20,
+      "spawnRate": 14,
+      "xpMultiplier": 1.5
     }
   ]
 }

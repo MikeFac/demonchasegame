@@ -52,7 +52,7 @@
       "theme": "forest",
       "authorId": "system",
       "visibility": "public",
-      "missionIds": ["jesus-01", "jesus-02", "jesus-03", "jesus-04", "jesus-05"],
+      "missionIds": ["jesus-01", "jesus-02", "jesus-03", "jesus-04", "jesus-05", "jesus-06"],
       "unlockRequirement": null
     }
   ]

@@ -288,6 +288,19 @@ Original prompt: Check the implementation of docs/multi-version-songs-implementa
   - browser screenshot confirms the mission starts correctly:
     - `output/web-game/three-circles-mission-start.png`
 
+2026-03-11:
+- Added a new discipleship mission for the 411 disciple-making tool:
+  - `jesus-06`
+  - `411: Why, Who, What, When`
+  - backed by `content-maker/packs/411-disciple-making-training.json`
+- Verification:
+  - mission manifests and pack JSON parse successfully
+  - browser screenshot confirms the mission appears in the discipleship list:
+    - `output/web-game/411-mission-list.png`
+  - direct mission launch reaches gameplay:
+    - `output/web-game/411-mission-start.png`
+  - note: the captured gameplay screenshot landed before the first question prompt visibly rendered, so only launch into gameplay was confirmed in that artifact
+
 2026-03-10:
 - Adjusted discipleship-mission answer UI without affecting standard verse missions.
 - Implemented a discipleship-only multi-choice layout in:
