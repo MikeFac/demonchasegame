@@ -1996,8 +1996,11 @@ class Renderer {
         if (!this.assets.particleBurstImg || !this.assets.particleBurstImg.complete) {
             if (deathParticles.length > 0) {
                 console.warn('Particle sprite not loaded, using fallback rendering');
-                // Draw simple expanding red circles as fallback
                 deathParticles.forEach(particle => {
+                    if (particle.type === 'heavenly') {
+                        this._drawHeavenlyKillEffect2D(particle, camera);
+                        return;
+                    }
                     const screenX = particle.x - camera.x;
                     const screenY = particle.y - camera.y;
                     const radius = 10 + (particle.frame * 2); // Expand over time
@@ -2020,6 +2023,11 @@ class Renderer {
         const columns = 6;    // 6 columns in the sprite sheet
 
         deathParticles.forEach(particle => {
+            if (particle.type === 'heavenly') {
+                this._drawHeavenlyKillEffect2D(particle, camera);
+                return;
+            }
+
             // Calculate which frame to show (0-23)
             const frame = Math.min(particle.frame, 23);
 
@@ -2043,5 +2051,57 @@ class Renderer {
                 frameSize, frameSize
             );
         });
+    }
+
+    _drawHeavenlyKillEffect2D(particle, camera) {
+        const progress = Math.min(1, (particle.frame || 0) / Math.max(1, (particle.maxFrames || 10) - 1));
+        const screenX = particle.x - camera.x;
+        const screenY = particle.y - camera.y - progress * 42;
+        const glowRadius = 34 + progress * 30;
+        const alpha = 1 - progress;
+
+        this.ctx.save();
+        this.ctx.globalAlpha = alpha * 0.95;
+
+        const glow = this.ctx.createRadialGradient(screenX, screenY, 0, screenX, screenY, glowRadius);
+        glow.addColorStop(0, 'rgba(255, 252, 225, 1)');
+        glow.addColorStop(0.35, 'rgba(255, 232, 145, 0.88)');
+        glow.addColorStop(0.65, 'rgba(255, 214, 96, 0.55)');
+        glow.addColorStop(1, 'rgba(255, 210, 90, 0)');
+        this.ctx.fillStyle = glow;
+        this.ctx.beginPath();
+        this.ctx.arc(screenX, screenY, glowRadius, 0, Math.PI * 2);
+        this.ctx.fill();
+
+        this.ctx.fillStyle = `rgba(255, 244, 188, ${0.18 * alpha})`;
+        this.ctx.fillRect(screenX - glowRadius * 0.22, screenY - glowRadius * 1.9, glowRadius * 0.44, glowRadius * 2.2);
+
+        this.ctx.strokeStyle = `rgba(255, 245, 205, ${0.8 * alpha})`;
+        this.ctx.lineWidth = 4;
+        this.ctx.beginPath();
+        this.ctx.moveTo(screenX, screenY - glowRadius * 1.0);
+        this.ctx.lineTo(screenX, screenY + glowRadius * 0.45);
+        this.ctx.moveTo(screenX - glowRadius * 0.5, screenY - glowRadius * 0.12);
+        this.ctx.lineTo(screenX + glowRadius * 0.5, screenY - glowRadius * 0.12);
+        this.ctx.stroke();
+
+        for (let i = 0; i < 10; i++) {
+            const t = i / 9;
+            const sparkleX = screenX + Math.cos((-0.85 + t * 1.7) * Math.PI) * (16 + progress * 18);
+            const sparkleY = screenY - 10 - progress * 28 - i * 7;
+            const sparkleSize = 2.5 + (1 - t) * 2.8;
+
+            this.ctx.fillStyle = `rgba(255, 232, 136, ${alpha * (0.96 - t * 0.28)})`;
+            this.ctx.beginPath();
+            this.ctx.arc(sparkleX, sparkleY, sparkleSize, 0, Math.PI * 2);
+            this.ctx.fill();
+        }
+
+        this.ctx.fillStyle = `rgba(255, 250, 225, ${0.95 * alpha})`;
+        this.ctx.font = `bold ${Math.round(18 + glowRadius * 0.42)}px Georgia`;
+        this.ctx.textAlign = 'center';
+        this.ctx.fillText('✦', screenX, screenY + 8);
+
+        this.ctx.restore();
     }
 }

@@ -539,6 +539,11 @@ class Renderer3D extends Renderer {
 
     _drawDeathParticles3D(deathParticles, player, depthBuffer, viewAngle) {
         (deathParticles || []).forEach((particle) => {
+            if (particle.type === 'heavenly') {
+                this._drawHeavenlyKillEffect3D(particle, player, depthBuffer, viewAngle);
+                return;
+            }
+
             const projected = this._projectBillboard(particle, player, depthBuffer, viewAngle, {
                 widthScale: 0.85,
                 heightScale: 0.85,
@@ -554,6 +559,65 @@ class Renderer3D extends Renderer {
 
             this._drawExplosionBurst(projected.screenX, centerY, burstRadius, alpha);
         });
+    }
+
+    _drawHeavenlyKillEffect3D(particle, player, depthBuffer, viewAngle) {
+        const projected = this._projectBillboard(particle, player, depthBuffer, viewAngle, {
+            widthScale: 0.8,
+            heightScale: 1.15,
+            lift: 0.16,
+            baseHeight: 96
+        });
+        if (!projected) return;
+
+        const progress = Math.min(1, (particle.frame || 0) / Math.max(1, (particle.maxFrames || 10) - 1));
+        const alpha = 1 - progress;
+        const centerX = projected.screenX;
+        const centerY = projected.spriteTop + projected.spriteHeight * 0.46 - progress * projected.spriteHeight * 0.2;
+        const glowRadius = projected.spriteWidth * (0.62 + progress * 0.24);
+
+        this.ctx.save();
+        this.ctx.globalAlpha = alpha;
+
+        const glow = this.ctx.createRadialGradient(centerX, centerY, 0, centerX, centerY, glowRadius);
+        glow.addColorStop(0, 'rgba(255, 251, 225, 1)');
+        glow.addColorStop(0.4, 'rgba(255, 229, 140, 0.88)');
+        glow.addColorStop(0.68, 'rgba(255, 214, 96, 0.56)');
+        glow.addColorStop(1, 'rgba(255, 210, 90, 0)');
+        this.ctx.fillStyle = glow;
+        this.ctx.beginPath();
+        this.ctx.arc(centerX, centerY, glowRadius, 0, Math.PI * 2);
+        this.ctx.fill();
+
+        this.ctx.fillStyle = `rgba(255, 245, 196, ${0.18 * alpha})`;
+        this.ctx.fillRect(centerX - glowRadius * 0.18, centerY - glowRadius * 1.85, glowRadius * 0.36, glowRadius * 2.15);
+
+        this.ctx.strokeStyle = `rgba(255, 245, 205, ${0.82 * alpha})`;
+        this.ctx.lineWidth = Math.max(3, projected.spriteWidth * 0.04);
+        this.ctx.beginPath();
+        this.ctx.moveTo(centerX, centerY - glowRadius * 0.95);
+        this.ctx.lineTo(centerX, centerY + glowRadius * 0.4);
+        this.ctx.moveTo(centerX - glowRadius * 0.48, centerY - glowRadius * 0.12);
+        this.ctx.lineTo(centerX + glowRadius * 0.48, centerY - glowRadius * 0.12);
+        this.ctx.stroke();
+
+        for (let i = 0; i < 10; i++) {
+            const spread = -0.95 + i * 0.22;
+            const sparkleX = centerX + Math.sin(spread) * glowRadius * 0.7;
+            const sparkleY = centerY - glowRadius * (0.18 + i * 0.14) - progress * 14;
+            const sparkleR = Math.max(2, projected.spriteWidth * (0.028 + (9 - i) * 0.002));
+            this.ctx.fillStyle = `rgba(255, 231, 144, ${alpha * (0.96 - i * 0.07)})`;
+            this.ctx.beginPath();
+            this.ctx.arc(sparkleX, sparkleY, sparkleR, 0, Math.PI * 2);
+            this.ctx.fill();
+        }
+
+        this.ctx.fillStyle = `rgba(255, 250, 225, ${0.95 * alpha})`;
+        this.ctx.font = `bold ${Math.round(Math.max(18, projected.spriteWidth * 0.55))}px Georgia`;
+        this.ctx.textAlign = 'center';
+        this.ctx.fillText('✦', centerX, centerY + projected.spriteHeight * 0.08);
+
+        this.ctx.restore();
     }
 
     _drawBillboard(entity, player, depthBuffer, viewAngle, options) {

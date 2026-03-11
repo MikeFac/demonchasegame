@@ -483,6 +483,7 @@ let flashMessages = [];  // Array of { text, color, startTime, duration }
 // Particle effects
 let particleBurstImg = null;
 let deathParticles = []; // Array of active death particle animations
+let heavenlyKillCelebrationShown = false;
 
 // for monster explosion
 let explosionTimer = 0;
@@ -1747,6 +1748,23 @@ async function init() {
                     console.log(`✨ Spawned death particle at (${x}, ${y}), total active: ${deathParticles.length}`);
                 } else {
                     console.warn('Particle burst image not loaded yet');
+                }
+
+                const triggerHeavenlyBurst = !heavenlyKillCelebrationShown || Math.random() < 0.2;
+                if (triggerHeavenlyBurst) {
+                    heavenlyKillCelebrationShown = true;
+                    deathParticles.push({
+                        x: x,
+                        y: y - 18,
+                        frame: 0,
+                        frameTimer: 0,
+                        startTime: Date.now(),
+                        type: 'heavenly',
+                        maxFrames: 18
+                    });
+                    if (window.SoundEffects && typeof SoundEffects.playHeavenlyKill === 'function') {
+                        SoundEffects.playHeavenlyKill();
+                    }
                 }
 
                 // Clear enemy HUD if this was the monster we were tracking
@@ -3303,9 +3321,8 @@ function gameLoop(generation) {
                 particle.frameTimer = 0;
             }
 
-            // Remove after 24 frames (using first 4 rows of 6x6 grid)
-            // At 100ms per frame, this is 2.4 seconds total
-            return particle.frame < 24;
+            // Default death burst runs 24 frames; custom effects can override.
+            return particle.frame < (particle.maxFrames || 24);
         });
 
         // Update screen shake
