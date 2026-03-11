@@ -239,6 +239,42 @@ Original prompt: Check the implementation of docs/multi-version-songs-implementa
     - chapter4 unlocked and selectable as a separate track
   - screenshot: `output/web-game/discipleship-track-unlocked.png`
 
+2026-03-11:
+- Added a new discipleship mission in chapter4 using the new promises pack:
+  - mission id `jesus-04`
+  - mission name `Peace, Mercy, and Life`
+  - pack id `promises-of-jesus-peace-rest-forgiveness-mercy-eternal-life`
+- Updated `missions/chapter4-jesus-teachings.json` and `missions/chapters.json` so the mission appears in the independent Jesus track with no prerequisites.
+- Normalized discipleship track monster lists to supported existing monster keys only:
+  - `jesus-03`: `Discouragement` -> `Despair`
+  - `jesus-04`: `Death` -> `Despair`
+- Verification:
+  - mission manifests parse successfully
+  - browser smoke confirmed chapter4 now shows 4 missions on the Missions screen
+  - browser smoke confirmed selecting the fourth node and pressing `Start Mission` launches gameplay successfully
+  - startup gameplay screenshot captured at `output/web-game/jesus-04-start/shot-0.png`
+- Expanded the promises pack question pool for `jesus-04`:
+  - increased from 33 total questions to 99 total questions
+  - each of the 11 units now has 9 authored questions instead of 3
+- Tuned the mission length so the larger pool is more likely to appear in one run:
+  - `maxMonsters`: 28 -> 32
+  - `monstersToKill`: 18 -> 24
+  - `spawnRate`: 14 -> 13
+  - `xpMultiplier`: 1.45 -> 1.5
+- Reworked the Missions screen from node-only overland markers into a readable mission list:
+  - chapter headers plus one-line clickable mission entries
+  - mission title and learning subtitle visible in the list
+  - fixed bottom action bar with `Mission Learning` first and `Start Mission` second
+  - scrollable mission viewport with mouse-wheel and touch-drag support
+- Updated latest discipleship mission copy for clearer curriculum framing:
+  - `Jesus on Peace, Mercy, and Life`
+  - `Promises of peace, rest, forgiveness, mercy, and eternal life from the teachings of Jesus.`
+- Verification:
+  - `node --check` passed for `src/client/OverlandRenderer.js`, `src/client/InputHandler.js`, and `game.js`
+  - browser screenshots confirm the new mission list layout and scroll behavior:
+    - `output/web-game/missions-scroll-small-before.png`
+    - `output/web-game/missions-scroll-small-after.png`
+
 2026-03-10:
 - Adjusted discipleship-mission answer UI without affecting standard verse missions.
 - Implemented a discipleship-only multi-choice layout in:

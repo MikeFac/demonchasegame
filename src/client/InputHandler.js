@@ -7,6 +7,7 @@ class InputHandler {
         this.canvas = canvas;
         this.constants = constants;
         this.viewMode = '2d';
+        this.overlandTouchGesture = null;
 
         // Movement target in WORLD coordinates (where player should move towards)
         this.worldTargetX = null;
@@ -155,6 +156,10 @@ class InputHandler {
         event.preventDefault();
         const touch = event.changedTouches[0];
         const point = this._getCanvasPoint(touch.clientX, touch.clientY);
+        if (typeof gameMode !== 'undefined' && gameMode === 'overland') {
+            this.overlandTouchGesture = { x: point.x, y: point.y, moved: false };
+            return;
+        }
         this._handleGameModeTouch(point.x, point.y, false);
     }
 
@@ -163,11 +168,27 @@ class InputHandler {
         event.preventDefault();
         const touch = event.changedTouches[0];
         const point = this._getCanvasPoint(touch.clientX, touch.clientY);
+        if (typeof gameMode !== 'undefined' && gameMode === 'overland') {
+            if (this.overlandTouchGesture) {
+                const dx = point.x - this.overlandTouchGesture.x;
+                const dy = point.y - this.overlandTouchGesture.y;
+                if (Math.abs(dx) > 6 || Math.abs(dy) > 6) {
+                    this.overlandTouchGesture.moved = true;
+                }
+            }
+            return;
+        }
         this._handleGameModeTouch(point.x, point.y, true);
     }
 
     _handleTouchEnd(event) {
         if (event) event.preventDefault();
+        if (typeof gameMode !== 'undefined' && gameMode === 'overland') {
+            if (this.overlandTouchGesture && !this.overlandTouchGesture.moved && this.callbacks.onOverlandClick) {
+                this.callbacks.onOverlandClick(this.overlandTouchGesture.x, this.overlandTouchGesture.y);
+            }
+            this.overlandTouchGesture = null;
+        }
     }
 
     _handleGameModeTouch(x, y, isDrag) {

@@ -47,7 +47,7 @@
       "unitIds": ["come-to-me-and-rest", "abide-in-me", "do-not-be-afraid", "make-disciples"],
       "mapStyle": "open",
       "qualities": ["Trust", "Hope", "Obedience"],
-      "monsters": ["Blindness", "Discouragement", "Unbelief"],
+      "monsters": ["Blindness", "Despair", "Unbelief"],
       "monsterDamageFactor": 1.2,
       "monsterSpeed": 6,
       "playerSpeed": 5,
@@ -55,6 +55,36 @@
       "monstersToKill": 18,
       "spawnRate": 15,
       "xpMultiplier": 1.4
+    },
+    {
+      "id": "jesus-04",
+      "name": "Jesus on Peace, Mercy, and Life",
+      "description": "Promises of peace, rest, forgiveness, mercy, and eternal life from the teachings of Jesus.",
+      "type": "discipleship",
+      "packId": "promises-of-jesus-peace-rest-forgiveness-mercy-eternal-life",
+      "unitIds": [
+        "peace-i-leave-with-you",
+        "peace-in-me-have-peace",
+        "come-to-me-for-rest",
+        "find-rest-for-your-souls",
+        "your-father-will-forgive-you",
+        "your-sins-are-forgiven-go-in-peace",
+        "blessed-are-the-merciful",
+        "be-merciful-as-your-father",
+        "whoever-hears-and-believes-has-eternal-life",
+        "whoever-believes-has-eternal-life",
+        "i-am-the-resurrection-and-the-life"
+      ],
+      "mapStyle": "city",
+      "qualities": ["Trust", "Hope", "Obedience"],
+      "monsters": ["Fear", "Shame", "Condemnation", "Despair"],
+      "monsterDamageFactor": 1.25,
+      "monsterSpeed": 6,
+      "playerSpeed": 5,
+      "maxMonsters": 32,
+      "monstersToKill": 24,
+      "spawnRate": 13,
+      "xpMultiplier": 1.5
     }
   ]
 }

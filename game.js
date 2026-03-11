@@ -2581,6 +2581,10 @@ async function initializeMissions() {
 }
 
 let overlandClickHandler = null;
+let overlandWheelHandler = null;
+let overlandTouchStartHandler = null;
+let overlandTouchMoveHandler = null;
+let overlandTouchEndHandler = null;
 let reviewClickHandler = null;
 
 async function showOverland() {
@@ -2622,6 +2626,56 @@ window.gameMode = 'overland';
         handleOverlandClick(x, y);
     };
     canvas.addEventListener('click', overlandClickHandler);
+
+    if (overlandWheelHandler) {
+        canvas.removeEventListener('wheel', overlandWheelHandler);
+    }
+    overlandWheelHandler = function(event) {
+        if (!overlandRenderer) return;
+        event.preventDefault();
+        overlandRenderer.scrollBy(event.deltaY);
+    };
+    canvas.addEventListener('wheel', overlandWheelHandler, { passive: false });
+
+    let touchStartY = null;
+    let touchDragging = false;
+    if (overlandTouchStartHandler) {
+        canvas.removeEventListener('touchstart', overlandTouchStartHandler);
+    }
+    if (overlandTouchMoveHandler) {
+        canvas.removeEventListener('touchmove', overlandTouchMoveHandler);
+    }
+    if (overlandTouchEndHandler) {
+        canvas.removeEventListener('touchend', overlandTouchEndHandler);
+    }
+
+    overlandTouchStartHandler = function(event) {
+        if (!event.touches || event.touches.length === 0) return;
+        touchStartY = event.touches[0].clientY;
+        touchDragging = false;
+    };
+    overlandTouchMoveHandler = function(event) {
+        if (!overlandRenderer || !event.touches || event.touches.length === 0 || touchStartY === null) return;
+        const currentY = event.touches[0].clientY;
+        const delta = touchStartY - currentY;
+        if (Math.abs(delta) > 4) {
+            touchDragging = true;
+            overlandRenderer.scrollBy(delta);
+            touchStartY = currentY;
+            event.preventDefault();
+        }
+    };
+    overlandTouchEndHandler = function() {
+        touchStartY = null;
+        window.__overlandTouchDragging = touchDragging;
+        setTimeout(function () {
+            window.__overlandTouchDragging = false;
+        }, 120);
+    };
+
+    canvas.addEventListener('touchstart', overlandTouchStartHandler, { passive: true });
+    canvas.addEventListener('touchmove', overlandTouchMoveHandler, { passive: false });
+    canvas.addEventListener('touchend', overlandTouchEndHandler, { passive: true });
 
     
     await initializeMissions();
@@ -2850,6 +2904,22 @@ function handleOverlandClick(x, y) {
             canvas.removeEventListener('click', overlandClickHandler);
             overlandClickHandler = null;
         }
+        if (overlandWheelHandler) {
+            canvas.removeEventListener('wheel', overlandWheelHandler);
+            overlandWheelHandler = null;
+        }
+        if (overlandTouchStartHandler) {
+            canvas.removeEventListener('touchstart', overlandTouchStartHandler);
+            overlandTouchStartHandler = null;
+        }
+        if (overlandTouchMoveHandler) {
+            canvas.removeEventListener('touchmove', overlandTouchMoveHandler);
+            overlandTouchMoveHandler = null;
+        }
+        if (overlandTouchEndHandler) {
+            canvas.removeEventListener('touchend', overlandTouchEndHandler);
+            overlandTouchEndHandler = null;
+        }
         return;
     }
     
@@ -2868,9 +2938,9 @@ function handleOverlandClick(x, y) {
         }
     }
     
-    // Check for Learn Verses button
-    const learnClicked = overlandRenderer.isLearnVersesClicked(x, y);
-    console.log('isLearnVersesClicked:', learnClicked, 'selectedMission:', !!overlandRenderer.getSelectedMission(), 'ReviewMode:', !!window.ReviewMode);
+    // Check for Mission Learning button
+    const learnClicked = overlandRenderer.isMissionLearningClicked(x, y);
+    console.log('isMissionLearningClicked:', learnClicked, 'selectedMission:', !!overlandRenderer.getSelectedMission(), 'ReviewMode:', !!window.ReviewMode);
     if (learnClicked && overlandRenderer.getSelectedMission()) {
         if (window.ReviewMode) {
             const selected = overlandRenderer.getSelectedMission();
@@ -2929,6 +2999,22 @@ function setupReviewClickHandler() {
     if (overlandClickHandler) {
         canvas.removeEventListener('click', overlandClickHandler);
         overlandClickHandler = null;
+    }
+    if (overlandWheelHandler) {
+        canvas.removeEventListener('wheel', overlandWheelHandler);
+        overlandWheelHandler = null;
+    }
+    if (overlandTouchStartHandler) {
+        canvas.removeEventListener('touchstart', overlandTouchStartHandler);
+        overlandTouchStartHandler = null;
+    }
+    if (overlandTouchMoveHandler) {
+        canvas.removeEventListener('touchmove', overlandTouchMoveHandler);
+        overlandTouchMoveHandler = null;
+    }
+    if (overlandTouchEndHandler) {
+        canvas.removeEventListener('touchend', overlandTouchEndHandler);
+        overlandTouchEndHandler = null;
     }
     // Remove any previous review click handler
     if (reviewClickHandler) {
