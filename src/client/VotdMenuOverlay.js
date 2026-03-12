@@ -1,11 +1,26 @@
 // VotdMenuOverlay.js - Show VOTD on main menu screen
 // Displays VOTD overlay on page load, with Learn/Dismiss options
 (function () {
+    const VOTD_MENU_ENABLED_KEY = 'votdMenuEnabled';
+
+    function isVOTDMenuEnabled() {
+        return localStorage.getItem(VOTD_MENU_ENABLED_KEY) === 'true';
+    }
+
+    function setVOTDMenuEnabled(enabled) {
+        localStorage.setItem(VOTD_MENU_ENABLED_KEY, enabled ? 'true' : 'false');
+    }
+
     /**
      * Show VOTD overlay on main menu
      */
     function showVOTDOverlay() {
         console.log('showVOTDOverlay called');
+
+        if (!isVOTDMenuEnabled()) {
+            console.log('VOTD menu overlay disabled in settings');
+            return;
+        }
 
         // Get today's verse (requires VersOfTheDayManager)
         if (typeof VersOfTheDayManager === 'undefined') {
@@ -126,7 +141,9 @@
     window.VotdMenuOverlay = {
         show: showVOTDOverlay,
         hide: hideVOTDOverlay,
-        learn: learnVOTD
+        learn: learnVOTD,
+        isEnabled: isVOTDMenuEnabled,
+        setEnabled: setVOTDMenuEnabled
     };
 
     // Initialize when DOM is ready

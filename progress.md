@@ -218,6 +218,26 @@ Original prompt: Check the implementation of docs/multi-version-songs-implementa
   - chapter4 is intentionally locked until chapter3 progress is complete
   - with seeded local `missionProgress`, overland showed `The Teachings of Jesus` unlocked and selectable
   - selected `Kingdom Call`, and both `Start Mission` / `Learn Verses` buttons appeared as expected
+
+2026-03-12:
+- Added direct Reddit Pixel integration without GTM:
+  - new `public/reddit-analytics.js`
+  - landing pages now load Reddit analytics before `landing-analytics.js`
+  - `index.html` now loads Reddit analytics before `src/client/Analytics.js`
+  - `src/client/Analytics.js` now emits a one-time Reddit custom event for `start_game_after_landing`
+- Local verification:
+  - JS parse check passed for `public/reddit-analytics.js`, `public/landing-analytics.js`, and `src/client/Analytics.js`
+  - Playwright smoke reached the main app after clicking `/youth-pastors` hero CTA; screenshot artifact at `output/web-game/shot-0.png`
+  - Playwright smoke recorded one transient pageerror (`Cannot read properties of undefined (reading 'length')`) during the splash-to-app pass, but a targeted Puppeteer verification of the Reddit path showed no page errors
+  - Puppeteer verification with stubbed `window.rdt` confirmed:
+    - `/youth-pastors` fires `PageVisit` with `{ audience: "youth_pastors", page_path: "/youth-pastors" }`
+    - clicking the landing CTA stores `redditLandingIntent` in `sessionStorage`
+    - first `#btnSolo` game start after landing fires one Reddit `Custom` event with `customEventName: "start_game_after_landing"`
+    - landing intent is consumed after the event
+    - menu hides and canvas shows on game start
+- Follow-up TODO:
+  - verify in Reddit Events Manager / Pixel Helper against the live pixel, not just the local stub
+  - if the transient Playwright pageerror reappears in normal use, capture the stack and fix the underlying script path
 - Found and fixed a regression in the discipleship `Learn Verses` path:
   - error: `ReferenceError: organizedVerses is not defined`
   - cause: `organizedVerses` had been used as an implicit global in the legacy flow, but the new discipleship review path reached it earlier

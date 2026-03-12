@@ -1374,6 +1374,15 @@
           <option value="3d" data-i18n="menu.view3d">3D Experimental</option>
         </select>
       </div>
+
+      <h4 style="color: #a8c5e6; margin: 15px 0 10px 0; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 5px;">Verse of the Day</h4>
+      <div class="settings-section">
+        <label class="offline-toggle" style="margin-top: 0;">
+          <input type="checkbox" id="votdMenuToggle">
+          <span>Show Verse of the Day on menu</span>
+        </label>
+        <p style="color: #888; font-size: 11px; margin-top: 5px;">Default is off. Enable this if you want Verse of the Day to appear from the main menu.</p>
+      </div>
     </div>
 
   </div>
@@ -1638,6 +1647,7 @@
   <script src="src/client/SermonViewer.js?v=1.1"></script>
   <script src="src/client/WorldBrowser.js?v=1.0"></script>
   <script src="src/client/GroupsPanel.js?v=2.2"></script>
+  <script src="/reddit-analytics.js"></script>
   <script src="src/client/Analytics.js"></script>
   <script>
     // Parse category from URL query parameters

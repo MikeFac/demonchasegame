@@ -1431,6 +1431,7 @@ document.addEventListener('DOMContentLoaded', function () {
         const mainMenuLanguageSelect = document.getElementById('mainMenuLanguageSelect');
         const mainMenuViewModeSelect = document.getElementById('mainMenuViewModeSelect');
         const viewModeSelect = document.getElementById('viewModeSelect');
+        const votdMenuToggle = document.getElementById('votdMenuToggle');
 
         const applyLanguageChange = (newLang) => {
             localStorage.setItem('lang', newLang);
@@ -1464,6 +1465,16 @@ document.addEventListener('DOMContentLoaded', function () {
             viewModeSelect.addEventListener('change', () => {
                 persistViewMode(viewModeSelect.value);
                 updateViewModeControls(viewMode);
+            });
+        }
+
+        if (votdMenuToggle && window.VotdMenuOverlay) {
+            votdMenuToggle.checked = window.VotdMenuOverlay.isEnabled();
+            votdMenuToggle.addEventListener('change', () => {
+                window.VotdMenuOverlay.setEnabled(votdMenuToggle.checked);
+                if (!votdMenuToggle.checked) {
+                    window.VotdMenuOverlay.hide();
+                }
             });
         }
     }
