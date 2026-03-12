@@ -1,5 +1,7 @@
 # Verse-to-Song Learning System - Implementation Summary
 
+> **Status note (2026-03-08):** Historical implementation summary. The core architecture remains relevant, but operational scripts and UI/admin flows have expanded since this summary was written.
+
 ## Overview
 
 A complete educational music system that generates AI-powered songs for Bible verses, enabling dcgame players to learn Scripture through category-specific musical styles.

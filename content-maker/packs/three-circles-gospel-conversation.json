@@ -1,0 +1,897 @@
+{
+  "id": "three-circles-gospel-conversation",
+  "title": "Three Circles: Brokenness-First Gospel Conversation",
+  "theme": "Understanding and communicating a brokenness-first Three Circles presentation",
+  "description": "A discipleship and evangelism-focused content pack built around a brokenness-first Three Circles flow: Brokenness, God's Design, the Gospel, Repent and Believe, and Recover and Pursue, with added training on drawing, explaining, and inviting response.",
+  "audience": [
+    "youth",
+    "small-group",
+    "discipleship",
+    "missions",
+    "evangelism"
+  ],
+  "language": "en",
+  "version": 2,
+  "questionTypes": [
+    "multiple_choice",
+    "true_false",
+    "cloze_choice",
+    "best_application"
+  ],
+  "sourceBasis": [
+    {
+      "label": "Gospel Catalysts brokenness-first Three Circles training",
+      "url": "https://www.gospelcatalysts.com/training-resources/pages/three-circles"
+    },
+    {
+      "label": "East-West 3 Circles transcript",
+      "url": "https://www.eastwest.org/3circles/"
+    },
+    {
+      "label": "NAMB 3 Circles resource hub",
+      "url": "https://www.namb.net/mission/share-the-gospel-with-3-circles/"
+    },
+    {
+      "label": "Lifeway Three Circles teen study overview",
+      "url": "https://www.lifeway.com/en/product/three-circles-video-streaming-teen-group-P005842294"
+    }
+  ],
+  "units": [
+    {
+      "id": "three-circles-overview",
+      "title": "What Three Circles Is For",
+      "type": "invitation",
+      "summary": "Three Circles is a simple gospel conversation tool designed to help Christians explain life, brokenness, and hope in Jesus clearly and reproducibly.",
+      "difficulty": "easy",
+      "tags": ["evangelism", "overview", "conversation", "training"],
+      "passages": [
+        {
+          "reference": "2 Corinthians 5:20",
+          "text": "We are therefore ambassadors on behalf of Christ, as though God were entreating by us. We beg you on behalf of Christ, be reconciled to God."
+        }
+      ],
+      "focus": {
+        "kind": "invitation",
+        "statement": "Use simple gospel tools faithfully so people can understand and respond to Christ."
+      },
+      "contextCard": {
+        "title": "A repeatable gospel conversation",
+        "body": "Three Circles is meant to be simple, visual, and reproducible. Brokenness-first trainers emphasize that the tool can begin where many people already feel pain and disorder, then move naturally into the hope of the gospel."
+      },
+      "questions": [
+        {
+          "id": "overview-q1",
+          "type": "multiple_choice",
+          "prompt": "What is the main purpose of the Three Circles tool?",
+          "options": [
+            "To win arguments about religion",
+            "To explain the gospel simply in conversation",
+            "To replace reading the Bible",
+            "To entertain people with drawings"
+          ],
+          "correctIndex": 1,
+          "explanation": "Three Circles is meant to help people share the gospel simply and clearly."
+        },
+        {
+          "id": "overview-q2",
+          "type": "true_false",
+          "prompt": "Three Circles is designed to be reproducible and easy to use in ordinary conversations.",
+          "correctAnswer": true,
+          "explanation": "That is one of the main reasons it has become widely used."
+        },
+        {
+          "id": "overview-q3",
+          "type": "cloze_choice",
+          "prompt": "Three Circles is meant to turn everyday conversations into gospel _____.",
+          "options": ["conversations", "debates", "lectures", "performances"],
+          "correctIndex": 0,
+          "explanation": "The tool is explicitly framed around gospel conversations."
+        },
+        {
+          "id": "overview-q4",
+          "type": "best_application",
+          "prompt": "Which use best fits the purpose of Three Circles?",
+          "options": [
+            "Using it as a memorized script without listening",
+            "Using it to clarify the gospel in a real conversation",
+            "Using it only with professional preachers",
+            "Using it to avoid Scripture"
+          ],
+          "correctIndex": 1,
+          "explanation": "The tool supports real evangelistic conversations, not mechanical delivery."
+        },
+        {
+          "id": "overview-q5",
+          "type": "multiple_choice",
+          "prompt": "What makes Three Circles especially useful?",
+          "options": [
+            "It requires no biblical truth",
+            "It is simple, visual, and repeatable",
+            "It guarantees every person will believe",
+            "It avoids any call for response"
+          ],
+          "correctIndex": 1,
+          "explanation": "Its simplicity and visual clarity are central to its usefulness."
+        },
+        {
+          "id": "overview-q6",
+          "type": "true_false",
+          "prompt": "A brokenness-first version changes the conversational entry point, not the need for the gospel.",
+          "correctAnswer": true,
+          "explanation": "It changes where the conversation begins, not the core message."
+        }
+      ],
+      "reflection": {
+        "prompt": "Why might starting from a felt problem make gospel conversation easier for some people?"
+      },
+      "mission": {
+        "intro": "A gospel conversation often begins where a person already knows that life is not right.",
+        "victoryText": "You learned to see evangelism as a faithful conversation, not a performance."
+      }
+    },
+    {
+      "id": "brokenness-first",
+      "title": "Circle One: Brokenness",
+      "type": "warning",
+      "summary": "A brokenness-first version begins with the reality people already recognize: life is not the way it should be.",
+      "difficulty": "easy",
+      "tags": ["brokenness", "pain", "sin", "fall"],
+      "passages": [
+        {
+          "reference": "Romans 3:23",
+          "text": "For all have sinned, and fall short of the glory of God."
+        },
+        {
+          "reference": "Romans 8:22",
+          "text": "For we know that the whole creation groans and travails in pain together until now."
+        }
+      ],
+      "focus": {
+        "kind": "warning",
+        "statement": "Brokenness is real, and it shows that something has gone deeply wrong."
+      },
+      "contextCard": {
+        "title": "Start where people feel the fracture",
+        "body": "Some Three Circles trainers explicitly begin with brokenness because people immediately recognize grief, fear, addiction, violence, shame, fractured relationships, and death. From there, the conversation can move to why life feels so wrong."
+      },
+      "questions": [
+        {
+          "id": "brokenness-q1",
+          "type": "multiple_choice",
+          "prompt": "In a brokenness-first version, what does the first circle usually represent?",
+          "options": [
+            "Brokenness",
+            "The Gospel",
+            "God's Design",
+            "Human effort"
+          ],
+          "correctIndex": 0,
+          "explanation": "This version starts with brokenness because it connects to immediate lived experience."
+        },
+        {
+          "id": "brokenness-q2",
+          "type": "true_false",
+          "prompt": "A brokenness-first approach begins with a reality many people already feel in life.",
+          "correctAnswer": true,
+          "explanation": "That is why many people find it conversationally useful."
+        },
+        {
+          "id": "brokenness-q3",
+          "type": "cloze_choice",
+          "prompt": "This version often begins with the world we know is _____.",
+          "options": ["broken", "complete", "neutral", "finished"],
+          "correctIndex": 0,
+          "explanation": "The whole point is to begin with evident brokenness."
+        },
+        {
+          "id": "brokenness-q4",
+          "type": "multiple_choice",
+          "prompt": "Why can brokenness be a strong conversational starting point?",
+          "options": [
+            "Because it avoids truth claims",
+            "Because people already recognize pain and disorder",
+            "Because it removes the need to mention sin",
+            "Because it proves everyone understands the gospel"
+          ],
+          "correctIndex": 1,
+          "explanation": "Brokenness is immediately relatable for many listeners."
+        },
+        {
+          "id": "brokenness-q5",
+          "type": "best_application",
+          "prompt": "Which statement best fits the first circle in this version?",
+          "options": [
+            "Life is basically fine if we adjust our expectations",
+            "Life is deeply broken and needs more than self-help",
+            "Brokenness is imaginary",
+            "Brokenness has nothing to do with God or sin"
+          ],
+          "correctIndex": 1,
+          "explanation": "The first circle names the reality of brokenness honestly."
+        },
+        {
+          "id": "brokenness-q6",
+          "type": "true_false",
+          "prompt": "Starting with brokenness means the conversation should stay only at the level of pain and never move deeper.",
+          "correctAnswer": false,
+          "explanation": "The point is to start there and then move toward the deeper biblical explanation."
+        }
+      ],
+      "reflection": {
+        "prompt": "What forms of brokenness do people around you most readily admit?"
+      },
+      "mission": {
+        "intro": "Many people already know the world is fractured. The question is what explains it.",
+        "victoryText": "You started with a point of real human recognition rather than abstraction."
+      }
+    },
+    {
+      "id": "gods-design-contrast",
+      "title": "Circle Two: God's Design as the Contrast",
+      "type": "promise",
+      "summary": "After naming brokenness, the conversation explains that life was not meant to be this way because God has a good design.",
+      "difficulty": "easy",
+      "tags": ["design", "creation", "purpose", "contrast"],
+      "passages": [
+        {
+          "reference": "Genesis 1:31",
+          "text": "God saw everything that he had made, and, behold, it was very good."
+        },
+        {
+          "reference": "Genesis 2:15-17",
+          "text": "Yahweh God took the man, and put him into the garden of Eden to cultivate and keep it."
+        }
+      ],
+      "focus": {
+        "kind": "promise",
+        "statement": "Brokenness is not the original pattern; God has a good design."
+      },
+      "contextCard": {
+        "title": "Use design as explanation, not as cold opener",
+        "body": "In a brokenness-first flow, God's design is brought in as the reason brokenness feels wrong. If there were no Creator-given design, the universal longing for peace, justice, wholeness, and life would be harder to explain."
+      },
+      "questions": [
+        {
+          "id": "design-q1",
+          "type": "multiple_choice",
+          "prompt": "In this version, why is God's Design introduced after Brokenness?",
+          "options": [
+            "To show what life was meant to be",
+            "To deny suffering",
+            "To avoid the gospel",
+            "To keep the message abstract"
+          ],
+          "correctIndex": 0,
+          "explanation": "God's design explains why brokenness is truly broken."
+        },
+        {
+          "id": "design-q2",
+          "type": "true_false",
+          "prompt": "God's Design still matters even when the conversation begins with brokenness.",
+          "correctAnswer": true,
+          "explanation": "The order changes, but God's design remains essential."
+        },
+        {
+          "id": "design-q3",
+          "type": "cloze_choice",
+          "prompt": "Brokenness feels wrong because life was not designed this _____.",
+          "options": ["way", "moment", "circle", "age"],
+          "correctIndex": 0,
+          "explanation": "The point is that brokenness is a departure from God's good design."
+        },
+        {
+          "id": "design-q4",
+          "type": "multiple_choice",
+          "prompt": "What does God's Design help explain?",
+          "options": [
+            "Why people long for something better than brokenness",
+            "Why sin does not matter",
+            "Why suffering is imaginary",
+            "Why the gospel is unnecessary"
+          ],
+          "correctIndex": 0,
+          "explanation": "God's design gives meaning to our longing for wholeness."
+        },
+        {
+          "id": "design-q5",
+          "type": "best_application",
+          "prompt": "Which statement best fits this second circle?",
+          "options": [
+            "Brokenness is the final truth about life",
+            "God intended life differently, which is why brokenness grieves us",
+            "Human beings create all meaning for themselves",
+            "There is no real difference between design and brokenness"
+          ],
+          "correctIndex": 1,
+          "explanation": "This circle shows the goodness from which we have fallen."
+        },
+        {
+          "id": "design-q6",
+          "type": "true_false",
+          "prompt": "Bringing in God's design after brokenness can make the conversation feel less abrupt for some listeners.",
+          "correctAnswer": true,
+          "explanation": "That is one reason some trainers prefer this order."
+        }
+      ],
+      "reflection": {
+        "prompt": "How does the existence of deep human longing point beyond brokenness toward design?"
+      },
+      "mission": {
+        "intro": "To understand what is wrong, people need to see what was meant to be.",
+        "victoryText": "You used God's design as the contrast that made brokenness intelligible."
+      }
+    },
+    {
+      "id": "sin-and-false-escapes",
+      "title": "Why We Stay in Brokenness",
+      "type": "warning",
+      "summary": "Brokenness is not only painful; it is tied to sin, and our self-made exits cannot save us.",
+      "difficulty": "medium",
+      "tags": ["sin", "false solutions", "idolatry", "brokenness"],
+      "passages": [
+        {
+          "reference": "Romans 1:25",
+          "text": "They exchanged the truth of God for a lie, and worshiped and served the creature rather than the Creator."
+        },
+        {
+          "reference": "Jeremiah 2:13",
+          "text": "My people have committed two evils: they have forsaken me, the spring of living waters, and cut them out cisterns, broken cisterns, that can hold no water."
+        }
+      ],
+      "focus": {
+        "kind": "warning",
+        "statement": "Sin leads us into brokenness, and self-made exits cannot rescue us."
+      },
+      "contextCard": {
+        "title": "Brokenness has a cause and false exits",
+        "body": "Brokenness-first presentations still explain sin. They also often show outward arrows from brokenness to represent the things people try: success, pleasure, religion, relationships, addiction, or distraction. None of these can reconcile us to God."
+      },
+      "questions": [
+        {
+          "id": "escape-q1",
+          "type": "multiple_choice",
+          "prompt": "What explains how we got into brokenness?",
+          "options": [
+            "Sin",
+            "Luck",
+            "Design",
+            "Neutrality"
+          ],
+          "correctIndex": 0,
+          "explanation": "Brokenness is not random in the biblical explanation; sin is the cause."
+        },
+        {
+          "id": "escape-q2",
+          "type": "true_false",
+          "prompt": "A brokenness-first approach still needs to explain sin, not just suffering.",
+          "correctAnswer": true,
+          "explanation": "The order changes, but sin still must be named truthfully."
+        },
+        {
+          "id": "escape-q3",
+          "type": "cloze_choice",
+          "prompt": "People often try many false _____ from brokenness.",
+          "options": ["exits", "gospels", "designs", "covenants"],
+          "correctIndex": 0,
+          "explanation": "The outward arrows often picture false exits from brokenness."
+        },
+        {
+          "id": "escape-q4",
+          "type": "multiple_choice",
+          "prompt": "Which is a common example of a false exit from brokenness?",
+          "options": [
+            "Seeking pleasure or success to numb pain",
+            "Repenting and believing the gospel",
+            "Trusting Christ's resurrection",
+            "Recovering and pursuing God's design"
+          ],
+          "correctIndex": 0,
+          "explanation": "False exits are self-made attempts to escape pain without reconciliation."
+        },
+        {
+          "id": "escape-q5",
+          "type": "best_application",
+          "prompt": "Why include false exits in the presentation?",
+          "options": [
+            "To help people recognize themselves honestly",
+            "To replace the gospel",
+            "To avoid talking about sin",
+            "To show Christians never struggle"
+          ],
+          "correctIndex": 0,
+          "explanation": "This helps listeners locate themselves inside the story."
+        },
+        {
+          "id": "escape-q6",
+          "type": "true_false",
+          "prompt": "Three Circles teaches that some self-made exits from brokenness can reconcile us to God without Christ.",
+          "correctAnswer": false,
+          "explanation": "The point is exactly the opposite."
+        }
+      ],
+      "reflection": {
+        "prompt": "What false exits from brokenness are most common in the people you know?"
+      },
+      "mission": {
+        "intro": "People do not only suffer brokenness; they also search for ways around it that cannot save them.",
+        "victoryText": "You explained both the cause of brokenness and the failure of false escapes."
+      }
+    },
+    {
+      "id": "the-gospel-circle",
+      "title": "Circle Three: The Gospel of Jesus",
+      "type": "promise",
+      "summary": "The gospel is the answer: Jesus came, died for sins, and rose again so broken people can be reconciled to God.",
+      "difficulty": "easy",
+      "tags": ["gospel", "cross", "resurrection", "jesus"],
+      "passages": [
+        {
+          "reference": "1 Corinthians 15:3-4",
+          "text": "Christ died for our sins according to the Scriptures, that he was buried, that he was raised on the third day according to the Scriptures."
+        },
+        {
+          "reference": "2 Corinthians 5:21",
+          "text": "Him who knew no sin he made to be sin on our behalf, so that in him we might become the righteousness of God."
+        }
+      ],
+      "focus": {
+        "kind": "promise",
+        "statement": "Jesus entered our brokenness to rescue and reconcile us through His death and resurrection."
+      },
+      "contextCard": {
+        "title": "The gospel is the turning point",
+        "body": "The third circle is usually labeled Gospel, often with a cross and empty tomb. In a brokenness-first flow, this is the moment when the conversation moves from the human problem to God's saving answer."
+      },
+      "questions": [
+        {
+          "id": "gospel-q1",
+          "type": "multiple_choice",
+          "prompt": "What does the third circle usually represent?",
+          "options": [
+            "Brokenness",
+            "The Gospel",
+            "Human religion",
+            "Judgment only"
+          ],
+          "correctIndex": 1,
+          "explanation": "The third circle is commonly the Gospel."
+        },
+        {
+          "id": "gospel-q2",
+          "type": "true_false",
+          "prompt": "The gospel circle commonly includes Jesus' death and resurrection.",
+          "correctAnswer": true,
+          "explanation": "That is central to how the presentation explains the gospel."
+        },
+        {
+          "id": "gospel-q3",
+          "type": "cloze_choice",
+          "prompt": "The Gospel circle explains that Jesus died for our sins and _____ again.",
+          "options": ["rose", "waited", "hid", "changed"],
+          "correctIndex": 0,
+          "explanation": "The resurrection is essential to the gospel."
+        },
+        {
+          "id": "gospel-q4",
+          "type": "multiple_choice",
+          "prompt": "Why is the gospel the answer to brokenness?",
+          "options": [
+            "Because people can save themselves",
+            "Because Jesus does what we cannot do",
+            "Because design and brokenness are illusions",
+            "Because sin does not matter"
+          ],
+          "correctIndex": 1,
+          "explanation": "The gospel announces God's saving work in Christ."
+        },
+        {
+          "id": "gospel-q5",
+          "type": "best_application",
+          "prompt": "Which statement best fits the gospel circle?",
+          "options": [
+            "Try harder and God will accept you",
+            "Jesus came, died, and rose to reconcile sinners to God",
+            "Brokenness can be solved by time alone",
+            "Morality is enough to return to God's design"
+          ],
+          "correctIndex": 1,
+          "explanation": "The gospel is about God's saving work in Jesus."
+        },
+        {
+          "id": "gospel-q6",
+          "type": "true_false",
+          "prompt": "In a brokenness-first flow, the gospel still remains the decisive answer rather than a side note.",
+          "correctAnswer": true,
+          "explanation": "The ordering changes, but the gospel remains central."
+        }
+      ],
+      "reflection": {
+        "prompt": "Why is it important that the solution to brokenness is Christ's work, not our effort?"
+      },
+      "mission": {
+        "intro": "Brokenness needs more than advice. It needs rescue.",
+        "victoryText": "You centered the hope of the conversation on Jesus and the gospel."
+      }
+    },
+    {
+      "id": "repent-and-believe",
+      "title": "The Response: Repent and Believe",
+      "type": "commandment",
+      "summary": "The presentation calls for repentance from sin and faith in Jesus as the response to the gospel.",
+      "difficulty": "easy",
+      "tags": ["repent", "believe", "response", "faith"],
+      "passages": [
+        {
+          "reference": "Mark 1:15",
+          "text": "The time is fulfilled, and God's Kingdom is at hand! Repent, and believe in the Good News."
+        },
+        {
+          "reference": "Romans 10:9",
+          "text": "If you will confess with your mouth that Jesus is Lord, and believe in your heart that God raised him from the dead, you will be saved."
+        }
+      ],
+      "focus": {
+        "kind": "commandment",
+        "statement": "Repent and believe."
+      },
+      "contextCard": {
+        "title": "The gospel calls for response",
+        "body": "In both design-first and brokenness-first versions, the gospel is not merely explained; it leads to a response. Popular versions use the phrase 'Repent and Believe' to show that we must turn from our own way and trust Jesus."
+      },
+      "questions": [
+        {
+          "id": "response-q1",
+          "type": "multiple_choice",
+          "prompt": "What response is commonly named after the gospel circle?",
+          "options": [
+            "Observe and wait",
+            "Repent and believe",
+            "Improve and perform",
+            "Debate and compare"
+          ],
+          "correctIndex": 1,
+          "explanation": "Repent and Believe is the common response phrase."
+        },
+        {
+          "id": "response-q2",
+          "type": "true_false",
+          "prompt": "Three Circles presents the gospel as calling for a response, not just information.",
+          "correctAnswer": true,
+          "explanation": "The presentation is meant to lead naturally to invitation and response."
+        },
+        {
+          "id": "response-q3",
+          "type": "cloze_choice",
+          "prompt": "Mark 1:15 says, 'Repent, and believe in the Good _____.",
+          "options": ["News", "Design", "Circle", "Story"],
+          "correctIndex": 0,
+          "explanation": "Jesus commands repentance and belief in the good news."
+        },
+        {
+          "id": "response-q4",
+          "type": "multiple_choice",
+          "prompt": "What does repentance mean in this context?",
+          "options": [
+            "Trying harder without faith",
+            "Turning from sin and our own way",
+            "Feeling bad without change",
+            "Avoiding Jesus until later"
+          ],
+          "correctIndex": 1,
+          "explanation": "Repentance means turning from our own sinful way to God's way."
+        },
+        {
+          "id": "response-q5",
+          "type": "best_application",
+          "prompt": "Which response best fits this part of Three Circles?",
+          "options": [
+            "Acknowledge the gospel but remain unchanged",
+            "Turn from sin and trust Jesus Christ",
+            "Admire Jesus as a teacher only",
+            "Delay response until life is easier"
+          ],
+          "correctIndex": 1,
+          "explanation": "The right response is repentance and faith in Jesus."
+        },
+        {
+          "id": "response-q6",
+          "type": "true_false",
+          "prompt": "Repent and Believe is often presented as the decisive response to the gospel.",
+          "correctAnswer": true,
+          "explanation": "The common tool presents this as the needed response."
+        }
+      ],
+      "reflection": {
+        "prompt": "Why does a faithful gospel conversation need both clarity and a real call for response?"
+      },
+      "mission": {
+        "intro": "The gospel is not complete as a conversation until the call to respond is made clear.",
+        "victoryText": "You held together the message of grace and the call to repent and believe."
+      }
+    },
+    {
+      "id": "recover-and-pursue",
+      "title": "Recover and Pursue God's Design",
+      "type": "promise",
+      "summary": "After repentance and faith, believers begin to recover and pursue God's design by the Spirit's help.",
+      "difficulty": "medium",
+      "tags": ["recover", "pursue", "discipleship", "sanctification"],
+      "passages": [
+        {
+          "reference": "Ephesians 2:10",
+          "text": "For we are his workmanship, created in Christ Jesus for good works, which God prepared before that we would walk in them."
+        },
+        {
+          "reference": "Philippians 2:13",
+          "text": "For it is God who works in you both to will and to work, for his good pleasure."
+        }
+      ],
+      "focus": {
+        "kind": "promise",
+        "statement": "In Christ, we recover and pursue God's design."
+      },
+      "contextCard": {
+        "title": "The gospel leads into discipleship",
+        "body": "The common arrow from the Gospel circle back toward God's Design is often labeled 'Recover and Pursue.' This does not mean instant perfection. It means that by grace and the Spirit's help, believers now move toward the life God intended."
+      },
+      "questions": [
+        {
+          "id": "recover-q1",
+          "type": "multiple_choice",
+          "prompt": "What phrase commonly labels the arrow from the Gospel back toward God's Design?",
+          "options": [
+            "Hide and wait",
+            "Recover and Pursue",
+            "Earn and achieve",
+            "Perform and prove"
+          ],
+          "correctIndex": 1,
+          "explanation": "Recover and Pursue is the standard phrase."
+        },
+        {
+          "id": "recover-q2",
+          "type": "true_false",
+          "prompt": "Recover and Pursue means believers become perfect immediately.",
+          "correctAnswer": false,
+          "explanation": "It means a restored direction of life, not instant perfection."
+        },
+        {
+          "id": "recover-q3",
+          "type": "cloze_choice",
+          "prompt": "After repentance and faith, believers begin to recover and _____ God's design.",
+          "options": ["pursue", "replace", "ignore", "debate"],
+          "correctIndex": 0,
+          "explanation": "The common phrase is Recover and Pursue."
+        },
+        {
+          "id": "recover-q4",
+          "type": "multiple_choice",
+          "prompt": "What does this part of Three Circles emphasize?",
+          "options": [
+            "That salvation is the end of the story",
+            "That the gospel leads into a new life of discipleship",
+            "That sin no longer matters",
+            "That believers no longer need God's help"
+          ],
+          "correctIndex": 1,
+          "explanation": "It emphasizes restored life and ongoing discipleship."
+        },
+        {
+          "id": "recover-q5",
+          "type": "best_application",
+          "prompt": "Which statement best captures Recover and Pursue?",
+          "options": [
+            "Grace restores us and teaches us to live in God's design",
+            "Faith removes any need for obedience",
+            "Christian life is just avoiding punishment",
+            "God saves us but leaves us unchanged"
+          ],
+          "correctIndex": 0,
+          "explanation": "Recover and Pursue points to restored living by grace."
+        },
+        {
+          "id": "recover-q6",
+          "type": "true_false",
+          "prompt": "Recover and Pursue shows that Three Circles is not only about conversion, but also about new life.",
+          "correctAnswer": true,
+          "explanation": "The common presentation includes both salvation and new direction."
+        }
+      ],
+      "reflection": {
+        "prompt": "How does Recover and Pursue keep the gospel from sounding like a one-time transaction only?"
+      },
+      "mission": {
+        "intro": "The gospel does not merely pull people out of ruin. It sends them toward God's design.",
+        "victoryText": "You showed that grace changes both standing and direction."
+      }
+    },
+    {
+      "id": "drawing-the-diagram",
+      "title": "How to Draw and Explain the Diagram",
+      "type": "commandment",
+      "summary": "To use Three Circles well, a learner should understand the order of the circles, the arrows, and how each part connects in a brokenness-first flow.",
+      "difficulty": "medium",
+      "tags": ["diagram", "drawing", "order", "explanation"],
+      "passages": [
+        {
+          "reference": "1 Corinthians 14:33",
+          "text": "For God is not a God of confusion, but of peace."
+        }
+      ],
+      "focus": {
+        "kind": "commandment",
+        "statement": "Communicate the gospel clearly and in good order."
+      },
+      "contextCard": {
+        "title": "Clarity helps faithfulness",
+        "body": "In this variation, learners should know the order: Brokenness, God's Design as the contrast, the Gospel, Repent and Believe, then Recover and Pursue."
+      },
+      "questions": [
+        {
+          "id": "drawing-q1",
+          "type": "multiple_choice",
+          "prompt": "Which order best matches this brokenness-first Three Circles flow?",
+          "options": [
+            "Brokenness -> God's Design -> Gospel",
+            "God's Design -> Brokenness -> Gospel",
+            "Gospel -> Brokenness -> God's Design",
+            "Repent -> Brokenness -> Gospel"
+          ],
+          "correctIndex": 0,
+          "explanation": "This version begins with brokenness, then explains God's design as the intended contrast."
+        },
+        {
+          "id": "drawing-q2",
+          "type": "true_false",
+          "prompt": "The visual simplicity of Three Circles is part of why it is widely used.",
+          "correctAnswer": true,
+          "explanation": "Its simplicity helps people remember and reproduce it."
+        },
+        {
+          "id": "drawing-q3",
+          "type": "cloze_choice",
+          "prompt": "Even in this version, the move from God's Design into Brokenness is explained by _____.",
+          "options": ["sin", "hope", "recovery", "joy"],
+          "correctIndex": 0,
+          "explanation": "Sin is what leads away from God's design."
+        },
+        {
+          "id": "drawing-q4",
+          "type": "multiple_choice",
+          "prompt": "What usually comes after explaining the Gospel circle?",
+          "options": [
+            "Repent and Believe",
+            "Another explanation of brokenness only",
+            "Ignoring response",
+            "Starting over without invitation"
+          ],
+          "correctIndex": 0,
+          "explanation": "The common next move is the call to repent and believe."
+        },
+        {
+          "id": "drawing-q5",
+          "type": "best_application",
+          "prompt": "Which practice best helps someone learn this tool thoroughly?",
+          "options": [
+            "Practice drawing and explaining the full sequence aloud",
+            "Only memorize the titles without meaning",
+            "Skip the arrows and response",
+            "Treat the diagram as decoration"
+          ],
+          "correctIndex": 0,
+          "explanation": "Practicing the whole sequence builds clarity and confidence."
+        },
+        {
+          "id": "drawing-q6",
+          "type": "true_false",
+          "prompt": "Knowing the labels without understanding the brokenness-first logic would be incomplete mastery of Three Circles.",
+          "correctAnswer": true,
+          "explanation": "Thorough learning includes both the labels and the logic of the presentation."
+        }
+      ],
+      "reflection": {
+        "prompt": "What part of the brokenness-first flow would be easiest for you to explain, and what part would need more practice?"
+      },
+      "mission": {
+        "intro": "A clear tool becomes most useful when you can explain it in order without confusion.",
+        "victoryText": "You strengthened not just your memory, but your ability to explain the full sequence."
+      }
+    },
+    {
+      "id": "conversation-and-invitation",
+      "title": "From Everyday Conversation to Gospel Invitation",
+      "type": "commandment",
+      "summary": "Brokenness-first training emphasizes natural transitions into the gospel and a clear invitation at the end.",
+      "difficulty": "hard",
+      "tags": ["conversation", "invitation", "transition", "evangelism"],
+      "passages": [
+        {
+          "reference": "Colossians 4:5-6",
+          "text": "Walk in wisdom toward those who are outside, redeeming the time. Let your speech always be with grace, seasoned with salt, that you may know how you ought to answer each one."
+        },
+        {
+          "reference": "Acts 17:2-3",
+          "text": "Paul, as his custom was, went in to them, and for three Sabbath days reasoned with them from the Scriptures."
+        }
+      ],
+      "focus": {
+        "kind": "commandment",
+        "statement": "Use the gospel tool wisely in real conversations and invite a real response."
+      },
+      "contextCard": {
+        "title": "A tool inside a conversation",
+        "body": "Brokenness-first versions are often preferred because they open naturally into the gospel. The tool serves a conversation; it is not a substitute for wisdom, listening, or clear invitation."
+      },
+      "questions": [
+        {
+          "id": "conversation-q1",
+          "type": "multiple_choice",
+          "prompt": "Why do some trainers prefer starting with brokenness?",
+          "options": [
+            "Because it often feels more immediate and conversational",
+            "Because it removes the need to mention God",
+            "Because it avoids talking about sin",
+            "Because it replaces the gospel"
+          ],
+          "correctIndex": 0,
+          "explanation": "The brokenness-first approach often meets people at a more immediate felt need."
+        },
+        {
+          "id": "conversation-q2",
+          "type": "true_false",
+          "prompt": "A faithful use of Three Circles should still include listening and wise conversation.",
+          "correctAnswer": true,
+          "explanation": "The tool is meant to serve wise conversation, not replace it."
+        },
+        {
+          "id": "conversation-q3",
+          "type": "cloze_choice",
+          "prompt": "Popular training often says the diagram should lead to an _____.",
+          "options": ["invitation", "argument", "performance", "avoidance"],
+          "correctIndex": 0,
+          "explanation": "The presentation commonly ends with a call to respond."
+        },
+        {
+          "id": "conversation-q4",
+          "type": "multiple_choice",
+          "prompt": "What question can be useful near the end of a Three Circles conversation?",
+          "options": [
+            "Where do you see yourself in this picture?",
+            "Can you draw better than me?",
+            "Would you like a more complex method?",
+            "Do you agree religion is confusing?"
+          ],
+          "correctIndex": 0,
+          "explanation": "That question helps the listener engage personally with the message."
+        },
+        {
+          "id": "conversation-q5",
+          "type": "best_application",
+          "prompt": "Which use of Three Circles is best?",
+          "options": [
+            "Using it mechanically with no invitation",
+            "Using it prayerfully in a real conversation and asking for response",
+            "Using it as a substitute for Scripture",
+            "Using it only to talk at people"
+          ],
+          "correctIndex": 1,
+          "explanation": "The tool works best inside prayerful, relational gospel witness."
+        },
+        {
+          "id": "conversation-q6",
+          "type": "true_false",
+          "prompt": "Knowing how to invite a response is part of understanding the Three Circles presentation thoroughly.",
+          "correctAnswer": true,
+          "explanation": "Thorough understanding includes not just content, but how it is used in real witness."
+        }
+      ],
+      "reflection": {
+        "prompt": "What kind of brokenness-first transition would feel natural and faithful for you in a real gospel conversation?"
+      },
+      "mission": {
+        "intro": "The message is clear, but courage is needed to carry it into real conversation.",
+        "victoryText": "You learned to use the tool as part of a wise and inviting gospel conversation."
+      }
+    }
+  ]
+}

@@ -48,6 +48,9 @@
                 configMsg.worldId = engine.gameConfig.worldId;
                 configMsg.missionName = engine.gameConfig.missionName;
                 configMsg.xpMultiplier = engine.gameConfig.xpMultiplier;
+                configMsg.missionType = engine.gameConfig.missionType || 'verse';
+                configMsg.packId = engine.gameConfig.packId || null;
+                configMsg.unitIds = engine.gameConfig.unitIds || null;
             }
             // Include FUN mode properties
             configMsg.startingAmmo = engine.gameConfig.startingAmmo || 0;
@@ -149,6 +152,9 @@
                         reconConfigMsg.worldId = engine.gameConfig.worldId;
                         reconConfigMsg.missionName = engine.gameConfig.missionName;
                         reconConfigMsg.xpMultiplier = engine.gameConfig.xpMultiplier;
+                        reconConfigMsg.missionType = engine.gameConfig.missionType || 'verse';
+                        reconConfigMsg.packId = engine.gameConfig.packId || null;
+                        reconConfigMsg.unitIds = engine.gameConfig.unitIds || null;
                     }
                     sendFn('gameConfig', reconConfigMsg);
                     sendFn('playerNumber', Object.keys(engine.gameState.players).indexOf(code) + 1);

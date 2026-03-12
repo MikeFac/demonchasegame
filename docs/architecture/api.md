@@ -1,5 +1,7 @@
 # API Documentation
 
+**Last Updated:** 2026-03-08
+
 ## REST API
 The server provides a few REST endpoints for user and room management.
 
@@ -33,13 +35,16 @@ The server provides a few REST endpoints for user and room management.
 | `setReady` | `{ roomId, ready }`, callback | Toggle ready state. |
 | `startGame` | `roomId`, callback | Host starts the game. |
 | `playerPosition` | `{ x, y }` | Send updated player position. |
-| `playerAttack` | `monsterId` | Attack a monster (deprecated mechanism?). |
+| `playerAttack` | `{ monsterId, damage }` | Attack a monster (legacy melee path). |
 | `playerShoot` | `{ x, y }` | Shoot a bullet towards target. |
 | `playerHit` | `damage` | Notify server player took damage (Client-authoritative damage?). |
 | `collectHealingPoint` | `formattedId` | Player collected a healing item. |
-| `collectShield` | `shieldId` | Player collected a shield item. |
 | `levelCompleted` | *(none)* | Player completed the current level. |
-| `quizCorrect` | *(none)* | Player answered a quiz correctly. |
+| `quizCorrect` | `{ category? }` | Player answered a quiz correctly and may update combat category. |
+| `setCombatCategory` | `{ category }` | Explicitly sync current combat category. |
+| `votdBonusEarned` | *(none)* | Mark VOTD damage bonus active. |
+| `verseTestPassed` | *(none)* | Award verse-test health reward. |
+| `funModeBonus` | `{ bonusHealth, bonusAmmo }` | Apply fun-mode rewards on the shared engine. |
 
 ### Server -> Client
 
@@ -51,4 +56,6 @@ The server provides a few REST endpoints for user and room management.
 | `gameStateUpdate` | `gameState` | Frequent game state broadcast (players, monsters, etc). |
 | `playerCode` | `code` | Assigns the player their unique ID. |
 | `playerNumber` | `number` | Assigns a sprite index (1-4). |
-| `monsterKilled` | `{ monsterId }` | Notification that a monster died. |
+| `monsterKilled` | `{ monsterId, killer, x, y }` | Notification that a monster died. |
+| `bulletHit` | `{ x, y, damage, baseDamage, multiplier, category, monsterType }` | Bullet impact with combat affinity metadata. |
+| `armorAbsorb` | `{ monsterId, armorLeft }` | Armor absorbed a hit. |

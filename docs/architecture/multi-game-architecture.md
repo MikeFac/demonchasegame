@@ -1,63 +1,48 @@
 # Multi-Game Architecture Analysis
 
-**Current Status**: ⚠️ **Not Supported**
+**Current Status**: ✅ Supported
 
-The current codebase has the *structure* for multiple games (Rooms, Game Instances), but the **Game Logic** prevents them from running simultaneously without interference.
+**Last Updated:** 2026-03-08
 
-## The Issue: Global Broadcasting
+## Summary
 
-While `server.js` correctly creates a separate `Game` instance for each Room, the `Game` class itself broadcasts its state to **ALL** connected sockets, regardless of which room they are in.
+The game now supports multiple simultaneous room-scoped game instances. The shared engine is instantiated once per room, and `src/server/Game.js` emits gameplay events through a room-aware emitter rather than global Socket.IO broadcasts.
 
-### Technical Detail
+## Current Architecture
 
-In `src/server/Game.js`, the update loop uses:
+- `server.js` creates one `Game` per active room and stores it in `gameInstances`
+- `src/server/Game.js` wraps the shared `GameEngine` with an emitter that uses `io.to('room:' + roomId).emit(...)`
+- solo games use isolated room IDs of the form `solo-{socketId}`
+- lobby membership and gameplay membership stay separate until clients call `joinGame`
 
-```javascript
-// ❌ Current Implementation
-this.io.emit('gameStateUpdate', this.gameState); 
-```
+## What This Fixes
 
-`io.emit` sends the message to the "default" namespace, which includes every connected client.
+Two active rooms no longer receive each other's:
 
-### The Result
+- `gameStateUpdate`
+- `monsterKilled`
+- `bulletHit`
+- `levelAdvancing`
+- other room-scoped gameplay events
 
-If two rooms are active (e.g., "Room A" and "Room B"):
-1.  **Game Instance A** calculates state -> Broadcasts to everyone.
-2.  **Game Instance B** calculates state -> Broadcasts to everyone.
-3.  **Client (You)** receives interleaved updates from both Game A and Game B.
-4.  **Effect**: The game will flicker, players will teleport between positions, and the game state will be unplayable.
+## Remaining Practical Risks
 
-## The Fix: Room Scoping
+Room isolation is not the main multiplayer risk anymore. The current problems are more likely to be client-side desync or input issues, such as:
 
-We need to modify `src/server/Game.js` to emit events *only* to the sockets that have joined the specific `roomId`.
+- clients overwriting a server-assigned spawn on `walls` receipt
+- missing movement input on mobile
+- stale local UI/input state during transitions
 
-The `Game` constructor already accepts a `roomId`, we just need to use it.
+Recent fixes addressed:
 
-### Required Changes
-
-Replace all instances of `this.io.emit` with a scoped emit:
-
-```javascript
-// ✅ Correct Implementation
-if (this.roomId) {
-    // Broadcast only to this room
-    this.io.to(this.roomId).emit('gameStateUpdate', this.gameState);
-} else {
-    // Fallback for legacy/solo mode (global broadcast)
-    this.io.emit('gameStateUpdate', this.gameState);
-}
-```
-
-This needs to be applied to:
-*   `gameStateUpdate` (The main game loop)
-*   `monsterKilled`
-*   `playerHit`
-*   Any other game events.
+- per-player spawn reconciliation on `walls`
+- explicit touch input handling for mobile gameplay
 
 ## Verification
 
-Once applied:
-1.  Open two browser tabs.
-2.  Create "Room 1" in Tab A.
-3.  Create "Room 2" in Tab B.
-4.  Ensure movement in Room 1 does **not** affect the state in Room 2.
+To verify room isolation:
+
+1. Open two separate multiplayer rooms.
+2. Start a game in both rooms.
+3. Move and shoot in Room A.
+4. Confirm clients in Room B do not receive position, monster, or combat state changes from Room A.

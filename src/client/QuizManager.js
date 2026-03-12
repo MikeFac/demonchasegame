@@ -462,6 +462,13 @@
         };
     }
 
+    function generateDiscipleshipQuiz(verse) {
+        if (!verse || !verse.discipleshipQuestion || !window.discipleshipMissionManager) {
+            return null;
+        }
+        return window.discipleshipMissionManager.buildQuizFromQuestion(verse);
+    }
+
     function getClozeDisplayText(quiz) {
         if (!quiz || quiz.mode !== 'cloze') return '';
         
@@ -519,10 +526,18 @@
         if (typeof dbg === 'function') dbg('QUIZ', `onClozeComplete success=${success} pos=(${player.x.toFixed(0)},${player.y.toFixed(0)})`);
         const verseEntry = organizedVerses[vQuality] && organizedVerses[vQuality][currentVerseIndex];
         const currentReference = verseEntry ? verseEntry.Reference : '';
+        const currentQualityEntries = organizedVerses[vQuality] || [];
+        if (currentQualityEntries.length === 0) {
+            return;
+        }
+        if (typeof qualityIndex[vQuality] !== 'number' || qualityIndex[vQuality] < 0) {
+            qualityIndex[vQuality] = 0;
+        }
+        qualityIndex[vQuality] = qualityIndex[vQuality] % currentQualityEntries.length;
 
         if (success) {
             isAnswerCorrect = true;
-            qualityIndex[vQuality] = (qualityIndex[vQuality] + 1) % organizedVerses[vQuality].length;
+            qualityIndex[vQuality] = (qualityIndex[vQuality] + 1) % currentQualityEntries.length;
             qualityTotal[vQuality] = qualityTotal[vQuality] + 1;
             console.log(vQuality + " total correct is: " + qualityTotal[vQuality]);
 
@@ -534,7 +549,13 @@
                 });
                 if (availableQualities.length > 0) {
                     vQuality = availableQualities[Math.floor(Math.random() * availableQualities.length)];
-                    currentVerseIndex = qualityIndex[vQuality] || 0;
+                    const nextQualityEntries = organizedVerses[vQuality] || [];
+                    if (typeof qualityIndex[vQuality] !== 'number' || qualityIndex[vQuality] < 0) {
+                        qualityIndex[vQuality] = 0;
+                    }
+                    currentVerseIndex = nextQualityEntries.length > 0
+                        ? (qualityIndex[vQuality] % nextQualityEntries.length)
+                        : 0;
                     console.log('✨ Quality rotated to: ' + vQuality);
                 }
             }
@@ -555,8 +576,8 @@
             }
         } else {
             isAnswerCorrect = false;
-            qualityIndex[vQuality] = (qualityIndex[vQuality] + 1) % organizedVerses[vQuality].length;
-            const wrongVerse = organizedVerses[vQuality] && organizedVerses[vQuality][currentVerseIndex];
+            qualityIndex[vQuality] = (qualityIndex[vQuality] + 1) % currentQualityEntries.length;
+            const wrongVerse = currentQualityEntries[currentVerseIndex];
             answerFullVerse = wrongVerse ? wrongVerse.Text : '';
             setAnswerResultTimeout(6000);
 
@@ -572,6 +593,10 @@
 
     // --- Quiz Generation Entry Point ---
     function generateQuizForVerse(verse) {
+        if (verse && verse.discipleshipQuestion) {
+            return generateDiscipleshipQuiz(verse);
+        }
+
         const mode = selectMode();
         let quiz;
 
@@ -610,27 +635,58 @@
         if (currentQuiz.mode === 'cloze') return;
 
         const isCorrect = selectedOption.isCorrect;
-        const verseEntry = organizedVerses[vQuality] && organizedVerses[vQuality][currentVerseIndex];
-        const currentReference = verseEntry ? verseEntry.Reference : '';
-        const currentCategory = verseEntry ? (verseEntry.Category || vQuality) : vQuality;
+        const activeQuality = (currentQuiz.contentCategory && organizedVerses && organizedVerses[currentQuiz.contentCategory])
+            ? currentQuiz.contentCategory
+            : vQuality;
+        if (!organizedVerses || !organizedVerses[activeQuality] || organizedVerses[activeQuality].length === 0) {
+            return;
+        }
+        if (typeof qualityIndex === 'undefined' || !qualityIndex) {
+            qualityIndex = {};
+        }
+        if (typeof qualityTotal === 'undefined' || !qualityTotal) {
+            qualityTotal = {};
+        }
+        if (typeof qualityIndex[activeQuality] !== 'number' || qualityIndex[activeQuality] < 0) {
+            qualityIndex[activeQuality] = 0;
+        }
+        if (typeof qualityTotal[activeQuality] !== 'number' || qualityTotal[activeQuality] < 0) {
+            qualityTotal[activeQuality] = 0;
+        }
+
+        vQuality = activeQuality;
+        if (typeof window !== 'undefined') {
+            window.vQuality = activeQuality;
+        }
+
+        const currentQualityEntries = organizedVerses[activeQuality];
+        const verseEntry = currentQualityEntries[currentVerseIndex];
+        const currentReference = currentQuiz.verseReference || (verseEntry ? verseEntry.Reference : '');
+        const currentCategory = currentQuiz.contentCategory || (verseEntry ? (verseEntry.Category || activeQuality) : activeQuality);
 
         if (isCorrect) {
             isAnswerCorrect = true;
-            qualityIndex[vQuality] = (qualityIndex[vQuality] + 1) % organizedVerses[vQuality].length;
-            qualityTotal[vQuality] = qualityTotal[vQuality] + 1;
-            console.log(vQuality + " total correct is: " + qualityTotal[vQuality]);
+            qualityIndex[activeQuality] = (qualityIndex[activeQuality] + 1) % currentQualityEntries.length;
+            qualityTotal[activeQuality] = qualityTotal[activeQuality] + 1;
+            console.log(activeQuality + " total correct is: " + qualityTotal[activeQuality]);
 
             // Auto-rotate quality every 3 correct answers (restricted to level qualities)
-            if (qualityTotal[vQuality] % 3 === 0) {
+            if (qualityTotal[activeQuality] % 3 === 0) {
                 const levelQualities = (typeof QUALITIES !== 'undefined' && QUALITIES.length > 0) ? QUALITIES : Object.keys(organizedVerses);
                 const availableQualities = levelQualities.filter(q =>
-                    q !== vQuality &&
+                    q !== activeQuality &&
                     organizedVerses[q] &&
                     organizedVerses[q].length > 0
                 );
                 if (availableQualities.length > 0) {
                     vQuality = availableQualities[Math.floor(Math.random() * availableQualities.length)];
-                    currentVerseIndex = qualityIndex[vQuality] || 0;
+                    const nextQualityEntries = organizedVerses[vQuality] || [];
+                    if (typeof qualityIndex[vQuality] !== 'number' || qualityIndex[vQuality] < 0) {
+                        qualityIndex[vQuality] = 0;
+                    }
+                    currentVerseIndex = nextQualityEntries.length > 0
+                        ? (qualityIndex[vQuality] % nextQualityEntries.length)
+                        : 0;
                     console.log('✨ Quality rotated to: ' + vQuality);
                 }
             }
@@ -639,7 +695,7 @@
             network.sendQuizCorrect(currentCategory);
 
             const correctVerse = organizedVerses[vQuality] && organizedVerses[vQuality][currentVerseIndex];
-            answerFullVerse = correctVerse ? correctVerse.Text : '';
+            answerFullVerse = currentQuiz.answerRevealText || (correctVerse ? correctVerse.Text : '');
             setAnswerResultTimeout(4500);
 
             // Track verse learning via music (if available)
@@ -653,9 +709,9 @@
             }
         } else {
             isAnswerCorrect = false;
-            qualityIndex[vQuality] = (qualityIndex[vQuality] + 1) % organizedVerses[vQuality].length;
-            const wrongVerse = organizedVerses[vQuality] && organizedVerses[vQuality][currentVerseIndex];
-            answerFullVerse = wrongVerse ? wrongVerse.Text : '';
+            qualityIndex[activeQuality] = (qualityIndex[activeQuality] + 1) % currentQualityEntries.length;
+            const wrongVerse = currentQualityEntries[currentVerseIndex];
+            answerFullVerse = currentQuiz.answerRevealText || (wrongVerse ? wrongVerse.Text : '');
             setAnswerResultTimeout(4500);
 
             if (!incorrectAnswerReferences.includes(currentReference)) {
@@ -669,6 +725,9 @@
     }
 
     function pickRandomVerse() {
+        if (!organizedVerses || !organizedVerses[vQuality] || organizedVerses[vQuality].length === 0) {
+            return;
+        }
         currentVerseIndex = Math.floor(Math.random() * organizedVerses[vQuality].length);
         const verse = organizedVerses[vQuality][currentVerseIndex];
         currentQuiz = generateQuizForVerse(verse);
@@ -679,6 +738,17 @@
         // Don't rotate verse while verse test is active
         if (typeof VerseTestScreen !== 'undefined' && VerseTestScreen.isActive()) return;
 
+        if (!organizedVerses || !organizedVerses[vQuality] || organizedVerses[vQuality].length === 0) {
+            return;
+        }
+        if (typeof qualityIndex === 'undefined' || !qualityIndex) {
+            qualityIndex = {};
+        }
+        if (typeof qualityIndex[vQuality] !== 'number' || qualityIndex[vQuality] < 0) {
+            qualityIndex[vQuality] = 0;
+        }
+        qualityIndex[vQuality] = qualityIndex[vQuality] % organizedVerses[vQuality].length;
+
         console.log("Learn:" + vQuality + ", Index: " + qualityIndex[vQuality] + "out of" + organizedVerses[vQuality].length);
         currentVerseIndex = qualityIndex[vQuality];
         const verse = organizedVerses[vQuality][currentVerseIndex];
@@ -686,7 +756,7 @@
         clearAnswerResultTimeout();
 
         // Try to play verse-specific learning music (non-blocking)
-        if (typeof window.MusicManager !== 'undefined' && window.MusicManager.playVerseTrack) {
+        if (!verse.discipleshipContent && typeof window.MusicManager !== 'undefined' && window.MusicManager.playVerseTrack) {
             window.MusicManager.playVerseTrack(verse.Reference).then(wasPlayed => {
                 if (wasPlayed) {
                     console.log('🎵 Playing educational music for: ' + verse.Reference);
@@ -698,7 +768,10 @@
     }
 
     function setAnswerResultTimeout(duration) {
-        clearAnswerResultTimeout();
+        if (answerResultTimeout) {
+            clearTimeout(answerResultTimeout);
+            answerResultTimeout = null;
+        }
 
         answerResultTimeout = setTimeout(() => {
             clearAnswerResultTimeout();

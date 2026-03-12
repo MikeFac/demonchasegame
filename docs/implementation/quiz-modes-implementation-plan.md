@@ -1,5 +1,7 @@
 # Quiz Modes Implementation Plan
 
+> **Status note (2026-03-08):** Historical planning document. Multiple quiz modes are now implemented in the live client/runtime, so this file is best treated as design context and backlog material.
+
 ## Current State
 
 - **1,632 verses** across 22 categories in `bible-verses.js`

@@ -2,6 +2,8 @@
 
 This document maps how data flows between all components and every Socket.IO event in the system.
 
+**Last Updated:** 2026-03-08
+
 ---
 
 ## 1. State Ownership Map
@@ -12,6 +14,7 @@ This document maps how data flows between all components and every Socket.IO eve
 | Player health | Server | Broadcast via `gameStateUpdate` |
 | Player XP/level | Server | Broadcast via `gameStateUpdate` |
 | Player ammo | Server | Awarded on `quizCorrect`, broadcast |
+| Player combat category | Server | Set from `quizCorrect` / `setCombatCategory`, broadcast |
 | Monsters (position, health) | Server | Updated each frame, broadcast |
 | Bullets | Server | Created on `playerShoot`, physics on server |
 | Walls/Maze | Server | Sent once via `walls` event per level |
@@ -77,7 +80,7 @@ Server state arrives every 50ms
   → Position reconciliation:
      If drift < 60px: keep local prediction (trust client movement)
      If drift ≥ 60px: blend 30% toward server position
-  → Trust server for: health, XP, level, ammo
+  → Trust server for: health, XP, level, ammo, combat category
   → Replace: monsters array, healingPoints, shieldPoints, bullets
 ```
 
@@ -118,13 +121,13 @@ On movement:
   Client → 'playerPosition' { x, y }
 
 On quiz correct:
-  Client → 'quizCorrect' (no payload)
-  Server: player.ammo += AMMO_REWARD (2)
+  Client → 'quizCorrect' { category }
+  Server: player.ammo += AMMO_REWARD (2), player.currentCombatCategory = category
 
 On shooting:
   Client → 'playerShoot' { x, y } (target world coords)
   Server: check ammo ≥ 1, decrement, create bullet
-  Server → 'bulletHit' { x, y }        // On bullet-monster collision
+  Server → 'bulletHit' { x, y, damage, baseDamage, multiplier, category, monsterType }
   Server → 'monsterKilled' { monsterId, x, y }  // If monster dies
 
 On melee combat:

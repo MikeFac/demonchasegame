@@ -1,7 +1,9 @@
 # Implementation Summary: Daily Challenge, Verse Counter, and Game-Over Modal
 
 **Implemented:** 2026-02-10
-**Status:** ✅ Complete - Ready for Testing
+**Status:** ✅ Implemented
+
+> **Status note (2026-03-08):** The features documented here remain implemented, but this is a feature-specific snapshot from February. It is not a complete description of the current gameplay architecture.
 
 ## Features Implemented
 

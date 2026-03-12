@@ -6,6 +6,13 @@
     let sessionStarted = false;
     let eventQueue = [];
     let gtagLoadAttempted = false;
+    let redditGameStartTracked = false;
+
+    if (window.RedditAnalytics) {
+        window.RedditAnalytics.trackPageVisit({
+            page_path: window.location.pathname
+        });
+    }
 
     function track(eventName, params) {
         var event = { name: eventName, params: params || {}, time: Date.now() };
@@ -219,6 +226,14 @@
             offline: offline,
             timestamp: new Date().toISOString()
         });
+
+        if (!redditGameStartTracked && window.RedditAnalytics) {
+            redditGameStartTracked = true;
+            window.RedditAnalytics.trackGameStartAfterLanding({
+                game_mode: mode,
+                offline: offline
+            });
+        }
     }
 
     window.Analytics = {

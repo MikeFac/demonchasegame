@@ -1,6 +1,8 @@
 # Verse-to-Song Learning System - Complete Implementation ✅
 
-**Status**: 🟢 **PHASE 5 INITIATED - READY TO SEED**
+**Status**: Historical milestone snapshot
+
+> **Status note (2026-03-08):** This document captures the major VerseSong implementation milestone, but the system has expanded since then with additional local tooling and song-library/admin flows.
 
 ---
 

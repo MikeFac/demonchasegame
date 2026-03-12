@@ -56,6 +56,9 @@ function buildMissionGameConfig(settings, GameConfig) {
     gameConfig.worldId = settings.worldId;
     gameConfig.missionName = mission.name;
     gameConfig.xpMultiplier = mission.xpMultiplier || 1.0;
+    gameConfig.missionType = mission.type || 'verse';
+    gameConfig.packId = mission.packId || null;
+    gameConfig.unitIds = Array.isArray(mission.unitIds) ? mission.unitIds.slice() : null;
 
     return gameConfig;
   } catch (err) {

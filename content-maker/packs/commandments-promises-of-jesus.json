@@ -1,0 +1,657 @@
+{
+  "id": "commandments-promises-of-jesus",
+  "title": "The Commandments and Promises of Jesus Christ in the Gospels",
+  "theme": "Discipleship through the teachings of Jesus",
+  "description": "A discipleship-focused content pack built around the commandments, promises, invitations, and warnings of Jesus in the Gospels.",
+  "audience": [
+    "youth",
+    "small-group",
+    "discipleship",
+    "missions"
+  ],
+  "language": "en",
+  "version": 1,
+  "questionTypes": [
+    "multiple_choice",
+    "true_false",
+    "cloze_choice",
+    "best_application"
+  ],
+  "units": [
+    {
+      "id": "repent-and-believe",
+      "title": "Repent and Believe the Good News",
+      "type": "commandment",
+      "summary": "Jesus opens his ministry by calling people to repentance and faith because the kingdom of God has drawn near.",
+      "difficulty": "easy",
+      "tags": ["repentance", "faith", "kingdom"],
+      "passages": [
+        {
+          "reference": "Mark 1:14-15",
+          "text": "Jesus came into Galilee, preaching the Good News of God's Kingdom, and saying, \"The time is fulfilled, and God's Kingdom is at hand! Repent, and believe in the Good News.\""
+        }
+      ],
+      "focus": {
+        "kind": "commandment",
+        "statement": "Repent, and believe in the Good News."
+      },
+      "contextCard": {
+        "title": "The kingdom call",
+        "body": "Jesus does not begin with vague inspiration. He announces that God's kingdom is near and calls for a real response: turn from sin and trust the good news."
+      },
+      "questions": [
+        {
+          "id": "repent-q1",
+          "type": "multiple_choice",
+          "prompt": "What two responses does Jesus command in Mark 1:15?",
+          "options": [
+            "Study and debate",
+            "Repent and believe",
+            "Hide and wait",
+            "Fight and conquer"
+          ],
+          "correctIndex": 1,
+          "explanation": "Jesus calls people to repentance and faith as the right response to the kingdom."
+        },
+        {
+          "id": "repent-q2",
+          "type": "true_false",
+          "prompt": "Jesus says the kingdom is far away and not yet relevant.",
+          "correctAnswer": false,
+          "explanation": "He says the kingdom of God is at hand."
+        },
+        {
+          "id": "repent-q3",
+          "type": "cloze_choice",
+          "prompt": "The time is fulfilled, and God's Kingdom is at hand! _____, and believe in the Good News.",
+          "options": ["Repent", "Retreat", "Argue", "Delay"],
+          "correctIndex": 0,
+          "explanation": "Repentance is part of Jesus' opening command."
+        }
+      ],
+      "reflection": {
+        "prompt": "Where is Jesus calling you to turn and trust him rather than delay obedience?"
+      },
+      "mission": {
+        "intro": "The call of the kingdom comes first. Advance by answering with repentance and faith.",
+        "victoryText": "You moved forward by receiving the kingdom call, not ignoring it."
+      }
+    },
+    {
+      "id": "follow-me",
+      "title": "Follow Me",
+      "type": "commandment",
+      "summary": "Jesus calls disciples not merely to admire him, but to follow him personally and leave old priorities behind.",
+      "difficulty": "easy",
+      "tags": ["discipleship", "calling", "obedience"],
+      "passages": [
+        {
+          "reference": "Matthew 4:18-22",
+          "text": "He said to them, \"Come after me, and I will make you fishers for men.\" They immediately left their nets, and followed him."
+        },
+        {
+          "reference": "Luke 9:23",
+          "text": "If anyone desires to come after me, let him deny himself, take up his cross, and follow me."
+        }
+      ],
+      "focus": {
+        "kind": "commandment",
+        "statement": "Follow me."
+      },
+      "contextCard": {
+        "title": "Discipleship is movement",
+        "body": "Jesus does not call people only to agree with him intellectually. He calls them to follow him with surrendered lives, changed priorities, and daily obedience."
+      },
+      "questions": [
+        {
+          "id": "follow-q1",
+          "type": "multiple_choice",
+          "prompt": "What does Jesus promise to make the first disciples as they follow him?",
+          "options": [
+            "Teachers of the law",
+            "Fishers for men",
+            "Political leaders",
+            "Temple guardians"
+          ],
+          "correctIndex": 1,
+          "explanation": "Jesus says he will make them fishers for men."
+        },
+        {
+          "id": "follow-q2",
+          "type": "true_false",
+          "prompt": "Following Jesus in Luke 9:23 includes denying yourself and taking up your cross.",
+          "correctAnswer": true,
+          "explanation": "Jesus connects discipleship with self-denial and daily cross-bearing."
+        },
+        {
+          "id": "follow-q3",
+          "type": "best_application",
+          "prompt": "Which response best reflects Jesus' call to follow him?",
+          "options": [
+            "Keep Jesus as a private interest while changing nothing",
+            "Delay obedience until life becomes easier",
+            "Reorder your life around obedience to Jesus",
+            "Follow only when it costs nothing"
+          ],
+          "correctIndex": 2,
+          "explanation": "Following Jesus means real obedience, not casual admiration."
+        }
+      ],
+      "reflection": {
+        "prompt": "What current priority would have to move if you took Jesus' call to follow him more seriously?"
+      },
+      "mission": {
+        "intro": "The path forward is discipleship, not spectatorship.",
+        "victoryText": "You answered the call to follow, not merely to observe."
+      }
+    },
+    {
+      "id": "love-your-enemies",
+      "title": "Love Your Enemies",
+      "type": "commandment",
+      "summary": "Jesus commands a kingdom-shaped love that reaches even enemies and persecutors.",
+      "difficulty": "medium",
+      "tags": ["love", "mercy", "forgiveness", "enemy-love"],
+      "passages": [
+        {
+          "reference": "Matthew 5:43-48",
+          "text": "But I tell you, love your enemies, bless those who curse you, do good to those who hate you, and pray for those who mistreat you and persecute you."
+        },
+        {
+          "reference": "Luke 6:27-36",
+          "text": "But I tell you who hear: love your enemies, do good to those who hate you, bless those who curse you, and pray for those who mistreat you."
+        }
+      ],
+      "focus": {
+        "kind": "commandment",
+        "statement": "Love your enemies and pray for those who persecute you."
+      },
+      "contextCard": {
+        "title": "Kingdom love is different",
+        "body": "Jesus teaches a kind of love that does not depend on how others treat us. His disciples are called to reflect the mercy of the Father, not the hostility of the world."
+      },
+      "questions": [
+        {
+          "id": "enemies-q1",
+          "type": "multiple_choice",
+          "prompt": "What response does Jesus command toward enemies?",
+          "options": [
+            "Love them and pray for them",
+            "Ignore them completely",
+            "Defeat them publicly",
+            "Match their hostility"
+          ],
+          "correctIndex": 0,
+          "explanation": "Jesus commands active love, prayer, and good toward enemies."
+        },
+        {
+          "id": "enemies-q2",
+          "type": "true_false",
+          "prompt": "Jesus teaches that loving only those who love you is enough.",
+          "correctAnswer": false,
+          "explanation": "Jesus says even sinners do that. His disciples are called beyond that standard."
+        },
+        {
+          "id": "enemies-q3",
+          "type": "cloze_choice",
+          "prompt": "Love your enemies and _____ for those who persecute you.",
+          "options": ["pray", "hide", "retreat", "argue"],
+          "correctIndex": 0,
+          "explanation": "Prayer is part of Jesus' command."
+        }
+      ],
+      "reflection": {
+        "prompt": "Where is Jesus calling you to reject revenge and choose mercy instead?"
+      },
+      "mission": {
+        "intro": "Kingdom victory does not come through retaliation.",
+        "victoryText": "You advanced by answering with mercy, not revenge."
+      }
+    },
+    {
+      "id": "seek-first-the-kingdom",
+      "title": "Seek First the Kingdom of God",
+      "type": "commandment",
+      "summary": "Jesus teaches his followers to put God's kingdom and righteousness ahead of anxious pursuit of material security.",
+      "difficulty": "medium",
+      "tags": ["kingdom", "trust", "priority", "anxiety"],
+      "passages": [
+        {
+          "reference": "Matthew 6:25-34",
+          "text": "But seek first God's Kingdom, and his righteousness; and all these things will be given to you as well."
+        }
+      ],
+      "focus": {
+        "kind": "commandment",
+        "statement": "Seek first God's Kingdom, and his righteousness."
+      },
+      "contextCard": {
+        "title": "A reordered life",
+        "body": "Jesus is not teaching passivity. He is teaching priority. The disciple's life is not to be driven first by anxious scrambling, but by the kingdom of God."
+      },
+      "questions": [
+        {
+          "id": "seek-q1",
+          "type": "multiple_choice",
+          "prompt": "What does Jesus tell his disciples to seek first?",
+          "options": [
+            "Comfort and safety",
+            "God's kingdom and righteousness",
+            "Public influence",
+            "Financial success"
+          ],
+          "correctIndex": 1,
+          "explanation": "Jesus directs his followers to seek God's kingdom and righteousness first."
+        },
+        {
+          "id": "seek-q2",
+          "type": "true_false",
+          "prompt": "Jesus' teaching in Matthew 6 is closely connected to anxiety and trust.",
+          "correctAnswer": true,
+          "explanation": "The passage addresses worry and redirects attention to kingdom priorities."
+        },
+        {
+          "id": "seek-q3",
+          "type": "best_application",
+          "prompt": "Which response best matches this teaching?",
+          "options": [
+            "Let fear set your priorities",
+            "Pursue God's kingdom before lesser concerns",
+            "Assume provision means no responsibility",
+            "Ignore practical needs entirely"
+          ],
+          "correctIndex": 1,
+          "explanation": "Jesus calls for kingdom-first living, not anxious or careless living."
+        }
+      ],
+      "reflection": {
+        "prompt": "What concern most often competes with seeking God's kingdom first in your life?"
+      },
+      "mission": {
+        "intro": "The disciple chooses kingdom priority over anxious distraction.",
+        "victoryText": "You advanced by choosing the kingdom over fear."
+      }
+    },
+    {
+      "id": "forgive-one-another",
+      "title": "Forgive Others",
+      "type": "commandment",
+      "summary": "Jesus teaches that forgiven people must become forgiving people.",
+      "difficulty": "medium",
+      "tags": ["forgiveness", "mercy", "relationships"],
+      "passages": [
+        {
+          "reference": "Matthew 6:14-15",
+          "text": "For if you forgive men their trespasses, your heavenly Father will also forgive you. But if you don't forgive men their trespasses, neither will your Father forgive your trespasses."
+        },
+        {
+          "reference": "Matthew 18:21-35",
+          "text": "So my heavenly Father will also do to you, if you don't each forgive your brother from your hearts for his misdeeds."
+        }
+      ],
+      "focus": {
+        "kind": "commandment",
+        "statement": "Forgive from the heart."
+      },
+      "contextCard": {
+        "title": "Forgiveness is not optional",
+        "body": "Jesus treats forgiveness as a necessary fruit of grace received. The disciple is not free to hold onto bitterness while asking God for mercy."
+      },
+      "questions": [
+        {
+          "id": "forgive-q1",
+          "type": "multiple_choice",
+          "prompt": "According to Jesus, what should characterize a disciple's response to others' sins?",
+          "options": [
+            "Permanent resentment",
+            "Careful revenge",
+            "Heart-level forgiveness",
+            "Public humiliation"
+          ],
+          "correctIndex": 2,
+          "explanation": "Jesus calls for real forgiveness from the heart."
+        },
+        {
+          "id": "forgive-q2",
+          "type": "true_false",
+          "prompt": "Jesus treats forgiveness as a minor issue with little spiritual importance.",
+          "correctAnswer": false,
+          "explanation": "Jesus treats forgiveness as deeply serious."
+        },
+        {
+          "id": "forgive-q3",
+          "type": "cloze_choice",
+          "prompt": "Forgive your brother from your _____.",
+          "options": ["heart", "schedule", "memory", "comfort"],
+          "correctIndex": 0,
+          "explanation": "Jesus emphasizes heart-level forgiveness."
+        }
+      ],
+      "reflection": {
+        "prompt": "Is there a person or wound where Jesus is confronting your refusal to forgive?"
+      },
+      "mission": {
+        "intro": "Unforgiveness hardens the heart and clouds the way forward.",
+        "victoryText": "You advanced by choosing mercy over bitterness."
+      }
+    },
+    {
+      "id": "ask-seek-knock",
+      "title": "Ask, Seek, Knock",
+      "type": "promise",
+      "summary": "Jesus invites persistent prayer and promises that the Father responds generously to his children.",
+      "difficulty": "easy",
+      "tags": ["prayer", "promise", "persistence", "trust"],
+      "passages": [
+        {
+          "reference": "Matthew 7:7-11",
+          "text": "Ask, and it will be given you. Seek, and you will find. Knock, and it will be opened for you."
+        },
+        {
+          "reference": "Luke 11:9-13",
+          "text": "I tell you, keep asking, and it will be given you. Keep seeking, and you will find. Keep knocking, and it will be opened to you."
+        }
+      ],
+      "focus": {
+        "kind": "promise",
+        "statement": "Ask, and it will be given you. Seek, and you will find. Knock, and it will be opened to you."
+      },
+      "contextCard": {
+        "title": "Prayer shaped by trust",
+        "body": "Jesus does not teach prayer as empty words. He teaches confidence in the Father's goodness and persistence in seeking him."
+      },
+      "questions": [
+        {
+          "id": "ask-q1",
+          "type": "multiple_choice",
+          "prompt": "Which three verbs does Jesus use to teach prayer persistence?",
+          "options": [
+            "Wait, observe, remember",
+            "Ask, seek, knock",
+            "Build, defend, stand",
+            "Think, compare, conclude"
+          ],
+          "correctIndex": 1,
+          "explanation": "Jesus teaches prayer persistence with the words ask, seek, and knock."
+        },
+        {
+          "id": "ask-q2",
+          "type": "true_false",
+          "prompt": "Jesus presents the Father as reluctant and unwilling to give good gifts.",
+          "correctAnswer": false,
+          "explanation": "Jesus compares the Father favorably even to earthly parents."
+        },
+        {
+          "id": "ask-q3",
+          "type": "best_application",
+          "prompt": "Which response best fits this promise?",
+          "options": [
+            "Stop praying quickly when answers seem delayed",
+            "Pray persistently because the Father is good",
+            "Treat prayer as unnecessary because God already knows",
+            "Use prayer only in emergencies"
+          ],
+          "correctIndex": 1,
+          "explanation": "Jesus teaches confident persistence, not prayerlessness."
+        }
+      ],
+      "reflection": {
+        "prompt": "Where do you need renewed persistence in prayer rather than quiet resignation?"
+      },
+      "mission": {
+        "intro": "Locked doors yield to persistent seeking in the presence of a good Father.",
+        "victoryText": "You advanced by asking, seeking, and knocking in trust."
+      }
+    },
+    {
+      "id": "come-to-me-and-rest",
+      "title": "Come to Me and I Will Give You Rest",
+      "type": "promise",
+      "summary": "Jesus invites the weary and burdened to come to him and receive rest for their souls.",
+      "difficulty": "easy",
+      "tags": ["rest", "burden", "invitation", "comfort"],
+      "passages": [
+        {
+          "reference": "Matthew 11:28-30",
+          "text": "Come to me, all you who labor and are heavily burdened, and I will give you rest."
+        }
+      ],
+      "focus": {
+        "kind": "promise",
+        "statement": "Come to me... and I will give you rest."
+      },
+      "contextCard": {
+        "title": "Rest found in Jesus",
+        "body": "Jesus does not invite the strong to self-sufficiency. He invites the weary to himself. His yoke is not the crushing burden of self-salvation, but the discipleship rest of walking with him."
+      },
+      "questions": [
+        {
+          "id": "rest-q1",
+          "type": "multiple_choice",
+          "prompt": "Who does Jesus invite in Matthew 11:28?",
+          "options": [
+            "Only the already successful",
+            "Only the religious leaders",
+            "Those who labor and are heavily burdened",
+            "Those who need no help"
+          ],
+          "correctIndex": 2,
+          "explanation": "Jesus invites the weary and burdened."
+        },
+        {
+          "id": "rest-q2",
+          "type": "true_false",
+          "prompt": "Jesus promises rest for the soul, not deeper exhaustion.",
+          "correctAnswer": true,
+          "explanation": "Jesus says, \"I will give you rest.\""
+        },
+        {
+          "id": "rest-q3",
+          "type": "cloze_choice",
+          "prompt": "Come to me, all you who labor and are heavily burdened, and I will give you _____.",
+          "options": ["rest", "trouble", "fear", "distance"],
+          "correctIndex": 0,
+          "explanation": "Jesus promises rest."
+        }
+      ],
+      "reflection": {
+        "prompt": "Where are you carrying burdens that you have not actually brought to Jesus?"
+      },
+      "mission": {
+        "intro": "The exhausted traveler presses on only by coming to Jesus.",
+        "victoryText": "You advanced by receiving the rest Jesus offers."
+      }
+    },
+    {
+      "id": "abide-in-me",
+      "title": "Abide in Me",
+      "type": "commandment",
+      "summary": "Jesus teaches that fruitfulness comes from remaining in him rather than trying to live spiritually independent lives.",
+      "difficulty": "medium",
+      "tags": ["abide", "fruit", "dependence", "union-with-christ"],
+      "passages": [
+        {
+          "reference": "John 15:1-11",
+          "text": "Remain in me, and I in you. As the branch can't bear fruit by itself, unless it remains in the vine, so neither can you, unless you remain in me."
+        }
+      ],
+      "focus": {
+        "kind": "commandment",
+        "statement": "Remain in me."
+      },
+      "contextCard": {
+        "title": "Fruit comes from union",
+        "body": "Jesus does not present discipleship as independent effort. The branch lives by remaining connected to the vine. Fruit is the result of abiding, not mere self-generated activity."
+      },
+      "questions": [
+        {
+          "id": "abide-q1",
+          "type": "multiple_choice",
+          "prompt": "According to John 15, why can't a branch bear fruit by itself?",
+          "options": [
+            "It lacks discipline only",
+            "It must remain in the vine",
+            "It needs public approval",
+            "It must avoid all pruning"
+          ],
+          "correctIndex": 1,
+          "explanation": "Fruit depends on remaining in the vine."
+        },
+        {
+          "id": "abide-q2",
+          "type": "true_false",
+          "prompt": "Jesus teaches that spiritual fruitfulness can come apart from remaining in him.",
+          "correctAnswer": false,
+          "explanation": "He says, \"Apart from me you can do nothing.\""
+        },
+        {
+          "id": "abide-q3",
+          "type": "best_application",
+          "prompt": "Which response best reflects abiding in Jesus?",
+          "options": [
+            "Treat spiritual growth as self-powered achievement",
+            "Remain dependent on Jesus for lasting fruit",
+            "Assume activity always equals fruitfulness",
+            "Disconnect prayer from obedience"
+          ],
+          "correctIndex": 1,
+          "explanation": "Abiding means dependence, not self-sufficiency."
+        }
+      ],
+      "reflection": {
+        "prompt": "Where are you trying to produce fruit without remaining close to Jesus?"
+      },
+      "mission": {
+        "intro": "Only a branch joined to the vine can endure and bear fruit.",
+        "victoryText": "You advanced by remaining in the vine rather than trusting yourself."
+      }
+    },
+    {
+      "id": "do-not-be-afraid",
+      "title": "Do Not Be Afraid",
+      "type": "promise",
+      "summary": "Jesus repeatedly calls his followers away from fear by anchoring them in his presence and authority.",
+      "difficulty": "easy",
+      "tags": ["fear", "courage", "presence", "trust"],
+      "passages": [
+        {
+          "reference": "Matthew 14:27",
+          "text": "But immediately Jesus spoke to them, saying, \"Cheer up! I AM! Don't be afraid.\""
+        },
+        {
+          "reference": "John 14:27",
+          "text": "Peace I leave with you. My peace I give to you. Not as the world gives, give I to you. Don't let your heart be troubled, neither let it be fearful."
+        }
+      ],
+      "focus": {
+        "kind": "promise",
+        "statement": "Don't be afraid."
+      },
+      "contextCard": {
+        "title": "Peace in his presence",
+        "body": "Jesus does not deny danger, but he meets fear with his presence, peace, and authority. Courage in the disciple is not self-confidence, but confidence in Christ."
+      },
+      "questions": [
+        {
+          "id": "fear-q1",
+          "type": "multiple_choice",
+          "prompt": "What does Jesus tell his disciples in the storm?",
+          "options": [
+            "Run from the boat",
+            "Cheer up and don't be afraid",
+            "Hide and wait silently",
+            "Trust only your own strength"
+          ],
+          "correctIndex": 1,
+          "explanation": "Jesus speaks courage into their fear."
+        },
+        {
+          "id": "fear-q2",
+          "type": "true_false",
+          "prompt": "Jesus says, \"Don't let your heart be troubled, neither let it be fearful.\"",
+          "correctAnswer": true,
+          "explanation": "This is part of his peace-giving teaching in John 14."
+        },
+        {
+          "id": "fear-q3",
+          "type": "cloze_choice",
+          "prompt": "Peace I leave with you. My _____ I give to you.",
+          "options": ["peace", "warning", "distance", "silence"],
+          "correctIndex": 0,
+          "explanation": "Jesus gives his peace to his followers."
+        }
+      ],
+      "reflection": {
+        "prompt": "What fear is most often shaping your decisions more than Jesus' presence and peace?"
+      },
+      "mission": {
+        "intro": "Fear closes the path, but Jesus speaks peace into the storm.",
+        "victoryText": "You advanced by trusting his presence more than your fear."
+      }
+    },
+    {
+      "id": "make-disciples",
+      "title": "Make Disciples of All Nations",
+      "type": "commandment",
+      "summary": "Jesus sends his followers to make disciples by going, baptizing, and teaching obedience to all he commanded.",
+      "difficulty": "medium",
+      "tags": ["great-commission", "missions", "discipleship", "obedience"],
+      "passages": [
+        {
+          "reference": "Matthew 28:18-20",
+          "text": "Go, and make disciples of all nations, baptizing them in the name of the Father and of the Son and of the Holy Spirit, teaching them to observe all things that I commanded you."
+        }
+      ],
+      "focus": {
+        "kind": "commandment",
+        "statement": "Make disciples of all nations."
+      },
+      "contextCard": {
+        "title": "The Great Commission is a teaching commission",
+        "body": "Jesus does not command mere information transfer or crowd gathering. He commands disciple-making that includes teaching people to obey all that he commanded."
+      },
+      "questions": [
+        {
+          "id": "commission-q1",
+          "type": "multiple_choice",
+          "prompt": "According to Matthew 28, what are disciples to be taught?",
+          "options": [
+            "Only inspiring stories",
+            "All things Jesus commanded",
+            "Only cultural traditions",
+            "Only private spirituality"
+          ],
+          "correctIndex": 1,
+          "explanation": "Jesus says to teach them to observe all he commanded."
+        },
+        {
+          "id": "commission-q2",
+          "type": "true_false",
+          "prompt": "The Great Commission includes teaching obedience, not only baptism.",
+          "correctAnswer": true,
+          "explanation": "Jesus explicitly includes teaching obedience."
+        },
+        {
+          "id": "commission-q3",
+          "type": "best_application",
+          "prompt": "Which response best reflects the Great Commission?",
+          "options": [
+            "Measure success only by attendance",
+            "Make disciples by teaching obedience to Jesus",
+            "Treat Jesus' commands as optional extras",
+            "Reduce mission to private belief alone"
+          ],
+          "correctIndex": 1,
+          "explanation": "Disciple-making includes teaching people to obey Jesus."
+        }
+      ],
+      "reflection": {
+        "prompt": "How could your life become more aligned with Jesus' command to make disciples rather than only consume teaching?"
+      },
+      "mission": {
+        "intro": "This mission is larger than survival. It is about obedience to the risen King.",
+        "victoryText": "You advanced under the authority of the One who sends disciples to all nations."
+      }
+    }
+  ]
+}

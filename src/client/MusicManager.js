@@ -147,6 +147,44 @@
     }
 
     /**
+     * Resume current playback in-place if audio was previously paused.
+     * Falls back to normal play selection if no current audio is loaded.
+     */
+    function resume() {
+        if (songBrowsingMode) {
+            console.log('MusicManager: ignoring resume while song browsing mode is active');
+            return;
+        }
+
+        if (currentAudio) {
+            currentAudio.play()
+                .then(() => {
+                    isPlaying = true;
+                    userPaused = false;
+                })
+                .catch((err) => {
+                    console.error('Error resuming audio:', err);
+                    isPlaying = false;
+                });
+            return;
+        }
+
+        userPaused = false;
+        if (currentVerseReference) {
+            playVerseTrack(currentVerseReference).then((wasPlayed) => {
+                if (!wasPlayed) {
+                    playTrack(currentTrackIndex);
+                }
+            }).catch(() => {
+                playTrack(currentTrackIndex);
+            });
+            return;
+        }
+
+        playTrack(currentTrackIndex);
+    }
+
+    /**
      * Toggle mute (volume 0 without stopping)
      */
     function toggleMute() {
@@ -384,6 +422,7 @@
         playTrackUrl,             // Helper for direct URL playback
         stop,
         pause,
+        resume,
         togglePlay,
         toggleMute,
         setVolume,

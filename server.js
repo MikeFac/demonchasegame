@@ -13,6 +13,7 @@ const userRouter = require('./src/server/routes/users');
 const progressRouter = require('./src/server/routes/progress');
 const worldRouter = require('./src/server/routes/worlds');
 const groupsRouter = require('./src/server/routes/groups');
+const contentMakerRouter = require('./src/server/routes/contentMaker');
 const { retryFailedGenerations } = require('./src/server/jobs/retryFailedGenerations');
 
 const app = express();
@@ -35,6 +36,35 @@ app.get('/lobby', (req, res) => {
 
 app.get('/config', (req, res) => {
   res.sendFile(path.join(__dirname, 'config.html'));
+});
+
+app.get('/privacy', (req, res) => {
+  res.sendFile(path.join(__dirname, 'privacy.html'));
+});
+
+app.get('/terms', (req, res) => {
+  res.sendFile(path.join(__dirname, 'terms.html'));
+});
+
+app.get('/youth-pastors', (req, res) => {
+  res.sendFile(path.join(__dirname, 'youth-pastors.html'));
+});
+
+app.get('/parents', (req, res) => {
+  res.sendFile(path.join(__dirname, 'parents.html'));
+});
+
+app.get('/players', (req, res) => {
+  res.sendFile(path.join(__dirname, 'players.html'));
+});
+
+app.get('/missions', (req, res) => {
+  res.sendFile(path.join(__dirname, 'missions.html'));
+});
+
+app.get('/content-maker', (req, res) => {
+  res.set('X-Robots-Tag', 'noindex, nofollow');
+  res.sendFile(path.join(__dirname, 'content-maker.html'));
 });
 
 // Initialize Managers
@@ -108,6 +138,9 @@ app.use('/api/worlds', worldRouter);
 // Group Management Routes
 app.use('/api/groups', groupsRouter);
 
+// Content Maker Routes
+app.use('/api/content-maker', contentMakerRouter);
+
 // ==================== Socket.IO ====================
 
 io.on('connection', (socket) => {
@@ -135,7 +168,18 @@ io.on('connection', (socket) => {
     // Use custom balance if provided (from URL config), otherwise use preset
     var gameConfig;
     if (options.balance) {
-      gameConfig = GameConfig.createFromCustomBalance(options.balance, quizSettings, options.levels || null);
+      gameConfig = GameConfig.createFromCustomBalance(
+        options.balance,
+        quizSettings,
+        options.levels || null,
+        {
+          fixedMonsters: options.fixedMonsters || null,
+          randomSpawnsEnabled: options.randomSpawnsEnabled,
+          randomSpawnBudget: options.randomSpawnBudget,
+          mapData: options.mapData || null,
+          playerSpawn: options.playerSpawn || null
+        }
+      );
     } else {
       gameConfig = GameConfig.createGameConfig(difficulty, quizSettings);
     }

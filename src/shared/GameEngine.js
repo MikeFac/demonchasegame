@@ -85,6 +85,10 @@
                 this.gameState, this.emitter, this.levelData,
                 this.wallGrid, this.gameConfig.monsterHealthMultiplier
             );
+            this.monsterManager.configureSpawner({
+                randomSpawnsEnabled: this.gameConfig.randomSpawnsEnabled,
+                randomSpawnBudget: this.gameConfig.randomSpawnBudget
+            });
             this.monsterManager.collectibleManager = this.collectibleManager;
             this.playerManager = new PlayerManager(this.gameState, this.emitter, this.wallGrid, this.gameConfig);
             this.bulletManager = new BulletManager(this.emitter, this.monsterManager, this.wallGrid, this.gameState);
@@ -94,6 +98,9 @@
                 this._spawnHealingPoint();
             }
             this.collectibleManager.initializeLevelCollectibles();
+            if (Array.isArray(this.gameConfig.fixedMonsters) && this.gameConfig.fixedMonsters.length > 0) {
+                this.monsterManager.spawnFixedMonsters(this.gameConfig.fixedMonsters);
+            }
 
             // Internal state
             this._levelAdvancing = false;
@@ -260,6 +267,25 @@
         }
 
         _generateMaze(mapStyle) {
+            if (this.gameConfig && this.gameConfig.mapData) {
+                var mapData = this.gameConfig.mapData;
+                this.walls = mapData.walls || [];
+                this.wallGrid = new WallGrid(
+                    mapData.grid,
+                    mapData.rows,
+                    mapData.cols,
+                    mapData.cellSize || this.constants.CELL_SIZE
+                );
+                this.mazeGridData = {
+                    rows: mapData.rows,
+                    cols: mapData.cols,
+                    cellSize: mapData.cellSize || this.constants.CELL_SIZE
+                };
+                this.spawnX = (this.gameConfig.playerSpawn && this.gameConfig.playerSpawn.x) || mapData.spawnX || 100;
+                this.spawnY = (this.gameConfig.playerSpawn && this.gameConfig.playerSpawn.y) || mapData.spawnY || 100;
+                return;
+            }
+
             var mazeResult = MapGeneratorFactory.generateMap(mapStyle, this.constants.WORLD_WIDTH, this.constants.WORLD_HEIGHT, this.constants.CELL_SIZE);
             this.walls = mazeResult.walls;
             this.wallGrid = new WallGrid(mazeResult.grid, mazeResult.rows, mazeResult.cols, this.constants.CELL_SIZE);

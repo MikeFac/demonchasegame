@@ -1,0 +1,1380 @@
+{
+  "id": "promises-of-jesus-peace-rest-forgiveness-mercy-eternal-life",
+  "title": "The Promises of Jesus: Peace, Rest, Forgiveness, Mercy, and Eternal Life",
+  "theme": "Discipleship through the consoling and saving promises of Jesus in the Gospels",
+  "description": "A discipleship-focused content pack built around the promises, invitations, and assurances of Jesus concerning peace, rest, forgiveness, mercy, and eternal life.",
+  "audience": [
+    "youth",
+    "small-group",
+    "discipleship",
+    "missions"
+  ],
+  "language": "en",
+  "version": 1,
+  "questionTypes": [
+    "multiple_choice",
+    "true_false",
+    "cloze_choice",
+    "best_application"
+  ],
+  "units": [
+    {
+      "id": "peace-i-leave-with-you",
+      "title": "My Peace I Give to You",
+      "type": "promise",
+      "summary": "Jesus promises a peace that is different from the world's fragile calm and tells troubled hearts not to fear.",
+      "difficulty": "easy",
+      "tags": ["peace", "fear", "comfort", "trust"],
+      "passages": [
+        {
+          "reference": "John 14:27",
+          "text": "Peace I leave with you. My peace I give to you; not as the world gives, give I to you. Don't let your heart be troubled, neither let it be fearful."
+        }
+      ],
+      "focus": {
+        "kind": "promise",
+        "statement": "Peace I leave with you. My peace I give to you."
+      },
+      "contextCard": {
+        "title": "Christ's peace is not shallow",
+        "body": "Jesus speaks these words on the eve of suffering, not in easy circumstances. His peace is rooted in his presence and promises, not in temporary comfort."
+      },
+      "questions": [
+        {
+          "id": "peace-give-q1",
+          "type": "multiple_choice",
+          "prompt": "How does Jesus say he gives peace?",
+          "options": [
+            "Only when life becomes easy",
+            "In the same way the world gives",
+            "In a way different from the world",
+            "Only after fear disappears"
+          ],
+          "correctIndex": 2,
+          "explanation": "Jesus explicitly says his peace is not given as the world gives."
+        },
+        {
+          "id": "peace-give-q2",
+          "type": "true_false",
+          "prompt": "Jesus tells troubled hearts to remain fearful until circumstances improve.",
+          "correctAnswer": false,
+          "explanation": "He says, 'Don't let your heart be troubled, neither let it be fearful.'"
+        },
+        {
+          "id": "peace-give-q3",
+          "type": "cloze_choice",
+          "prompt": "Peace I leave with you. My _____ I give to you.",
+          "options": ["peace", "strength", "victory", "wisdom"],
+          "correctIndex": 0,
+          "explanation": "Jesus promises his own peace."
+        },
+        {
+          "id": "peace-give-q4",
+          "type": "multiple_choice",
+          "prompt": "What does Jesus tell his disciples not to let happen to their hearts?",
+          "options": [
+            "Become troubled and fearful",
+            "Grow in faith",
+            "Remember his words",
+            "Hope in God"
+          ],
+          "correctIndex": 0,
+          "explanation": "Jesus tells them not to let their hearts be troubled or afraid."
+        },
+        {
+          "id": "peace-give-q5",
+          "type": "true_false",
+          "prompt": "Jesus compares his peace to the world's peace and says they are the same.",
+          "correctAnswer": false,
+          "explanation": "He specifically says his peace is not given as the world gives."
+        },
+        {
+          "id": "peace-give-q6",
+          "type": "best_application",
+          "prompt": "Which response best matches John 14:27?",
+          "options": [
+            "Measure peace only by changing circumstances",
+            "Receive Christ's peace even in unsettling conditions",
+            "Assume fear is unavoidable for every believer",
+            "Look to the world first for lasting calm"
+          ],
+          "correctIndex": 1,
+          "explanation": "Jesus offers a peace rooted in him rather than in outward ease."
+        },
+        {
+          "id": "peace-give-q7",
+          "type": "cloze_choice",
+          "prompt": "Don't let your heart be troubled, neither let it be _____.",
+          "options": ["fearful", "busy", "silent", "distant"],
+          "correctIndex": 0,
+          "explanation": "Jesus directly addresses fear in the heart."
+        },
+        {
+          "id": "peace-give-q8",
+          "type": "multiple_choice",
+          "prompt": "What kind of peace is Jesus promising here?",
+          "options": [
+            "A temporary pause in conflict only",
+            "His own peace",
+            "A political peace",
+            "Peace earned by performance"
+          ],
+          "correctIndex": 1,
+          "explanation": "Jesus says, 'My peace I give to you.'"
+        },
+        {
+          "id": "peace-give-q9",
+          "type": "true_false",
+          "prompt": "Jesus gives this promise in a context where suffering is near, not absent.",
+          "correctAnswer": true,
+          "explanation": "The promise comes on the eve of his suffering, which makes it more, not less, significant."
+        }
+      ],
+      "reflection": {
+        "prompt": "Where do you usually look for peace that Jesus is calling you to receive from him instead?"
+      },
+      "mission": {
+        "intro": "Fear rises quickly, but the Lord offers a deeper peace than the world can supply.",
+        "victoryText": "You advanced by standing in Christ's peace instead of surrendering to fear."
+      }
+    },
+    {
+      "id": "peace-in-me-have-peace",
+      "title": "In Me You May Have Peace",
+      "type": "promise",
+      "summary": "Jesus promises peace in himself even while warning that his followers will face trouble in the world.",
+      "difficulty": "medium",
+      "tags": ["peace", "trouble", "courage", "victory"],
+      "passages": [
+        {
+          "reference": "John 16:33",
+          "text": "I have told you these things, so that in me you may have peace. In the world you have oppression; but cheer up! I have overcome the world."
+        }
+      ],
+      "focus": {
+        "kind": "promise",
+        "statement": "In me you may have peace."
+      },
+      "contextCard": {
+        "title": "Peace without denial",
+        "body": "Jesus does not promise an easy road. He names real trouble, then anchors peace in his own victory over the world."
+      },
+      "questions": [
+        {
+          "id": "peace-overcome-q1",
+          "type": "multiple_choice",
+          "prompt": "Where does Jesus say his followers may have peace?",
+          "options": [
+            "In favorable politics",
+            "In themselves",
+            "In him",
+            "In perfect health"
+          ],
+          "correctIndex": 2,
+          "explanation": "Jesus says, 'In me you may have peace.'"
+        },
+        {
+          "id": "peace-overcome-q2",
+          "type": "true_false",
+          "prompt": "Jesus says believers will never face trouble in the world.",
+          "correctAnswer": false,
+          "explanation": "He plainly says, 'In the world you have oppression.'"
+        },
+        {
+          "id": "peace-overcome-q3",
+          "type": "best_application",
+          "prompt": "Which response best matches John 16:33?",
+          "options": [
+            "Deny that suffering exists",
+            "Seek peace by withdrawing from discipleship",
+            "Take courage because Jesus has overcome the world",
+            "Assume trouble means Jesus has failed"
+          ],
+          "correctIndex": 2,
+          "explanation": "Jesus grounds courage in his victory, not in trouble-free living."
+        },
+        {
+          "id": "peace-overcome-q4",
+          "type": "multiple_choice",
+          "prompt": "What does Jesus say he has overcome?",
+          "options": [
+            "Every question",
+            "The world",
+            "All governments",
+            "Human weakness alone"
+          ],
+          "correctIndex": 1,
+          "explanation": "Jesus says, 'I have overcome the world.'"
+        },
+        {
+          "id": "peace-overcome-q5",
+          "type": "cloze_choice",
+          "prompt": "In the world you have oppression; but cheer up! I have overcome the _____.",
+          "options": ["world", "enemy", "storm", "flesh"],
+          "correctIndex": 0,
+          "explanation": "Jesus sets courage on the fact of his victory over the world."
+        },
+        {
+          "id": "peace-overcome-q6",
+          "type": "true_false",
+          "prompt": "Jesus offers peace by pretending trouble is not real.",
+          "correctAnswer": false,
+          "explanation": "He openly acknowledges trouble before promising peace in himself."
+        },
+        {
+          "id": "peace-overcome-q7",
+          "type": "multiple_choice",
+          "prompt": "Why does Jesus say he told his disciples these things?",
+          "options": [
+            "So they would avoid every trial",
+            "So they may have peace in him",
+            "So they could prove themselves strong",
+            "So they would fear the future"
+          ],
+          "correctIndex": 1,
+          "explanation": "He says he has told them these things so that in him they may have peace."
+        },
+        {
+          "id": "peace-overcome-q8",
+          "type": "best_application",
+          "prompt": "Which choice shows the kind of courage Jesus commands here?",
+          "options": [
+            "Courage based on self-confidence alone",
+            "Courage rooted in Christ's victory",
+            "Courage that denies pain exists",
+            "Courage that avoids obedience"
+          ],
+          "correctIndex": 1,
+          "explanation": "Jesus calls for courage because he has overcome the world."
+        },
+        {
+          "id": "peace-overcome-q9",
+          "type": "true_false",
+          "prompt": "According to Jesus, peace and tribulation can both be present in a believer's life.",
+          "correctAnswer": true,
+          "explanation": "He says peace is found in him even while trouble is experienced in the world."
+        }
+      ],
+      "reflection": {
+        "prompt": "How could remembering Jesus' victory change the way you respond to present trouble?"
+      },
+      "mission": {
+        "intro": "Pressure surrounds you, but Christ has already spoken peace into the conflict.",
+        "victoryText": "You held your ground because Jesus has overcome the world."
+      }
+    },
+    {
+      "id": "come-to-me-for-rest",
+      "title": "Come to Me and I Will Give You Rest",
+      "type": "invitation",
+      "summary": "Jesus invites the weary and burdened to come to him and receive rest.",
+      "difficulty": "easy",
+      "tags": ["rest", "weariness", "invitation", "comfort"],
+      "passages": [
+        {
+          "reference": "Matthew 11:28",
+          "text": "Come to me, all you who labor and are heavily burdened, and I will give you rest."
+        }
+      ],
+      "focus": {
+        "kind": "promise",
+        "statement": "Come to me... and I will give you rest."
+      },
+      "contextCard": {
+        "title": "Rest begins with coming",
+        "body": "Jesus addresses people who are tired, burdened, and unable to save themselves by effort alone. His invitation is personal: come to him."
+      },
+      "questions": [
+        {
+          "id": "rest-come-q1",
+          "type": "multiple_choice",
+          "prompt": "Who does Jesus invite to come to him in Matthew 11:28?",
+          "options": [
+            "Only the strong and successful",
+            "Those who labor and are heavily burdened",
+            "Only trained teachers",
+            "Only those with no problems"
+          ],
+          "correctIndex": 1,
+          "explanation": "Jesus invites the weary and burdened."
+        },
+        {
+          "id": "rest-come-q2",
+          "type": "true_false",
+          "prompt": "Jesus promises rest to those who come to him.",
+          "correctAnswer": true,
+          "explanation": "He says, 'I will give you rest.'"
+        },
+        {
+          "id": "rest-come-q3",
+          "type": "cloze_choice",
+          "prompt": "Come to me, all you who labor and are heavily burdened, and I will give you _____.",
+          "options": ["rest", "riches", "power", "status"],
+          "correctIndex": 0,
+          "explanation": "Jesus promises rest, not worldly advancement."
+        },
+        {
+          "id": "rest-come-q4",
+          "type": "multiple_choice",
+          "prompt": "To whom is Jesus speaking in Matthew 11:28?",
+          "options": [
+            "The self-satisfied only",
+            "The weary and burdened",
+            "Only those with public influence",
+            "Only the spiritually mature"
+          ],
+          "correctIndex": 1,
+          "explanation": "Jesus calls those who labor and are heavily burdened."
+        },
+        {
+          "id": "rest-come-q5",
+          "type": "true_false",
+          "prompt": "Jesus invites people to come first to a method rather than to himself.",
+          "correctAnswer": false,
+          "explanation": "The invitation is personal: 'Come to me.'"
+        },
+        {
+          "id": "rest-come-q6",
+          "type": "best_application",
+          "prompt": "Which response best fits this invitation?",
+          "options": [
+            "Hide your burdens and pretend strength",
+            "Come honestly to Jesus with your weariness",
+            "Carry every burden alone to prove maturity",
+            "Wait until you feel worthy before approaching him"
+          ],
+          "correctIndex": 1,
+          "explanation": "Jesus invites weary people to come directly to him."
+        },
+        {
+          "id": "rest-come-q7",
+          "type": "cloze_choice",
+          "prompt": "Come to me, all you who _____ and are heavily burdened.",
+          "options": ["labor", "lead", "sing", "wander"],
+          "correctIndex": 0,
+          "explanation": "Jesus addresses those who labor under heavy burdens."
+        },
+        {
+          "id": "rest-come-q8",
+          "type": "multiple_choice",
+          "prompt": "What is the direction of Jesus' promise in this verse?",
+          "options": [
+            "From human effort to deeper striving",
+            "From burden to rest in him",
+            "From discipleship to independence",
+            "From weakness to self-sufficiency"
+          ],
+          "correctIndex": 1,
+          "explanation": "Jesus promises rest to those who come to him burdened."
+        },
+        {
+          "id": "rest-come-q9",
+          "type": "true_false",
+          "prompt": "Matthew 11:28 presents Jesus as approachable to the exhausted.",
+          "correctAnswer": true,
+          "explanation": "The verse highlights Christ's invitation to the weary."
+        }
+      ],
+      "reflection": {
+        "prompt": "What burden do you most need to bring honestly to Jesus instead of carrying alone?"
+      },
+      "mission": {
+        "intro": "The burden is heavy, but Jesus calls the weary toward himself.",
+        "victoryText": "You moved forward by receiving Christ's invitation to rest."
+      }
+    },
+    {
+      "id": "find-rest-for-your-souls",
+      "title": "You Will Find Rest for Your Souls",
+      "type": "promise",
+      "summary": "Jesus promises soul-rest to those who take his yoke and learn from his gentle and humble heart.",
+      "difficulty": "medium",
+      "tags": ["rest", "gentleness", "discipleship", "humility"],
+      "passages": [
+        {
+          "reference": "Matthew 11:29-30",
+          "text": "Take my yoke upon you, and learn from me, for I am gentle and humble in heart; and you will find rest for your souls. For my yoke is easy, and my burden is light."
+        }
+      ],
+      "focus": {
+        "kind": "promise",
+        "statement": "You will find rest for your souls."
+      },
+      "contextCard": {
+        "title": "Rest through surrendered discipleship",
+        "body": "Jesus does not promise aimless relief. He calls people into his yoke and his way, where true rest is found under his gentle authority."
+      },
+      "questions": [
+        {
+          "id": "rest-souls-q1",
+          "type": "multiple_choice",
+          "prompt": "What does Jesus say people will find for their souls?",
+          "options": [
+            "Rest",
+            "Excitement",
+            "Popularity",
+            "Independence"
+          ],
+          "correctIndex": 0,
+          "explanation": "Jesus promises rest for the soul."
+        },
+        {
+          "id": "rest-souls-q2",
+          "type": "true_false",
+          "prompt": "Jesus describes himself as gentle and humble in heart.",
+          "correctAnswer": true,
+          "explanation": "That is central to this invitation."
+        },
+        {
+          "id": "rest-souls-q3",
+          "type": "best_application",
+          "prompt": "Which response best fits Jesus' teaching here?",
+          "options": [
+            "Reject all submission in order to be free",
+            "Learn from Jesus and walk under his yoke",
+            "Search for rest by avoiding obedience",
+            "Assume discipleship always means crushing weight"
+          ],
+          "correctIndex": 1,
+          "explanation": "Soul-rest comes through learning from Jesus and walking in his way."
+        },
+        {
+          "id": "rest-souls-q4",
+          "type": "multiple_choice",
+          "prompt": "What does Jesus tell his disciples to take upon themselves?",
+          "options": [
+            "His yoke",
+            "Their pride",
+            "The world's burden",
+            "A path of self-rule"
+          ],
+          "correctIndex": 0,
+          "explanation": "Jesus says, 'Take my yoke upon you.'"
+        },
+        {
+          "id": "rest-souls-q5",
+          "type": "true_false",
+          "prompt": "Jesus describes his burden as crushing and impossible.",
+          "correctAnswer": false,
+          "explanation": "He says his yoke is easy and his burden is light."
+        },
+        {
+          "id": "rest-souls-q6",
+          "type": "cloze_choice",
+          "prompt": "Learn from me, for I am gentle and humble in _____.",
+          "options": ["heart", "speech", "power", "appearance"],
+          "correctIndex": 0,
+          "explanation": "Jesus emphasizes his gentle and humble heart."
+        },
+        {
+          "id": "rest-souls-q7",
+          "type": "multiple_choice",
+          "prompt": "Where does Jesus say this rest is found?",
+          "options": [
+            "For the body only",
+            "For the soul",
+            "In public honor",
+            "In avoiding all responsibility"
+          ],
+          "correctIndex": 1,
+          "explanation": "Jesus promises rest for your souls."
+        },
+        {
+          "id": "rest-souls-q8",
+          "type": "best_application",
+          "prompt": "Which response misunderstands Jesus' promise here?",
+          "options": [
+            "Learning from him",
+            "Walking under his yoke",
+            "Treating freedom as independence from him",
+            "Receiving his gentle leadership"
+          ],
+          "correctIndex": 2,
+          "explanation": "Jesus offers rest under his lordship, not apart from it."
+        },
+        {
+          "id": "rest-souls-q9",
+          "type": "true_false",
+          "prompt": "In Matthew 11:29-30, discipleship and rest are presented as compatible.",
+          "correctAnswer": true,
+          "explanation": "Jesus ties learning from him directly to finding rest for the soul."
+        }
+      ],
+      "reflection": {
+        "prompt": "Where do you resist Jesus' yoke even though he offers rest under his leadership?"
+      },
+      "mission": {
+        "intro": "The way of Jesus is not oppressive mastery but gentle authority that gives rest.",
+        "victoryText": "You endured by learning from the gentle and humble Christ."
+      }
+    },
+    {
+      "id": "your-father-will-forgive-you",
+      "title": "Your Heavenly Father Will Also Forgive You",
+      "type": "promise",
+      "summary": "Jesus teaches that those who forgive others can look to the Father's forgiving mercy.",
+      "difficulty": "medium",
+      "tags": ["forgiveness", "father", "mercy", "prayer"],
+      "passages": [
+        {
+          "reference": "Matthew 6:12",
+          "text": "Forgive us our debts, as we also forgive our debtors."
+        },
+        {
+          "reference": "Matthew 6:14-15",
+          "text": "For if you forgive men their trespasses, your heavenly Father will also forgive you. But if you don't forgive men their trespasses, neither will your Father forgive your trespasses."
+        }
+      ],
+      "focus": {
+        "kind": "promise",
+        "statement": "If you forgive others, your heavenly Father will also forgive you."
+      },
+      "contextCard": {
+        "title": "Forgiven people forgive",
+        "body": "Jesus ties forgiveness received and forgiveness extended together. He is not commending shallow words, but hearts transformed by mercy."
+      },
+      "questions": [
+        {
+          "id": "forgive-father-q1",
+          "type": "multiple_choice",
+          "prompt": "According to Jesus, what does the heavenly Father do when people forgive others?",
+          "options": [
+            "He ignores their prayers",
+            "He also forgives them",
+            "He rewards them with status",
+            "He removes all consequences immediately"
+          ],
+          "correctIndex": 1,
+          "explanation": "Jesus explicitly says the heavenly Father will also forgive them."
+        },
+        {
+          "id": "forgive-father-q2",
+          "type": "true_false",
+          "prompt": "Jesus treats forgiving others as unrelated to spiritual life.",
+          "correctAnswer": false,
+          "explanation": "He makes it a serious matter connected to prayer and forgiveness."
+        },
+        {
+          "id": "forgive-father-q3",
+          "type": "best_application",
+          "prompt": "Which response best reflects this teaching?",
+          "options": [
+            "Hold bitterness while asking God for mercy",
+            "Receive God's mercy and extend forgiveness to others",
+            "Treat forgiveness as optional for mature believers only",
+            "Forgive only when it costs nothing"
+          ],
+          "correctIndex": 1,
+          "explanation": "Jesus teaches that forgiven people must become forgiving people."
+        },
+        {
+          "id": "forgive-father-q4",
+          "type": "multiple_choice",
+          "prompt": "In the Lord's Prayer, how are disciples taught to pray about debts?",
+          "options": [
+            "Ignore them",
+            "Forgive us our debts, as we forgive our debtors",
+            "Punish our debtors",
+            "Remember every offense forever"
+          ],
+          "correctIndex": 1,
+          "explanation": "Jesus places forgiveness at the center of kingdom prayer."
+        },
+        {
+          "id": "forgive-father-q5",
+          "type": "true_false",
+          "prompt": "Jesus treats unforgiveness as spiritually serious.",
+          "correctAnswer": true,
+          "explanation": "He makes it a weighty issue connected to the Father's forgiveness."
+        },
+        {
+          "id": "forgive-father-q6",
+          "type": "cloze_choice",
+          "prompt": "If you forgive men their trespasses, your heavenly Father will also _____ you.",
+          "options": ["forgive", "test", "reward", "delay"],
+          "correctIndex": 0,
+          "explanation": "Jesus clearly says the Father will also forgive."
+        },
+        {
+          "id": "forgive-father-q7",
+          "type": "multiple_choice",
+          "prompt": "What heart posture does this teaching oppose?",
+          "options": [
+            "Mercy",
+            "Bitterness",
+            "Prayer",
+            "Compassion"
+          ],
+          "correctIndex": 1,
+          "explanation": "Jesus challenges the bitter refusal to forgive others."
+        },
+        {
+          "id": "forgive-father-q8",
+          "type": "best_application",
+          "prompt": "Which action most directly obeys Jesus here?",
+          "options": [
+            "Keep rehearsing the offense inwardly",
+            "Pray for mercy while refusing to release others",
+            "Bring the hurt to God and choose forgiveness",
+            "Pretend evil never happened"
+          ],
+          "correctIndex": 2,
+          "explanation": "Jesus calls for real forgiveness, not denial or bitterness."
+        },
+        {
+          "id": "forgive-father-q9",
+          "type": "true_false",
+          "prompt": "This teaching connects forgiveness to the transformed life of a disciple, not to bare theory.",
+          "correctAnswer": true,
+          "explanation": "Jesus links prayer, mercy, and real forgiveness in lived discipleship."
+        }
+      ],
+      "reflection": {
+        "prompt": "Whom do you need to release before God rather than continuing to hold in bitterness?"
+      },
+      "mission": {
+        "intro": "Mercy cannot remain theory. The forgiven are called to forgive.",
+        "victoryText": "You advanced by choosing the way of mercy instead of resentment."
+      }
+    },
+    {
+      "id": "your-sins-are-forgiven-go-in-peace",
+      "title": "Your Sins Are Forgiven... Go in Peace",
+      "type": "promise",
+      "summary": "Jesus publicly assures the repentant sinner that her sins are forgiven and sends her away in peace.",
+      "difficulty": "medium",
+      "tags": ["forgiveness", "peace", "grace", "faith"],
+      "passages": [
+        {
+          "reference": "Luke 7:47-50",
+          "text": "He said to her, \"Your sins are forgiven... Your faith has saved you. Go in peace.\""
+        }
+      ],
+      "focus": {
+        "kind": "promise",
+        "statement": "Your sins are forgiven... Go in peace."
+      },
+      "contextCard": {
+        "title": "Grace speaks publicly",
+        "body": "Jesus does not merely tolerate the repentant woman. He defends her, announces forgiveness, and sends her away in peace rather than shame."
+      },
+      "questions": [
+        {
+          "id": "go-peace-q1",
+          "type": "multiple_choice",
+          "prompt": "What does Jesus say to the forgiven woman at the end of Luke 7?",
+          "options": [
+            "Go in peace",
+            "Return when you are cleaner",
+            "Hide from everyone",
+            "Earn your acceptance"
+          ],
+          "correctIndex": 0,
+          "explanation": "Jesus sends her away with the words, 'Go in peace.'"
+        },
+        {
+          "id": "go-peace-q2",
+          "type": "true_false",
+          "prompt": "Jesus leaves the woman's standing with God uncertain and unresolved.",
+          "correctAnswer": false,
+          "explanation": "He explicitly announces forgiveness and peace."
+        },
+        {
+          "id": "go-peace-q3",
+          "type": "cloze_choice",
+          "prompt": "Your faith has saved you. Go in _____.",
+          "options": ["peace", "fear", "secret", "sorrow"],
+          "correctIndex": 0,
+          "explanation": "Peace is part of Jesus' assurance to her."
+        },
+        {
+          "id": "go-peace-q4",
+          "type": "multiple_choice",
+          "prompt": "What does Jesus publicly announce over the woman?",
+          "options": [
+            "Your sins are forgiven",
+            "Your effort is enough",
+            "Your shame defines you",
+            "Your future is uncertain"
+          ],
+          "correctIndex": 0,
+          "explanation": "Jesus openly declares her forgiveness."
+        },
+        {
+          "id": "go-peace-q5",
+          "type": "true_false",
+          "prompt": "Jesus reinforces shame as the woman's final identity.",
+          "correctAnswer": false,
+          "explanation": "He gives forgiveness and peace, not shame."
+        },
+        {
+          "id": "go-peace-q6",
+          "type": "best_application",
+          "prompt": "Which response best reflects Luke 7:47-50?",
+          "options": [
+            "Stay defined by former sin",
+            "Receive Jesus' forgiveness and walk in peace",
+            "Earn acceptance after Jesus speaks",
+            "Hide from Christ's grace"
+          ],
+          "correctIndex": 1,
+          "explanation": "Jesus' word sends the forgiven person away in peace."
+        },
+        {
+          "id": "go-peace-q7",
+          "type": "cloze_choice",
+          "prompt": "Your faith has _____ you.",
+          "options": ["saved", "tested", "judged", "burdened"],
+          "correctIndex": 0,
+          "explanation": "Jesus says, 'Your faith has saved you.'"
+        },
+        {
+          "id": "go-peace-q8",
+          "type": "multiple_choice",
+          "prompt": "What tone marks Jesus' treatment of the repentant woman?",
+          "options": [
+            "Grace and assurance",
+            "Cold distance",
+            "Public humiliation",
+            "Uncertainty"
+          ],
+          "correctIndex": 0,
+          "explanation": "Jesus responds with grace, defense, forgiveness, and peace."
+        },
+        {
+          "id": "go-peace-q9",
+          "type": "true_false",
+          "prompt": "In Luke 7, Jesus shows that repentant sinners can receive both forgiveness and peace.",
+          "correctAnswer": true,
+          "explanation": "That is exactly what Jesus declares to the woman."
+        }
+      ],
+      "reflection": {
+        "prompt": "Do you still live as though shame has the final word, or do you receive Jesus' promise of forgiven peace?"
+      },
+      "mission": {
+        "intro": "Shame accuses loudly, but Jesus speaks a better word over the repentant.",
+        "victoryText": "You stood on Christ's declaration of forgiveness and peace."
+      }
+    },
+    {
+      "id": "blessed-are-the-merciful",
+      "title": "Blessed Are the Merciful",
+      "type": "promise",
+      "summary": "Jesus promises that the merciful themselves will receive mercy.",
+      "difficulty": "easy",
+      "tags": ["mercy", "beatitudes", "blessing", "compassion"],
+      "passages": [
+        {
+          "reference": "Matthew 5:7",
+          "text": "Blessed are the merciful, for they shall obtain mercy."
+        }
+      ],
+      "focus": {
+        "kind": "promise",
+        "statement": "Blessed are the merciful, for they shall obtain mercy."
+      },
+      "contextCard": {
+        "title": "Mercy marks kingdom people",
+        "body": "Jesus presents mercy as a mark of the blessed life. The kingdom does not celebrate hardness of heart, but compassionate action shaped by God's own mercy."
+      },
+      "questions": [
+        {
+          "id": "merciful-q1",
+          "type": "multiple_choice",
+          "prompt": "What does Jesus promise to the merciful?",
+          "options": [
+            "They shall obtain mercy",
+            "They shall avoid all suffering",
+            "They shall never need grace",
+            "They shall rule by force"
+          ],
+          "correctIndex": 0,
+          "explanation": "Jesus says the merciful shall obtain mercy."
+        },
+        {
+          "id": "merciful-q2",
+          "type": "true_false",
+          "prompt": "Mercy is presented by Jesus as part of the blessed life.",
+          "correctAnswer": true,
+          "explanation": "It is one of the Beatitudes."
+        },
+        {
+          "id": "merciful-q3",
+          "type": "best_application",
+          "prompt": "Which action best reflects this teaching?",
+          "options": [
+            "Refuse compassion in order to stay strong",
+            "Show mercy because you know you also need mercy",
+            "Celebrate harshness as spiritual maturity",
+            "Offer mercy only to impressive people"
+          ],
+          "correctIndex": 1,
+          "explanation": "Kingdom mercy flows from knowing we ourselves depend on mercy."
+        },
+        {
+          "id": "merciful-q4",
+          "type": "multiple_choice",
+          "prompt": "What does Jesus say the merciful will obtain?",
+          "options": [
+            "Mercy",
+            "Control",
+            "Applause",
+            "Revenge"
+          ],
+          "correctIndex": 0,
+          "explanation": "Jesus promises mercy to the merciful."
+        },
+        {
+          "id": "merciful-q5",
+          "type": "true_false",
+          "prompt": "Matthew 5:7 belongs to Jesus' Beatitudes.",
+          "correctAnswer": true,
+          "explanation": "It is one of the Beatitudes in the Sermon on the Mount."
+        },
+        {
+          "id": "merciful-q6",
+          "type": "cloze_choice",
+          "prompt": "Blessed are the merciful, for they shall obtain _____.",
+          "options": ["mercy", "honor", "power", "comfort"],
+          "correctIndex": 0,
+          "explanation": "Mercy is both the mark and the promise in this Beatitude."
+        },
+        {
+          "id": "merciful-q7",
+          "type": "multiple_choice",
+          "prompt": "Which quality is blessed here by Jesus?",
+          "options": [
+            "Harshness",
+            "Mercy",
+            "Self-protection",
+            "Pride"
+          ],
+          "correctIndex": 1,
+          "explanation": "Jesus blesses the merciful."
+        },
+        {
+          "id": "merciful-q8",
+          "type": "best_application",
+          "prompt": "Which response contradicts Matthew 5:7?",
+          "options": [
+            "Showing compassion to the weak",
+            "Extending mercy because you need mercy",
+            "Taking pride in being hard on others",
+            "Helping someone in distress"
+          ],
+          "correctIndex": 2,
+          "explanation": "Hard-hearted harshness runs against Jesus' teaching here."
+        },
+        {
+          "id": "merciful-q9",
+          "type": "true_false",
+          "prompt": "Jesus presents mercy as weakness to be avoided.",
+          "correctAnswer": false,
+          "explanation": "He presents mercy as blessed."
+        }
+      ],
+      "reflection": {
+        "prompt": "Where is Jesus inviting you to show practical mercy instead of cold judgment?"
+      },
+      "mission": {
+        "intro": "The way of the kingdom is not hardness but mercy.",
+        "victoryText": "You advanced by choosing compassion in the path of Christ."
+      }
+    },
+    {
+      "id": "be-merciful-as-your-father",
+      "title": "Be Merciful, Even as Your Father Is Merciful",
+      "type": "commandment",
+      "summary": "Jesus commands disciples to reflect the Father's mercy in their treatment of others.",
+      "difficulty": "medium",
+      "tags": ["mercy", "father", "discipleship", "judgment"],
+      "passages": [
+        {
+          "reference": "Luke 6:36-38",
+          "text": "Therefore be merciful, even as your Father is also merciful. Don't judge, and you won't be judged. Don't condemn, and you won't be condemned. Set free, and you will be set free."
+        }
+      ],
+      "focus": {
+        "kind": "commandment",
+        "statement": "Be merciful, even as your Father is merciful."
+      },
+      "contextCard": {
+        "title": "Mercy reflects the Father",
+        "body": "Jesus roots mercy in the character of God himself. The disciple's treatment of others is meant to mirror the Father's compassionate heart."
+      },
+      "questions": [
+        {
+          "id": "father-merciful-q1",
+          "type": "multiple_choice",
+          "prompt": "Whose mercy is the model for Jesus' disciples?",
+          "options": [
+            "The strongest leader in society",
+            "Their own personal preference",
+            "Their Father's mercy",
+            "The crowd's opinion"
+          ],
+          "correctIndex": 2,
+          "explanation": "Jesus says, 'Be merciful, even as your Father is merciful.'"
+        },
+        {
+          "id": "father-merciful-q2",
+          "type": "true_false",
+          "prompt": "Jesus disconnects mercy from the character of God.",
+          "correctAnswer": false,
+          "explanation": "He explicitly grounds mercy in the Father's mercy."
+        },
+        {
+          "id": "father-merciful-q3",
+          "type": "best_application",
+          "prompt": "Which response best reflects Luke 6:36-38?",
+          "options": [
+            "Practice condemnation as a sign of zeal",
+            "Mirror the Father's mercy in how you treat others",
+            "Protect yourself by refusing forgiveness",
+            "Judge first and show grace later"
+          ],
+          "correctIndex": 1,
+          "explanation": "Jesus calls disciples to imitate the merciful Father."
+        },
+        {
+          "id": "father-merciful-q4",
+          "type": "multiple_choice",
+          "prompt": "What command begins this section in Luke 6:36?",
+          "options": [
+            "Be merciful",
+            "Be severe",
+            "Be distant",
+            "Be admired"
+          ],
+          "correctIndex": 0,
+          "explanation": "Jesus says, 'Be merciful, even as your Father is merciful.'"
+        },
+        {
+          "id": "father-merciful-q5",
+          "type": "true_false",
+          "prompt": "Jesus links mercy with refusing condemnation.",
+          "correctAnswer": true,
+          "explanation": "The passage continues with 'Don't judge' and 'Don't condemn.'"
+        },
+        {
+          "id": "father-merciful-q6",
+          "type": "cloze_choice",
+          "prompt": "Be merciful, even as your Father is also _____.",
+          "options": ["merciful", "patient", "holy", "just"],
+          "correctIndex": 0,
+          "explanation": "Jesus grounds mercy in the Father's mercy."
+        },
+        {
+          "id": "father-merciful-q7",
+          "type": "multiple_choice",
+          "prompt": "Which pattern does Jesus reject in this passage?",
+          "options": [
+            "Merciful release",
+            "Judging and condemning others",
+            "Reflecting the Father",
+            "Compassion"
+          ],
+          "correctIndex": 1,
+          "explanation": "Jesus warns against judging and condemning."
+        },
+        {
+          "id": "father-merciful-q8",
+          "type": "best_application",
+          "prompt": "Which action best imitates the Father here?",
+          "options": [
+            "Quick condemnation",
+            "Measured mercy and release",
+            "Protective coldness",
+            "Prideful distance"
+          ],
+          "correctIndex": 1,
+          "explanation": "Merciful release reflects the Father's character."
+        },
+        {
+          "id": "father-merciful-q9",
+          "type": "true_false",
+          "prompt": "Jesus teaches that mercy is rooted in God's character, not mere temperament.",
+          "correctAnswer": true,
+          "explanation": "The Father's mercy is the model for disciples."
+        }
+      ],
+      "reflection": {
+        "prompt": "In what relationship do you most need the Father's mercy to reshape your reflexes?"
+      },
+      "mission": {
+        "intro": "The Father's character defines the disciple's response.",
+        "victoryText": "You advanced by reflecting the mercy of your Father."
+      }
+    },
+    {
+      "id": "whoever-hears-and-believes-has-eternal-life",
+      "title": "Whoever Hears and Believes Has Eternal Life",
+      "type": "promise",
+      "summary": "Jesus promises eternal life to those who hear his word and believe the Father who sent him.",
+      "difficulty": "medium",
+      "tags": ["eternal life", "faith", "hearing", "judgment"],
+      "passages": [
+        {
+          "reference": "John 5:24",
+          "text": "Most certainly I tell you, he who hears my word, and believes him who sent me, has eternal life, and doesn't come into judgment, but has passed out of death into life."
+        }
+      ],
+      "focus": {
+        "kind": "promise",
+        "statement": "He who hears my word and believes... has eternal life."
+      },
+      "contextCard": {
+        "title": "From death into life",
+        "body": "Jesus speaks of eternal life as a present possession for believers, not only a distant hope. His word brings people across the great divide from death to life."
+      },
+      "questions": [
+        {
+          "id": "eternal-hears-q1",
+          "type": "multiple_choice",
+          "prompt": "According to Jesus, what does the one who hears his word and believes have?",
+          "options": [
+            "Temporary relief",
+            "Eternal life",
+            "Automatic earthly success",
+            "Freedom from all hardship"
+          ],
+          "correctIndex": 1,
+          "explanation": "Jesus says such a person has eternal life."
+        },
+        {
+          "id": "eternal-hears-q2",
+          "type": "true_false",
+          "prompt": "Jesus says the believer remains in death and awaits possible life later.",
+          "correctAnswer": false,
+          "explanation": "He says the believer has passed out of death into life."
+        },
+        {
+          "id": "eternal-hears-q3",
+          "type": "cloze_choice",
+          "prompt": "He has passed out of _____ into life.",
+          "options": ["death", "trouble", "labor", "sorrow"],
+          "correctIndex": 0,
+          "explanation": "Jesus describes salvation as passing from death into life."
+        },
+        {
+          "id": "eternal-hears-q4",
+          "type": "multiple_choice",
+          "prompt": "What does Jesus say the believer does not come into?",
+          "options": [
+            "Service",
+            "Judgment",
+            "Prayer",
+            "Discipleship"
+          ],
+          "correctIndex": 1,
+          "explanation": "Jesus says the believer doesn't come into judgment."
+        },
+        {
+          "id": "eternal-hears-q5",
+          "type": "true_false",
+          "prompt": "John 5:24 presents eternal life as a present possession for the believer.",
+          "correctAnswer": true,
+          "explanation": "Jesus says the believer 'has eternal life.'"
+        },
+        {
+          "id": "eternal-hears-q6",
+          "type": "best_application",
+          "prompt": "Which response best fits John 5:24?",
+          "options": [
+            "Treat eternal life as uncertain despite Jesus' promise",
+            "Hear Christ's word and trust the Father who sent him",
+            "Assume life comes through self-improvement",
+            "Ignore Jesus' word while expecting life"
+          ],
+          "correctIndex": 1,
+          "explanation": "Jesus ties life to hearing his word and believing the Father who sent him."
+        },
+        {
+          "id": "eternal-hears-q7",
+          "type": "cloze_choice",
+          "prompt": "He who hears my word, and _____ him who sent me, has eternal life.",
+          "options": ["believes", "questions", "fears", "avoids"],
+          "correctIndex": 0,
+          "explanation": "Faith in the Father who sent Jesus is central to this promise."
+        },
+        {
+          "id": "eternal-hears-q8",
+          "type": "multiple_choice",
+          "prompt": "What boundary has the believer crossed according to Jesus?",
+          "options": [
+            "From weakness to strength",
+            "From death to life",
+            "From sorrow to laughter",
+            "From obscurity to fame"
+          ],
+          "correctIndex": 1,
+          "explanation": "Jesus describes salvation as passing from death into life."
+        },
+        {
+          "id": "eternal-hears-q9",
+          "type": "true_false",
+          "prompt": "In John 5:24, hearing Jesus' word is disconnected from faith.",
+          "correctAnswer": false,
+          "explanation": "Jesus joins hearing his word and believing the Father who sent him."
+        }
+      ],
+      "reflection": {
+        "prompt": "Do you think of eternal life only as future, or do you receive it as Jesus' present promise to believers?"
+      },
+      "mission": {
+        "intro": "The word of Christ carries life across the boundary death cannot hold.",
+        "victoryText": "You stood on the promise that believers pass from death into life."
+      }
+    },
+    {
+      "id": "whoever-believes-has-eternal-life",
+      "title": "Everyone Who Believes May Have Eternal Life",
+      "type": "promise",
+      "summary": "Jesus promises eternal life to all who look to the Son in faith.",
+      "difficulty": "medium",
+      "tags": ["eternal life", "belief", "son", "salvation"],
+      "passages": [
+        {
+          "reference": "John 3:14-16",
+          "text": "As Moses lifted up the serpent in the wilderness, even so must the Son of Man be lifted up, that whoever believes in him should not perish, but have eternal life. For God so loved the world, that he gave his one and only Son, that whoever believes in him should not perish, but have eternal life."
+        },
+        {
+          "reference": "John 6:40",
+          "text": "For this is the will of my Father, that everyone who sees the Son, and believes in him, should have eternal life; and I will raise him up at the last day."
+        }
+      ],
+      "focus": {
+        "kind": "promise",
+        "statement": "Whoever believes in him should not perish, but have eternal life."
+      },
+      "contextCard": {
+        "title": "Life through the Son",
+        "body": "Jesus centers eternal life on faith in himself. The promise is wide enough for 'whoever believes' and strong enough to include resurrection hope."
+      },
+      "questions": [
+        {
+          "id": "eternal-believes-q1",
+          "type": "multiple_choice",
+          "prompt": "Who does Jesus say may have eternal life?",
+          "options": [
+            "Only the morally elite",
+            "Everyone who sees the Son and believes in him",
+            "Only those with perfect understanding",
+            "Only those from one nation"
+          ],
+          "correctIndex": 1,
+          "explanation": "Jesus says everyone who sees the Son and believes in him should have eternal life."
+        },
+        {
+          "id": "eternal-believes-q2",
+          "type": "true_false",
+          "prompt": "Jesus presents eternal life as tied to belief in the Son.",
+          "correctAnswer": true,
+          "explanation": "Belief in the Son is central in both John 3 and John 6."
+        },
+        {
+          "id": "eternal-believes-q3",
+          "type": "best_application",
+          "prompt": "Which response best fits these promises?",
+          "options": [
+            "Treat Jesus as optional and search elsewhere for life",
+            "Look to the Son in faith and receive his promise of life",
+            "Assume eternal life is earned by private effort",
+            "Limit the invitation to a small favored group"
+          ],
+          "correctIndex": 1,
+          "explanation": "Jesus invites people to life through faith in the Son."
+        },
+        {
+          "id": "eternal-believes-q4",
+          "type": "multiple_choice",
+          "prompt": "According to John 3:16, what is the alternative to perishing?",
+          "options": [
+            "Fame",
+            "Eternal life",
+            "Worldly success",
+            "Religious status"
+          ],
+          "correctIndex": 1,
+          "explanation": "Jesus says whoever believes should not perish but have eternal life."
+        },
+        {
+          "id": "eternal-believes-q5",
+          "type": "true_false",
+          "prompt": "John 6:40 adds resurrection hope to Jesus' promise of eternal life.",
+          "correctAnswer": true,
+          "explanation": "Jesus says he will raise the believer up at the last day."
+        },
+        {
+          "id": "eternal-believes-q6",
+          "type": "cloze_choice",
+          "prompt": "Whoever believes in him should not perish, but have eternal _____.",
+          "options": ["life", "strength", "knowledge", "peace"],
+          "correctIndex": 0,
+          "explanation": "Eternal life is the promise Jesus repeats."
+        },
+        {
+          "id": "eternal-believes-q7",
+          "type": "multiple_choice",
+          "prompt": "Whose will is described in John 6:40?",
+          "options": [
+            "The crowd's will",
+            "My Father's will",
+            "The disciples' will",
+            "Human willpower"
+          ],
+          "correctIndex": 1,
+          "explanation": "Jesus says this is the will of his Father."
+        },
+        {
+          "id": "eternal-believes-q8",
+          "type": "best_application",
+          "prompt": "Which statement best matches John 3 and John 6?",
+          "options": [
+            "Life is for those who achieve enough",
+            "Life is promised to those who believe in the Son",
+            "Resurrection is unrelated to Jesus",
+            "The promise is limited to a cultural elite"
+          ],
+          "correctIndex": 1,
+          "explanation": "Both passages anchor life and resurrection in faith in the Son."
+        },
+        {
+          "id": "eternal-believes-q9",
+          "type": "true_false",
+          "prompt": "Jesus presents the invitation to life as broad enough for 'whoever believes.'",
+          "correctAnswer": true,
+          "explanation": "The language of the promise is intentionally wide and open."
+        }
+      ],
+      "reflection": {
+        "prompt": "How does Jesus' repeated promise of life through faith challenge self-reliance or despair in you?"
+      },
+      "mission": {
+        "intro": "Life is held out through the Son for all who will believe.",
+        "victoryText": "You advanced by looking to Christ for the life he promises."
+      }
+    },
+    {
+      "id": "i-am-the-resurrection-and-the-life",
+      "title": "I Am the Resurrection and the Life",
+      "type": "promise",
+      "summary": "Jesus promises life beyond death to those who believe in him and anchors hope in his own person.",
+      "difficulty": "hard",
+      "tags": ["eternal life", "resurrection", "hope", "belief"],
+      "passages": [
+        {
+          "reference": "John 11:25-26",
+          "text": "Jesus said to her, \"I am the resurrection and the life. He who believes in me will still live, even if he dies. Whoever lives and believes in me will never die. Do you believe this?\""
+        }
+      ],
+      "focus": {
+        "kind": "promise",
+        "statement": "He who believes in me will still live, even if he dies."
+      },
+      "contextCard": {
+        "title": "Hope is personal in Jesus",
+        "body": "Jesus does not merely teach resurrection as an idea. He identifies himself as the resurrection and the life, making hope inseparable from faith in him."
+      },
+      "questions": [
+        {
+          "id": "resurrection-life-q1",
+          "type": "multiple_choice",
+          "prompt": "How does Jesus describe himself in John 11:25?",
+          "options": [
+            "The teacher and the example",
+            "The resurrection and the life",
+            "The judge and the ruler only",
+            "The prophet of future hope"
+          ],
+          "correctIndex": 1,
+          "explanation": "Jesus says, 'I am the resurrection and the life.'"
+        },
+        {
+          "id": "resurrection-life-q2",
+          "type": "true_false",
+          "prompt": "Jesus promises that the believer will still live even if he dies.",
+          "correctAnswer": true,
+          "explanation": "That is the heart of the promise."
+        },
+        {
+          "id": "resurrection-life-q3",
+          "type": "cloze_choice",
+          "prompt": "I am the resurrection and the _____.",
+          "options": ["life", "kingdom", "victory", "truth"],
+          "correctIndex": 0,
+          "explanation": "Jesus identifies himself as the life."
+        },
+        {
+          "id": "resurrection-life-q4",
+          "type": "multiple_choice",
+          "prompt": "What does Jesus say will happen to the one who believes in him, even if he dies?",
+          "options": [
+            "He will still live",
+            "He will be forgotten",
+            "He will lose hope",
+            "He will be judged only by men"
+          ],
+          "correctIndex": 0,
+          "explanation": "Jesus promises life beyond death to the believer."
+        },
+        {
+          "id": "resurrection-life-q5",
+          "type": "true_false",
+          "prompt": "Jesus presents resurrection hope as inseparable from himself.",
+          "correctAnswer": true,
+          "explanation": "He says, 'I am the resurrection and the life.'"
+        },
+        {
+          "id": "resurrection-life-q6",
+          "type": "best_application",
+          "prompt": "Which response best reflects John 11:25-26?",
+          "options": [
+            "Anchor hope in Jesus himself",
+            "Treat resurrection as an abstract idea only",
+            "Assume death has the final word",
+            "Detach faith from eternal hope"
+          ],
+          "correctIndex": 0,
+          "explanation": "Jesus centers resurrection hope in his own person."
+        },
+        {
+          "id": "resurrection-life-q7",
+          "type": "cloze_choice",
+          "prompt": "He who believes in me will still _____, even if he dies.",
+          "options": ["live", "fear", "struggle", "wait"],
+          "correctIndex": 0,
+          "explanation": "Jesus promises continuing life to the believer."
+        },
+        {
+          "id": "resurrection-life-q8",
+          "type": "multiple_choice",
+          "prompt": "How does Jesus end this statement to Martha?",
+          "options": [
+            "Do you understand this?",
+            "Do you believe this?",
+            "Can you explain this?",
+            "Will you teach this?"
+          ],
+          "correctIndex": 1,
+          "explanation": "Jesus presses the promise personally with, 'Do you believe this?'"
+        },
+        {
+          "id": "resurrection-life-q9",
+          "type": "true_false",
+          "prompt": "In John 11, Jesus speaks resurrection life into a context of grief and death.",
+          "correctAnswer": true,
+          "explanation": "The promise comes at Lazarus' tomb, in the midst of sorrow."
+        }
+      ],
+      "reflection": {
+        "prompt": "Where do you need Jesus' promise of resurrection life to confront fear of death or loss?"
+      },
+      "mission": {
+        "intro": "Death threatens to dominate the field, but Jesus speaks a stronger promise.",
+        "victoryText": "You endured by standing in the hope of the resurrection and the life."
+      }
+    }
+  ]
+}

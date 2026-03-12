@@ -2,6 +2,19 @@
 
 > **Demon Chase Game**: A multiplayer Bible verse quiz game with top-down dungeon combat. Players fight demons by answering quizzes to earn ammo, then shoot projectiles to destroy monsters. The primary goal is Scripture memorization through engaging gameplay.
 
+**Last Updated:** 2026-03-08
+
+## Current Snapshot
+
+- Shared engine architecture is live for server multiplayer and offline/local solo.
+- Combat affinity is implemented: correct quiz answers persist player category state and affect bullet damage.
+- `bulletHit` events now include damage and affinity metadata for client VFX/feedback.
+- Mobile movement input is handled explicitly with touch listeners on the canvas.
+- Multiplayer wall-sync now prefers the server-assigned player position to avoid second-player spawn desync.
+- Current base balance in `LevelConfig.js`:
+  - Level 1: `spawnRate 16000`, `maxMonsters 30`, `monstersToKill 15`
+  - Level 2: `spawnRate 8400`, `maxMonsters 26`, `monstersToKill 21`
+
 ---
 
 ## Table of Contents

@@ -167,7 +167,7 @@
         loadIcons();
         pickRandomBackground();
 
-        // Pause music during VOTD
+        // Pause music during VOTD learning and restore it on return to gameplay.
         if (typeof MusicManager !== 'undefined' && MusicManager.getIsPlaying()) {
             musicWasPlaying = true;
             MusicManager.pause();
@@ -389,6 +389,7 @@
         drawSvgIcon(c, 'share', shareX, iconY, iconSize, '#fff');
         hitRects.push({ name: 'share', x: shareX, y: iconY, w: iconSize, h: iconSize, tooltip: t('common.share') });
 
+
         // Title (Centered)
         c.fillStyle = '#ffd700';
         c.font = 'bold 18px "Segoe UI", Arial';
@@ -502,6 +503,7 @@
         }
         drawSvgIcon(c, 'share', shareX, iconY, iconSize, '#fff');
         hitRects.push({ name: 'share', x: shareX, y: iconY, w: iconSize, h: iconSize, tooltip: t('common.share') });
+
 
         // Title (Centered)
         c.fillStyle = '#ffd700';
@@ -805,6 +807,12 @@
         window.gameMode = 'game';
         votdMode = null;
         currentVerse = null;
+        if (musicWasPlaying &&
+            typeof MusicManager !== 'undefined' &&
+            typeof MusicManager.resume === 'function') {
+            MusicManager.resume();
+        }
+        musicWasPlaying = false;
     }
 
     window.VotdLearningMode = {

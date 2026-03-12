@@ -96,10 +96,43 @@ const SoundEffects = (function() {
         });
     }
 
+    /**
+     * Play a short airy shimmer for heavenly kill celebrations
+     */
+    function playHeavenlyKill() {
+        const ctx = getAudioContext();
+        const start = ctx.currentTime;
+        const notes = [
+            { freq: 784, delay: 0.00, type: 'sine', gain: 0.08 },
+            { freq: 988, delay: 0.05, type: 'triangle', gain: 0.065 },
+            { freq: 1175, delay: 0.10, type: 'sine', gain: 0.05 }
+        ];
+
+        notes.forEach((note) => {
+            const oscillator = ctx.createOscillator();
+            const gainNode = ctx.createGain();
+
+            oscillator.connect(gainNode);
+            gainNode.connect(ctx.destination);
+
+            oscillator.type = note.type;
+            oscillator.frequency.setValueAtTime(note.freq, start + note.delay);
+            oscillator.frequency.exponentialRampToValueAtTime(note.freq * 1.12, start + note.delay + 0.3);
+
+            gainNode.gain.setValueAtTime(0.001, start + note.delay);
+            gainNode.gain.exponentialRampToValueAtTime(note.gain, start + note.delay + 0.04);
+            gainNode.gain.exponentialRampToValueAtTime(0.001, start + note.delay + 0.62);
+
+            oscillator.start(start + note.delay);
+            oscillator.stop(start + note.delay + 0.62);
+        });
+    }
+
     return {
         playDing,
         playFirstKill,
-        playLevelComplete
+        playLevelComplete,
+        playHeavenlyKill
     };
 })();
 

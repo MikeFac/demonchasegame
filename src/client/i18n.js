@@ -36,7 +36,13 @@ const I18n = (function () {
             options: "Options",
             back: "Back",
             songs: "🎵 Songs",
-            affinityHelp: "📘 Affinity Help"
+            affinityHelp: "📘 Affinity Help",
+            languageCompact: "Language",
+            viewMode: "View",
+            view2d: "2D Classic",
+            view3d: "3D Experimental",
+            switchTo2d: "🧭 Switch to 2D",
+            switchTo3d: "🧭 Switch to 3D"
         },
         toasts: {
             offlineMode: "Offline mode enabled",

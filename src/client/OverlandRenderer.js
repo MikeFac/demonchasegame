@@ -30,6 +30,8 @@
             this.selectedMission = null;
             this.worlds = [];
             this.nodePositions = [];
+            this.scrollOffset = 0;
+            this.contentHeight = 0;
         }
         
         /**
@@ -46,43 +48,59 @@
          */
         _calculateNodePositions() {
             this.nodePositions = [];
-            
-            const padding = 30;
-            const nodeRadius = 25;
-            const nodeSpacing = 70;
-            const chapterSpacing = 40;
-            
-            let currentY = 80;
-            
+
+            const listX = 12;
+            const listWidth = Math.max(260, this.canvas.width - 24);
+            const headerHeight = 18;
+            const headerGap = 8;
+            const rowHeight = 34;
+            const rowGap = 6;
+            const chapterGap = 10;
+
+            let currentY = 62;
+
             for (let w = 0; w < this.worlds.length; w++) {
                 const world = this.worlds[w];
                 const worldNodes = [];
-                
                 const missions = world.missions || [];
-                const startX = (this.canvas.width - (missions.length - 1) * nodeSpacing) / 2;
-                
+                const headerY = currentY;
+
+                currentY += headerHeight + headerGap;
+
                 for (let m = 0; m < missions.length; m++) {
+                    const mission = missions[m];
                     worldNodes.push({
                         worldId: world.id,
                         worldName: world.name,
-                        missionId: missions[m].id,
-                        missionName: missions[m].name,
-                        x: startX + m * nodeSpacing,
+                        missionId: mission.id,
+                        missionName: mission.name,
+                        missionDescription: mission.description || '',
+                        missionQualities: Array.isArray(mission.qualities) ? mission.qualities.slice() : [],
+                        x: listX,
                         y: currentY,
-                        radius: nodeRadius,
-                        shape: NODE_SHAPES[world.nodeShape] || 'circle'
+                        width: listWidth,
+                        height: rowHeight,
+                        radius: 0,
+                        shape: NODE_SHAPES[world.nodeShape] || 'circle',
+                        listIndex: m + 1
                     });
+
+                    currentY += rowHeight + rowGap;
                 }
-                
+
                 this.nodePositions.push({
                     worldId: world.id,
                     worldName: world.name,
                     nodes: worldNodes,
-                    y: currentY
+                    y: headerY,
+                    headerHeight: headerHeight
                 });
-                
-                currentY += chapterSpacing + nodeRadius * 2;
+
+                currentY += chapterGap;
             }
+
+            this.contentHeight = currentY;
+            this._clampScrollOffset();
         }
         
         /**
@@ -150,79 +168,93 @@
          * Draw all chapters with their mission nodes.
          */
         _drawChapters(ctx, canvas, progressManager) {
+            const viewport = this._getListViewport();
+            ctx.save();
+            ctx.beginPath();
+            ctx.rect(viewport.x, viewport.y, viewport.width, viewport.height);
+            ctx.clip();
+
             for (const chapterData of this.nodePositions) {
                 const world = this.worlds.find(w => w.id === chapterData.worldId);
                 const isUnlocked = progressManager.isWorldUnlocked(chapterData.worldId);
-                
-                // Draw chapter name
-                ctx.font = 'bold 14px Arial';
+                const headerY = chapterData.y - this.scrollOffset;
+                if (headerY < viewport.y - 30 || headerY > viewport.y + viewport.height + 40) {
+                    // Skip obviously off-screen headers; rows are checked individually below.
+                }
+
+                ctx.font = 'bold 15px Arial';
                 ctx.fillStyle = isUnlocked ? '#ffffff' : COLORS.locked.text;
                 ctx.textAlign = 'left';
-                ctx.fillText(world ? world.name : chapterData.worldId, 10, chapterData.y - 15);
-                
-                // Draw locked label
+                ctx.fillText(world ? world.name : chapterData.worldId, 10, headerY);
+
                 if (!isUnlocked) {
                     ctx.font = '12px Arial';
                     ctx.fillStyle = COLORS.locked.text;
-                    ctx.fillText(t('overland.locked', '[LOCKED]'), canvas.width - 80, chapterData.y - 15);
+                    ctx.textAlign = 'right';
+                    ctx.fillText(t('overland.locked', '[LOCKED]'), canvas.width - 12, headerY);
                 }
-                
-                // Draw connection lines between nodes
-                if (chapterData.nodes.length > 1) {
-                    ctx.strokeStyle = isUnlocked ? '#4a90e2' : '#333333';
-                    ctx.lineWidth = 2;
-                    ctx.beginPath();
-                    ctx.moveTo(chapterData.nodes[0].x, chapterData.nodes[0].y);
-                    for (let i = 1; i < chapterData.nodes.length; i++) {
-                        ctx.lineTo(chapterData.nodes[i].x, chapterData.nodes[i].y);
-                    }
-                    ctx.stroke();
-                }
-                
-                // Draw nodes
+
                 for (const node of chapterData.nodes) {
-                    this._drawNode(ctx, node, progressManager, isUnlocked);
+                    const rowY = node.y - this.scrollOffset;
+                    if (rowY + node.height < viewport.y || rowY > viewport.y + viewport.height) continue;
+                    this._drawMissionRow(ctx, Object.assign({}, node, { screenY: rowY }), progressManager, isUnlocked);
                 }
             }
+            ctx.textAlign = 'left';
+            ctx.restore();
+
+            this._drawScrollIndicators(ctx, viewport);
         }
         
         /**
          * Draw a single mission node.
          */
-        _drawNode(ctx, node, progressManager, isWorldUnlocked) {
+        _drawMissionRow(ctx, node, progressManager, isWorldUnlocked) {
             const isCompleted = progressManager.isMissionCompleted(node.missionId);
             const isSelected = this.selectedMission && this.selectedMission.missionId === node.missionId;
-            
-            let colors;
-            if (!isWorldUnlocked) {
-                colors = COLORS.locked;
-            } else if (isCompleted) {
-                colors = COLORS.completed;
-            } else {
-                colors = COLORS.unlocked;
-            }
-            
-            // Selection highlight
-            if (isSelected) {
-                ctx.beginPath();
-                ctx.arc(node.x, node.y, node.radius + 5, 0, Math.PI * 2);
-                ctx.fillStyle = 'rgba(255, 215, 0, 0.3)';
-                ctx.fill();
-            }
-            
-            // Draw shape based on chapter theme
-            this._drawShape(ctx, node.x, node.y, node.radius, colors, node.shape);
-            
-            // Draw mission number or stars
-            if (isWorldUnlocked) {
-                const stars = progressManager.getMissionStars(node.missionId);
-                if (stars > 0) {
-                    ctx.font = '12px Arial';
-                    ctx.fillStyle = '#FFD700';
-                    ctx.textAlign = 'center';
-                    ctx.fillText('★'.repeat(stars), node.x, node.y + node.radius + 15);
-                }
-            }
+            const drawY = typeof node.screenY === 'number' ? node.screenY : node.y;
+
+            const fill = !isWorldUnlocked
+                ? '#2d2d38'
+                : isSelected
+                    ? '#274a7f'
+                    : isCompleted
+                        ? '#214f2f'
+                        : '#1f2f4d';
+            const stroke = isSelected ? '#ffd166' : (isCompleted ? '#5bc777' : '#4a90e2');
+
+            ctx.fillStyle = fill;
+            ctx.strokeStyle = stroke;
+            ctx.lineWidth = isSelected ? 2 : 1;
+            ctx.fillRect(node.x, drawY, node.width, node.height);
+            ctx.strokeRect(node.x, drawY, node.width, node.height);
+
+            const badgeSize = 22;
+            const badgeX = node.x + 8;
+            const badgeY = drawY + 6;
+            const badgeColors = !isWorldUnlocked ? COLORS.locked : (isCompleted ? COLORS.completed : COLORS.unlocked);
+            this._drawShape(ctx, badgeX + badgeSize / 2, badgeY + badgeSize / 2, badgeSize / 2, badgeColors, node.shape);
+
+            ctx.font = 'bold 13px Arial';
+            ctx.fillStyle = '#ffffff';
+            ctx.textAlign = 'left';
+            ctx.fillText(node.missionName, node.x + 38, drawY + 14);
+
+            ctx.font = '11px Arial';
+            ctx.fillStyle = isWorldUnlocked ? '#d1d8e6' : '#8f96a3';
+            const subtitle = this._truncateText(node.missionDescription || '', node.width - 120, '11px Arial');
+            ctx.fillText(subtitle, node.x + 38, drawY + 28);
+
+            const statusText = !isWorldUnlocked
+                ? t('overland.locked', 'Locked')
+                : isCompleted
+                    ? t('overland.completed', 'Completed')
+                    : t('overland.available', 'Available');
+            ctx.font = '11px Arial';
+            ctx.fillStyle = isCompleted ? '#89f0a0' : (!isWorldUnlocked ? '#999999' : '#8dc3ff');
+            ctx.textAlign = 'right';
+            ctx.fillText(statusText, node.x + node.width - 10, drawY + 21);
+            ctx.textAlign = 'left';
         }
         
         /**
@@ -308,48 +340,48 @@
          * Draw mission info panel at bottom.
          */
         _drawMissionInfo(ctx, canvas, progressManager) {
-            const panelY = canvas.height - 100;
-            const panelHeight = 60;
-            
-            // Panel background
-            ctx.fillStyle = 'rgba(30, 30, 50, 0.95)';
+            const panelY = canvas.height - 92;
+            const panelHeight = 42;
+
+            ctx.fillStyle = 'rgba(20, 24, 40, 0.96)';
             ctx.fillRect(0, panelY, canvas.width, panelHeight);
-            
-            // Mission name
-            ctx.font = 'bold 16px Arial';
-            ctx.fillStyle = '#ffffff';
-            ctx.textAlign = 'center';
-            ctx.fillText(this.selectedMission.missionName, canvas.width / 2, panelY + 20);
-            
-            // Mission status
+
             const isCompleted = progressManager.isMissionCompleted(this.selectedMission.missionId);
             const statusText = isCompleted ? t('overland.completed', 'Completed') : t('overland.available', 'Available');
-            ctx.font = '12px Arial';
-            ctx.fillStyle = isCompleted ? '#4CAF50' : '#4a90e2';
-            ctx.fillText(statusText, canvas.width / 2, panelY + 40);
+            const qualitiesText = this.selectedMission.missionQualities && this.selectedMission.missionQualities.length
+                ? this.selectedMission.missionQualities.join(' • ')
+                : statusText;
+
+            ctx.font = '11px Arial';
+            ctx.fillStyle = '#f2f5ff';
+            ctx.textAlign = 'left';
+            ctx.fillText(this._truncateText(this.selectedMission.missionDescription || '', canvas.width - 24, '11px Arial'), 12, panelY + 16);
+
+            ctx.fillStyle = '#9ec6ff';
+            ctx.fillText(this._truncateText(qualitiesText, canvas.width - 24, '11px Arial'), 12, panelY + 31);
         }
         
         /**
-         * Draw bottom buttons (Start Mission, Learn Verses).
+         * Draw bottom buttons (Mission Learning, Start Mission).
          */
         _drawBottomButtons(ctx, canvas) {
-            const buttonY = canvas.height - 35;
-            const buttonWidth = 100;
+            const buttonY = canvas.height - 42;
+            const buttonWidth = 108;
             const buttonHeight = 30;
-            const buttonSpacing = 20;
+            const buttonSpacing = 16;
             
             const totalWidth = buttonWidth * 2 + buttonSpacing;
             const startX = (canvas.width - totalWidth) / 2;
             
-            // Start Mission button
+            // Mission Learning button
             this._drawButton(ctx, startX, buttonY, buttonWidth, buttonHeight,
+                'Mission Learning',
+                this.selectedMission ? '#4a90e2' : '#333333');
+            
+            // Start Mission button
+            this._drawButton(ctx, startX + buttonWidth + buttonSpacing, buttonY, buttonWidth, buttonHeight,
                 t('overland.startMission', 'Start Mission'),
                 this.selectedMission ? '#4CAF50' : '#333333');
-            
-            // Learn Verses button
-            this._drawButton(ctx, startX + buttonWidth + buttonSpacing, buttonY, buttonWidth, buttonHeight,
-                t('overland.learnVerses', 'Learn Verses'),
-                this.selectedMission ? '#4a90e2' : '#333333');
         }
         
         /**
@@ -377,16 +409,18 @@
          * @returns {Object|null} Clicked node or null
          */
         handleClick(screenX, screenY, progressManager) {
+            const viewport = this._getListViewport();
+            if (screenY < viewport.y || screenY > viewport.y + viewport.height) {
+                return null;
+            }
+
             for (const chapterData of this.nodePositions) {
                 const isUnlocked = progressManager.isWorldUnlocked(chapterData.worldId);
                 if (!isUnlocked) continue;
                 
                 for (const node of chapterData.nodes) {
-                    const dx = screenX - node.x;
-                    const dy = screenY - node.y;
-                    const dist = Math.sqrt(dx * dx + dy * dy);
-                    
-                    if (dist <= node.radius) {
+                    if (screenX >= node.x && screenX <= node.x + node.width &&
+                        screenY + this.scrollOffset >= node.y && screenY + this.scrollOffset <= node.y + node.height) {
                         this.selectedMission = node;
                         this.selectedWorld = chapterData.worldId;
                         return node;
@@ -402,14 +436,15 @@
         isStartMissionClicked(screenX, screenY) {
             if (!this.selectedMission) return false;
             
-            const buttonY = this.canvas.height - 35;
-            const buttonWidth = 100;
+            const buttonY = this.canvas.height - 42;
+            const buttonWidth = 108;
             const buttonHeight = 30;
-            const buttonSpacing = 20;
+            const buttonSpacing = 16;
             const totalWidth = buttonWidth * 2 + buttonSpacing;
             const startX = (this.canvas.width - totalWidth) / 2;
+            const missionStartX = startX + buttonWidth + buttonSpacing;
             
-            return screenX >= startX && screenX <= startX + buttonWidth &&
+            return screenX >= missionStartX && screenX <= missionStartX + buttonWidth &&
                    screenY >= buttonY && screenY <= buttonY + buttonHeight;
         }
         
@@ -427,18 +462,17 @@
         }
         
         /**
-         * Check if Learn Verses button was clicked.
+         * Check if Mission Learning button was clicked.
          */
-        isLearnVersesClicked(screenX, screenY) {
-            const buttonY = this.canvas.height - 35;
-            const buttonWidth = 100;
+        isMissionLearningClicked(screenX, screenY) {
+            const buttonY = this.canvas.height - 42;
+            const buttonWidth = 108;
             const buttonHeight = 30;
-            const buttonSpacing = 20;
+            const buttonSpacing = 16;
             const totalWidth = buttonWidth * 2 + buttonSpacing;
             const startX = (this.canvas.width - totalWidth) / 2;
-            const learnX = startX + buttonWidth + buttonSpacing;
             
-            return screenX >= learnX && screenX <= learnX + buttonWidth &&
+            return screenX >= startX && screenX <= startX + buttonWidth &&
                    screenY >= buttonY && screenY <= buttonY + buttonHeight;
         }
         
@@ -448,6 +482,26 @@
         getSelectedMission() {
             return this.selectedMission;
         }
+
+        /**
+         * Programmatically select a mission by world and mission id.
+         * @param {string} worldId
+         * @param {string} missionId
+         * @returns {Object|null}
+         */
+        selectMission(worldId, missionId) {
+            for (const chapterData of this.nodePositions) {
+                if (chapterData.worldId !== worldId) continue;
+                for (const node of chapterData.nodes) {
+                    if (node.missionId === missionId) {
+                        this.selectedMission = node;
+                        this.selectedWorld = worldId;
+                        return node;
+                    }
+                }
+            }
+            return null;
+        }
         
         /**
          * Clear selection.
@@ -455,6 +509,62 @@
         clearSelection() {
             this.selectedMission = null;
             this.selectedWorld = null;
+        }
+
+        scrollBy(deltaY) {
+            this.scrollOffset += deltaY;
+            this._clampScrollOffset();
+        }
+
+        _getListViewport() {
+            return {
+                x: 0,
+                y: 50,
+                width: this.canvas.width,
+                height: Math.max(120, this.canvas.height - 148)
+            };
+        }
+
+        _clampScrollOffset() {
+            const viewport = this._getListViewport();
+            const maxOffset = Math.max(0, this.contentHeight - (viewport.y + viewport.height) + 8);
+            this.scrollOffset = Math.max(0, Math.min(this.scrollOffset, maxOffset));
+        }
+
+        _drawScrollIndicators(ctx, viewport) {
+            const maxOffset = Math.max(0, this.contentHeight - (viewport.y + viewport.height) + 8);
+            if (maxOffset <= 0) return;
+
+            const trackX = this.canvas.width - 8;
+            const trackY = viewport.y + 8;
+            const trackHeight = viewport.height - 16;
+            const thumbHeight = Math.max(24, Math.round((viewport.height / this.contentHeight) * trackHeight));
+            const scrollRatio = maxOffset > 0 ? this.scrollOffset / maxOffset : 0;
+            const thumbY = trackY + Math.round((trackHeight - thumbHeight) * scrollRatio);
+
+            ctx.save();
+            ctx.fillStyle = 'rgba(255,255,255,0.12)';
+            ctx.fillRect(trackX, trackY, 3, trackHeight);
+            ctx.fillStyle = 'rgba(255,255,255,0.45)';
+            ctx.fillRect(trackX, thumbY, 3, thumbHeight);
+            ctx.restore();
+        }
+
+        _truncateText(text, maxWidth, font) {
+            const ctx = this.ctx;
+            const originalFont = ctx.font;
+            ctx.font = font || originalFont;
+            if (ctx.measureText(text).width <= maxWidth) {
+                ctx.font = originalFont;
+                return text;
+            }
+
+            let truncated = text;
+            while (truncated.length > 0 && ctx.measureText(truncated + '...').width > maxWidth) {
+                truncated = truncated.slice(0, -1);
+            }
+            ctx.font = originalFont;
+            return truncated + '...';
         }
     }
     

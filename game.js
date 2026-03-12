@@ -25,6 +25,7 @@ window.debugWin = () => {
 let currentTime = Date.now();
 let socket;
 let playerCode = null;  // code to access player information for the current player
+let viewMode = '2d';
 
 // Declare the canvas variable globally
 let canvas;
@@ -156,6 +157,76 @@ function drawLoadingScreen() {
     ctx.fillText('Loading...', canvas.width / 2 - 50, canvas.height / 2);
 }
 
+function normalizeAngleDelta(angle) {
+    while (angle > Math.PI) angle -= Math.PI * 2;
+    while (angle < -Math.PI) angle += Math.PI * 2;
+    return angle;
+}
+
+function find3DTargetMonster(monsters, player) {
+    let bestMonster = null;
+    let bestDistance = Infinity;
+    const facing = typeof player.viewAngle === 'number' ? player.viewAngle : 0;
+    const facingX = Math.cos(facing);
+    const facingY = Math.sin(facing);
+
+    for (const monster of monsters) {
+        const dx = monster.x - player.x;
+        const dy = monster.y - player.y;
+        const distance = Math.sqrt(dx * dx + dy * dy);
+        if (distance > THREE_D_FIRE_RANGE) continue;
+
+        const normDx = dx / Math.max(distance, 1);
+        const normDy = dy / Math.max(distance, 1);
+        const forwardDot = normDx * facingX + normDy * facingY;
+        if (forwardDot < 0.9) continue;
+
+        const angleToMonster = Math.atan2(dy, dx);
+        const angleDelta = Math.abs(normalizeAngleDelta(angleToMonster - facing));
+        if (angleDelta > THREE_D_FIRE_CONE) continue;
+
+        if (distance < bestDistance) {
+            bestMonster = monster;
+            bestDistance = distance;
+        }
+    }
+
+    return bestMonster;
+}
+
+function tryHandle3DFire(monsters, now) {
+    if (now - lastAttackTime <= ATTACK_RATE) return false;
+    const monster = find3DTargetMonster(monsters, player);
+    if (!monster) return false;
+
+    lastAttackTime = now;
+    lastAttackedMonster = monster;
+
+    attackSound.play();
+    monster.isAttacked = true;
+    setTimeout(() => {
+        monster.isAttacked = false;
+    }, 200);
+
+    screenShake = {
+        x: (Math.random() - 0.5) * 8,
+        y: (Math.random() - 0.5) * 8,
+        intensity: 8,
+        duration: 150
+    };
+
+    damageNumbers.push({
+        x: monster.x,
+        y: monster.y - 20,
+        damage: 1,
+        startTime: Date.now(),
+        duration: 1000
+    });
+
+    handlePlayerAttack(monster);
+    return true;
+}
+
 // Wait for the DOM content to load
 document.addEventListener('DOMContentLoaded', function () {
     // Get the canvas element by its ID
@@ -202,6 +273,59 @@ let player = {
 
 // Game variables
 let ctx, monsters, healingPoints, chaseTrigger, lastAttackedMonster;
+
+function normalizeViewMode(value) {
+    return value === '3d' ? '3d' : '2d';
+}
+
+function resolveInitialViewMode(urlParams) {
+    const urlMode = normalizeViewMode(urlParams.get('viewMode'));
+    if (urlMode === '3d') return urlMode;
+
+    const persistedMode = normalizeViewMode(localStorage.getItem('preferredViewMode'));
+    return persistedMode;
+}
+
+function persistViewMode(nextMode) {
+    viewMode = normalizeViewMode(nextMode);
+    window.viewMode = viewMode;
+    localStorage.setItem('preferredViewMode', viewMode);
+}
+
+function updateViewModeControls(selectedMode) {
+    const normalized = normalizeViewMode(selectedMode);
+    const mainMenuSelect = document.getElementById('mainMenuViewModeSelect');
+    const settingsSelect = document.getElementById('viewModeSelect');
+    if (mainMenuSelect) mainMenuSelect.value = normalized;
+    if (settingsSelect) settingsSelect.value = normalized;
+}
+
+function reloadWithViewMode(nextMode) {
+    const normalized = normalizeViewMode(nextMode);
+    persistViewMode(normalized);
+
+    const nextUrl = new URL(window.location.href);
+    if (normalized === '3d') {
+        nextUrl.searchParams.set('viewMode', '3d');
+    } else {
+        nextUrl.searchParams.delete('viewMode');
+    }
+    window.location.href = nextUrl.toString();
+}
+
+function getRendererClassForViewMode(mode) {
+    if (mode === '3d' && typeof Renderer3D === 'function') {
+        return Renderer3D;
+    }
+    return Renderer;
+}
+
+function getInputHandlerClassForViewMode(mode) {
+    if (mode === '3d' && typeof InputHandler3D === 'function') {
+        return InputHandler3D;
+    }
+    return InputHandler;
+}
 let playerImg, otherPlayerImg, healingPointImg, demonImages, explosionImg;
 let buildingTilesImg, terrainTilesImg; // Tile sprite sheets (8x8 grids, 32x32 tiles)
 
@@ -241,6 +365,8 @@ let gameSpeedMultiplier = 1.0; // Controlled by server (0.5 = slow, 1.0 = normal
 
 
 const ATTACK_RATE = 700; // milliseconds (0.5 seconds)
+const THREE_D_FIRE_RANGE = 520;
+const THREE_D_FIRE_CONE = Math.PI / 10;
 const MAX_HEALING_POINTS = 2; // Maximum number of healing points on the screen
 const MIN_HEALING_POINT_DISTANCE = 50; // Minimum distance between healing points and other objects
 const COMBAT_DISTANCE = 60; // Distance for combat to happen
@@ -277,6 +403,7 @@ const LOCAL_STORAGE_CONFIG_KEY = 'versebattles_custom_config';
 
 let QUALITIES;
 let ALL_QUALITIES;
+let organizedVerses = {};
 // gameCategory variable is taken from index.php?category=Whatever
 
 let currentQuiz = null; // Unified quiz object from QuizManager
@@ -331,8 +458,13 @@ let meleeHitProbabilityNoAnswer = 0.1; // Probability to hit in melee without an
 let overlandRenderer = null;
 let currentMission = null;
 let currentMissionConfig = null;
+let pendingMissionContentOverride = null;
+let baseOrganizedVerses = null;
+let baseAllQualities = null;
 window.missionWorlds = [];
 let missionsInitialized = false;
+
+window.currentMission = null;
 
 // Verse Test shield setting (Option A/B)
 let verseTestShielded = localStorage.getItem('verseTestShielded') === 'true';
@@ -351,6 +483,7 @@ let flashMessages = [];  // Array of { text, color, startTime, duration }
 // Particle effects
 let particleBurstImg = null;
 let deathParticles = []; // Array of active death particle animations
+let heavenlyKillCelebrationShown = false;
 
 // for monster explosion
 let explosionTimer = 0;
@@ -624,6 +757,37 @@ function loadVersesFromBundle() {
     organizedVerses = QuizManager.organizeByCategory2(filteredVerses);
 }
 
+function captureBaseContentState() {
+    if (!baseOrganizedVerses && organizedVerses) {
+        baseOrganizedVerses = organizedVerses;
+    }
+    if (!baseAllQualities && Array.isArray(ALL_QUALITIES)) {
+        baseAllQualities = ALL_QUALITIES.slice();
+    }
+}
+
+function applyMissionContentOverride(override) {
+    if (!override || !override.organizedVerses) return false;
+    captureBaseContentState();
+    organizedVerses = override.organizedVerses;
+    ALL_QUALITIES = override.allQualities.slice();
+    QUALITIES = override.allQualities.slice();
+    window._discipleshipMissionContent = override;
+    return true;
+}
+
+function clearMissionContentOverride() {
+    pendingMissionContentOverride = null;
+    window._discipleshipMissionContent = null;
+    if (baseOrganizedVerses) {
+        organizedVerses = baseOrganizedVerses;
+    }
+    if (baseAllQualities) {
+        ALL_QUALITIES = baseAllQualities.slice();
+        QUALITIES = baseAllQualities.slice();
+    }
+}
+
 // === Custom Config Loading (from URL or localStorage) ===
 
 function loadUrlConfig() {
@@ -725,7 +889,7 @@ function resetGameState() {
         network = null;
     }
     playerCode = null;
-    player = { x: 0, y: 0, health: 100, maxHealth: 100, width: 48, height: 48, xp: 0, level: 1, ammo: 0 };
+    player = { x: 0, y: 0, health: 100, maxHealth: 100, width: 48, height: 48, xp: 0, level: 1, ammo: 0, viewAngle: 0 };
 
     // Game flags
     gameOverFlag = false;
@@ -787,6 +951,9 @@ function resetGameState() {
     // Input
     if (inputHandler) {
         inputHandler.clearTarget();
+        if (inputHandler.viewMode === '3d' && typeof inputHandler.stopForwardMovement === 'function') {
+            inputHandler.stopForwardMovement();
+        }
         inputHandler.setCamera(camera);
     }
     _lastPositionSendTime = 0;
@@ -885,7 +1052,12 @@ function startGame(mode, roomId, missionOpts) {
     if (missionOpts && mode === 'solo') {
         currentMission = preservedMission;
         currentMissionConfig = preservedMissionConfig;
+        window.currentMission = currentMission;
         console.log('[MISSION] Restored mission state after resetGameState:', currentMission?.name);
+    } else {
+        currentMission = null;
+        currentMissionConfig = null;
+        window.currentMission = null;
     }
 
     // Handle mission config passed directly from startMission()
@@ -1082,6 +1254,8 @@ document.addEventListener('DOMContentLoaded', function () {
     // Parse URL params
     const roomId = urlParams.get('room');
     const mode = urlParams.get('mode');
+    persistViewMode(resolveInitialViewMode(urlParams));
+    console.log('View mode:', viewMode);
 
     // Check for first-time visit
     const hasVisited = localStorage.getItem('hasVisited');
@@ -1091,6 +1265,8 @@ document.addEventListener('DOMContentLoaded', function () {
     if (persistedOffline) {
         offlineMode = true;
     }
+
+    const captureMode = urlParams.get('capture');
 
     if (roomId) {
         // Coming from lobby redirect — skip menu, join game
@@ -1161,6 +1337,16 @@ document.addEventListener('DOMContentLoaded', function () {
             if (menuScreen) menuScreen.style.display = 'none';
             showOverland();
         });
+        const discipleshipTrackLink = document.getElementById('discipleshipTrackLink');
+        if (discipleshipTrackLink) {
+            discipleshipTrackLink.addEventListener('click', (event) => {
+                event.preventDefault();
+                if (window.Analytics) Analytics.trackMenuClick('discipleship_track');
+                openDiscipleshipTrackMenu().catch((error) => {
+                    console.error('Failed to open discipleship track', error);
+                });
+            });
+        }
         document.getElementById('btnFunMode').addEventListener('click', () => {
             if (window.Analytics) Analytics.trackMenuClick('fun_mode');
             startGame('fun');
@@ -1177,6 +1363,22 @@ document.addEventListener('DOMContentLoaded', function () {
             if (window.Analytics) Analytics.trackMenuClick('groups');
             showGroupsPanel();
         });
+        const worldsLink = document.getElementById('worldsLink');
+        if (worldsLink) {
+            worldsLink.addEventListener('click', (event) => {
+                event.preventDefault();
+                if (window.Analytics) Analytics.trackMenuClick('worlds');
+                showWorldBrowserPanel();
+            });
+        }
+
+        if (captureMode === 'worlds') {
+            window.setTimeout(() => {
+                showWorldBrowserPanel().catch((error) => {
+                    console.error('Failed to auto-open worlds capture panel', error);
+                });
+            }, 250);
+        }
 
         // Settings Toggle
         const btnSettings = document.getElementById('btnSettings');
@@ -1225,15 +1427,54 @@ document.addEventListener('DOMContentLoaded', function () {
             });
         }
 
-        // Language selector
         const languageSelect = document.getElementById('languageSelect');
+        const mainMenuLanguageSelect = document.getElementById('mainMenuLanguageSelect');
+        const mainMenuViewModeSelect = document.getElementById('mainMenuViewModeSelect');
+        const viewModeSelect = document.getElementById('viewModeSelect');
+        const votdMenuToggle = document.getElementById('votdMenuToggle');
+
+        const applyLanguageChange = (newLang) => {
+            localStorage.setItem('lang', newLang);
+            if (languageSelect) languageSelect.value = newLang;
+            if (mainMenuLanguageSelect) mainMenuLanguageSelect.value = newLang;
+            window.location.reload();
+        };
+
+        const currentLang = I18n.getLang();
         if (languageSelect) {
-            // Set current language
-            languageSelect.value = I18n.getLang();
+            languageSelect.value = currentLang;
             languageSelect.addEventListener('change', () => {
-                const newLang = languageSelect.value;
-                localStorage.setItem('lang', newLang);
-                window.location.reload();
+                applyLanguageChange(languageSelect.value);
+            });
+        }
+        if (mainMenuLanguageSelect) {
+            mainMenuLanguageSelect.value = currentLang;
+            mainMenuLanguageSelect.addEventListener('change', () => {
+                applyLanguageChange(mainMenuLanguageSelect.value);
+            });
+        }
+
+        updateViewModeControls(viewMode);
+        if (mainMenuViewModeSelect) {
+            mainMenuViewModeSelect.addEventListener('change', () => {
+                persistViewMode(mainMenuViewModeSelect.value);
+                updateViewModeControls(viewMode);
+            });
+        }
+        if (viewModeSelect) {
+            viewModeSelect.addEventListener('change', () => {
+                persistViewMode(viewModeSelect.value);
+                updateViewModeControls(viewMode);
+            });
+        }
+
+        if (votdMenuToggle && window.VotdMenuOverlay) {
+            votdMenuToggle.checked = window.VotdMenuOverlay.isEnabled();
+            votdMenuToggle.addEventListener('change', () => {
+                window.VotdMenuOverlay.setEnabled(votdMenuToggle.checked);
+                if (!votdMenuToggle.checked) {
+                    window.VotdMenuOverlay.hide();
+                }
             });
         }
     }
@@ -1269,9 +1510,10 @@ function initializeVerseCounter() {
 }
 
 // Callback for QuizManager to notify of correct answers
- window.onQuizCorrectAnswer = function (quizMode, verseReference, combatCategory) {
+window.onQuizCorrectAnswer = function (quizMode, verseReference, combatCategory) {
     // Store reference for display in UI
     lastAnsweredReference = verseReference;
+    const isDiscipleshipMission = currentMission && currentMission.type === 'discipleship';
 
     if (player && combatCategory) {
         player.currentCombatCategory = combatCategory;
@@ -1339,7 +1581,7 @@ function initializeVerseCounter() {
     }
 
     // Track daily challenge progress (only first_letter mode)
-    if (quizMode === 'first_letter') {
+    if (quizMode === 'first_letter' && !isDiscipleshipMission) {
         if (!dailyChallengeCompleted && dailyChallengeProgress < dailyChallengeGoal) {
             dailyChallengeProgress++;
             localStorage.setItem('dailyChallengeProgress', dailyChallengeProgress.toString());
@@ -1376,7 +1618,7 @@ function initializeVerseCounter() {
         }
 
         // Track unique verses learned (first_letter and cloze modes count)
-        if (quizMode === 'first_letter' || quizMode === 'cloze') {
+        if ((quizMode === 'first_letter' || quizMode === 'cloze') && !isDiscipleshipMission) {
             if (window.progressManager) {
                 const isNew = progressManager.addVerseLearned(verseReference);
                 if (isNew) {
@@ -1442,7 +1684,8 @@ async function init() {
                         height: 48,
                         xp: 0,
                         level: 1,
-                        ammo: 0 // Must earn ammo by answering quizzes correctly
+                        ammo: 0, // Must earn ammo by answering quizzes correctly
+                        viewAngle: 0
                     };
                     gameState.players[playerCode] = player;
                 } else {
@@ -1516,6 +1759,23 @@ async function init() {
                     console.log(`✨ Spawned death particle at (${x}, ${y}), total active: ${deathParticles.length}`);
                 } else {
                     console.warn('Particle burst image not loaded yet');
+                }
+
+                const triggerHeavenlyBurst = !heavenlyKillCelebrationShown || Math.random() < 0.2;
+                if (triggerHeavenlyBurst) {
+                    heavenlyKillCelebrationShown = true;
+                    deathParticles.push({
+                        x: x,
+                        y: y - 18,
+                        frame: 0,
+                        frameTimer: 0,
+                        startTime: Date.now(),
+                        type: 'heavenly',
+                        maxFrames: 18
+                    });
+                    if (window.SoundEffects && typeof SoundEffects.playHeavenlyKill === 'function') {
+                        SoundEffects.playHeavenlyKill();
+                    }
                 }
 
                 // Clear enemy HUD if this was the monster we were tracking
@@ -1645,7 +1905,12 @@ async function init() {
                     player.x = targetX;
                     player.y = targetY;
                     // Clear any movement target so player doesn't walk back to old position
-                    if (inputHandler) inputHandler.clearTarget();
+                    if (inputHandler) {
+                        inputHandler.clearTarget();
+                        if (inputHandler.viewMode === '3d' && typeof inputHandler.stopForwardMovement === 'function') {
+                            inputHandler.stopForwardMovement();
+                        }
+                    }
                     const spawnCollides = clientWallGrid.collides(player.x, player.y, player.width, player.height);
                     console.log(`[WallSpawn] onWalls: moved player from (${oldX.toFixed(1)}, ${oldY.toFixed(1)}) to spawn (${player.x}, ${player.y}) wallCollides=${spawnCollides} w=${player.width} h=${player.height}`);
                     if (spawnCollides) {
@@ -1754,9 +2019,27 @@ async function init() {
                         id: config.missionId,
                         name: config.missionName || config.missionId,
                         worldId: config.worldId,
-                        xpMultiplier: config.xpMultiplier || 1.0
+                        xpMultiplier: config.xpMultiplier || 1.0,
+                        type: config.missionType || 'verse',
+                        packId: config.packId || null,
+                        unitIds: config.unitIds || null
                     };
+                    window.currentMission = currentMission;
                     console.log('[MISSION] Set currentMission from server config:', currentMission.name);
+                    if (currentMission.type === 'discipleship' && window.discipleshipMissionManager) {
+                        window.discipleshipMissionManager.buildMissionOverride(currentMission).then(function (override) {
+                            pendingMissionContentOverride = override;
+                            applyMissionContentOverride(override);
+                            if (override && override.allQualities && override.allQualities.length > 0) {
+                                window.vQuality = override.allQualities[0];
+                                if (window.QuizManager && typeof QuizManager.pickQualityVerse === 'function') {
+                                    QuizManager.pickQualityVerse();
+                                }
+                            }
+                        }).catch(function (error) {
+                            console.error('Failed to load discipleship mission content from server config:', error);
+                        });
+                    }
                 }
                 // Override local quiz settings with server-authoritative values
                 if (config.quizSettings) {
@@ -1868,6 +2151,11 @@ async function init() {
             QUALITIES = ALL_QUALITIES;
         }
 
+        captureBaseContentState();
+        if (pendingMissionContentOverride) {
+            applyMissionContentOverride(pendingMissionContentOverride);
+        }
+
         // Apply level 1 qualities from custom config (if present)
         // This must happen after ALL_QUALITIES is populated but before window.vQuality is picked
         if (customLevelData && customLevelData[1] && customLevelData[1].qualities && customLevelData[1].qualities.length > 0) {
@@ -1970,7 +2258,11 @@ async function init() {
         };
 
         // Initialize InputHandler
-        inputHandler = new InputHandler(canvas, {
+        if (inputHandler && typeof inputHandler.destroy === 'function') {
+            inputHandler.destroy();
+        }
+        const InputHandlerClass = getInputHandlerClassForViewMode(viewMode);
+        inputHandler = new InputHandlerClass(canvas, {
             QUALITY_LINE_HEIGHT,
             BUTTON_HEIGHT,
             BUTTON_WIDTH,
@@ -2054,6 +2346,8 @@ async function init() {
                     if (window.AffinityHelpOverlay) {
                         window.AffinityHelpOverlay.open();
                     }
+                } else if (itemId === 'switchViewMode') {
+                    reloadWithViewMode(viewMode === '3d' ? '2d' : '3d');
                 } else if (itemId === 'shareGame') {
                     if (window.ShareManager) {
                         ShareManager.shareInvite().then(result => {
@@ -2316,6 +2610,10 @@ async function initializeMissions() {
 }
 
 let overlandClickHandler = null;
+let overlandWheelHandler = null;
+let overlandTouchStartHandler = null;
+let overlandTouchMoveHandler = null;
+let overlandTouchEndHandler = null;
 let reviewClickHandler = null;
 
 async function showOverland() {
@@ -2358,6 +2656,56 @@ window.gameMode = 'overland';
     };
     canvas.addEventListener('click', overlandClickHandler);
 
+    if (overlandWheelHandler) {
+        canvas.removeEventListener('wheel', overlandWheelHandler);
+    }
+    overlandWheelHandler = function(event) {
+        if (!overlandRenderer) return;
+        event.preventDefault();
+        overlandRenderer.scrollBy(event.deltaY);
+    };
+    canvas.addEventListener('wheel', overlandWheelHandler, { passive: false });
+
+    let touchStartY = null;
+    let touchDragging = false;
+    if (overlandTouchStartHandler) {
+        canvas.removeEventListener('touchstart', overlandTouchStartHandler);
+    }
+    if (overlandTouchMoveHandler) {
+        canvas.removeEventListener('touchmove', overlandTouchMoveHandler);
+    }
+    if (overlandTouchEndHandler) {
+        canvas.removeEventListener('touchend', overlandTouchEndHandler);
+    }
+
+    overlandTouchStartHandler = function(event) {
+        if (!event.touches || event.touches.length === 0) return;
+        touchStartY = event.touches[0].clientY;
+        touchDragging = false;
+    };
+    overlandTouchMoveHandler = function(event) {
+        if (!overlandRenderer || !event.touches || event.touches.length === 0 || touchStartY === null) return;
+        const currentY = event.touches[0].clientY;
+        const delta = touchStartY - currentY;
+        if (Math.abs(delta) > 4) {
+            touchDragging = true;
+            overlandRenderer.scrollBy(delta);
+            touchStartY = currentY;
+            event.preventDefault();
+        }
+    };
+    overlandTouchEndHandler = function() {
+        touchStartY = null;
+        window.__overlandTouchDragging = touchDragging;
+        setTimeout(function () {
+            window.__overlandTouchDragging = false;
+        }, 120);
+    };
+
+    canvas.addEventListener('touchstart', overlandTouchStartHandler, { passive: true });
+    canvas.addEventListener('touchmove', overlandTouchMoveHandler, { passive: false });
+    canvas.addEventListener('touchend', overlandTouchEndHandler, { passive: true });
+
     
     await initializeMissions();
     
@@ -2367,8 +2715,16 @@ window.gameMode = 'overland';
     if (!_gameLoopRunning) gameLoop();
 }
 
+async function openDiscipleshipTrackMenu() {
+    await showOverland();
+    if (overlandRenderer && typeof overlandRenderer.selectMission === 'function') {
+        overlandRenderer.selectMission('chapter4', 'jesus-01');
+    }
+}
+
 let groupsPanelVisible = false;
 let groupsModal = null;
+let worldBrowserModal = null;
 
 function showGroupsPanel() {
     if (!window.authManager || !window.authManager.isAuthenticated) {
@@ -2577,6 +2933,22 @@ function handleOverlandClick(x, y) {
             canvas.removeEventListener('click', overlandClickHandler);
             overlandClickHandler = null;
         }
+        if (overlandWheelHandler) {
+            canvas.removeEventListener('wheel', overlandWheelHandler);
+            overlandWheelHandler = null;
+        }
+        if (overlandTouchStartHandler) {
+            canvas.removeEventListener('touchstart', overlandTouchStartHandler);
+            overlandTouchStartHandler = null;
+        }
+        if (overlandTouchMoveHandler) {
+            canvas.removeEventListener('touchmove', overlandTouchMoveHandler);
+            overlandTouchMoveHandler = null;
+        }
+        if (overlandTouchEndHandler) {
+            canvas.removeEventListener('touchend', overlandTouchEndHandler);
+            overlandTouchEndHandler = null;
+        }
         return;
     }
     
@@ -2595,19 +2967,20 @@ function handleOverlandClick(x, y) {
         }
     }
     
-    // Check for Learn Verses button
-    const learnClicked = overlandRenderer.isLearnVersesClicked(x, y);
-    console.log('isLearnVersesClicked:', learnClicked, 'selectedMission:', !!overlandRenderer.getSelectedMission(), 'ReviewMode:', !!window.ReviewMode);
+    // Check for Mission Learning button
+    const learnClicked = overlandRenderer.isMissionLearningClicked(x, y);
+    console.log('isMissionLearningClicked:', learnClicked, 'selectedMission:', !!overlandRenderer.getSelectedMission(), 'ReviewMode:', !!window.ReviewMode);
     if (learnClicked && overlandRenderer.getSelectedMission()) {
         if (window.ReviewMode) {
             const selected = overlandRenderer.getSelectedMission();
             let reviewQuality = null;
+            let selectedMission = null;
             if (selected && window.worldsWithMissions && window.worldsWithMissions.length > 0) {
                 const world = window.worldsWithMissions.find(w => w.id === selected.worldId);
                 if (world) {
-                    const mission = world.missions.find(m => m.id === selected.missionId);
-                    if (mission && mission.qualities && mission.qualities.length > 0) {
-                        reviewQuality = mission.qualities[0];
+                    selectedMission = world.missions.find(m => m.id === selected.missionId);
+                    if (selectedMission && selectedMission.qualities && selectedMission.qualities.length > 0) {
+                        reviewQuality = selectedMission.qualities[0];
                     }
                 }
             }
@@ -2616,19 +2989,32 @@ function handleOverlandClick(x, y) {
                 returnTo: 'overland',
                 vQuality: reviewQuality
             };
+
+            const startReview = function () {
+                ReviewMode.startReviewMode(reviewOptions);
+                setupReviewClickHandler();
+            };
+
+            if (selectedMission && selectedMission.type === 'discipleship' && window.discipleshipMissionManager) {
+                window.discipleshipMissionManager.buildMissionOverride(selectedMission).then(function (override) {
+                    pendingMissionContentOverride = override;
+                    applyMissionContentOverride(override);
+                    startReview();
+                }).catch(function (error) {
+                    console.error('Failed to prepare discipleship review content:', error);
+                });
+                return;
+            }
             
             if (typeof organizedVerses === 'undefined' || !organizedVerses || Object.keys(organizedVerses).length === 0) {
                 console.log('Loading verses before entering review mode...');
                 loadVerses().then(() => {
                     console.log('Verses loaded, entering review mode');
-
-                    ReviewMode.startReviewMode(reviewOptions);
-                    setupReviewClickHandler();
+                    startReview();
                 });
             } else {
                 console.log('Verses already loaded, entering review mode');
-                ReviewMode.startReviewMode(reviewOptions);
-                setupReviewClickHandler();
+                startReview();
             }
         }
         return;
@@ -2642,6 +3028,22 @@ function setupReviewClickHandler() {
     if (overlandClickHandler) {
         canvas.removeEventListener('click', overlandClickHandler);
         overlandClickHandler = null;
+    }
+    if (overlandWheelHandler) {
+        canvas.removeEventListener('wheel', overlandWheelHandler);
+        overlandWheelHandler = null;
+    }
+    if (overlandTouchStartHandler) {
+        canvas.removeEventListener('touchstart', overlandTouchStartHandler);
+        overlandTouchStartHandler = null;
+    }
+    if (overlandTouchMoveHandler) {
+        canvas.removeEventListener('touchmove', overlandTouchMoveHandler);
+        overlandTouchMoveHandler = null;
+    }
+    if (overlandTouchEndHandler) {
+        canvas.removeEventListener('touchend', overlandTouchEndHandler);
+        overlandTouchEndHandler = null;
     }
     // Remove any previous review click handler
     if (reviewClickHandler) {
@@ -2670,7 +3072,13 @@ async function startMission(worldId, missionId) {
         }
 
         currentMission = mission;
+        window.currentMission = currentMission;
         currentMissionConfig = missionClient.missionToGameConfig(mission);
+        if (mission.type === 'discipleship' && window.discipleshipMissionManager) {
+            pendingMissionContentOverride = await window.discipleshipMissionManager.buildMissionOverride(mission);
+        } else {
+            pendingMissionContentOverride = null;
+        }
 
         console.log('Starting mission:', mission.name);
 
@@ -2737,11 +3145,15 @@ function completeMission(stars) {
     
     currentMission = null;
     currentMissionConfig = null;
+    window.currentMission = null;
+    clearMissionContentOverride();
 }
 
 function returnToOverland() {
     currentMission = null;
     currentMissionConfig = null;
+    window.currentMission = null;
+    clearMissionContentOverride();
     showOverland();
 }
 
@@ -2840,7 +3252,7 @@ function gameLoop(generation) {
 
     if (window.gameMode === 'game') {
         const uiState = {
-            vQuality: window.vQuality,
+            vQuality: (currentQuiz && currentQuiz.contentCategory) ? currentQuiz.contentCategory : window.vQuality,
             currentCombatCategory: player ? player.currentCombatCategory : null,
             categoryPickerOpen,
             allCategories: QUALITIES,
@@ -2851,15 +3263,18 @@ function gameLoop(generation) {
             lastAttackedMonster,
             explosionTimer,
             currentVerse: {
-                text: answerFullVerse || (currentQuiz ? currentQuiz.promptText : ''),
-                reference: (organizedVerses[window.vQuality] && organizedVerses[window.vQuality][currentVerseIndex]) ? organizedVerses[window.vQuality][currentVerseIndex].Reference : ''
+                text: answerFullVerse || (currentQuiz ? (currentQuiz.promptText || currentQuiz.answerRevealText || '') : ''),
+                reference: (currentQuiz && currentQuiz.verseReference)
+                    ? currentQuiz.verseReference
+                    : ((organizedVerses[window.vQuality] && organizedVerses[window.vQuality][currentVerseIndex]) ? organizedVerses[window.vQuality][currentVerseIndex].Reference : '')
             },
             quiz: answerFullVerse ? null : currentQuiz,
             menuState: {
                 menuOpen,
                 musicState: MusicManager.getState(),
                 reviewActive: window.gameMode === 'review',
-                verseTestShielded
+                verseTestShielded,
+                viewMode
             },
             dailyChallengeProgress,
             dailyChallengeGoal,
@@ -2887,8 +3302,9 @@ function gameLoop(generation) {
         };
 
         // Instantiate renderer if not already (hack for now, should be in init)
-        if (!window.renderer) {
-            window.renderer = new Renderer(canvas, ctx, assets);
+        const RendererClass = getRendererClassForViewMode(viewMode);
+        if (!window.renderer || window.renderer.viewMode !== viewMode) {
+            window.renderer = new RendererClass(canvas, ctx, assets);
         }
         window.renderer.assets = assets; // Update assets in case they loaded late
 
@@ -2916,9 +3332,8 @@ function gameLoop(generation) {
                 particle.frameTimer = 0;
             }
 
-            // Remove after 24 frames (using first 4 rows of 6x6 grid)
-            // At 100ms per frame, this is 2.4 seconds total
-            return particle.frame < 24;
+            // Default death burst runs 24 frames; custom effects can override.
+            return particle.frame < (particle.maxFrames || 24);
         });
 
         // Update screen shake
@@ -3080,8 +3495,10 @@ function gameLoop(generation) {
         */
 
         // Move the player
-        // Get movement target from InputHandler
         const worldTarget = inputHandler ? inputHandler.getWorldTarget() : null;
+        const movementIntent = inputHandler && typeof inputHandler.getMovementIntent === 'function'
+            ? inputHandler.getMovementIntent()
+            : null;
 
         // Safety timeout: auto-unfreeze if walls never arrive
         if (movementFrozen && Date.now() - levelTransitionStartTime > MAX_TRANSITION_FREEZE_MS) {
@@ -3094,11 +3511,93 @@ function gameLoop(generation) {
             // Clear any pending movement target so player doesn't auto-move when unfrozen
             if (inputHandler) {
                 inputHandler.clearTarget();
+                if (inputHandler.viewMode === '3d' && typeof inputHandler.stopForwardMovement === 'function') {
+                    inputHandler.stopForwardMovement();
+                }
             }
             // Reset moving state
             player.isMoving = false;
             player.currentFrame = 0;
             player.frameTimer = 0;
+        } else if (movementIntent && inputHandler && inputHandler.viewMode === '3d') {
+            const turnSteps = movementIntent.turnSteps || 0;
+            if (turnSteps) {
+                if (typeof inputHandler.stopForwardMovement === 'function') {
+                    inputHandler.stopForwardMovement();
+                }
+                movementIntent.forward = false;
+                player.viewAngle = (player.viewAngle || 0) + turnSteps * (Math.PI / 6);
+                if (player.viewAngle > Math.PI) player.viewAngle -= Math.PI * 2;
+                if (player.viewAngle < -Math.PI) player.viewAngle += Math.PI * 2;
+            }
+            if (movementIntent.fire) {
+                tryHandle3DFire(monsters, Date.now());
+            }
+
+            const wasMoving = player.isMoving;
+            player.isMoving = !!movementIntent.forward;
+            if (wasMoving && !player.isMoving) {
+                player.currentFrame = 0;
+                player.frameTimer = 0;
+            }
+
+            if (movementIntent.forward) {
+                const baseSpeed = activeBuffs.sandals.active ? PLAYER_SPEED * Constants.SANDALS_SPEED_BOOST : PLAYER_SPEED;
+                let moveSpeed = baseSpeed * gameSpeedMultiplier;
+
+                for (const monster of monsters) {
+                    if (monster.freezeAura) {
+                        const mdx = monster.x - player.x;
+                        const mdy = monster.y - player.y;
+                        const mdist = Math.sqrt(mdx * mdx + mdy * mdy);
+                        if (mdist < Constants.FREEZE_AURA_RADIUS) {
+                            moveSpeed *= Constants.FREEZE_AURA_SLOW;
+                            break;
+                        }
+                    }
+                }
+
+                const dx = Math.cos(player.viewAngle || 0) * moveSpeed;
+                const dy = Math.sin(player.viewAngle || 0) * moveSpeed;
+                const newX = player.x + dx;
+                const newY = player.y + dy;
+
+                let monsterCollision = false;
+                for (const monster of monsters) {
+                    const monsterDx = newX - monster.x;
+                    const monsterDy = newY - monster.y;
+                    const monsterDist = Math.sqrt(monsterDx * monsterDx + monsterDy * monsterDy);
+                    if (monsterDist < (player.width / 2 + monster.width / 2)) {
+                        monsterCollision = true;
+                        break;
+                    }
+                }
+
+                const blocked = monsterCollision || checkWallCollision(newX, newY, player.width, player.height);
+
+                if (!blocked) {
+                    player.x = newX;
+                    player.y = newY;
+                } else {
+                    if (typeof inputHandler.stopForwardMovement === 'function') {
+                        inputHandler.stopForwardMovement();
+                    }
+                    player.isMoving = false;
+                }
+
+                player.facingDirection = Math.cos(player.viewAngle || 0) >= 0 ? 'right' : 'left';
+                player.x = Math.max(0, Math.min(player.x, WORLD_WIDTH));
+                player.y = Math.max(0, Math.min(player.y, WORLD_HEIGHT));
+
+                const now = Date.now();
+                if (now - _lastPositionSendTime >= POSITION_SEND_INTERVAL &&
+                    (player.x !== _lastSentX || player.y !== _lastSentY)) {
+                    network.sendPosition(player.x, player.y);
+                    _lastPositionSendTime = now;
+                    _lastSentX = player.x;
+                    _lastSentY = player.y;
+                }
+            }
         } else if (worldTarget) {
             let dx = worldTarget.x - player.x;
             let dy = worldTarget.y - player.y;
@@ -3113,6 +3612,9 @@ function gameLoop(generation) {
             // Determine facing direction based on horizontal movement
             if (Math.abs(dx) > 2) {  // Only change direction if significant horizontal movement
                 player.facingDirection = dx > 0 ? 'right' : 'left';
+            }
+            if (distance > THRESHOLD_DISTANCE) {
+                player.viewAngle = Math.atan2(dy, dx);
             }
 
             // If player stopped moving, reset to idle frame
@@ -3742,6 +4244,714 @@ function updateGameState(newGameState) {
 
     // Sync collectibles to local variable
     collectibles = gameState.collectibles || [];
+}
+
+function ensureWorldBrowserModal() {
+    if (worldBrowserModal) {
+        return worldBrowserModal;
+    }
+
+    worldBrowserModal = document.createElement('div');
+    worldBrowserModal.id = 'worldBrowserModal';
+    worldBrowserModal.style.cssText = 'position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.86); z-index: 1000; display: none; justify-content: center; align-items: center; font-family: "Segoe UI", sans-serif;';
+
+    const content = document.createElement('div');
+    content.style.cssText = 'background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%); border-radius: 16px; padding: 24px; max-width: 460px; width: 92%; max-height: 88vh; overflow-y: auto; color: #fff; position: relative; box-shadow: 0 18px 60px rgba(0,0,0,0.35);';
+
+    const closeBtn = document.createElement('button');
+    closeBtn.textContent = '×';
+    closeBtn.style.cssText = 'position: absolute; top: 10px; right: 14px; background: none; border: none; color: #fff; font-size: 24px; cursor: pointer;';
+    closeBtn.addEventListener('click', hideWorldBrowserPanel);
+    content.appendChild(closeBtn);
+
+    const panelContainer = document.createElement('div');
+    panelContainer.id = 'worldBrowserContainer';
+    content.appendChild(panelContainer);
+
+    worldBrowserModal.appendChild(content);
+    document.body.appendChild(worldBrowserModal);
+
+    worldBrowserModal.addEventListener('click', (e) => {
+        if (e.target === worldBrowserModal) hideWorldBrowserPanel();
+    });
+
+    return worldBrowserModal;
+}
+
+function hideWorldBrowserPanel() {
+    if (worldBrowserModal) {
+        worldBrowserModal.style.display = 'none';
+    }
+}
+
+function buildCustomWorldMissionConfig(world, mission) {
+    const spawnRateMs = mission.spawnRate > 1000 ? mission.spawnRate : (mission.spawnRate || 18) * 1000;
+    const monstersToKill = mission.monstersToKill || (mission.objectives && mission.objectives.monstersToKill) || 10;
+    const missionMonsters = Array.isArray(mission.monsters) && mission.monsters.length
+        ? mission.monsters
+        : (Array.isArray(mission.monsterTypes) && mission.monsterTypes.length ? mission.monsterTypes : ['Fear', 'Doubt']);
+    const missionQualities = Array.isArray(mission.qualities) && mission.qualities.length
+        ? mission.qualities
+        : [mission.category || 'Faith'];
+
+    return {
+        balance: {
+            monsterHealth: 1.0,
+            monsterDamage: mission.monsterDamageFactor || 1.0,
+            monsterSpeed: 1.0,
+            spawnRate: 1.0,
+            maxMonsters: 1.0,
+            healingFrequency: 1.0
+        },
+        levels: [{
+            qualities: missionQualities,
+            monsters: missionMonsters,
+            monstersToKill: monstersToKill,
+            maxMonsters: mission.maxMonsters || 20,
+            spawnRate: spawnRateMs / 1000
+        }]
+    };
+}
+
+function startCustomWorldMission(world, mission, previewData) {
+    if (!world || !mission) return;
+
+    currentMission = {
+        id: mission.id,
+        name: mission.name,
+        xpMultiplier: mission.xpMultiplier || 1.0,
+        worldId: world.slug || world.id,
+        isCustomWorld: true
+    };
+    currentMissionConfig = buildCustomWorldMissionConfig(world, mission);
+    currentMissionConfig.fixedMonsters = Array.isArray(mission.fixedMonsters) ? mission.fixedMonsters : [];
+    currentMissionConfig.randomSpawnsEnabled = mission.randomSpawnsEnabled !== false;
+    currentMissionConfig.randomSpawnBudget = typeof mission.randomSpawnBudget === 'number' ? mission.randomSpawnBudget : undefined;
+    if (previewData) {
+        currentMissionConfig.mapData = previewData;
+        currentMissionConfig.playerSpawn = {
+            x: previewData.spawnX,
+            y: previewData.spawnY
+        };
+    }
+
+    hideWorldBrowserPanel();
+
+    startGame('solo', undefined, {
+        config: currentMissionConfig,
+        mapStyle: mission.mapStyle || 'classic',
+        qualities: Array.isArray(mission.qualities) && mission.qualities.length ? mission.qualities : [mission.category || 'Faith']
+    });
+}
+
+function drawMissionPreviewCanvas(canvasEl, previewState) {
+    const ctx = canvasEl.getContext('2d');
+    const preview = previewState.preview;
+    if (!ctx || !preview) return;
+
+    const mapWidth = (preview.cols || 80) * (preview.cellSize || 40);
+    const mapHeight = (preview.rows || 80) * (preview.cellSize || 40);
+    const scaleX = canvasEl.width / mapWidth;
+    const scaleY = canvasEl.height / mapHeight;
+
+    ctx.fillStyle = '#0e1522';
+    ctx.fillRect(0, 0, canvasEl.width, canvasEl.height);
+
+    ctx.fillStyle = '#516072';
+    (preview.walls || []).forEach((wall) => {
+        ctx.fillRect(
+            wall.x * scaleX,
+            wall.y * scaleY,
+            wall.width * scaleX,
+            wall.height * scaleY
+        );
+    });
+
+    ctx.fillStyle = '#6be585';
+    ctx.beginPath();
+    ctx.arc((preview.spawnX || 0) * scaleX, (preview.spawnY || 0) * scaleY, 5, 0, Math.PI * 2);
+    ctx.fill();
+
+    (previewState.fixedMonsters || []).forEach((monster, index) => {
+        ctx.fillStyle = monster.isBoss ? '#ffcc55' : '#ff6b6b';
+        ctx.beginPath();
+        ctx.arc(monster.x * scaleX, monster.y * scaleY, monster.isBoss ? 7 : 5, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = '#ffffff';
+        ctx.font = '10px Arial';
+        ctx.fillText(String(index + 1), monster.x * scaleX + 6, monster.y * scaleY - 6);
+    });
+}
+
+function isPreviewPositionBlocked(preview, x, y) {
+    if (!preview || !Array.isArray(preview.walls)) {
+        return false;
+    }
+
+    const halfWidth = Constants.MONSTER_WIDTH / 2;
+    const halfHeight = Constants.MONSTER_HEIGHT / 2;
+    const left = x - halfWidth;
+    const right = x + halfWidth;
+    const top = y - halfHeight;
+    const bottom = y + halfHeight;
+
+    return preview.walls.some((wall) => (
+        left < wall.x + wall.width &&
+        right > wall.x &&
+        top < wall.y + wall.height &&
+        bottom > wall.y
+    ));
+}
+
+function buildMissionEditorState(mission) {
+    return {
+        name: mission.name || '',
+        description: mission.description || '',
+        category: mission.category || 'Faith',
+        mapStyle: mission.mapStyle || 'classic',
+        spawnRate: mission.spawnRate || 18,
+        maxMonsters: mission.maxMonsters || 20,
+        monstersToKill: mission.monstersToKill || 10,
+        monsterDamageFactor: mission.monsterDamageFactor || 1.0,
+        qualitiesCsv: Array.isArray(mission.qualities) ? mission.qualities.join(', ') : (mission.category || 'Faith'),
+        monstersCsv: Array.isArray(mission.monsters) ? mission.monsters.join(', ') : (Array.isArray(mission.monsterTypes) ? mission.monsterTypes.join(', ') : ''),
+        randomSpawnsEnabled: mission.randomSpawnsEnabled !== false,
+        randomSpawnBudget: mission.randomSpawnBudget || '',
+        fixedMonsters: Array.isArray(mission.fixedMonsters) ? mission.fixedMonsters.map((entry) => ({ ...entry })) : [],
+        selectedDemonType: 'Fear',
+        selectedTriggerType: 'immediate',
+        selectedTriggerValue: 0,
+        preview: null
+    };
+}
+
+function buildMissionPayloadFromEditor(editorState) {
+    const parseCsv = function (value) {
+        return String(value || '')
+            .split(',')
+            .map((entry) => entry.trim())
+            .filter(Boolean);
+    };
+
+    const spawnRateValue = Number(editorState.spawnRate);
+
+    return {
+        name: editorState.name.trim(),
+        description: editorState.description.trim(),
+        category: editorState.category.trim() || 'Faith',
+        mapStyle: editorState.mapStyle,
+        spawnRate: Number.isFinite(spawnRateValue) && spawnRateValue > 1000 ? spawnRateValue : (Number.isFinite(spawnRateValue) ? spawnRateValue * 1000 : 18000),
+        maxMonsters: Number(editorState.maxMonsters) || 20,
+        monstersToKill: Number(editorState.monstersToKill) || 10,
+        monsterDamageFactor: Number(editorState.monsterDamageFactor) || 1.0,
+        qualities: parseCsv(editorState.qualitiesCsv),
+        monsters: parseCsv(editorState.monstersCsv),
+        monsterTypes: parseCsv(editorState.monstersCsv),
+        randomSpawnsEnabled: !!editorState.randomSpawnsEnabled,
+        randomSpawnBudget: editorState.randomSpawnBudget === '' ? undefined : Number(editorState.randomSpawnBudget) || 0,
+        fixedMonsters: editorState.fixedMonsters
+    };
+}
+
+async function showEditMissionModal(worldBrowser, world, mission, container, reloadList) {
+    const modal = document.createElement('div');
+    modal.style.cssText = 'position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.94); z-index: 1002; display: flex; justify-content: center; align-items: center;';
+
+    const content = document.createElement('div');
+    content.style.cssText = 'background: linear-gradient(135deg, #171f2b 0%, #101823 100%); border-radius: 16px; padding: 20px; width: min(980px, 96vw); max-height: 92vh; overflow: auto; color: #fff;';
+    modal.appendChild(content);
+    document.body.appendChild(modal);
+
+    const editorState = buildMissionEditorState(mission);
+
+    async function refreshPreview() {
+        const result = await worldBrowser.previewMission(world.slug, mission.id, {
+            mapStyle: editorState.mapStyle,
+            customWalls: [],
+            removedWalls: [],
+            playerSpawn: null
+        });
+        if (result.success) {
+            editorState.preview = result.preview;
+            drawMissionPreviewCanvas(document.getElementById('missionPreviewCanvas'), editorState);
+            renderFixedMonsterList();
+        } else {
+            showToast(result.error || 'Preview failed', 3000);
+        }
+    }
+
+    function renderFixedMonsterList() {
+        const list = document.getElementById('fixedMonsterList');
+        if (!list) return;
+        list.innerHTML = '';
+
+        if (!editorState.fixedMonsters.length) {
+            list.innerHTML = '<div style="opacity:0.65;">No fixed monsters placed yet. Click the preview to add one.</div>';
+            drawMissionPreviewCanvas(document.getElementById('missionPreviewCanvas'), editorState);
+            return;
+        }
+
+        editorState.fixedMonsters.forEach((entry, index) => {
+            const row = document.createElement('div');
+            row.style.cssText = 'display:flex;justify-content:space-between;gap:10px;padding:8px 10px;background:rgba(255,255,255,0.06);border-radius:8px;margin-bottom:8px;';
+            row.innerHTML = `<span>${index + 1}. ${entry.demonType} @ (${Math.round(entry.x)}, ${Math.round(entry.y)}) [${entry.spawnTrigger.type}]</span>`;
+
+            const removeBtn = document.createElement('button');
+            removeBtn.textContent = 'Remove';
+            removeBtn.style.cssText = 'border:none;border-radius:6px;background:rgba(255,80,80,0.16);color:#ffd6d6;padding:6px 10px;cursor:pointer;';
+            removeBtn.addEventListener('click', () => {
+                editorState.fixedMonsters.splice(index, 1);
+                renderFixedMonsterList();
+            });
+            row.appendChild(removeBtn);
+            list.appendChild(row);
+        });
+
+        drawMissionPreviewCanvas(document.getElementById('missionPreviewCanvas'), editorState);
+    }
+
+    content.innerHTML = `
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:16px;">
+            <div>
+                <h2 style="margin:0 0 4px;">Edit Mission</h2>
+                <div style="font-size:0.9em;color:#a8c5e6;">Adjust mission rules, place fixed monsters, preview, then test play.</div>
+            </div>
+            <button id="closeMissionEditor" style="border:none;background:none;color:#fff;font-size:24px;cursor:pointer;">×</button>
+        </div>
+        <div style="display:grid;grid-template-columns:minmax(300px, 1fr) minmax(340px, 1.1fr);gap:18px;">
+            <div>
+                <div style="display:grid;gap:10px;">
+                    <input id="missionEditorName" placeholder="Mission name" value="${editorState.name.replace(/"/g, '&quot;')}" style="padding:10px;border-radius:8px;border:1px solid rgba(255,255,255,0.18);background:rgba(0,0,0,0.18);color:#fff;">
+                    <textarea id="missionEditorDescription" rows="3" placeholder="Mission description" style="padding:10px;border-radius:8px;border:1px solid rgba(255,255,255,0.18);background:rgba(0,0,0,0.18);color:#fff;resize:vertical;">${editorState.description}</textarea>
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+                        <input id="missionEditorCategory" placeholder="Category" value="${editorState.category.replace(/"/g, '&quot;')}" style="padding:10px;border-radius:8px;border:1px solid rgba(255,255,255,0.18);background:rgba(0,0,0,0.18);color:#fff;">
+                        <select id="missionEditorMapStyle" style="padding:10px;border-radius:8px;border:1px solid rgba(255,255,255,0.18);background:rgba(0,0,0,0.18);color:#fff;">
+                            <option value="classic">Classic</option>
+                            <option value="narrow">Narrow</option>
+                            <option value="labyrinth">Labyrinth</option>
+                            <option value="open">Open</option>
+                            <option value="city">City</option>
+                        </select>
+                    </div>
+                    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;">
+                        <input id="missionEditorSpawnRate" type="number" min="1" step="1" value="${Math.round((Number(editorState.spawnRate) > 1000 ? Number(editorState.spawnRate) : Number(editorState.spawnRate) * 1000) / 1000)}" style="padding:10px;border-radius:8px;border:1px solid rgba(255,255,255,0.18);background:rgba(0,0,0,0.18);color:#fff;">
+                        <input id="missionEditorMaxMonsters" type="number" min="1" step="1" value="${editorState.maxMonsters}" style="padding:10px;border-radius:8px;border:1px solid rgba(255,255,255,0.18);background:rgba(0,0,0,0.18);color:#fff;">
+                        <input id="missionEditorMonstersToKill" type="number" min="1" step="1" value="${editorState.monstersToKill}" style="padding:10px;border-radius:8px;border:1px solid rgba(255,255,255,0.18);background:rgba(0,0,0,0.18);color:#fff;">
+                    </div>
+                    <input id="missionEditorMonsterDamageFactor" type="number" min="0.5" step="0.1" value="${editorState.monsterDamageFactor}" style="padding:10px;border-radius:8px;border:1px solid rgba(255,255,255,0.18);background:rgba(0,0,0,0.18);color:#fff;">
+                    <input id="missionEditorQualities" placeholder="Qualities CSV" value="${editorState.qualitiesCsv.replace(/"/g, '&quot;')}" style="padding:10px;border-radius:8px;border:1px solid rgba(255,255,255,0.18);background:rgba(0,0,0,0.18);color:#fff;">
+                    <input id="missionEditorMonsters" placeholder="Demons CSV" value="${editorState.monstersCsv.replace(/"/g, '&quot;')}" style="padding:10px;border-radius:8px;border:1px solid rgba(255,255,255,0.18);background:rgba(0,0,0,0.18);color:#fff;">
+                    <label style="display:flex;align-items:center;gap:8px;font-size:0.92em;">
+                        <input id="missionEditorRandomSpawns" type="checkbox" ${editorState.randomSpawnsEnabled ? 'checked' : ''}>
+                        Random spawns enabled
+                    </label>
+                    <input id="missionEditorRandomBudget" type="number" min="0" step="1" placeholder="Random spawn budget (optional)" value="${editorState.randomSpawnBudget}" style="padding:10px;border-radius:8px;border:1px solid rgba(255,255,255,0.18);background:rgba(0,0,0,0.18);color:#fff;">
+                </div>
+                <div style="margin-top:16px;padding:12px;background:rgba(255,255,255,0.04);border-radius:12px;">
+                    <div style="font-weight:700;margin-bottom:10px;">Fixed Monster Tool</div>
+                    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;">
+                        <select id="missionEditorDemonType" style="padding:10px;border-radius:8px;border:1px solid rgba(255,255,255,0.18);background:rgba(0,0,0,0.18);color:#fff;">
+                            <option>Fear</option><option>Doubt</option><option>Confusion</option><option>Deception</option><option>Ignorance</option><option>Blindness</option><option>Condemnation</option><option>Unbelief</option><option>Depression</option><option>Despair</option><option>Pride</option><option>Poverty</option><option>Shame</option><option>Strife</option><option>Infirmity</option><option>Temptation</option><option>Swarm</option>
+                        </select>
+                        <select id="missionEditorTriggerType" style="padding:10px;border-radius:8px;border:1px solid rgba(255,255,255,0.18);background:rgba(0,0,0,0.18);color:#fff;">
+                            <option value="immediate">Immediate</option>
+                            <option value="timer">Timer</option>
+                            <option value="proximity">Proximity</option>
+                            <option value="killCount">Kill Count</option>
+                        </select>
+                        <input id="missionEditorTriggerValue" type="number" min="0" step="1" value="0" style="padding:10px;border-radius:8px;border:1px solid rgba(255,255,255,0.18);background:rgba(0,0,0,0.18);color:#fff;">
+                    </div>
+                    <div style="font-size:0.82em;color:#a8c5e6;margin-top:8px;">Click on the preview map to place the selected demon. Right click the preview to remove the nearest one.</div>
+                </div>
+            </div>
+            <div>
+                <canvas id="missionPreviewCanvas" width="420" height="420" style="width:100%;max-width:420px;border-radius:12px;background:#0e1522;border:1px solid rgba(255,255,255,0.12);display:block;"></canvas>
+                <div style="display:flex;gap:10px;margin-top:12px;flex-wrap:wrap;">
+                    <button id="refreshMissionPreview" style="padding:10px 14px;border:none;border-radius:8px;background:#4a90e2;color:#fff;cursor:pointer;">Refresh Preview</button>
+                    <button id="saveMissionEdits" style="padding:10px 14px;border:none;border-radius:8px;background:#4CAF50;color:#fff;cursor:pointer;">Save Mission</button>
+                    <button id="testPlayMission" style="padding:10px 14px;border:none;border-radius:8px;background:#FFD166;color:#1a1a1a;cursor:pointer;font-weight:700;">Test Play</button>
+                </div>
+                <div id="fixedMonsterList" style="margin-top:14px;"></div>
+            </div>
+        </div>
+    `;
+
+    document.getElementById('missionEditorMapStyle').value = editorState.mapStyle;
+
+    const syncFormState = function () {
+        editorState.name = document.getElementById('missionEditorName').value;
+        editorState.description = document.getElementById('missionEditorDescription').value;
+        editorState.category = document.getElementById('missionEditorCategory').value;
+        editorState.mapStyle = document.getElementById('missionEditorMapStyle').value;
+        editorState.spawnRate = Number(document.getElementById('missionEditorSpawnRate').value) || 18;
+        editorState.maxMonsters = Number(document.getElementById('missionEditorMaxMonsters').value) || 20;
+        editorState.monstersToKill = Number(document.getElementById('missionEditorMonstersToKill').value) || 10;
+        editorState.monsterDamageFactor = Number(document.getElementById('missionEditorMonsterDamageFactor').value) || 1.0;
+        editorState.qualitiesCsv = document.getElementById('missionEditorQualities').value;
+        editorState.monstersCsv = document.getElementById('missionEditorMonsters').value;
+        editorState.randomSpawnsEnabled = document.getElementById('missionEditorRandomSpawns').checked;
+        editorState.randomSpawnBudget = document.getElementById('missionEditorRandomBudget').value;
+        editorState.selectedDemonType = document.getElementById('missionEditorDemonType').value;
+        editorState.selectedTriggerType = document.getElementById('missionEditorTriggerType').value;
+        editorState.selectedTriggerValue = Number(document.getElementById('missionEditorTriggerValue').value) || 0;
+    };
+
+    const previewCanvas = document.getElementById('missionPreviewCanvas');
+    previewCanvas.addEventListener('click', (event) => {
+        if (!editorState.preview) return;
+        syncFormState();
+        const rect = previewCanvas.getBoundingClientRect();
+        const x = ((event.clientX - rect.left) / rect.width) * ((editorState.preview.cols || 80) * (editorState.preview.cellSize || 40));
+        const y = ((event.clientY - rect.top) / rect.height) * ((editorState.preview.rows || 80) * (editorState.preview.cellSize || 40));
+        if (isPreviewPositionBlocked(editorState.preview, x, y)) {
+            showToast('Cannot place a demon inside a wall', 2500);
+            return;
+        }
+        editorState.fixedMonsters.push({
+            x: Math.round(x),
+            y: Math.round(y),
+            demonType: editorState.selectedDemonType,
+            behavior: { type: 'chaser', patrolRadius: 0, patrolPath: [] },
+            stats: { healthMultiplier: 1.0, damageMultiplier: 1.0, speedMultiplier: 1.0 },
+            spawnTrigger: {
+                type: editorState.selectedTriggerType,
+                value: editorState.selectedTriggerValue
+            },
+            isBoss: false,
+            label: ''
+        });
+        renderFixedMonsterList();
+    });
+    previewCanvas.addEventListener('contextmenu', (event) => {
+        event.preventDefault();
+        if (!editorState.preview || !editorState.fixedMonsters.length) return;
+        const rect = previewCanvas.getBoundingClientRect();
+        const x = ((event.clientX - rect.left) / rect.width) * ((editorState.preview.cols || 80) * (editorState.preview.cellSize || 40));
+        const y = ((event.clientY - rect.top) / rect.height) * ((editorState.preview.rows || 80) * (editorState.preview.cellSize || 40));
+        let closestIndex = 0;
+        let closestDist = Infinity;
+        editorState.fixedMonsters.forEach((entry, index) => {
+            const dx = entry.x - x;
+            const dy = entry.y - y;
+            const dist = Math.sqrt(dx * dx + dy * dy);
+            if (dist < closestDist) {
+                closestDist = dist;
+                closestIndex = index;
+            }
+        });
+        if (closestDist < 180) {
+            editorState.fixedMonsters.splice(closestIndex, 1);
+            renderFixedMonsterList();
+        }
+    });
+
+    document.getElementById('closeMissionEditor').addEventListener('click', () => modal.remove());
+    document.getElementById('refreshMissionPreview').addEventListener('click', async () => {
+        syncFormState();
+        await refreshPreview();
+    });
+    document.getElementById('saveMissionEdits').addEventListener('click', async () => {
+        syncFormState();
+        const payload = buildMissionPayloadFromEditor(editorState);
+        const result = await worldBrowser.updateMission(world.slug, mission.id, payload);
+        if (!result.success) {
+            showToast(result.error || 'Failed to save mission', 3500);
+            return;
+        }
+        showToast('Mission saved', 2500);
+        const refreshedWorld = await worldBrowser.getWorld(world.slug);
+        if (refreshedWorld) {
+            renderWorldDetailView(worldBrowser, refreshedWorld, container, reloadList);
+        }
+        modal.remove();
+    });
+    document.getElementById('testPlayMission').addEventListener('click', async () => {
+        syncFormState();
+        if (!editorState.preview) {
+            await refreshPreview();
+        }
+        const testMission = buildMissionPayloadFromEditor(editorState);
+        startCustomWorldMission(world, testMission, editorState.preview);
+        modal.remove();
+    });
+
+    modal.addEventListener('click', (event) => {
+        if (event.target === modal) modal.remove();
+    });
+
+    await refreshPreview();
+}
+
+function showEditWorldModal(worldBrowser, world, container, reloadList) {
+    const modal = document.createElement('div');
+    modal.style.cssText = 'position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.92); z-index: 1001; display: flex; justify-content: center; align-items: center;';
+
+    const content = document.createElement('div');
+    content.style.cssText = 'background: linear-gradient(135deg, #1b2334 0%, #101823 100%); border-radius: 14px; padding: 24px; max-width: 400px; width: 92%; color: #fff;';
+    content.innerHTML = `
+        <h3 style="margin: 0 0 10px;">Edit World</h3>
+        <div style="margin-bottom: 14px;">
+            <label style="display: block; font-size: 0.85em; margin-bottom: 5px; color: #a8c5e6;">World Name</label>
+            <input type="text" id="editWorldName" maxlength="100" value="${(world.name || '').replace(/"/g, '&quot;')}" style="width: 100%; padding: 10px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.2); background: rgba(0,0,0,0.2); color: #fff;">
+        </div>
+        <div style="margin-bottom: 14px;">
+            <label style="display: block; font-size: 0.85em; margin-bottom: 5px; color: #a8c5e6;">Description</label>
+            <textarea id="editWorldDescription" maxlength="500" rows="3" style="width: 100%; padding: 10px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.2); background: rgba(0,0,0,0.2); color: #fff; resize: vertical;">${world.description || ''}</textarea>
+        </div>
+        <div style="margin-bottom: 14px;">
+            <label style="display: block; font-size: 0.85em; margin-bottom: 5px; color: #a8c5e6;">Visibility</label>
+            <select id="editWorldVisibility" style="width: 100%; padding: 10px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.2); background: rgba(0,0,0,0.2); color: #fff;">
+                <option value="private" ${world.visibility === 'private' ? 'selected' : ''}>Private</option>
+                <option value="unlisted" ${world.visibility === 'unlisted' ? 'selected' : ''}>Unlisted</option>
+                <option value="public" ${world.visibility === 'public' ? 'selected' : ''}>Public</option>
+            </select>
+        </div>
+        <div style="margin-bottom: 18px;">
+            <label style="display: block; font-size: 0.85em; margin-bottom: 5px; color: #a8c5e6;">Status</label>
+            <select id="editWorldStatus" style="width: 100%; padding: 10px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.2); background: rgba(0,0,0,0.2); color: #fff;">
+                <option value="draft" ${world.status === 'draft' ? 'selected' : ''}>Draft</option>
+                <option value="published" ${world.status === 'published' ? 'selected' : ''}>Published</option>
+                <option value="archived" ${world.status === 'archived' ? 'selected' : ''}>Archived</option>
+            </select>
+        </div>
+        <div style="display: flex; gap: 10px;">
+            <button id="cancelEditWorld" style="flex: 1; padding: 12px; border: none; border-radius: 8px; background: rgba(255,255,255,0.1); color: #fff; cursor: pointer;">Cancel</button>
+            <button id="submitEditWorld" style="flex: 1; padding: 12px; border: none; border-radius: 8px; background: linear-gradient(135deg, #4a90e2, #357abd); color: #fff; cursor: pointer; font-weight: bold;">Save</button>
+        </div>
+    `;
+
+    modal.appendChild(content);
+    document.body.appendChild(modal);
+
+    document.getElementById('cancelEditWorld').addEventListener('click', () => modal.remove());
+
+    document.getElementById('submitEditWorld').addEventListener('click', async () => {
+        const result = await worldBrowser.updateWorld(world.slug, {
+            name: document.getElementById('editWorldName').value.trim(),
+            description: document.getElementById('editWorldDescription').value.trim(),
+            visibility: document.getElementById('editWorldVisibility').value,
+            status: document.getElementById('editWorldStatus').value
+        });
+
+        if (!result.success) {
+            showToast(result.error || 'Failed to update world', 3500);
+            return;
+        }
+
+        modal.remove();
+        showToast('World updated', 2500);
+        const refreshed = await worldBrowser.getWorld(world.slug);
+        if (refreshed) {
+            renderWorldDetailView(worldBrowser, refreshed, container, reloadList);
+        }
+    });
+
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) modal.remove();
+    });
+}
+
+function renderWorldDetailView(worldBrowser, world, container, reloadList) {
+    worldBrowser.renderWorldDetail(world, container, {
+        onPlayMission: function (selectedWorld, mission) {
+            startCustomWorldMission(selectedWorld, mission);
+        },
+        onEditMission: function (selectedWorld, mission) {
+            showEditMissionModal(worldBrowser, selectedWorld, mission, container, reloadList);
+        },
+        onJoin: async function (selectedWorld) {
+            const result = await worldBrowser.joinWorld(selectedWorld.slug);
+            showToast(result.success ? 'World joined' : (result.error || 'Join failed'), 3000);
+            const refreshed = await worldBrowser.getWorld(selectedWorld.slug);
+            if (refreshed) {
+                renderWorldDetailView(worldBrowser, refreshed, container, reloadList);
+            }
+        },
+        onEditWorld: function (selectedWorld) {
+            showEditWorldModal(worldBrowser, selectedWorld, container, reloadList);
+        },
+        onDeleteWorld: async function (selectedWorld) {
+            if (!window.confirm('Delete this world?')) return;
+            const result = await worldBrowser.deleteWorld(selectedWorld.slug);
+            showToast(result.success ? 'World deleted' : (result.error || 'Delete failed'), 3000);
+            if (result.success) {
+                await reloadList();
+            }
+        },
+        onBack: reloadList
+    });
+}
+
+function showCreateWorldModal(worldBrowser, container, reloadList) {
+    const modal = document.createElement('div');
+    modal.style.cssText = 'position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.92); z-index: 1001; display: flex; justify-content: center; align-items: center;';
+
+    const content = document.createElement('div');
+    content.style.cssText = 'background: linear-gradient(135deg, #1b2334 0%, #101823 100%); border-radius: 14px; padding: 24px; max-width: 380px; width: 92%; color: #fff;';
+    content.innerHTML = `
+        <h3 style="margin: 0 0 10px;">Create a World</h3>
+        <p style="font-size: 0.85em; color: #a8c5e6; margin: 0 0 18px;">This creates a starter world with one chapter and three missions. You can expand it later.</p>
+        <div style="margin-bottom: 14px;">
+            <label style="display: block; font-size: 0.85em; margin-bottom: 5px; color: #a8c5e6;">World Name</label>
+            <input type="text" id="newWorldName" placeholder="e.g. Easter Journey" maxlength="100" style="width: 100%; padding: 10px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.2); background: rgba(0,0,0,0.2); color: #fff;">
+        </div>
+        <div style="margin-bottom: 14px;">
+            <label style="display: block; font-size: 0.85em; margin-bottom: 5px; color: #a8c5e6;">Description</label>
+            <textarea id="newWorldDescription" maxlength="500" rows="3" placeholder="What is this world for?" style="width: 100%; padding: 10px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.2); background: rgba(0,0,0,0.2); color: #fff; resize: vertical;"></textarea>
+        </div>
+        <div style="margin-bottom: 18px;">
+            <label style="display: block; font-size: 0.85em; margin-bottom: 5px; color: #a8c5e6;">Visibility</label>
+            <select id="newWorldVisibility" style="width: 100%; padding: 10px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.2); background: rgba(0,0,0,0.2); color: #fff;">
+                <option value="private">Private</option>
+                <option value="unlisted">Unlisted</option>
+                <option value="public">Public</option>
+            </select>
+        </div>
+        <div style="display: flex; gap: 10px;">
+            <button id="cancelCreateWorld" style="flex: 1; padding: 12px; border: none; border-radius: 8px; background: rgba(255,255,255,0.1); color: #fff; cursor: pointer;">Cancel</button>
+            <button id="submitCreateWorld" style="flex: 1; padding: 12px; border: none; border-radius: 8px; background: linear-gradient(135deg, #4a90e2, #357abd); color: #fff; cursor: pointer; font-weight: bold;">Create</button>
+        </div>
+    `;
+
+    modal.appendChild(content);
+    document.body.appendChild(modal);
+
+    document.getElementById('cancelCreateWorld').addEventListener('click', () => {
+        modal.remove();
+    });
+
+    document.getElementById('submitCreateWorld').addEventListener('click', async () => {
+        const name = document.getElementById('newWorldName').value.trim();
+        const description = document.getElementById('newWorldDescription').value.trim();
+        const visibility = document.getElementById('newWorldVisibility').value;
+
+        if (!name) {
+            showToast('Please enter a world name', 3000);
+            return;
+        }
+
+        const result = await worldBrowser.createWorld({
+            name,
+            description,
+            visibility
+        });
+
+        if (!result.success) {
+            showToast(result.error || 'Failed to create world', 3500);
+            return;
+        }
+
+        modal.remove();
+        showToast('World created', 2500);
+        await reloadList();
+        const createdWorld = await worldBrowser.getWorld(result.world.slug);
+        if (createdWorld) {
+            renderWorldDetailView(worldBrowser, createdWorld, container, reloadList);
+        }
+    });
+
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) modal.remove();
+    });
+}
+
+async function renderWorldBrowserList(worldBrowser, container) {
+    container.innerHTML = '<p style="text-align: center; padding: 20px;">Loading worlds...</p>';
+
+    await worldBrowser.loadWorlds();
+
+    const header = document.createElement('div');
+    header.style.cssText = 'margin-bottom: 16px;';
+
+    const title = document.createElement('h2');
+    title.textContent = 'Worlds';
+    title.style.cssText = 'margin: 0 0 6px;';
+    header.appendChild(title);
+
+    const subtitle = document.createElement('p');
+    subtitle.textContent = 'Browse public worlds, open shared worlds, or create a starter world if you are signed in.';
+    subtitle.style.cssText = 'margin: 0; font-size: 0.9em; color: #a8c5e6;';
+    header.appendChild(subtitle);
+
+    container.innerHTML = '';
+    container.appendChild(header);
+
+    const actions = document.createElement('div');
+    actions.style.cssText = 'display: flex; gap: 10px; margin-bottom: 14px; flex-wrap: wrap;';
+
+    if (window.authManager && window.authManager.isAuthenticated && window.authManager.isRegistered) {
+        const createBtn = document.createElement('button');
+        createBtn.textContent = '+ Create World';
+        createBtn.style.cssText = 'padding: 10px 14px; border: none; border-radius: 8px; background: linear-gradient(135deg, #4a90e2, #357abd); color: #fff; cursor: pointer; font-weight: bold;';
+        createBtn.addEventListener('click', () => {
+            showCreateWorldModal(worldBrowser, container, async function () {
+                await renderWorldBrowserList(worldBrowser, container);
+            });
+        });
+        actions.appendChild(createBtn);
+    }
+
+    const shareBtn = document.createElement('button');
+    shareBtn.textContent = 'Join by Code';
+    shareBtn.style.cssText = 'padding: 10px 14px; border: none; border-radius: 8px; background: rgba(255,255,255,0.12); color: #fff; cursor: pointer;';
+    shareBtn.addEventListener('click', async () => {
+        const code = window.prompt('Enter a world share code');
+        if (!code) return;
+        const result = await worldBrowser.joinByShareCode(code.trim());
+        if (!result.success || !result.world) {
+            showToast(result.error || 'Share code not found', 3000);
+            return;
+        }
+        const world = await worldBrowser.getWorld(result.world.slug);
+        if (!world) {
+            showToast('Could not open that world', 3000);
+            return;
+        }
+        renderWorldDetailView(worldBrowser, world, container, async function () {
+            await renderWorldBrowserList(worldBrowser, container);
+        });
+    });
+    actions.appendChild(shareBtn);
+
+    if (!window.authManager || !window.authManager.isRegistered) {
+        const note = document.createElement('div');
+        note.textContent = window.authManager && window.authManager.isAuthenticated
+            ? 'Complete registration to create and join worlds.'
+            : 'Sign in to create and join worlds.';
+        note.style.cssText = 'width: 100%; font-size: 0.82em; color: rgba(255,255,255,0.64); margin-top: 2px;';
+        actions.appendChild(note);
+    }
+
+    container.appendChild(actions);
+
+    const list = document.createElement('div');
+    container.appendChild(list);
+
+    worldBrowser.renderWorldList(list, {
+        onSelect: async function (worldMeta) {
+            list.innerHTML = '<p style="text-align: center; padding: 20px;">Loading world...</p>';
+            const world = await worldBrowser.getWorld(worldMeta.slug);
+            if (!world) {
+                showToast('Could not load that world', 3000);
+                await renderWorldBrowserList(worldBrowser, container);
+                return;
+            }
+            renderWorldDetailView(worldBrowser, world, container, async function () {
+                await renderWorldBrowserList(worldBrowser, container);
+            });
+        }
+    });
+}
+
+async function showWorldBrowserPanel() {
+    ensureWorldBrowserModal();
+    worldBrowserModal.style.display = 'flex';
+
+    const container = document.getElementById('worldBrowserContainer');
+    if (!container) return;
+
+    const worldBrowser = new WorldBrowser(window.authManager || null);
+    await renderWorldBrowserList(worldBrowser, container);
 }
 
 function lerp(a, b, t) {

@@ -1,0 +1,638 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Content Maker</title>
+  <meta name="robots" content="noindex,nofollow">
+  <style>
+    :root {
+      --bg: #f5f1e8;
+      --panel: #fffaf1;
+      --ink: #1f1b16;
+      --muted: #6f6558;
+      --line: #d7cbb7;
+      --accent: #315c42;
+      --accent-soft: #e4efe7;
+      --warn: #7c2d12;
+      --warn-soft: #fff1ec;
+      --shadow: 0 18px 48px rgba(31, 27, 22, 0.08);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: Georgia, "Times New Roman", serif;
+      background: linear-gradient(180deg, #f2ebde 0%, #f7f3ec 100%);
+      color: var(--ink);
+    }
+
+    .shell {
+      max-width: 1320px;
+      margin: 0 auto;
+      padding: 28px 20px 48px;
+    }
+
+    .hero, .panel {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      box-shadow: var(--shadow);
+    }
+
+    .hero {
+      padding: 26px 28px;
+      margin-bottom: 18px;
+    }
+
+    .eyebrow {
+      display: inline-block;
+      padding: 6px 10px;
+      border-radius: 999px;
+      background: var(--accent-soft);
+      color: var(--accent);
+      font-size: 12px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    h1 {
+      margin: 14px 0 10px;
+      font-size: clamp(2rem, 4vw, 3.4rem);
+      line-height: 1.05;
+    }
+
+    p {
+      margin: 0;
+      line-height: 1.6;
+      color: var(--muted);
+    }
+
+    .status-bar {
+      margin-top: 18px;
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 12px;
+      border-radius: 999px;
+      background: #f1eadf;
+      border: 1px solid var(--line);
+      font-size: 14px;
+      color: var(--ink);
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1.2fr) minmax(320px, 380px);
+      gap: 18px;
+    }
+
+    .panel {
+      padding: 20px;
+    }
+
+    .panel h2, .panel h3 {
+      margin: 0 0 12px;
+      font-size: 1.2rem;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 14px;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 12px;
+      font-size: 14px;
+      color: var(--muted);
+    }
+
+    input, select, textarea {
+      width: 100%;
+      margin-top: 6px;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 12px 14px;
+      background: #fffdf9;
+      color: var(--ink);
+      font: inherit;
+    }
+
+    textarea {
+      min-height: 120px;
+      resize: vertical;
+      line-height: 1.5;
+    }
+
+    .body-editor {
+      min-height: 460px;
+      font-family: "Courier New", monospace;
+      font-size: 14px;
+    }
+
+    .actions, .mini-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 10px;
+    }
+
+    button {
+      border: none;
+      border-radius: 12px;
+      padding: 11px 16px;
+      cursor: pointer;
+      font: inherit;
+    }
+
+    .btn-primary {
+      background: var(--accent);
+      color: #fff;
+    }
+
+    .btn-secondary {
+      background: #ece3d4;
+      color: var(--ink);
+      border: 1px solid var(--line);
+    }
+
+    .btn-link {
+      background: transparent;
+      color: var(--accent);
+      border: 1px solid var(--line);
+    }
+
+    .notice {
+      border-radius: 14px;
+      padding: 14px 16px;
+      margin-bottom: 16px;
+      border: 1px solid var(--line);
+      background: #f8f1e6;
+      color: var(--muted);
+    }
+
+    .notice.warn {
+      background: var(--warn-soft);
+      color: var(--warn);
+      border-color: #efc2af;
+    }
+
+    .draft-list {
+      display: grid;
+      gap: 10px;
+      margin-top: 8px;
+    }
+
+    .draft-item {
+      padding: 14px;
+      border-radius: 14px;
+      border: 1px solid var(--line);
+      background: #fffdf8;
+    }
+
+    .draft-item strong {
+      display: block;
+      margin-bottom: 4px;
+    }
+
+    .draft-item button {
+      margin-top: 10px;
+    }
+
+    .hidden {
+      display: none;
+    }
+
+    .meta {
+      margin-top: 8px;
+      font-size: 13px;
+      color: var(--muted);
+    }
+
+    @media (max-width: 980px) {
+      .layout,
+      .grid {
+        grid-template-columns: 1fr;
+      }
+
+      .shell {
+        padding-left: 14px;
+        padding-right: 14px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <section class="hero">
+      <div class="eyebrow">Internal Tool</div>
+      <h1>Content Maker</h1>
+      <p>Create content briefs, load draft articles, generate structured starters, and save editorial drafts without exposing the workflow publicly.</p>
+      <div class="status-bar">
+        <div class="badge" id="authBadge">Checking auth…</div>
+        <div class="badge" id="userBadge">No user</div>
+      </div>
+      <div class="actions">
+        <button class="btn-primary" id="signInBtn" type="button">Sign In</button>
+        <button class="btn-secondary hidden" id="signOutBtn" type="button">Sign Out</button>
+        <button class="btn-link hidden" id="refreshBtn" type="button">Refresh Drafts</button>
+      </div>
+    </section>
+
+    <div class="notice" id="messageBox">This page stays empty until an authenticated allowlisted user is confirmed.</div>
+
+    <section class="layout hidden" id="appLayout">
+      <div class="panel">
+        <h2>Brief And Draft</h2>
+        <div class="grid">
+          <label>Title
+            <input id="titleInput" type="text" placeholder="How missions leaders can use browser-based Bible games in low-income contexts">
+          </label>
+          <label>Slug
+            <input id="slugInput" type="text" placeholder="missions-browser-based-bible-games-low-income-contexts">
+          </label>
+          <label>Audience
+            <input id="audienceInput" type="text" value="Missions leaders">
+          </label>
+          <label>Cluster
+            <select id="clusterInput">
+              <option value="missions">missions</option>
+              <option value="youth-pastors">youth-pastors</option>
+              <option value="parents">parents</option>
+              <option value="blog">blog</option>
+            </select>
+          </label>
+          <label>Keyword
+            <input id="keywordInput" type="text" value="scripture memory tools for mission schools">
+          </label>
+          <label>Search Intent
+            <input id="intentInput" type="text" value="compare practical Scripture engagement tools for lower-resource ministry settings">
+          </label>
+          <label>Meta Description
+            <textarea id="metaInput">A practical guide for missions leaders evaluating browser-based Scripture memory tools in lower-resource contexts, with clear criteria and an honest look at where VerseBattles fits.</textarea>
+          </label>
+          <label>Primary CTA
+            <textarea id="ctaInput">Visit the missions page, test VerseBattles on the devices and bandwidth you actually have, and decide whether it fits your ministry constraints before rolling it out more broadly.</textarea>
+          </label>
+          <label>Product Angle
+            <textarea id="productAngleInput">VerseBattles is browser-based, replayable, and built around Scripture knowledge affecting gameplay, which can make it useful where app-install friction or repeated leader prep are barriers.</textarea>
+          </label>
+          <label>Featured Image Concept
+            <textarea id="imageInput">A youth leader in a modest classroom or church setting guiding students around a shared screen, with Scripture references visible and the visual emphasis on practical ministry use rather than polished consumer-tech aesthetics.</textarea>
+          </label>
+        </div>
+
+        <label>Suggested Internal Links
+          <textarea id="linksInput">/missions
+/youth-pastors
+/players
+/</textarea>
+        </label>
+
+        <label>Source Notes JSON
+          <textarea id="sourcesInput">[
+  {
+    "title": "ITU Facts and Figures 2024 press release",
+    "url": "https://www.itu.int/en/mediacentre/Pages/PR-2024-11-27-facts-and-figures.aspx",
+    "note": "Use for connectivity, affordability, rural access, and mobile ownership constraints."
+  },
+  {
+    "title": "UNESCO GEM Report 2023 summary",
+    "url": "https://www.unesco.org/en/articles/global-education-monitoring-report-2023-technology-education-tool-whose-terms",
+    "note": "Use for relevance, equity, scalability, sustainability, and learner-first framing."
+  },
+  {
+    "title": "UNESCO press release on appropriate use of technology in education",
+    "url": "https://www.unesco.org/gem-report/en/articles/unesco-issues-urgent-call-appropriate-use-technology-education",
+    "note": "Use for the principle that technology should support rather than replace teacher-led, human instruction."
+  },
+  {
+    "title": "World Bank and EdTech Hub brief",
+    "url": "https://www.worldbank.org/en/topic/edutech/brief/edtech-hub",
+    "note": "Use for the point that decision makers face too many tools and too little evidence in low- and middle-income settings."
+  }
+]</textarea>
+        </label>
+
+        <label>Draft Body
+          <textarea class="body-editor" id="bodyInput"></textarea>
+        </label>
+
+        <div class="actions">
+          <button class="btn-primary" id="generateBtn" type="button">Generate Starter</button>
+          <button class="btn-secondary" id="saveBtn" type="button">Save Draft</button>
+          <button class="btn-link" id="newBtn" type="button">Clear Form</button>
+        </div>
+        <div class="meta" id="saveMeta"></div>
+      </div>
+
+      <aside class="panel">
+        <h2>Saved Drafts</h2>
+        <p>Drafts are stored internally under `content-maker/drafts/` and can be reloaded here for editing.</p>
+        <div class="mini-actions">
+          <button class="btn-secondary" id="loadLatestBtn" type="button">Load Latest Draft</button>
+        </div>
+        <div class="draft-list" id="draftList"></div>
+      </aside>
+    </section>
+  </main>
+
+  <script src="/src/client/AuthManager.js"></script>
+  <script>
+    (function () {
+      var authManager = new AuthManager();
+      var state = {
+        authReady: false,
+        isAuthorized: false,
+        drafts: []
+      };
+
+      var els = {
+        authBadge: document.getElementById('authBadge'),
+        userBadge: document.getElementById('userBadge'),
+        messageBox: document.getElementById('messageBox'),
+        appLayout: document.getElementById('appLayout'),
+        signInBtn: document.getElementById('signInBtn'),
+        signOutBtn: document.getElementById('signOutBtn'),
+        refreshBtn: document.getElementById('refreshBtn'),
+        generateBtn: document.getElementById('generateBtn'),
+        saveBtn: document.getElementById('saveBtn'),
+        newBtn: document.getElementById('newBtn'),
+        loadLatestBtn: document.getElementById('loadLatestBtn'),
+        draftList: document.getElementById('draftList'),
+        saveMeta: document.getElementById('saveMeta'),
+        titleInput: document.getElementById('titleInput'),
+        slugInput: document.getElementById('slugInput'),
+        audienceInput: document.getElementById('audienceInput'),
+        clusterInput: document.getElementById('clusterInput'),
+        keywordInput: document.getElementById('keywordInput'),
+        intentInput: document.getElementById('intentInput'),
+        metaInput: document.getElementById('metaInput'),
+        ctaInput: document.getElementById('ctaInput'),
+        productAngleInput: document.getElementById('productAngleInput'),
+        imageInput: document.getElementById('imageInput'),
+        linksInput: document.getElementById('linksInput'),
+        sourcesInput: document.getElementById('sourcesInput'),
+        bodyInput: document.getElementById('bodyInput')
+      };
+
+      function setMessage(text, isWarning) {
+        els.messageBox.textContent = text;
+        els.messageBox.className = isWarning ? 'notice warn' : 'notice';
+      }
+
+      function setAuthorized(authorized, user) {
+        state.isAuthorized = authorized;
+        els.appLayout.classList.toggle('hidden', !authorized);
+        els.refreshBtn.classList.toggle('hidden', !authorized);
+        els.signOutBtn.classList.toggle('hidden', !authManager.isAuthenticated);
+        els.signInBtn.classList.toggle('hidden', authManager.isAuthenticated);
+        els.userBadge.textContent = user ? (user.email || user.username || 'Authenticated') : 'No user';
+        if (authorized) {
+          els.authBadge.textContent = 'Authorized';
+          setMessage('Authenticated and allowlisted. Draft tools are unlocked.', false);
+        } else if (authManager.isAuthenticated) {
+          els.authBadge.textContent = 'Signed in, not allowlisted';
+          setMessage('This Clerk account is signed in but not allowlisted for content-maker.', true);
+        } else {
+          els.authBadge.textContent = 'Signed out';
+          setMessage('Sign in with the allowlisted account to use content-maker.', true);
+        }
+      }
+
+      async function getToken() {
+        return authManager.getToken();
+      }
+
+      async function fetchJson(url, options) {
+        var token = await getToken();
+        var response = await fetch(url, {
+          method: (options && options.method) || 'GET',
+          headers: Object.assign({
+            'Content-Type': 'application/json',
+            'Authorization': token ? ('Bearer ' + token) : ''
+          }, options && options.headers ? options.headers : {}),
+          body: options && options.body ? JSON.stringify(options.body) : undefined
+        });
+
+        if (!response.ok) {
+          var errorText = 'Request failed';
+          try {
+            var errorPayload = await response.json();
+            errorText = errorPayload.error || errorText;
+          } catch (err) {}
+          throw new Error(errorText);
+        }
+
+        return response.json();
+      }
+
+      function readForm() {
+        var sources = [];
+        try {
+          sources = JSON.parse(els.sourcesInput.value || '[]');
+        } catch (err) {
+          throw new Error('Source Notes JSON must be valid JSON.');
+        }
+
+        return {
+          title: els.titleInput.value,
+          slug: els.slugInput.value,
+          audience: els.audienceInput.value,
+          cluster: els.clusterInput.value,
+          keyword: els.keywordInput.value,
+          searchIntent: els.intentInput.value,
+          metaDescription: els.metaInput.value,
+          cta: els.ctaInput.value,
+          productAngle: els.productAngleInput.value,
+          imageConcept: els.imageInput.value,
+          suggestedInternalLinks: els.linksInput.value.split('\n'),
+          sources: sources,
+          body: els.bodyInput.value
+        };
+      }
+
+      function applyDraft(draft) {
+        els.titleInput.value = draft.title || '';
+        els.slugInput.value = draft.slug || '';
+        els.audienceInput.value = draft.audience || '';
+        els.clusterInput.value = draft.cluster || 'missions';
+        els.keywordInput.value = draft.keyword || '';
+        els.intentInput.value = draft.searchIntent || '';
+        els.metaInput.value = draft.metaDescription || '';
+        els.ctaInput.value = draft.cta || '';
+        els.productAngleInput.value = draft.productAngle || '';
+        els.imageInput.value = draft.imageConcept || '';
+        els.linksInput.value = Array.isArray(draft.suggestedInternalLinks) ? draft.suggestedInternalLinks.join('\n') : '';
+        els.sourcesInput.value = JSON.stringify(draft.sources || [], null, 2);
+        els.bodyInput.value = draft.body || '';
+        els.saveMeta.textContent = draft.updatedAt ? ('Last saved: ' + new Date(draft.updatedAt).toLocaleString()) : '';
+      }
+
+      function renderDraftList() {
+        els.draftList.innerHTML = '';
+        if (!state.drafts.length) {
+          els.draftList.innerHTML = '<div class="draft-item"><strong>No drafts yet</strong><span class="meta">Save a draft to make it appear here.</span></div>';
+          return;
+        }
+
+        state.drafts.forEach(function (draft) {
+          var card = document.createElement('div');
+          card.className = 'draft-item';
+          var updatedText = draft.updatedAt ? new Date(draft.updatedAt).toLocaleString() : 'Unknown time';
+          card.innerHTML = '<strong>' + draft.title + '</strong><div class="meta">' + (draft.cluster || 'unclustered') + ' · ' + (draft.audience || 'no audience') + '</div><div class="meta">Updated ' + updatedText + '</div>';
+          var button = document.createElement('button');
+          button.className = 'btn-secondary';
+          button.type = 'button';
+          button.textContent = 'Load Draft';
+          button.addEventListener('click', function () {
+            loadDraft(draft.slug);
+          });
+          card.appendChild(button);
+          els.draftList.appendChild(card);
+        });
+      }
+
+      async function loadDraft(slug) {
+        try {
+          setMessage('Loading draft…', false);
+          var payload = await fetchJson('/api/content-maker/drafts/' + encodeURIComponent(slug));
+          applyDraft(payload.draft);
+          setMessage('Draft loaded.', false);
+        } catch (err) {
+          setMessage(err.message, true);
+        }
+      }
+
+      async function refreshDrafts() {
+        if (!state.isAuthorized) return;
+        try {
+          var payload = await fetchJson('/api/content-maker/drafts');
+          state.drafts = payload.drafts || [];
+          renderDraftList();
+        } catch (err) {
+          setMessage(err.message, true);
+        }
+      }
+
+      async function checkAuthorization() {
+        if (!authManager.isAuthenticated) {
+          setAuthorized(false, null);
+          return;
+        }
+
+        try {
+          var payload = await fetchJson('/api/content-maker/session');
+          setAuthorized(!!payload.authorized, payload.user || null);
+          if (payload.authorized) {
+            await refreshDrafts();
+          }
+        } catch (err) {
+          setAuthorized(false, authManager.user ? {
+            email: authManager.user.primaryEmailAddress && authManager.user.primaryEmailAddress.emailAddress
+          } : null);
+          setMessage(err.message, true);
+        }
+      }
+
+      async function initAuth() {
+        try {
+          var configResponse = await fetch('/api/config');
+          var config = await configResponse.json();
+          await authManager.init(config.clerkPublishableKey);
+        } catch (err) {
+          els.authBadge.textContent = 'Auth unavailable';
+          setMessage('Clerk failed to initialize for content-maker.', true);
+        }
+
+        authManager.onAuthChange(function () {
+          checkAuthorization();
+        });
+
+        await checkAuthorization();
+      }
+
+      els.signInBtn.addEventListener('click', function () {
+        authManager.openSignIn();
+      });
+
+      els.signOutBtn.addEventListener('click', function () {
+        authManager.signOut();
+      });
+
+      els.refreshBtn.addEventListener('click', function () {
+        refreshDrafts();
+      });
+
+      els.generateBtn.addEventListener('click', async function () {
+        try {
+          var payload = readForm();
+          payload.articleAngle = 'Create a practical missions-leader article with concrete evaluation criteria, rollout advice, and an honest VerseBattles fit section.';
+          setMessage('Generating structured starter…', false);
+          var response = await fetchJson('/api/content-maker/generate-starter', {
+            method: 'POST',
+            body: payload
+          });
+          applyDraft(Object.assign({}, payload, response.draft));
+          setMessage('Structured starter generated. Edit it before saving.', false);
+        } catch (err) {
+          setMessage(err.message, true);
+        }
+      });
+
+      els.saveBtn.addEventListener('click', async function () {
+        try {
+          var payload = readForm();
+          setMessage('Saving draft…', false);
+          var response = await fetchJson('/api/content-maker/drafts', {
+            method: 'POST',
+            body: payload
+          });
+          applyDraft(response.draft);
+          setMessage('Draft saved.', false);
+          await refreshDrafts();
+        } catch (err) {
+          setMessage(err.message, true);
+        }
+      });
+
+      els.newBtn.addEventListener('click', function () {
+        applyDraft({
+          title: '',
+          slug: '',
+          audience: 'Missions leaders',
+          cluster: 'missions',
+          keyword: '',
+          searchIntent: '',
+          metaDescription: '',
+          cta: '',
+          productAngle: '',
+          imageConcept: '',
+          suggestedInternalLinks: [],
+          sources: [],
+          body: ''
+        });
+        setMessage('Form cleared.', false);
+      });
+
+      els.loadLatestBtn.addEventListener('click', function () {
+        if (state.drafts.length) {
+          loadDraft(state.drafts[0].slug);
+        }
+      });
+
+      initAuth();
+    })();
+  </script>
+</body>
+</html>

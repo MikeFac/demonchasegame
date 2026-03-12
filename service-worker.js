@@ -1,4 +1,18 @@
-var CACHE_NAME = 'versebattles-v9';
+var CACHE_NAME = 'versebattles-v12';
+
+// HTML routes that should behave like part of the installable app.
+var APP_NAVIGATION_PATHS = {
+    '/': true,
+    '/index.html': true,
+    '/privacy': true,
+    '/privacy.html': true,
+    '/terms': true,
+    '/terms.html': true,
+    '/config': true,
+    '/config.html': true,
+    '/lobby': true,
+    '/lobby.html': true
+};
 
 // Sound effects to cache
 var SOUND_ASSETS = [
@@ -47,6 +61,10 @@ var IMAGE_ASSETS = [
 var CORE_ASSETS = [
     '/',
     '/index.html',
+    '/privacy.html',
+    '/terms.html',
+    '/config.html',
+    '/lobby.html',
     '/game.js',
     '/bible-verses.js',
     '/bible-verses-es.js',
@@ -138,6 +156,8 @@ self.addEventListener('activate', function (event) {
 // Fetch: stale-while-revalidate for JS/HTML, cache-first for images/sounds, network-only for API/audio/external-audio
 self.addEventListener('fetch', function (event) {
     var url = new URL(event.request.url);
+    var acceptHeader = event.request.headers.get('accept') || '';
+    var isHtmlRequest = event.request.mode === 'navigate' || acceptHeader.indexOf('text/html') !== -1;
 
     // Network-only for non-GET, socket.io, API, verse audio, and external audio
     if (event.request.method !== 'GET') return;
@@ -146,6 +166,10 @@ self.addEventListener('fetch', function (event) {
     if (url.pathname.startsWith('/lobby')) return;
     if (url.pathname.startsWith('/audio/')) return;  // Verse songs - managed by VerseSongService
     if (url.pathname.startsWith('/public/audio')) return;
+    if (url.pathname.startsWith('/missions/') && url.pathname.endsWith('.json')) {
+        event.respondWith(fetch(event.request));
+        return;
+    }
     
     // Cache-first for local sounds (game sound effects only)
     if (url.pathname.startsWith('/sounds/') && url.pathname.endsWith('.mp3')) {
@@ -170,6 +194,13 @@ self.addEventListener('fetch', function (event) {
     
     // Skip external audio files (verse audio from remote servers)
     if (url.origin !== self.location.origin && url.pathname.match(/\.(mp3|ogg|wav)$/)) return;
+
+    // Keep marketing/content pages outside the app cache. Allow only selected
+    // app routes to be available offline/in-app.
+    if (url.origin === self.location.origin && isHtmlRequest && !APP_NAVIGATION_PATHS[url.pathname]) {
+        event.respondWith(fetch(event.request));
+        return;
+    }
 
     // Cache-first for images
     if (url.pathname.match(/\.(png|jpg|jpeg|gif|svg|ico)$/)) {

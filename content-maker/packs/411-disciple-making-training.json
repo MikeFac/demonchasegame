@@ -1,0 +1,609 @@
+{
+  "id": "411-disciple-making-training",
+  "title": "411: Why, Who, What, and When of Disciple Making",
+  "theme": "Understanding and practicing the 411 disciple-making tool",
+  "description": "A discipleship and mission-focused content pack built around the 411 training tool: four questions, one sheet, one hour. It trains believers in why they make disciples, who they should reach, what they should say, and when they will act.",
+  "audience": [
+    "youth",
+    "small-group",
+    "discipleship",
+    "missions",
+    "evangelism"
+  ],
+  "language": "en",
+  "version": 1,
+  "questionTypes": [
+    "multiple_choice",
+    "true_false",
+    "cloze_choice",
+    "best_application"
+  ],
+  "sourceBasis": [
+    {
+      "label": "Smith Family Missions - What is the 411?",
+      "url": "https://move-the-gospel.com/2018/08/06/what-is-the-411/"
+    },
+    {
+      "label": "Movements.net - The 411",
+      "url": "https://www.movements.net/3-disciples"
+    },
+    {
+      "label": "Village Church - The 411 on Gospel Conversation",
+      "url": "https://www.villagechurch.com/the-411-on-gospel-conversation/"
+    },
+    {
+      "label": "Christian Faith - A Great Discipleship Tool: 411 Training",
+      "url": "https://christian-faith.com/a-great-discipleship-tool-411-training/"
+    }
+  ],
+  "units": [
+    {
+      "id": "what-is-411",
+      "title": "What 411 Is",
+      "type": "invitation",
+      "summary": "411 is a simple disciple-making tool built around four questions on one sheet of paper in one hour or less.",
+      "difficulty": "easy",
+      "tags": ["411", "overview", "training", "multiplication"],
+      "passages": [
+        {
+          "reference": "2 Timothy 2:2",
+          "text": "The things which you have heard from me among many witnesses, commit the same things to faithful men, who will be able to teach others also."
+        }
+      ],
+      "focus": {
+        "kind": "invitation",
+        "statement": "Use simple, reproducible tools to equip disciples who can train others."
+      },
+      "contextCard": {
+        "title": "Four questions, one sheet, one hour",
+        "body": "The 411 tool is commonly described as a simple training that answers four questions on one sheet of paper in one hour or less. It is meant to help both new and seasoned believers begin making disciples and equipping others to do the same."
+      },
+      "questions": [
+        {
+          "id": "overview-q1",
+          "type": "multiple_choice",
+          "prompt": "What does the name 411 usually refer to?",
+          "options": [
+            "Four questions, one sheet, one hour",
+            "Four churches, one pastor, one meeting",
+            "Four sermons, one Bible, one plan",
+            "Four gifts, one ministry, one leader"
+          ],
+          "correctIndex": 0,
+          "explanation": "That is the common explanation of the name."
+        },
+        {
+          "id": "overview-q2",
+          "type": "true_false",
+          "prompt": "411 is meant to be a simple and reproducible disciple-making tool.",
+          "correctAnswer": true,
+          "explanation": "Simplicity and reproducibility are central to how the tool is described."
+        },
+        {
+          "id": "overview-q3",
+          "type": "cloze_choice",
+          "prompt": "411 is designed to answer four questions on one sheet of paper in one _____ or less.",
+          "options": ["hour", "month", "conversation", "week"],
+          "correctIndex": 0,
+          "explanation": "The common phrase is 'one hour or less.'"
+        },
+        {
+          "id": "overview-q4",
+          "type": "best_application",
+          "prompt": "Which use best matches the purpose of 411?",
+          "options": [
+            "Equipping believers to make disciples and train others",
+            "Replacing all long-term discipleship",
+            "Keeping evangelism in the hands of specialists only",
+            "Avoiding practical planning"
+          ],
+          "correctIndex": 0,
+          "explanation": "411 is meant to equip ordinary believers for disciple making."
+        },
+        {
+          "id": "overview-q5",
+          "type": "multiple_choice",
+          "prompt": "Who is 411 commonly said to be useful for?",
+          "options": [
+            "Only experienced pastors",
+            "Only missionaries overseas",
+            "Both new and seasoned believers",
+            "Only children"
+          ],
+          "correctIndex": 2,
+          "explanation": "The tool is described as useful for both new and seasoned believers."
+        },
+        {
+          "id": "overview-q6",
+          "type": "true_false",
+          "prompt": "The goal of 411 is not merely information, but action and multiplication.",
+          "correctAnswer": true,
+          "explanation": "The tool is action-oriented and meant to be passed on."
+        }
+      ],
+      "reflection": {
+        "prompt": "Why can a very simple tool sometimes help people obey Jesus more readily than a complex one?"
+      },
+      "mission": {
+        "intro": "A multiplying movement needs tools that ordinary disciples can learn and pass on.",
+        "victoryText": "You began with the purpose of the tool itself: simple obedience that multiplies."
+      }
+    },
+    {
+      "id": "why-make-disciples",
+      "title": "Why: Identity and Purpose",
+      "type": "commandment",
+      "summary": "The first question of 411 teaches that making disciples is part of Christian identity and obedience, not just an optional ministry activity.",
+      "difficulty": "easy",
+      "tags": ["why", "identity", "purpose", "great-commission"],
+      "passages": [
+        {
+          "reference": "Matthew 28:18-20",
+          "text": "Go, and make disciples of all nations, baptizing them in the name of the Father and of the Son and of the Holy Spirit, teaching them to observe all things that I commanded you."
+        },
+        {
+          "reference": "2 Corinthians 5:17-20",
+          "text": "If anyone is in Christ, he is a new creation... He gave to us the ministry of reconciliation... We are therefore ambassadors on behalf of Christ."
+        }
+      ],
+      "focus": {
+        "kind": "commandment",
+        "statement": "We make disciples because Jesus commands it and because it is part of who we are in Christ."
+      },
+      "contextCard": {
+        "title": "Disciple making is identity, not merely assignment",
+        "body": "Popular 411 explanations emphasize that making disciples is not just something a few leaders do. It is part of Christian identity and purpose. Believers are ambassadors of reconciliation and are called to participate in Jesus' commission."
+      },
+      "questions": [
+        {
+          "id": "why-q1",
+          "type": "multiple_choice",
+          "prompt": "What is the first question in 411?",
+          "options": [
+            "Why make disciples?",
+            "Who will lead us?",
+            "What church should we attend?",
+            "When should we move?"
+          ],
+          "correctIndex": 0,
+          "explanation": "The first question is 'Why make disciples?'"
+        },
+        {
+          "id": "why-q2",
+          "type": "true_false",
+          "prompt": "411 teaches that making disciples is part of Christian identity, not merely a task for specialists.",
+          "correctAnswer": true,
+          "explanation": "That identity emphasis is common in the tool's explanation."
+        },
+        {
+          "id": "why-q3",
+          "type": "cloze_choice",
+          "prompt": "2 Corinthians 5 presents believers as Christ's _____.",
+          "options": ["ambassadors", "spectators", "critics", "strangers"],
+          "correctIndex": 0,
+          "explanation": "Believers are ambassadors on behalf of Christ."
+        },
+        {
+          "id": "why-q4",
+          "type": "multiple_choice",
+          "prompt": "Why do 411 trainers often begin with identity?",
+          "options": [
+            "Because people need pressure more than purpose",
+            "Because disciple making flows from who we are in Christ",
+            "Because obedience is irrelevant",
+            "Because mission belongs only to clergy"
+          ],
+          "correctIndex": 1,
+          "explanation": "They want believers to see disciple making as part of who they are."
+        },
+        {
+          "id": "why-q5",
+          "type": "best_application",
+          "prompt": "Which statement best reflects the 'Why' of 411?",
+          "options": [
+            "Making disciples is optional for especially motivated Christians",
+            "Making disciples belongs to our identity and obedience in Jesus",
+            "Making disciples is mainly for paid workers",
+            "Making disciples matters only after years of maturity"
+          ],
+          "correctIndex": 1,
+          "explanation": "The 411 tool connects disciple making to identity and obedience."
+        },
+        {
+          "id": "why-q6",
+          "type": "true_false",
+          "prompt": "The Great Commission is usually part of the 'Why' section of 411.",
+          "correctAnswer": true,
+          "explanation": "Matthew 28 is a natural foundation for the 'Why' question."
+        }
+      ],
+      "reflection": {
+        "prompt": "How would your habits change if you consistently saw disciple making as part of your identity in Christ?"
+      },
+      "mission": {
+        "intro": "Movements weaken when disciple making is treated as somebody else's job.",
+        "victoryText": "You anchored the work of disciple making in identity and obedience."
+      }
+    },
+    {
+      "id": "who-to-reach",
+      "title": "Who: Oikos and Open People",
+      "type": "commandment",
+      "summary": "The second question teaches believers to identify people far from God, beginning with their relational network and looking for open people.",
+      "difficulty": "easy",
+      "tags": ["who", "oikos", "relationships", "open-people"],
+      "passages": [
+        {
+          "reference": "Luke 10:5-9",
+          "text": "Into whatever house you enter, first say, 'Peace be to this house.' ... stay in that same house... heal the sick who are therein, and tell them, 'God's Kingdom has come near to you.'"
+        },
+        {
+          "reference": "John 1:40-42",
+          "text": "One of the two who heard John and followed him was Andrew... He first found his own brother, Simon, and said to him, 'We have found the Messiah!'"
+        }
+      ],
+      "focus": {
+        "kind": "commandment",
+        "statement": "Begin with the people God has already placed in your life, and look for those who are open."
+      },
+      "contextCard": {
+        "title": "Start near, not abstractly",
+        "body": "The 'Who' question in 411 often focuses on an oikos map or a list of people in one's relational world who are far from God. It may also include prayer walking and looking for people who are open and receptive."
+      },
+      "questions": [
+        {
+          "id": "who-q1",
+          "type": "multiple_choice",
+          "prompt": "What is the second question in 411?",
+          "options": [
+            "Who do we reach?",
+            "Who will teach us?",
+            "Who already agrees with us?",
+            "Who is the strongest believer?"
+          ],
+          "correctIndex": 0,
+          "explanation": "The second question is 'Who do we reach?'"
+        },
+        {
+          "id": "who-q2",
+          "type": "true_false",
+          "prompt": "411 commonly teaches people to begin with friends and family who are far from God.",
+          "correctAnswer": true,
+          "explanation": "That is a common explanation of the 'Who' section."
+        },
+        {
+          "id": "who-q3",
+          "type": "cloze_choice",
+          "prompt": "The 'Who' question often uses an _____ map of relationships.",
+          "options": ["oikos", "academic", "doctrinal", "financial"],
+          "correctIndex": 0,
+          "explanation": "An oikos map is a common relational mapping tool in this context."
+        },
+        {
+          "id": "who-q4",
+          "type": "multiple_choice",
+          "prompt": "Why start with your relational network?",
+          "options": [
+            "Because strangers can never hear the gospel",
+            "Because God often works through existing relationships",
+            "Because the gospel should stay private",
+            "Because open people do not matter"
+          ],
+          "correctIndex": 1,
+          "explanation": "The 411 tool encourages starting where God has already given relational access."
+        },
+        {
+          "id": "who-q5",
+          "type": "best_application",
+          "prompt": "Which action best fits the 'Who' section?",
+          "options": [
+            "Make a list of people far from God and pray for them specifically",
+            "Wait for ideal circumstances before thinking about people",
+            "Focus only on Christians already convinced",
+            "Avoid naming anyone concretely"
+          ],
+          "correctIndex": 0,
+          "explanation": "The tool pushes toward specific prayer and intentionality."
+        },
+        {
+          "id": "who-q6",
+          "type": "true_false",
+          "prompt": "The 'Who' section can also include looking for open and receptive people beyond your closest circle.",
+          "correctAnswer": true,
+          "explanation": "Many versions include prayer walking and openness to receptive people."
+        }
+      ],
+      "reflection": {
+        "prompt": "Who has God already placed near you that you may be overlooking?"
+      },
+      "mission": {
+        "intro": "Disciple making becomes concrete when names and faces replace vague intentions.",
+        "victoryText": "You moved from theory into real people and real relationships."
+      }
+    },
+    {
+      "id": "what-to-say",
+      "title": "What: Story and Gospel Tool",
+      "type": "commandment",
+      "summary": "The third question trains believers in what to say, often including a short personal testimony and a simple gospel presentation tool.",
+      "difficulty": "medium",
+      "tags": ["what", "testimony", "gospel-tool", "3-circles"],
+      "passages": [
+        {
+          "reference": "1 Peter 3:15",
+          "text": "Always be ready to give an answer to everyone who asks you a reason concerning the hope that is in you, with humility and fear."
+        },
+        {
+          "reference": "Mark 5:19",
+          "text": "Go to your house, to your friends, and tell them what great things the Lord has done for you, and how he had mercy on you."
+        }
+      ],
+      "focus": {
+        "kind": "commandment",
+        "statement": "Learn to share your story and God's story clearly and simply."
+      },
+      "contextCard": {
+        "title": "Personal story and gospel clarity",
+        "body": "The 'What' section often includes a short testimony, such as a 15-second testimony, and a simple gospel tool. Different movements use different gospel tools here, including Three Circles or other short frameworks, but the goal is clarity and reproducibility."
+      },
+      "questions": [
+        {
+          "id": "what-q1",
+          "type": "multiple_choice",
+          "prompt": "What is the third question in 411?",
+          "options": [
+            "What do we say?",
+            "What is our denomination?",
+            "What programs do we run?",
+            "What building do we use?"
+          ],
+          "correctIndex": 0,
+          "explanation": "The third question is 'What do we say?'"
+        },
+        {
+          "id": "what-q2",
+          "type": "true_false",
+          "prompt": "411 often includes a short personal testimony as part of what to say.",
+          "correctAnswer": true,
+          "explanation": "A brief testimony is a common feature of the tool."
+        },
+        {
+          "id": "what-q3",
+          "type": "cloze_choice",
+          "prompt": "The 'What' section often teaches people to share their _____ and God's story.",
+          "options": ["story", "schedule", "status", "position"],
+          "correctIndex": 0,
+          "explanation": "The tool commonly pairs personal testimony with a gospel story."
+        },
+        {
+          "id": "what-q4",
+          "type": "multiple_choice",
+          "prompt": "Why use a simple gospel tool in the 'What' section?",
+          "options": [
+            "To avoid Scripture completely",
+            "To make the message clear and reproducible",
+            "To replace personal testimony",
+            "To make sharing more complicated"
+          ],
+          "correctIndex": 1,
+          "explanation": "The goal is a clear, simple gospel explanation that can be passed on."
+        },
+        {
+          "id": "what-q5",
+          "type": "best_application",
+          "prompt": "Which practice best fits the 'What' section?",
+          "options": [
+            "Prepare a short testimony and a simple gospel explanation",
+            "Rely only on spontaneity with no preparation",
+            "Use complicated language to sound impressive",
+            "Avoid saying anything personal"
+          ],
+          "correctIndex": 0,
+          "explanation": "The point is to be ready with a clear and simple witness."
+        },
+        {
+          "id": "what-q6",
+          "type": "true_false",
+          "prompt": "The specific gospel tool can vary, but the goal remains clear witness to Jesus.",
+          "correctAnswer": true,
+          "explanation": "Different contexts use different tools, but the goal is the same."
+        }
+      ],
+      "reflection": {
+        "prompt": "What part of your story and the gospel do you need to practice so it becomes simpler and clearer?"
+      },
+      "mission": {
+        "intro": "Many disciples want to speak, but freeze because they have never practiced what to say.",
+        "victoryText": "You strengthened both your personal witness and your gospel clarity."
+      }
+    },
+    {
+      "id": "when-to-start",
+      "title": "When: Plans, Goals, and Immediate Obedience",
+      "type": "commandment",
+      "summary": "The fourth question pushes believers toward concrete planning, deadlines, and immediate obedience rather than vague intention.",
+      "difficulty": "medium",
+      "tags": ["when", "goals", "obedience", "planning"],
+      "passages": [
+        {
+          "reference": "James 1:22",
+          "text": "But be doers of the word, and not only hearers, deluding your own selves."
+        },
+        {
+          "reference": "Ephesians 5:15-16",
+          "text": "Therefore watch carefully how you walk, not as unwise, but as wise; redeeming the time, because the days are evil."
+        }
+      ],
+      "focus": {
+        "kind": "commandment",
+        "statement": "Move from intention to action by setting specific next steps."
+      },
+      "contextCard": {
+        "title": "Set a time, not just a feeling",
+        "body": "The 'When' question helps people move from vague desire to concrete obedience. Common explanations include setting goals for prayer, sharing the gospel, training others in 411, starting a group, or taking the next disciple-making step."
+      },
+      "questions": [
+        {
+          "id": "when-q1",
+          "type": "multiple_choice",
+          "prompt": "What is the fourth question in 411?",
+          "options": [
+            "When will we get started?",
+            "When will we retire?",
+            "When will others do it?",
+            "When will church programs fix it?"
+          ],
+          "correctIndex": 0,
+          "explanation": "The fourth question is about when action will begin."
+        },
+        {
+          "id": "when-q2",
+          "type": "true_false",
+          "prompt": "The 'When' question is meant to push people toward concrete next steps.",
+          "correctAnswer": true,
+          "explanation": "This section is intentionally action-oriented."
+        },
+        {
+          "id": "when-q3",
+          "type": "cloze_choice",
+          "prompt": "The 'When' section helps believers set goals and _____ for action.",
+          "options": ["deadlines", "excuses", "distances", "titles"],
+          "correctIndex": 0,
+          "explanation": "Specific planning is central to the 'When' question."
+        },
+        {
+          "id": "when-q4",
+          "type": "multiple_choice",
+          "prompt": "Why is this question important?",
+          "options": [
+            "Because intention without action rarely multiplies disciples",
+            "Because plans remove dependence on God",
+            "Because obedience is mainly theoretical",
+            "Because timing does not matter"
+          ],
+          "correctIndex": 0,
+          "explanation": "The point is to move from desire to actual obedience."
+        },
+        {
+          "id": "when-q5",
+          "type": "best_application",
+          "prompt": "Which response best fits the 'When' section?",
+          "options": [
+            "I hope to do something someday",
+            "I will pray for these names this week and share by this date",
+            "I will wait until I feel fully ready",
+            "I prefer not to make plans"
+          ],
+          "correctIndex": 1,
+          "explanation": "Specific goals turn vague desire into intentional obedience."
+        },
+        {
+          "id": "when-q6",
+          "type": "true_false",
+          "prompt": "The 'When' question can include plans to train others in 411, not just plans to share the gospel yourself.",
+          "correctAnswer": true,
+          "explanation": "411 is a multiplication tool, so passing it on is part of the vision."
+        }
+      ],
+      "reflection": {
+        "prompt": "What specific next step would turn your good intentions into real obedience this week?"
+      },
+      "mission": {
+        "intro": "A movement stalls when disciples delay obedience into an undefined future.",
+        "victoryText": "You turned general desire into specific, time-bound action."
+      }
+    },
+    {
+      "id": "passing-on-411",
+      "title": "Passing 411 On",
+      "type": "commandment",
+      "summary": "411 is not only for personal use; it is meant to be passed on so others can also make disciples.",
+      "difficulty": "medium",
+      "tags": ["multiplication", "training", "pass-on", "equipping"],
+      "passages": [
+        {
+          "reference": "2 Timothy 2:2",
+          "text": "The things which you have heard from me among many witnesses, commit the same things to faithful men, who will be able to teach others also."
+        }
+      ],
+      "focus": {
+        "kind": "commandment",
+        "statement": "Learn the tool well enough to train others in it."
+      },
+      "contextCard": {
+        "title": "Train others, not just yourself",
+        "body": "Movement-oriented descriptions of 411 treat it as a starter tool that believers should quickly pass on to others. The goal is not merely private improvement, but multiplication through equipping others."
+      },
+      "questions": [
+        {
+          "id": "passon-q1",
+          "type": "multiple_choice",
+          "prompt": "What should happen after a believer learns 411 well?",
+          "options": [
+            "Keep it private",
+            "Train others to use it too",
+            "Replace all discipleship with it permanently",
+            "Stop making plans"
+          ],
+          "correctIndex": 1,
+          "explanation": "The tool is meant to be passed on."
+        },
+        {
+          "id": "passon-q2",
+          "type": "true_false",
+          "prompt": "Multiplication is part of the purpose of 411.",
+          "correctAnswer": true,
+          "explanation": "411 is designed to be reproducible and transferable."
+        },
+        {
+          "id": "passon-q3",
+          "type": "cloze_choice",
+          "prompt": "A movement grows when disciples not only obey, but also _____ others.",
+          "options": ["train", "impress", "separate", "protect"],
+          "correctIndex": 0,
+          "explanation": "Training others is part of multiplication."
+        },
+        {
+          "id": "passon-q4",
+          "type": "best_application",
+          "prompt": "Which action best fits the multiplication goal of 411?",
+          "options": [
+            "Use the tool once and set it aside",
+            "Help another believer work through the four questions",
+            "Keep the tool only for leaders",
+            "Avoid sharing the process with newer Christians"
+          ],
+          "correctIndex": 1,
+          "explanation": "The tool is meant to be reproduced in others."
+        },
+        {
+          "id": "passon-q5",
+          "type": "multiple_choice",
+          "prompt": "Why is reproducibility so important in 411?",
+          "options": [
+            "Because complexity creates dependence",
+            "Because a simple tool can multiply through ordinary disciples",
+            "Because disciple making should stay centralized",
+            "Because no long-term growth is needed"
+          ],
+          "correctIndex": 1,
+          "explanation": "A simple reproducible tool can spread quickly through ordinary believers."
+        },
+        {
+          "id": "passon-q6",
+          "type": "true_false",
+          "prompt": "411 can serve as a starting point before ongoing discipleship tools such as Commands of Christ or 3/3rds discipleship.",
+          "correctAnswer": true,
+          "explanation": "That is a common movement-oriented way of using it."
+        }
+      ],
+      "reflection": {
+        "prompt": "Who is one person you could help work through the four questions after you learn this yourself?"
+      },
+      "mission": {
+        "intro": "A tool becomes strategic when it is easy to pass on.",
+        "victoryText": "You saw 411 not only as a lesson to receive, but as a tool to multiply."
+      }
+    }
+  ]
+}

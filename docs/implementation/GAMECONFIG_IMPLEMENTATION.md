@@ -1,5 +1,7 @@
 # GameConfig System Implementation Summary
 
+> **Status note (2026-03-08):** The GameConfig system is live, but current runtime balance also depends on `src/shared/LevelConfig.js`, which now includes combat affinity mappings and updated baseline level pacing.
+
 ## Overview
 
 Implemented a comprehensive difficulty preset system that allows room hosts to select Easy/Normal/Hard difficulty when creating multiplayer rooms. The system uses multipliers to dynamically adjust game balance without hardcoding separate configurations.

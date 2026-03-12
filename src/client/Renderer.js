@@ -3,6 +3,7 @@ class Renderer {
         this.canvas = canvas;
         this.ctx = ctx;
         this.assets = assets;
+        this.viewMode = '2d';
 
         // UI constants from centralized UILayout
         const UI = window.UILayout;
@@ -212,7 +213,7 @@ class Renderer {
         const isPlaying = musicState.isPlaying;
 
         const testShieldOn = menuState.verseTestShielded || false;
-        const itemCount = 11;
+        const itemCount = 12;
 
         // Panel background
         this.ctx.fillStyle = 'rgba(0, 0, 0, 0.9)';
@@ -232,6 +233,7 @@ class Renderer {
             { id: 'toggleTestShield', label: testShieldOn ? t('menu.testShieldOn') : t('menu.testShieldOff') },
             { id: 'songs', label: t('menu.songs') },
             { id: 'affinityHelp', label: t('menu.affinityHelp') },
+            { id: 'switchViewMode', label: menuState.viewMode === '3d' ? t('menu.switchTo2d') : t('menu.switchTo3d') },
             { id: 'shareGame', label: '📤 Share Game', color: '#4CAF50' },
             { id: 'leave', label: t('menu.leaveGame'), color: '#ff4444' }
         ];
@@ -1377,6 +1379,13 @@ class Renderer {
             return;
         }
 
+        const effectiveVerseText = (quiz && quiz.discipleshipContent)
+            ? (quiz.promptText || verseText || '')
+            : (verseText || (quiz ? quiz.promptText : '') || '');
+        const effectiveReference = (quiz && quiz.verseReference)
+            ? quiz.verseReference
+            : (verseReference || '');
+
         const leftPadding = 14;
         const rightPadding = 7;
         const maxWidth = this.canvas.width - leftPadding - rightPadding;
@@ -1386,7 +1395,7 @@ class Renderer {
         this.ctx.font = 'bold 16px Arial';
 
         let lines = [];
-        let words = verseText.split(' ');
+        let words = effectiveVerseText.split(' ');
         let currentLine = '';
 
         for (let i = 0; i < words.length; i++) {
@@ -1415,7 +1424,7 @@ class Renderer {
 
         this.ctx.fillStyle = '#cccccc';
         this.ctx.font = '14px Arial';
-        this.ctx.fillText(verseReference, leftPadding, this.canvas.height - 118 + lines.length * lineHeight);
+        this.ctx.fillText(effectiveReference, leftPadding, this.canvas.height - 118 + lines.length * lineHeight);
 
         if (quiz) {
             this.displayQuizOptions(quiz);
@@ -1526,7 +1535,128 @@ class Renderer {
         return lines;
     }
 
+    _isDiscipleshipGridQuiz(quiz) {
+        return !!(quiz && quiz.discipleshipContent && Array.isArray(quiz.options) && quiz.options.length > 2);
+    }
+
+    _wrapTextWithLimit(text, maxWidth, maxLines, font) {
+        const previousFont = this.ctx.font;
+        if (font) {
+            this.ctx.font = font;
+        }
+
+        const words = String(text || '').split(/\s+/).filter(Boolean);
+        const lines = [];
+        let currentLine = '';
+
+        for (let i = 0; i < words.length; i++) {
+            const testLine = currentLine ? currentLine + ' ' + words[i] : words[i];
+            if (this.ctx.measureText(testLine).width > maxWidth && currentLine) {
+                lines.push(currentLine);
+                currentLine = words[i];
+                if (lines.length === maxLines - 1) {
+                    break;
+                }
+            } else {
+                currentLine = testLine;
+            }
+        }
+
+        if (currentLine) {
+            const remainingWords = words.slice(lines.join(' ').split(/\s+/).filter(Boolean).length);
+            let finalLine = remainingWords.length ? remainingWords.join(' ') : currentLine;
+            if (lines.length === maxLines - 1) {
+                while (finalLine && this.ctx.measureText(finalLine + '...').width > maxWidth) {
+                    const parts = finalLine.split(' ');
+                    parts.pop();
+                    finalLine = parts.join(' ');
+                }
+                if (finalLine !== currentLine || remainingWords.length > currentLine.split(/\s+/).filter(Boolean).length) {
+                    finalLine = (finalLine || currentLine) + '...';
+                }
+            }
+            lines.push(finalLine);
+        }
+
+        this.ctx.font = previousFont;
+        return lines.slice(0, maxLines);
+    }
+
+    _getDiscipleshipQuizLayout(quiz) {
+        const optionCount = quiz.options.length;
+        const columns = Math.min(2, optionCount);
+        const rows = Math.ceil(optionCount / columns);
+        const leftMargin = 14;
+        const rightMargin = this.viewMode === '3d' ? 108 : 14;
+        const topGap = 8;
+        const rowGap = 8;
+        const columnGap = 10;
+        const buttonHeight = optionCount >= 4 ? 38 : 34;
+        const buttonWidth = Math.floor((this.canvas.width - leftMargin - rightMargin - columnGap) / columns);
+        const optionFont = '11px Arial';
+        const labelLineHeight = 16;
+        const labelLines = [];
+        const labelHeight = labelLines.length * labelLineHeight;
+        const totalHeight = labelHeight + topGap + rows * buttonHeight + (rows - 1) * rowGap;
+        const topY = this.canvas.height - totalHeight - 10;
+        const buttons = [];
+
+        for (let i = 0; i < optionCount; i++) {
+            const column = i % columns;
+            const row = Math.floor(i / columns);
+            const x = leftMargin + column * (buttonWidth + columnGap);
+            const y = topY + labelHeight + topGap + row * (buttonHeight + rowGap);
+            buttons.push({
+                x: x,
+                y: y,
+                width: buttonWidth,
+                height: buttonHeight,
+                textLines: this._wrapTextWithLimit(quiz.options[i].text, buttonWidth - 10, 2, optionFont)
+            });
+        }
+
+        return {
+            labelLines: labelLines,
+            labelX: leftMargin,
+            labelY: topY,
+            labelLineHeight: labelLineHeight,
+            buttons: buttons
+        };
+    }
+
     displayQuizOptions(quiz) {
+        if (this._isDiscipleshipGridQuiz(quiz)) {
+            const layout = this._getDiscipleshipQuizLayout(quiz);
+            this.ctx.fillStyle = '#ffffff';
+            this.ctx.font = 'bold 16px Arial';
+
+            layout.labelLines.forEach((line, index) => {
+                this.ctx.fillText(line, layout.labelX, layout.labelY + 2 + index * layout.labelLineHeight);
+            });
+
+            this.ctx.font = '11px Arial';
+            this.ctx.textAlign = 'center';
+            this.ctx.textBaseline = 'middle';
+
+            layout.buttons.forEach((button, index) => {
+                this.ctx.fillStyle = 'lightgray';
+                this.ctx.fillRect(button.x, button.y, button.width, button.height);
+
+                this.ctx.fillStyle = '#333';
+                const lineHeight = 11;
+                const lineBlockHeight = button.textLines.length * lineHeight;
+                const startY = button.y + (button.height - lineBlockHeight) / 2 + lineHeight / 2;
+
+                button.textLines.forEach((line, lineIndex) => {
+                    this.ctx.fillText(line, button.x + button.width / 2, startY + lineIndex * lineHeight);
+                });
+            });
+
+            this.ctx.textAlign = 'left';
+            this.ctx.textBaseline = 'alphabetic';
+            return;
+        }
+
         const qo = UILayout.quizOptions;
         const buttonHeight = qo.height;
         const buttonSpacing = qo.spacing;
@@ -1866,8 +1996,11 @@ class Renderer {
         if (!this.assets.particleBurstImg || !this.assets.particleBurstImg.complete) {
             if (deathParticles.length > 0) {
                 console.warn('Particle sprite not loaded, using fallback rendering');
-                // Draw simple expanding red circles as fallback
                 deathParticles.forEach(particle => {
+                    if (particle.type === 'heavenly') {
+                        this._drawHeavenlyKillEffect2D(particle, camera);
+                        return;
+                    }
                     const screenX = particle.x - camera.x;
                     const screenY = particle.y - camera.y;
                     const radius = 10 + (particle.frame * 2); // Expand over time
@@ -1890,6 +2023,11 @@ class Renderer {
         const columns = 6;    // 6 columns in the sprite sheet
 
         deathParticles.forEach(particle => {
+            if (particle.type === 'heavenly') {
+                this._drawHeavenlyKillEffect2D(particle, camera);
+                return;
+            }
+
             // Calculate which frame to show (0-23)
             const frame = Math.min(particle.frame, 23);
 
@@ -1913,5 +2051,57 @@ class Renderer {
                 frameSize, frameSize
             );
         });
+    }
+
+    _drawHeavenlyKillEffect2D(particle, camera) {
+        const progress = Math.min(1, (particle.frame || 0) / Math.max(1, (particle.maxFrames || 10) - 1));
+        const screenX = particle.x - camera.x;
+        const screenY = particle.y - camera.y - progress * 42;
+        const glowRadius = 34 + progress * 30;
+        const alpha = 1 - progress;
+
+        this.ctx.save();
+        this.ctx.globalAlpha = alpha * 0.95;
+
+        const glow = this.ctx.createRadialGradient(screenX, screenY, 0, screenX, screenY, glowRadius);
+        glow.addColorStop(0, 'rgba(255, 252, 225, 1)');
+        glow.addColorStop(0.35, 'rgba(255, 232, 145, 0.88)');
+        glow.addColorStop(0.65, 'rgba(255, 214, 96, 0.55)');
+        glow.addColorStop(1, 'rgba(255, 210, 90, 0)');
+        this.ctx.fillStyle = glow;
+        this.ctx.beginPath();
+        this.ctx.arc(screenX, screenY, glowRadius, 0, Math.PI * 2);
+        this.ctx.fill();
+
+        this.ctx.fillStyle = `rgba(255, 244, 188, ${0.18 * alpha})`;
+        this.ctx.fillRect(screenX - glowRadius * 0.22, screenY - glowRadius * 1.9, glowRadius * 0.44, glowRadius * 2.2);
+
+        this.ctx.strokeStyle = `rgba(255, 245, 205, ${0.8 * alpha})`;
+        this.ctx.lineWidth = 4;
+        this.ctx.beginPath();
+        this.ctx.moveTo(screenX, screenY - glowRadius * 1.0);
+        this.ctx.lineTo(screenX, screenY + glowRadius * 0.45);
+        this.ctx.moveTo(screenX - glowRadius * 0.5, screenY - glowRadius * 0.12);
+        this.ctx.lineTo(screenX + glowRadius * 0.5, screenY - glowRadius * 0.12);
+        this.ctx.stroke();
+
+        for (let i = 0; i < 10; i++) {
+            const t = i / 9;
+            const sparkleX = screenX + Math.cos((-0.85 + t * 1.7) * Math.PI) * (16 + progress * 18);
+            const sparkleY = screenY - 10 - progress * 28 - i * 7;
+            const sparkleSize = 2.5 + (1 - t) * 2.8;
+
+            this.ctx.fillStyle = `rgba(255, 232, 136, ${alpha * (0.96 - t * 0.28)})`;
+            this.ctx.beginPath();
+            this.ctx.arc(sparkleX, sparkleY, sparkleSize, 0, Math.PI * 2);
+            this.ctx.fill();
+        }
+
+        this.ctx.fillStyle = `rgba(255, 250, 225, ${0.95 * alpha})`;
+        this.ctx.font = `bold ${Math.round(18 + glowRadius * 0.42)}px Georgia`;
+        this.ctx.textAlign = 'center';
+        this.ctx.fillText('✦', screenX, screenY + 8);
+
+        this.ctx.restore();
     }
 }

@@ -42,6 +42,18 @@
         "chapterId": "chapter2",
         "missionsCompleted": 2
       }
+    },
+    {
+      "id": "chapter4",
+      "slug": "chapter4-jesus-teachings",
+      "name": "The Teachings of Jesus",
+      "description": "Enter a discipleship path built around the commandments, promises, mercy, and life-giving words of Jesus Christ",
+      "nodeShape": "book",
+      "theme": "forest",
+      "authorId": "system",
+      "visibility": "public",
+      "missionIds": ["jesus-01", "jesus-02", "jesus-03", "jesus-04", "jesus-05", "jesus-06"],
+      "unlockRequirement": null
     }
   ]
 }

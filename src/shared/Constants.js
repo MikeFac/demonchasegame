@@ -86,6 +86,11 @@ const Constants = {
     STRONGHOLD_HP_MULTIPLIER: 2.0,   // 2x base health
     PRIDE_ARMOR_HITS: 3,             // Hits absorbed before taking damage
 
+    // Guard behavior
+    GUARD_HP_MULTIPLIER: 1.3,        // 30% more health than the same base monster
+    GUARD_RADIUS_MULTIPLIER: 4,      // Territory radius = 4x monster size
+    GUARD_RETURN_THRESHOLD: 12,      // pixels from home before guard snaps into return mode
+
     // Spirit Drain (Poverty, Temptation)
     DRAIN_CHANCE: 0.40,              // 40% chance per hit on player
     POVERTY_XP_DRAIN: 5,             // XP drained per proc

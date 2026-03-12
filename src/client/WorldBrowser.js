@@ -128,6 +128,158 @@ class WorldBrowser {
         }
     }
 
+    /**
+     * Create a new world. Requires authentication.
+     */
+    async createWorld(payload) {
+        try {
+            const token = await this._requireToken();
+            if (!token) return { success: false, error: 'Not authenticated' };
+
+            const response = await fetch('/api/worlds', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify(payload || {})
+            });
+
+            const data = await response.json();
+            if (!response.ok) {
+                return { success: false, error: data.error || 'Create failed' };
+            }
+
+            return { success: true, world: data.world };
+        } catch (error) {
+            console.error('WorldBrowser: Error creating world', error);
+            return { success: false, error: error.message };
+        }
+    }
+
+    async updateWorld(slug, payload) {
+        try {
+            const token = await this._requireToken();
+            if (!token) return { success: false, error: 'Not authenticated' };
+
+            const response = await fetch(`/api/worlds/${encodeURIComponent(slug)}`, {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify(payload || {})
+            });
+
+            const data = await response.json();
+            if (!response.ok) {
+                return { success: false, error: data.error || 'Update failed' };
+            }
+
+            return { success: true, world: data.world };
+        } catch (error) {
+            console.error('WorldBrowser: Error updating world', error);
+            return { success: false, error: error.message };
+        }
+    }
+
+    async deleteWorld(slug) {
+        try {
+            const token = await this._requireToken();
+            if (!token) return { success: false, error: 'Not authenticated' };
+
+            const response = await fetch(`/api/worlds/${encodeURIComponent(slug)}`, {
+                method: 'DELETE',
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+
+            const data = await response.json();
+            if (!response.ok) {
+                return { success: false, error: data.error || 'Delete failed' };
+            }
+
+            return { success: true, message: data.message };
+        } catch (error) {
+            console.error('WorldBrowser: Error deleting world', error);
+            return { success: false, error: error.message };
+        }
+    }
+
+    async getEditorWorld(slug) {
+        try {
+            const token = await this._requireToken();
+            if (!token) return { success: false, error: 'Not authenticated' };
+
+            const response = await fetch(`/api/worlds/${encodeURIComponent(slug)}/editor`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+
+            const data = await response.json();
+            if (!response.ok) {
+                return { success: false, error: data.error || 'Editor load failed' };
+            }
+
+            return { success: true, world: data.world, maps: data.maps || [] };
+        } catch (error) {
+            console.error('WorldBrowser: Error loading editor world', error);
+            return { success: false, error: error.message };
+        }
+    }
+
+    async updateMission(slug, missionId, payload) {
+        try {
+            const token = await this._requireToken();
+            if (!token) return { success: false, error: 'Not authenticated' };
+
+            const response = await fetch(`/api/worlds/${encodeURIComponent(slug)}/missions/${encodeURIComponent(missionId)}`, {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify(payload || {})
+            });
+
+            const data = await response.json();
+            if (!response.ok) {
+                return { success: false, error: data.error || 'Mission update failed' };
+            }
+
+            return { success: true, mission: data.mission, world: data.world };
+        } catch (error) {
+            console.error('WorldBrowser: Error updating mission', error);
+            return { success: false, error: error.message };
+        }
+    }
+
+    async previewMission(slug, missionId, payload) {
+        try {
+            const token = await this._requireToken();
+            if (!token) return { success: false, error: 'Not authenticated' };
+
+            const response = await fetch(`/api/worlds/${encodeURIComponent(slug)}/missions/${encodeURIComponent(missionId)}/preview`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify(payload || {})
+            });
+
+            const data = await response.json();
+            if (!response.ok) {
+                return { success: false, error: data.error || 'Mission preview failed' };
+            }
+
+            return { success: true, preview: data.preview };
+        } catch (error) {
+            console.error('WorldBrowser: Error previewing mission', error);
+            return { success: false, error: error.message };
+        }
+    }
+
     // ==================== Rendering ====================
 
     /**
@@ -242,6 +394,74 @@ class WorldBrowser {
             container.appendChild(chaptersSection);
         }
 
+        if (world.missions && world.missions.length > 0) {
+            const missionSection = document.createElement('div');
+            missionSection.style.marginBottom = '20px';
+
+            const missionTitle = document.createElement('h3');
+            missionTitle.textContent = 'Missions';
+            missionTitle.style.cssText = 'margin-bottom: 10px; font-size: 1em;';
+            missionSection.appendChild(missionTitle);
+
+            world.missions.forEach((mission) => {
+                const missionCard = document.createElement('div');
+                missionCard.style.cssText = 'padding: 10px 12px; background: rgba(255,255,255,0.05); border-radius: 8px; margin-bottom: 8px;';
+
+                const row = document.createElement('div');
+                row.style.cssText = 'display:flex;justify-content:space-between;align-items:flex-start;gap:10px;';
+
+                const textWrap = document.createElement('div');
+                textWrap.style.flex = '1';
+
+                const missionName = document.createElement('div');
+                missionName.style.cssText = 'font-weight:700;';
+                missionName.textContent = mission.name;
+                textWrap.appendChild(missionName);
+
+                const missionMeta = document.createElement('div');
+                missionMeta.style.cssText = 'font-size:0.82em;opacity:0.72;margin-top:4px;';
+                missionMeta.textContent = `${mission.category || 'Faith'} • ${mission.mapStyle || 'classic'} • ${mission.monstersToKill || 0} to clear`;
+                textWrap.appendChild(missionMeta);
+
+                if (mission.description) {
+                    const missionDesc = document.createElement('div');
+                    missionDesc.style.cssText = 'font-size:0.82em;opacity:0.82;margin-top:6px;';
+                    missionDesc.textContent = mission.description;
+                    textWrap.appendChild(missionDesc);
+                }
+
+                row.appendChild(textWrap);
+
+                if (options.onPlayMission) {
+                    const buttonWrap = document.createElement('div');
+                    buttonWrap.style.cssText = 'display:flex;flex-direction:column;gap:8px;';
+
+                    const playBtn = document.createElement('button');
+                    playBtn.type = 'button';
+                    playBtn.textContent = 'Play';
+                    playBtn.style.cssText = 'padding:8px 12px;border:none;border-radius:8px;background:#4CAF50;color:#fff;cursor:pointer;font-weight:700;';
+                    playBtn.addEventListener('click', () => options.onPlayMission(world, mission));
+                    buttonWrap.appendChild(playBtn);
+
+                    if (options.onEditMission && world.canEdit) {
+                        const editMissionBtn = document.createElement('button');
+                        editMissionBtn.type = 'button';
+                        editMissionBtn.textContent = 'Edit';
+                        editMissionBtn.style.cssText = 'padding:8px 12px;border:none;border-radius:8px;background:#4a90e2;color:#fff;cursor:pointer;font-weight:700;';
+                        editMissionBtn.addEventListener('click', () => options.onEditMission(world, mission));
+                        buttonWrap.appendChild(editMissionBtn);
+                    }
+
+                    row.appendChild(buttonWrap);
+                }
+
+                missionCard.appendChild(row);
+                missionSection.appendChild(missionCard);
+            });
+
+            container.appendChild(missionSection);
+        }
+
         // Share code
         if (world.shareCode) {
             const shareSection = document.createElement('div');
@@ -253,11 +473,30 @@ class WorldBrowser {
         // Action buttons
         const actions = document.createElement('div');
 
-        if (options.onJoin && this.authManager && this.authManager.isAuthenticated) {
+        if (options.onEditWorld && world.canEdit) {
+            const editBtn = document.createElement('button');
+            editBtn.className = 'btn-secondary';
+            editBtn.textContent = '✏️ Edit World';
+            editBtn.style.cssText = 'width: 100%; padding: 12px; margin-bottom: 10px;';
+            editBtn.addEventListener('click', () => options.onEditWorld(world));
+            actions.appendChild(editBtn);
+        }
+
+        if (options.onDeleteWorld && world.canEdit) {
+            const deleteBtn = document.createElement('button');
+            deleteBtn.className = 'btn-secondary';
+            deleteBtn.textContent = '🗑 Delete World';
+            deleteBtn.style.cssText = 'width: 100%; padding: 12px; margin-bottom: 10px; background: rgba(255,80,80,0.15); color: #ffd4d4;';
+            deleteBtn.addEventListener('click', () => options.onDeleteWorld(world));
+            actions.appendChild(deleteBtn);
+        }
+
+        if (options.onJoin && this.authManager && this.authManager.isAuthenticated && !world.canEdit) {
             const joinBtn = document.createElement('button');
             joinBtn.className = 'btn-primary';
-            joinBtn.textContent = '🎮 Join World';
+            joinBtn.textContent = world.isJoined ? '✓ Joined' : '🎮 Join World';
             joinBtn.style.cssText = 'width: 100%; padding: 12px; margin-bottom: 10px;';
+            joinBtn.disabled = !!world.isJoined;
             joinBtn.addEventListener('click', () => options.onJoin(world));
             actions.appendChild(joinBtn);
         }

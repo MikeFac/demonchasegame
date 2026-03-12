@@ -79,7 +79,18 @@ class LocalNetwork {
         // Create game config — use custom balance if URL config provided
         var config;
         if (urlConfig && urlConfig.balance) {
-            config = GameConfig.createFromCustomBalance(urlConfig.balance, quizSettings, urlConfig.levels || null);
+            config = GameConfig.createFromCustomBalance(
+                urlConfig.balance,
+                quizSettings,
+                urlConfig.levels || null,
+                {
+                    fixedMonsters: urlConfig.fixedMonsters || null,
+                    randomSpawnsEnabled: urlConfig.randomSpawnsEnabled,
+                    randomSpawnBudget: urlConfig.randomSpawnBudget,
+                    mapData: urlConfig.mapData || null,
+                    playerSpawn: urlConfig.playerSpawn || null
+                }
+            );
         } else {
             config = GameConfig.createGameConfig(difficulty);
             if (quizSettings) {

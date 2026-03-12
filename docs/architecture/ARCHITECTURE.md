@@ -1,6 +1,17 @@
 # Game Architecture Documentation
 
-**Last Updated:** 2026-02-27
+**Last Updated:** 2026-03-08
+
+## Current Snapshot (2026-03-08)
+
+- The shared engine path is now the canonical gameplay runtime for multiplayer and offline/local solo.
+- Combat affinity is implemented: a player's current quiz category is stored as `currentCombatCategory` and bullet damage is multiplied against demon type using `src/shared/LevelConfig.js`.
+- `bulletHit` now carries combat metadata (`damage`, `baseDamage`, `multiplier`, `category`, `monsterType`) so the client can render stronger-hit feedback.
+- Multiplayer spawn sync now uses the authoritative per-player server position on `walls` updates when available.
+- Mobile gameplay input now has explicit touch listeners in `src/client/InputHandler.js`, and the canvas disables browser touch gestures with `touchAction = 'none'`.
+- Current default level pacing in `LevelConfig.js`:
+  - Level 1: `spawnRate=16000`, `maxMonsters=30`, `monstersToKill=15`
+  - Level 2: `spawnRate=8400`, `maxMonsters=26`, `monstersToKill=21`
 
 ## Overview
 
@@ -22,8 +33,8 @@ Server-authoritative multiplayer Bible verse quiz game with top-down dungeon com
 
 3. **Manager Pattern**
    - `MonsterManager`: Monster spawning, AI movement, damage, special abilities
-   - `PlayerManager`: Player connections, spawn validation, health/XP
-   - `BulletManager`: Projectile physics, wall/monster collision
+   - `PlayerManager`: Player connections, spawn validation, health/XP, combat category state
+   - `BulletManager`: Projectile physics, wall/monster collision, combat affinity damage
    - `CollectibleManager`: Armor of God items, healing/shield spawning
 
 4. **Content Provider Abstraction (Missions)**

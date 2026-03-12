@@ -5,12 +5,27 @@ const World = require('../models/World');
 const WorldMap = require('../models/WorldMap');
 const User = require('../models/User');
 const { requireAuth, optionalAuth } = require('../middleware/clerkAuth');
+const MapGeneratorFactory = require('../../shared/map-generators');
+const Constants = require('../../shared/Constants');
+const { normalizeMission, normalizeWorldPayload } = require('../utils/worldDrafts');
 
 /**
  * Helper: generate a short share code (8 alphanumeric chars, uppercase).
  */
 function generateShareCode() {
     return crypto.randomBytes(4).toString('hex').toUpperCase();
+}
+
+async function generateUniqueShareCode() {
+    for (var attempts = 0; attempts < 5; attempts++) {
+        var code = generateShareCode();
+        var existing = await World.exists({ shareCode: code });
+        if (!existing) {
+            return code;
+        }
+    }
+
+    return generateShareCode() + Date.now().toString(36).toUpperCase().slice(-2);
 }
 
 /**
@@ -59,6 +74,58 @@ async function resolveOwnedWorld(req, res) {
     return { world, user };
 }
 
+function applyWallEdits(baseWalls, customWalls, removedWalls) {
+    var removedSet = new Set(
+        (removedWalls || []).map(function (wall) {
+            return [wall.x, wall.y, wall.width, wall.height].join(':');
+        })
+    );
+
+    var finalWalls = (baseWalls || []).filter(function (wall) {
+        return !removedSet.has([wall.x, wall.y, wall.width, wall.height].join(':'));
+    });
+
+    (customWalls || []).forEach(function (wall) {
+        finalWalls.push({
+            x: Number(wall.x) || 0,
+            y: Number(wall.y) || 0,
+            width: Number(wall.width) || Constants.CELL_SIZE,
+            height: Number(wall.height) || Constants.CELL_SIZE
+        });
+    });
+
+    return finalWalls;
+}
+
+function buildPreviewPayload(mission, overrides) {
+    var mapStyle = (overrides && overrides.mapStyle) || mission.mapStyle || 'classic';
+    var preview = MapGeneratorFactory.generateMap(
+        mapStyle,
+        Constants.WORLD_WIDTH,
+        Constants.WORLD_HEIGHT,
+        Constants.CELL_SIZE
+    );
+
+    var customWalls = Array.isArray(overrides && overrides.customWalls) ? overrides.customWalls : [];
+    var removedWalls = Array.isArray(overrides && overrides.removedWalls) ? overrides.removedWalls : [];
+    var walls = applyWallEdits(preview.walls, customWalls, removedWalls);
+
+    return {
+        mapStyle: mapStyle,
+        walls: walls,
+        grid: preview.grid,
+        rows: preview.rows,
+        cols: preview.cols,
+        cellSize: Constants.CELL_SIZE,
+        spawnX: overrides && overrides.playerSpawn && Number.isFinite(Number(overrides.playerSpawn.x))
+            ? Number(overrides.playerSpawn.x)
+            : preview.spawnX,
+        spawnY: overrides && overrides.playerSpawn && Number.isFinite(Number(overrides.playerSpawn.y))
+            ? Number(overrides.playerSpawn.y)
+            : preview.spawnY
+    };
+}
+
 // ===================================================================
 // LIST, SHARE LOOKUP, & READ
 // ===================================================================
@@ -70,9 +137,10 @@ async function resolveOwnedWorld(req, res) {
 router.get('/', optionalAuth, async (req, res) => {
     try {
         let query = { visibility: 'public', status: 'published' };
+        let user = null;
 
         if (req.auth) {
-            const user = await User.findOne({ clerkId: req.auth.userId });
+            user = await User.findOne({ clerkId: req.auth.userId });
             if (user) {
                 query = {
                     $or: [
@@ -85,11 +153,27 @@ router.get('/', optionalAuth, async (req, res) => {
         }
 
         const worlds = await World.find(query)
-            .select('slug name description authorUsername visibility status playCount rating createdAt')
+            .select('slug name description authorUsername visibility status playCount uniquePlayerCount rating createdAt updatedAt')
             .sort({ updatedAt: -1 })
-            .limit(50);
+            .limit(50)
+            .lean();
 
-        res.json({ worlds });
+        res.json({
+            worlds: worlds.map((world) => ({
+                slug: world.slug,
+                name: world.name,
+                description: world.description,
+                authorUsername: world.authorUsername,
+                visibility: world.visibility,
+                status: world.status,
+                playCount: world.playCount || 0,
+                playerCount: world.uniquePlayerCount || 0,
+                rating: world.rating || 0,
+                createdAt: world.createdAt,
+                updatedAt: world.updatedAt,
+                canEdit: !!(user && String(world.authorId) === String(user._id))
+            }))
+        });
     } catch (error) {
         console.error('Error fetching worlds:', error);
         res.status(500).json({ error: 'Internal server error' });
@@ -113,6 +197,7 @@ router.get('/share/:code', async (req, res) => {
                 description: world.description,
                 authorUsername: world.authorUsername,
                 playCount: world.playCount,
+                playerCount: world.uniquePlayerCount || 0,
                 rating: world.rating
             }
         });
@@ -130,23 +215,29 @@ router.get('/:slug', optionalAuth, async (req, res) => {
     try {
         const world = await World.findOne({ slug: req.params.slug });
         if (!world) return res.status(404).json({ error: 'World not found' });
+        let user = null;
 
         // Visibility check
         if (world.visibility === 'private') {
             if (!req.auth) {
                 return res.status(403).json({ error: 'This world is private' });
             }
-            const user = await User.findOne({ clerkId: req.auth.userId });
+            user = await User.findOne({ clerkId: req.auth.userId });
             if (!user || (!world.authorId.equals(user._id) && !user.worldsJoined.includes(world._id))) {
                 return res.status(403).json({ error: 'This world is private' });
             }
+        } else if (req.auth) {
+            user = await User.findOne({ clerkId: req.auth.userId });
         }
 
         // Increment play count (loose — not per-unique-user, just a simple counter)
         world.playCount = (world.playCount || 0) + 1;
         await world.save();
 
-        res.json({ world });
+        const worldJson = world.toObject();
+        worldJson.canEdit = !!(user && world.authorId.equals(user._id));
+        worldJson.isJoined = !!(user && user.worldsJoined.some(id => id.equals(world._id)));
+        res.json({ world: worldJson });
     } catch (error) {
         console.error('Error fetching world:', error);
         res.status(500).json({ error: 'Internal server error' });
@@ -166,21 +257,25 @@ router.post('/', requireAuth, async (req, res) => {
         const user = await resolveUser(req, res);
         if (!user) return;
 
-        const { name, description, visibility, chapters, missions } = req.body;
-
-        if (!name || typeof name !== 'string' || name.trim().length < 2) {
-            return res.status(400).json({ error: 'World name must be at least 2 characters' });
+        const normalized = normalizeWorldPayload(req.body, {
+            requireName: true,
+            createStarterIfEmpty: true
+        });
+        if (normalized.error) {
+            return res.status(400).json({ error: normalized.error });
         }
+        const worldData = normalized.value;
 
-        const slug = `${slugify(name.trim())}-${Date.now().toString(36)}`;
-        const shareCode = (visibility !== 'private') ? generateShareCode() : undefined;
+        const slug = `${slugify(worldData.name)}-${Date.now().toString(36)}`;
+        const shareCode = (worldData.visibility !== 'private') ? await generateUniqueShareCode() : undefined;
 
         const world = new World({
-            name: name.trim(),
-            description: description ? String(description).trim().substring(0, 500) : '',
-            visibility: visibility || 'private',
-            chapters: chapters || [],
-            missions: missions || [],
+            name: worldData.name,
+            description: worldData.description || '',
+            visibility: worldData.visibility || 'private',
+            chapters: worldData.chapters || [],
+            missions: worldData.missions || [],
+            status: worldData.status || 'draft',
             authorId: user._id,
             authorUsername: user.username,
             slug,
@@ -209,22 +304,27 @@ router.patch('/:slug', requireAuth, async (req, res) => {
         if (!result) return;
         const { world } = result;
 
-        const { name, description, visibility, chapters, missions, status } = req.body;
+        const normalized = normalizeWorldPayload(req.body, {
+            requireName: false,
+            createStarterIfEmpty: false
+        });
+        if (normalized.error) {
+            return res.status(400).json({ error: normalized.error });
+        }
+        const worldData = normalized.value;
 
-        if (name !== undefined) world.name = String(name).trim().substring(0, 100);
-        if (description !== undefined) world.description = String(description).trim().substring(0, 500);
-        if (visibility !== undefined && ['private', 'unlisted', 'public'].includes(visibility)) {
-            world.visibility = visibility;
+        if (worldData.name !== undefined) world.name = worldData.name;
+        if (worldData.description !== undefined) world.description = worldData.description;
+        if (worldData.visibility !== undefined) {
+            world.visibility = worldData.visibility;
             // Generate share code if making non-private and none exists
-            if (visibility !== 'private' && !world.shareCode) {
-                world.shareCode = generateShareCode();
+            if (worldData.visibility !== 'private' && !world.shareCode) {
+                world.shareCode = await generateUniqueShareCode();
             }
         }
-        if (chapters !== undefined) world.chapters = chapters;
-        if (missions !== undefined) world.missions = missions;
-        if (status !== undefined && ['draft', 'published', 'archived'].includes(status)) {
-            world.status = status;
-        }
+        if (worldData.chapters !== undefined) world.chapters = worldData.chapters;
+        if (worldData.missions !== undefined) world.missions = worldData.missions;
+        if (worldData.status !== undefined) world.status = worldData.status;
 
         await world.save();
         res.json({ world });
@@ -313,7 +413,7 @@ router.post('/:slug/maps', requireAuth, async (req, res) => {
         if (!result) return;
         const { world } = result;
 
-        const { missionId, name, generatorType, seed, parameters, wallData, terrainData, width, height } = req.body;
+        const { missionId, name, generatorType, seed, parameters, wallData, terrainData, width, height, customWalls, removedWalls, playerSpawn } = req.body;
 
         if (!missionId || !generatorType) {
             return res.status(400).json({ error: 'missionId and generatorType are required' });
@@ -328,6 +428,9 @@ router.post('/:slug/maps', requireAuth, async (req, res) => {
             parameters: parameters || {},
             wallData,
             terrainData,
+            customWalls: customWalls || [],
+            removedWalls: removedWalls || [],
+            playerSpawn: playerSpawn || null,
             width: width || 3200,
             height: height || 3200
         });
@@ -363,6 +466,114 @@ router.get('/:slug/maps/:missionId', optionalAuth, async (req, res) => {
         res.json({ map });
     } catch (error) {
         console.error('Error fetching map:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
+router.get('/:slug/editor', requireAuth, async (req, res) => {
+    try {
+        const result = await resolveOwnedWorld(req, res);
+        if (!result) return;
+        const { world } = result;
+
+        const maps = await WorldMap.find({ worldId: world._id }).lean();
+        res.json({ world, maps });
+    } catch (error) {
+        console.error('Error fetching editor world:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
+router.patch('/:slug/missions/:id', requireAuth, async (req, res) => {
+    try {
+        const result = await resolveOwnedWorld(req, res);
+        if (!result) return;
+        const { world } = result;
+
+        var missionIndex = world.missions.findIndex(function (mission) {
+            return mission.id === req.params.id;
+        });
+
+        if (missionIndex === -1) {
+            return res.status(404).json({ error: 'Mission not found' });
+        }
+
+        const existingMission = typeof world.missions[missionIndex].toObject === 'function'
+            ? world.missions[missionIndex].toObject()
+            : world.missions[missionIndex];
+
+        const normalizedMission = normalizeMission({
+            ...existingMission,
+            ...req.body,
+            id: world.missions[missionIndex].id
+        }, missionIndex);
+        if (!normalizedMission) {
+            return res.status(400).json({ error: 'Invalid mission payload' });
+        }
+
+        if (!Array.isArray(world.chapters)) {
+            world.chapters = [];
+        }
+
+        if (world.chapters.length === 0) {
+            world.chapters = [{
+                id: 'chapter-1',
+                name: 'Chapter 1',
+                description: 'Starter chapter for this custom world.',
+                nodeShape: 'shield',
+                theme: 'stone',
+                missionIds: [normalizedMission.id]
+            }];
+        } else {
+            world.chapters.forEach(function (chapter) {
+                if (!Array.isArray(chapter.missionIds)) {
+                    chapter.missionIds = [];
+                }
+                if (!chapter.missionIds.includes(normalizedMission.id)) {
+                    chapter.missionIds.push(normalizedMission.id);
+                }
+            });
+        }
+
+        world.set('missions.' + missionIndex, normalizedMission);
+        world.markModified('missions');
+        world.chapters.forEach(function (chapter) {
+            if (!Array.isArray(chapter.missionIds)) {
+                chapter.missionIds = [];
+            }
+            if (!chapter.missionIds.includes(normalizedMission.id)) {
+                chapter.missionIds.push(normalizedMission.id);
+            }
+        });
+
+        await world.save();
+        const savedMission = typeof world.missions[missionIndex].toObject === 'function'
+            ? world.missions[missionIndex].toObject()
+            : world.missions[missionIndex];
+        res.json({ mission: savedMission, world });
+    } catch (error) {
+        console.error('Error updating world mission:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
+router.post('/:slug/missions/:id/preview', requireAuth, async (req, res) => {
+    try {
+        const result = await resolveOwnedWorld(req, res);
+        if (!result) return;
+        const { world } = result;
+
+        const mission = world.missions.find(function (entry) {
+            return entry.id === req.params.id;
+        });
+        if (!mission) {
+            return res.status(404).json({ error: 'Mission not found' });
+        }
+
+        const preview = buildPreviewPayload(mission, req.body || {});
+        res.json({ preview });
+    } catch (error) {
+        console.error('Error generating mission preview:', error);
         res.status(500).json({ error: 'Internal server error' });
     }
 });
