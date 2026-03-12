@@ -220,6 +220,34 @@ Original prompt: Check the implementation of docs/multi-version-songs-implementa
   - selected `Kingdom Call`, and both `Start Mission` / `Learn Verses` buttons appeared as expected
 
 2026-03-12:
+- Added a contextual combat struggle hint:
+  - tracks hits taken from the same demon without dealing damage back
+  - after 2 hits, shows a floating hint above the player: `Flee and Learn` + the best counter-category for that demon
+  - resets on successful damage and expires automatically after a short duration
+- Added `LevelConfig.getBestCategoryForMonster(monsterType)` so the hint recommends the strongest learnable category from the combat affinity matrix.
+- Added renderer support for the floating hint bubble in `src/client/Renderer.js`.
+- Added a localhost-only test hook in `game.js`:
+  - `window.__combatHintDebug.simulateHits(monsterType, count)`
+  - `window.__combatHintDebug.snapshot()`
+  - gated to `localhost` / `127.0.0.1` only so it does not expose on production.
+- Verification:
+  - `node --check game.js`
+  - `node --check src/client/Renderer.js`
+  - `node --check src/shared/LevelConfig.js`
+  - restarted local server via `./restart-server.sh`
+  - Playwright smoke still reached gameplay, but the generic client was interrupted by the existing autoplay-audio console error before writing state
+  - final deterministic browser verification used the localhost-only test hook:
+    - confirmed `combatHint` is `null` before simulated pressure
+    - confirmed 2 simulated hits produce `combatHint.line1 = "Flee and Learn"`
+    - confirmed recommended category was populated (`Courage` in the recorded run)
+    - confirmed the canvas actually drew `Flee and Learn` and the category text
+    - screenshot: `output/web-game/combat-hint-final-check.png`
+    - JSON log: `output/web-game/combat-hint-final-check.json`
+- Follow-up UI adjustment:
+  - moved the floating combat hint higher above the player and clamped it below the HUD so it is less likely to be crowded out by the onboarding modal
+  - increased combat hint text and box sizing substantially so the message is readable during live play
+
+2026-03-12:
 - Added direct Reddit Pixel integration without GTM:
   - new `public/reddit-analytics.js`
   - landing pages now load Reddit analytics before `landing-analytics.js`

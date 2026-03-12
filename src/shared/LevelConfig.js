@@ -160,6 +160,28 @@ const LevelConfig = {
 
         var multiplier = affinities[category][monsterType];
         return typeof multiplier === 'number' ? multiplier : defaultMultiplier;
+    },
+
+    getBestCategoryForMonster: function (monsterType) {
+        var matrix = this.combatMatrix || {};
+        var affinities = matrix.affinities || {};
+        var defaultMultiplier = typeof matrix.defaultMultiplier === 'number' ? matrix.defaultMultiplier : 1.0;
+        var bestCategory = null;
+        var bestMultiplier = defaultMultiplier;
+
+        Object.keys(affinities).forEach(function (category) {
+            var categoryMultipliers = affinities[category] || {};
+            var multiplier = typeof categoryMultipliers[monsterType] === 'number'
+                ? categoryMultipliers[monsterType]
+                : defaultMultiplier;
+
+            if (multiplier > bestMultiplier) {
+                bestMultiplier = multiplier;
+                bestCategory = category;
+            }
+        });
+
+        return bestCategory;
     }
 };
 

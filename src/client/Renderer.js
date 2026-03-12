@@ -74,6 +74,9 @@ class Renderer {
         // Draw HUD (Health, Level, etc.)
         this.drawHUD(player, gameState);
 
+        // Draw contextual combat hint above the player.
+        this.drawCombatHint(player, camera, uiState.combatHint);
+
         // Draw monster tooltip on hover
         this.drawMonsterTooltip(monsters, camera, mouseX, mouseY);
 
@@ -1967,6 +1970,56 @@ class Renderer {
             yOffset += 24;
         });
 
+        ctx.restore();
+    }
+
+    drawCombatHint(player, camera, combatHint) {
+        if (!player || !camera || !combatHint) return;
+
+        const line1 = combatHint.line1 || '';
+        const line2 = combatHint.line2 || '';
+        const elapsed = combatHint.duration - (combatHint.remainingMs || 0);
+        const fadeWindow = 250;
+        let alpha = 1;
+
+        if (elapsed < fadeWindow) {
+            alpha = elapsed / fadeWindow;
+        } else if ((combatHint.remainingMs || 0) < fadeWindow) {
+            alpha = (combatHint.remainingMs || 0) / fadeWindow;
+        }
+        alpha = Math.max(0, Math.min(1, alpha));
+
+        const screenX = player.x - camera.x;
+        const preferredY = player.y - camera.y - (player.height || 48) - 92;
+        const screenY = Math.max(82, preferredY);
+        const ctx = this.ctx;
+        const line1Font = 'bold 28px Arial';
+        const line2Font = 'bold 28px Arial';
+
+        ctx.save();
+        ctx.font = line1Font;
+        const line1Width = ctx.measureText(line1).width;
+        ctx.font = line2Font;
+        const line2Width = ctx.measureText(line2).width;
+        const boxWidth = Math.max(line1Width, line2Width) + 44;
+        const boxHeight = 78;
+
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillStyle = `rgba(10, 10, 20, ${0.72 * alpha})`;
+        ctx.strokeStyle = `rgba(255, 209, 102, ${0.95 * alpha})`;
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.roundRect(screenX - boxWidth / 2, screenY - boxHeight / 2, boxWidth, boxHeight, 10);
+        ctx.fill();
+        ctx.stroke();
+
+        ctx.font = line1Font;
+        ctx.fillStyle = `rgba(255, 255, 255, ${alpha})`;
+        ctx.fillText(line1, screenX, screenY - 16);
+        ctx.font = line2Font;
+        ctx.fillStyle = `rgba(255, 209, 102, ${alpha})`;
+        ctx.fillText(line2, screenX, screenY + 16);
         ctx.restore();
     }
 

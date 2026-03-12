@@ -227,6 +227,102 @@ function tryHandle3DFire(monsters, now) {
     return true;
 }
 
+function clearCombatHint() {
+    combatHint = null;
+}
+
+function resetCombatStruggleState() {
+    combatStruggleState.monsterId = null;
+    combatStruggleState.hitsWithoutDamage = 0;
+    combatStruggleState.lastHitAt = 0;
+}
+
+function noteSuccessfulDamage() {
+    resetCombatStruggleState();
+    clearCombatHint();
+}
+
+function maybeShowCombatHint(monster) {
+    if (!monster || !monster.demonType) return;
+
+    const now = Date.now();
+    if (now - combatStruggleState.lastHintAt < COMBAT_HINT_COOLDOWN) {
+        return;
+    }
+
+    const suggestedCategory = LevelConfig.getBestCategoryForMonster(monster.demonType);
+    if (!suggestedCategory) return;
+
+    combatStruggleState.lastHintAt = now;
+    combatHint = {
+        line1: 'Flee and Learn',
+        line2: suggestedCategory,
+        color: '#ffd166',
+        startTime: now,
+        duration: COMBAT_HINT_DURATION
+    };
+}
+
+function noteMonsterPressure(monster, damage) {
+    if (!monster || !damage || damage <= 0) return;
+
+    const now = Date.now();
+    if (
+        combatStruggleState.monsterId !== monster.id ||
+        (combatStruggleState.lastHitAt && now - combatStruggleState.lastHitAt > COMBAT_HINT_ENCOUNTER_RESET_MS)
+    ) {
+        combatStruggleState.monsterId = monster.id;
+        combatStruggleState.hitsWithoutDamage = 0;
+    }
+
+    combatStruggleState.lastHitAt = now;
+    combatStruggleState.hitsWithoutDamage += 1;
+
+    if (combatStruggleState.hitsWithoutDamage >= COMBAT_HINT_TRIGGER_HITS) {
+        maybeShowCombatHint(monster);
+    }
+}
+
+function installCombatHintDebugHooks() {
+    const hostname = window.location.hostname;
+    const isLocalDev = hostname === 'localhost' || hostname === '127.0.0.1' || hostname === '';
+    if (!isLocalDev) return;
+
+    window.__combatHintDebug = {
+        simulateHits(monsterType = 'Fear', count = COMBAT_HINT_TRIGGER_HITS) {
+            const debugMonster = {
+                id: `debug-${monsterType}`,
+                demonType: monsterType
+            };
+            for (let i = 0; i < count; i++) {
+                noteMonsterPressure(debugMonster, 1);
+            }
+            return this.snapshot();
+        },
+        clear() {
+            clearCombatHint();
+            resetCombatStruggleState();
+            return this.snapshot();
+        },
+        snapshot() {
+            return {
+                combatHint: combatHint ? {
+                    line1: combatHint.line1,
+                    line2: combatHint.line2,
+                    duration: combatHint.duration,
+                    remainingMs: Math.max(0, combatHint.duration - (Date.now() - combatHint.startTime))
+                } : null,
+                struggleState: {
+                    monsterId: combatStruggleState.monsterId,
+                    hitsWithoutDamage: combatStruggleState.hitsWithoutDamage,
+                    lastHitAt: combatStruggleState.lastHitAt,
+                    lastHintAt: combatStruggleState.lastHintAt
+                }
+            };
+        }
+    };
+}
+
 // Wait for the DOM content to load
 document.addEventListener('DOMContentLoaded', function () {
     // Get the canvas element by its ID
@@ -492,6 +588,18 @@ const EXPLOSION_INTERVAL = 100; // Adjust the interval as needed
 // Visual effects - screen shake and damage numbers
 let screenShake = { x: 0, y: 0, intensity: 0, duration: 0 };
 let damageNumbers = [];  // Array of {x, y, damage, startTime, duration: 1000}
+let combatHint = null;
+let combatStruggleState = {
+    monsterId: null,
+    hitsWithoutDamage: 0,
+    lastHitAt: 0,
+    lastHintAt: 0
+};
+
+const COMBAT_HINT_TRIGGER_HITS = 2;
+const COMBAT_HINT_DURATION = 2200;
+const COMBAT_HINT_COOLDOWN = 25000;
+const COMBAT_HINT_ENCOUNTER_RESET_MS = 12000;
 
 const DEMON_TYPES = {
     Fear: `${scriptDirectory}/images/monsters/fear_demon.png`,
@@ -937,6 +1045,8 @@ function resetGameState() {
     damageNumbers = [];
     deathParticles = [];
     screenShake = { x: 0, y: 0, intensity: 0, duration: 0 };
+    clearCombatHint();
+    resetCombatStruggleState();
 
     // Inventory & buffs
     inventory = { sword: 0, belt: 0, helmet: 0, breastplate: 0, sandals: 0, shield: 0 };
@@ -1250,6 +1360,7 @@ document.addEventListener('DOMContentLoaded', function () {
         return;
     }
     ctx = canvas.getContext('2d');
+    installCombatHintDebugHooks();
 
     // Parse URL params
     const roomId = urlParams.get('room');
@@ -1518,6 +1629,8 @@ window.onQuizCorrectAnswer = function (quizMode, verseReference, combatCategory)
     if (player && combatCategory) {
         player.currentCombatCategory = combatCategory;
     }
+
+    noteSuccessfulDamage();
 
     if (window.Analytics) {
         Analytics.trackQuizCorrect(quizMode, verseReference);
@@ -1788,6 +1901,7 @@ async function init() {
                 bulletImpact.play();
 
                 if (typeof damage === 'number') {
+                    noteSuccessfulDamage();
                     damageNumbers.push({
                         x: x,
                         y: y - 20,
@@ -3254,6 +3368,7 @@ function gameLoop(generation) {
         const uiState = {
             vQuality: (currentQuiz && currentQuiz.contentCategory) ? currentQuiz.contentCategory : window.vQuality,
             currentCombatCategory: player ? player.currentCombatCategory : null,
+            combatHint,
             categoryPickerOpen,
             allCategories: QUALITIES,
             gameOverFlag,
@@ -3276,6 +3391,12 @@ function gameLoop(generation) {
                 verseTestShielded,
                 viewMode
             },
+            combatHint: combatHint ? {
+                line1: combatHint.line1,
+                line2: combatHint.line2,
+                duration: combatHint.duration,
+                remainingMs: Math.max(0, combatHint.duration - (Date.now() - combatHint.startTime))
+            } : null,
             dailyChallengeProgress,
             dailyChallengeGoal,
             dailyChallengeCompleted,
@@ -3353,6 +3474,9 @@ function gameLoop(generation) {
         flashMessages = flashMessages.filter(fm => {
             return (Date.now() - fm.startTime) < fm.duration;
         });
+        if (combatHint && (Date.now() - combatHint.startTime) >= combatHint.duration) {
+            clearCombatHint();
+        }
 
         // ===== INTERPOLATION: Lerp monsters and other players toward target positions =====
         const INTERPOLATION_SPEED = 0.15; // How fast to catch up (0.15 = smooth but responsive)
@@ -3786,6 +3910,7 @@ function gameLoop(generation) {
 
                         player.health -= damage;
                         network.sendPlayerHit(damage);
+                        noteMonsterPressure(monster, damage);
 
                         // ===== ONBOARDING: Show modal on first damage taken =====
                         if (!firstGameTips.demonAppeared && isInOnboardingWindow() && damage > 0) {
