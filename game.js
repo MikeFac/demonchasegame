@@ -561,6 +561,9 @@ window.missionWorlds = [];
 let missionsInitialized = false;
 
 window.currentMission = null;
+const START_HERE_WORLD_ID = 'chapter0';
+const START_HERE_MISSION_ID = 'intro-01';
+const START_HERE_SEEN_KEY = 'hasSeenStartHereMission';
 
 // Verse Test shield setting (Option A/B)
 let verseTestShielded = localStorage.getItem('verseTestShielded') === 'true';
@@ -869,6 +872,44 @@ function loadVersesFromBundle() {
     }
     
     organizedVerses = QuizManager.organizeByCategory2(filteredVerses);
+}
+
+function getFreezeAuraMoveFactor(player, monsters, now) {
+    if (!player || !monsters || !monsters.length) return 1.0;
+
+    let hasNearbyParalyzer = false;
+    for (const monster of monsters) {
+        if (!monster.freezeAura) continue;
+        const mdx = monster.x - player.x;
+        const mdy = monster.y - player.y;
+        const mdist = Math.sqrt(mdx * mdx + mdy * mdy);
+        if (mdist < Constants.FREEZE_AURA_RADIUS) {
+            hasNearbyParalyzer = true;
+            break;
+        }
+    }
+
+    if (!hasNearbyParalyzer) {
+        player.freezeAuraActiveSince = 0;
+        player.freezeAuraRecoveryUntil = 0;
+        return 1.0;
+    }
+
+    if ((player.freezeAuraRecoveryUntil || 0) > now) {
+        return 1.0;
+    }
+
+    if (!player.freezeAuraActiveSince) {
+        player.freezeAuraActiveSince = now;
+    }
+
+    if (now - player.freezeAuraActiveSince >= Constants.FREEZE_AURA_MAX_DURATION) {
+        player.freezeAuraActiveSince = 0;
+        player.freezeAuraRecoveryUntil = now + Constants.FREEZE_AURA_RECOVERY;
+        return 1.0;
+    }
+
+    return Math.max(Constants.FREEZE_AURA_SLOW, Constants.FREEZE_AURA_MIN_SPEED_FACTOR);
 }
 
 function captureBaseContentState() {
@@ -1437,7 +1478,7 @@ document.addEventListener('DOMContentLoaded', function () {
         // Show menu, wait for button click (standard flow)
         document.getElementById('btnSolo').addEventListener('click', () => {
             if (window.Analytics) Analytics.trackMenuClick('solo');
-            startGame('solo');
+            startDefaultSoloExperience();
         });
         document.getElementById('btnMultiplayer').addEventListener('click', () => {
             if (window.Analytics) Analytics.trackMenuClick('multiplayer');
@@ -2854,6 +2895,19 @@ window.gameMode = 'overland';
     if (!_gameLoopRunning) gameLoop();
 }
 
+function shouldLaunchStartHereMission() {
+    return !localStorage.getItem(START_HERE_SEEN_KEY);
+}
+
+function startDefaultSoloExperience() {
+    window._enterReviewAfterInit = false;
+    if (shouldLaunchStartHereMission()) {
+        startMission(START_HERE_WORLD_ID, START_HERE_MISSION_ID);
+        return;
+    }
+    startGame('solo');
+}
+
 async function openDiscipleshipTrackMenu() {
     await showOverland();
     if (overlandRenderer && typeof overlandRenderer.selectMission === 'function') {
@@ -3101,6 +3155,7 @@ function handleOverlandClick(x, y) {
     if (startClicked) {
         const selected = overlandRenderer.getSelectedMission();
         if (selected) {
+            window._enterReviewAfterInit = false;
             startMission(selected.worldId, selected.missionId);
             return;
         }
@@ -3204,6 +3259,7 @@ async function startMission(worldId, missionId) {
     dbg('MISSION', `startMission called! worldId=${worldId} missionId=${missionId} window.gameMode=${window.gameMode} gameOverFlag=${gameOverFlag} killed=${gameState.monstersKilled}/${gameState.monstersToKill}`);
     console.trace('[MISSION] startMission call stack');
     try {
+        window._enterReviewAfterInit = false;
         const mission = await missionClient.getMission(worldId, missionId);
         if (!mission) {
             console.error('Mission not found:', worldId, missionId);
@@ -3213,6 +3269,9 @@ async function startMission(worldId, missionId) {
         currentMission = mission;
         window.currentMission = currentMission;
         currentMissionConfig = missionClient.missionToGameConfig(mission);
+        if (worldId === START_HERE_WORLD_ID && missionId === START_HERE_MISSION_ID) {
+            localStorage.setItem(START_HERE_SEEN_KEY, 'true');
+        }
         if (mission.type === 'discipleship' && window.discipleshipMissionManager) {
             pendingMissionContentOverride = await window.discipleshipMissionManager.buildMissionOverride(mission);
         } else {
@@ -3240,7 +3299,11 @@ async function startMission(worldId, missionId) {
                 monstersToKill: mission.monstersToKill,
                 maxMonsters: mission.maxMonsters,
                 spawnRate: mission.spawnRate || 18
-            }]
+            }],
+            disableLevelBoss: mission.disableLevelBoss === true,
+            fixedMonsters: Array.isArray(mission.fixedMonsters) ? mission.fixedMonsters.slice() : [],
+            randomSpawnsEnabled: mission.randomSpawnsEnabled !== false,
+            randomSpawnBudget: typeof mission.randomSpawnBudget === 'number' ? mission.randomSpawnBudget : undefined
         };
 
         // Pass mission config directly to startGame (no window globals)
@@ -3259,6 +3322,9 @@ function completeMission(stars) {
     if (!currentMission) return;
     
     const xpEarned = Math.floor(100 * (currentMission.xpMultiplier || 1.0) * stars / 3);
+    if (currentMission.worldId === START_HERE_WORLD_ID && currentMission.id === START_HERE_MISSION_ID) {
+        localStorage.setItem(START_HERE_SEEN_KEY, 'true');
+    }
     
     if (window.progressManager) {
         progressManager.completeMission(currentMission.id, stars, xpEarned);
@@ -3692,19 +3758,7 @@ function gameLoop(generation) {
 
             if (movementIntent.forward) {
                 const baseSpeed = activeBuffs.sandals.active ? PLAYER_SPEED * Constants.SANDALS_SPEED_BOOST : PLAYER_SPEED;
-                let moveSpeed = baseSpeed * gameSpeedMultiplier;
-
-                for (const monster of monsters) {
-                    if (monster.freezeAura) {
-                        const mdx = monster.x - player.x;
-                        const mdy = monster.y - player.y;
-                        const mdist = Math.sqrt(mdx * mdx + mdy * mdy);
-                        if (mdist < Constants.FREEZE_AURA_RADIUS) {
-                            moveSpeed *= Constants.FREEZE_AURA_SLOW;
-                            break;
-                        }
-                    }
-                }
+                let moveSpeed = baseSpeed * gameSpeedMultiplier * getFreezeAuraMoveFactor(player, monsters, Date.now());
 
                 const dx = Math.cos(player.viewAngle || 0) * moveSpeed;
                 const dy = Math.sin(player.viewAngle || 0) * moveSpeed;
@@ -3775,20 +3829,7 @@ function gameLoop(generation) {
             if (distance > THRESHOLD_DISTANCE) {
                 // Apply game speed multiplier to all speeds
                 const baseSpeed = activeBuffs.sandals.active ? PLAYER_SPEED * Constants.SANDALS_SPEED_BOOST : PLAYER_SPEED;
-                let moveSpeed = baseSpeed * gameSpeedMultiplier;
-
-                // Freezing Aura: check if any paralyzer demon is nearby
-                for (const monster of monsters) {
-                    if (monster.freezeAura) {
-                        const mdx = monster.x - player.x;
-                        const mdy = monster.y - player.y;
-                        const mdist = Math.sqrt(mdx * mdx + mdy * mdy);
-                        if (mdist < Constants.FREEZE_AURA_RADIUS) {
-                            moveSpeed *= Constants.FREEZE_AURA_SLOW;
-                            break; // Only apply one slow
-                        }
-                    }
-                }
+                let moveSpeed = baseSpeed * gameSpeedMultiplier * getFreezeAuraMoveFactor(player, monsters, Date.now());
 
                 // Calculate new position
                 const newX = player.x + (dx / distance) * moveSpeed;

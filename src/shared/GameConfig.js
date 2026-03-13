@@ -266,6 +266,9 @@ function createFromCustomBalance(balance, customQuizSettings, levelOverrides, ex
   };
 
   if (extraOptions && typeof extraOptions === 'object') {
+    if (extraOptions.disableLevelBoss === true) {
+      config.disableLevelBoss = true;
+    }
     if (Array.isArray(extraOptions.fixedMonsters)) {
       config.fixedMonsters = extraOptions.fixedMonsters;
     }

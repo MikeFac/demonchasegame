@@ -218,6 +218,530 @@ This is intentionally short, placed in-world above the player, and avoids introd
 
 If affinity becomes a stronger damage multiplier over time, this hint becomes more valuable, not less:
 
+## Phase 8: Guided Demo World
+
+The current onboarding problem is not just comprehension. It is also conversion.
+
+A first-time player needs to leave the first session believing:
+
+- `I understand what to do`
+- `This is actually fun`
+- `There is more here to come back for`
+
+So the first-run experience should not be a neutral tutorial. It should be a short guided demo world that teaches, proves, and sells the loop.
+
+### Primary goal
+
+Increase first-session retention and second-session intent by delivering one short, authored run that:
+
+- teaches the controls
+- creates one clean early win
+- shows that learning verses makes combat easier
+- hints at deeper progression and ministry value
+
+### Target length
+
+- `60` to `120` seconds
+- hard cap around `2` minutes before the player is sent into the normal game or menu
+
+### Design rules
+
+- no large walls of text
+- no generic sandbox opening
+- no normal chaotic spawn pacing during the guided sequence
+- no requirement to understand the full game before getting a win
+
+## Exact Demo Sequence
+
+### Step 1: Safe Spawn
+
+Player starts in a small authored area with no nearby threats.
+
+Prompt:
+
+- `Move to begin`
+
+Success condition:
+
+- player moves a short distance
+
+What this proves:
+
+- immediate control understanding
+
+### Step 2: First Threat
+
+Spawn one weak demon at a visible distance in front of the player.
+
+Prompt:
+
+- `A demon is coming`
+- `Answer correctly to fight back`
+
+Requirements:
+
+- demon should move slowly
+- player should not be overwhelmed
+
+What this proves:
+
+- threat is readable
+- the game has a clear objective
+
+### Step 3: First Easy Quiz
+
+Show a very easy, curated question.
+
+Preferred mode:
+
+- simple multiple choice or cloze
+
+Avoid:
+
+- tricky first-letter edge cases
+- hard distractors
+
+Prompt:
+
+- `Tap the right answer`
+
+What this proves:
+
+- Scripture interaction is simple, not intimidating
+
+### Step 4: Powered Hit
+
+On correct answer:
+
+- visibly empower the player
+- make the next hit obviously stronger than a normal attack
+
+Feedback:
+
+- flash text
+- stronger hit effect
+- obvious damage response
+
+Suggested message:
+
+- `Correct answer powers your attack`
+
+What this proves:
+
+- learning is directly tied to action
+
+### Step 5: First Kill
+
+The first demon should die quickly after the correct answer.
+
+Feedback:
+
+- dramatic kill effect
+- brief celebratory message
+
+Suggested message:
+
+- `First demon defeated`
+
+What this proves:
+
+- the core loop works
+- the player can succeed quickly
+
+### Step 6: Healing Pickup
+
+Place one cross or healing pickup slightly ahead of the player.
+
+Prompt:
+
+- `Collect the cross to heal`
+
+What this proves:
+
+- pickups matter
+- the player can recover
+
+### Step 7: Affinity Reveal
+
+Spawn a second, tougher demon that resists easy brute force.
+
+The player should receive a short in-world hint:
+
+- `Flee and Learn {category}`
+
+Then give the player a short safe route or pause moment to reach a guided Learn flow.
+
+What this proves:
+
+- some demons are beaten more easily by learning the right category
+- the Learn loop is strategically useful, not separate
+
+### Step 8: Short Learn Moment
+
+Do not open a long study screen.
+
+Instead, give the player one compact learn interaction:
+
+- one category
+- one verse or one very short sequence
+- one clear outcome
+
+Prompt:
+
+- `Learn this verse to fight stronger demons`
+
+What this proves:
+
+- the game is not just combat
+- learning has gameplay payoff
+
+### Step 9: Stronger Return Fight
+
+Bring the player back into combat against the second demon.
+
+The result should be clearly easier or more powerful than before.
+
+Feedback:
+
+- `Stronger vs {demon}`
+- or visible combat bonus
+
+What this proves:
+
+- category learning creates tactical advantage
+
+### Step 10: Exit Sell
+
+After the second success, do not just drop the player silently into normal play.
+
+Show a short “why come back” bridge.
+
+Suggested messages:
+
+- `Unlock more categories`
+- `Fight stronger demons`
+- `Play missions and discipleship tracks`
+- `Use this with a group`
+
+Then give two clear choices:
+
+- `Continue to the full game`
+- `Learn verses first`
+
+## First-Session Conversion Goals
+
+This demo world should explicitly optimize for:
+
+- first movement within `10s`
+- first correct answer within `30s`
+- first kill within `45s`
+- first clear understanding of “learn to get stronger” within `90s`
+- increased likelihood of a second visit
+
+## Ministry-Leader Layer
+
+The player onboarding world also needs a lightweight proof layer for adult evaluators.
+
+Without turning it into a pitch deck, it should quietly signal:
+
+- this is browser-based
+- this teaches Scripture, not just trivia
+- students can grow through repeated use
+- there is enough structure here for ministry use
+
+Best place for that signal:
+
+- a short post-demo card
+- a landing page immediately before the demo
+- or a menu panel after the demo
+
+## Implementation Notes
+
+The easiest first implementation is:
+
+- add a dedicated `onboarding` world or mission
+- trigger it only for first-time solo players
+- store completion in local storage
+- allow replay from Help / Tutorial later
+
+Do not try to solve all onboarding inside the normal procedural start. The current balance work helps, but an authored first session is a better conversion tool than more tuning alone.
+
+## Onboarding Mission Spec
+
+This onboarding experience should be implemented as a dedicated authored mission, not a hidden one-off state inside the normal game.
+
+### Access requirements
+
+The onboarding mission should be available in two ways:
+
+1. `Auto-launch for first-time solo players`
+2. `Always visible at the top of Missions`
+
+### Why it must stay visible in Missions
+
+- it allows repeated testing and tuning without clearing local storage
+- it is easy to demo to other people on demand
+- it turns onboarding into a reusable “guided sample” rather than a fragile one-time event
+- it gives ministry leaders and evaluators a predictable place to start
+
+## Mission Placement
+
+### Missions menu behavior
+
+Add a dedicated onboarding/demo chapter that appears before the normal chapters.
+
+Suggested chapter metadata:
+
+- `id`: `chapter0`
+- `slug`: `chapter0-onboarding`
+- `name`: `Start Here`
+- `description`: `Learn the basics, defeat your first demons, and see how verse learning makes you stronger`
+- `nodeShape`: something simple and welcoming, such as `star` or `path`
+- `theme`: `stone` or another bright easy-to-read theme
+- `unlockRequirement`: `null`
+
+Suggested first mission:
+
+- `id`: `intro-01`
+- `name`: `First Steps`
+
+Optional second mission later:
+
+- `id`: `intro-02`
+- `name`: `Learn to Fight Stronger Demons`
+
+## First Mission Design
+
+### Mission identity
+
+This mission is not a normal grind mission.
+
+It is a guided conversion mission whose purpose is:
+
+- teach the loop
+- create confidence
+- create curiosity
+- create return intent
+
+### Mission constraints
+
+- short map
+- low chaos
+- controlled enemy pacing
+- highly readable terrain
+- no random armor pickups at start
+- low punishment for mistakes
+
+### Recommended technical settings
+
+- `mapStyle`: easiest readable map, likely `classic` or a custom open layout
+- `qualities`: limit to `Faith` and one support category
+- `monsters`: limit to `Fear` and maybe one second readable demon later
+- `maxMonsters`: very low during the onboarding flow
+- `randomSpawnsEnabled`: ideally `false` for the first version
+- `fixedMonsters`: yes
+- `monstersToKill`: low, probably `2`
+
+## Mission Flow Spec
+
+### Segment 1: Learn to Move
+
+Environment:
+
+- safe spawn
+- no active threat
+
+Prompt:
+
+- `Move to begin`
+
+Completion:
+
+- player moves a minimum distance
+
+### Segment 2: First Demon
+
+Environment:
+
+- one fixed demon appears ahead
+- slow movement
+
+Prompt:
+
+- `A demon is coming`
+- `Answer correctly to fight back`
+
+Completion:
+
+- player reaches combat range or the demon becomes visible
+
+### Segment 3: First Easy Question
+
+Question style:
+
+- simple multiple choice or easy cloze
+
+Prompt:
+
+- `Tap the right answer`
+
+Completion:
+
+- correct answer submitted
+
+### Segment 4: First Kill
+
+Requirements:
+
+- first demon should die quickly after the correct answer
+- make the first win feel strong and clean
+
+Feedback:
+
+- `Correct answer powers your attack`
+- `First demon defeated`
+
+Completion:
+
+- demon dies
+
+### Segment 5: Healing
+
+Environment:
+
+- place one healing pickup along the obvious next path
+
+Prompt:
+
+- `Collect the cross to heal`
+
+Completion:
+
+- pickup collected
+
+### Segment 6: Stronger Demon + Learn Hook
+
+Environment:
+
+- second demon appears
+- this demon should survive longer or pressure the player more
+
+Prompt:
+
+- `Some demons are easier to beat after learning`
+- then the in-world cue:
+- `Flee and Learn {category}`
+
+Completion:
+
+- player opens or is guided into a short learn step
+
+### Segment 7: Mini Learn Step
+
+Requirements:
+
+- brief
+- focused on one category
+- not a long reading wall
+
+Prompt:
+
+- `Learn this verse to fight stronger demons`
+
+Completion:
+
+- player completes one short learn interaction
+
+### Segment 8: Return Fight
+
+Environment:
+
+- player returns to defeat the second demon
+
+Feedback:
+
+- visible stronger effect
+- category advantage should be obvious
+
+Completion:
+
+- second demon dies
+
+### Segment 9: Exit Choice
+
+After the second success, show a short completion bridge.
+
+Suggested text themes:
+
+- `You are ready for the full game`
+- `Learn more verses to grow stronger`
+- `Try missions, categories, and group play`
+
+Buttons:
+
+- `Continue to Full Game`
+- `Learn Verses`
+- optional: `Replay Demo`
+
+## Triggering Rules
+
+### Auto-launch rule
+
+When a player starts solo for the first time:
+
+- if `hasCompletedOnboardingWorld !== true`
+- offer the onboarding mission first
+
+Best UX:
+
+- either auto-launch directly
+- or show a light choice:
+  - `Start Here`
+  - `Skip to Full Game`
+
+### Persistence
+
+Use local storage for:
+
+- `hasCompletedOnboardingWorld`
+- `hasSkippedOnboardingWorld`
+
+Do not hide the mission from the Missions list after completion.
+
+## Success Metrics
+
+Track these separately from normal missions:
+
+- onboarding mission started
+- onboarding mission completed
+- first correct answer
+- first demon kill
+- learn step reached
+- exit choice selected
+- later return session after onboarding completion
+
+## Non-Goals For V1
+
+- a fully cinematic tutorial
+- dynamic branching narrative
+- multiple onboarding chapters
+- teaching every mechanic
+- multiplayer onboarding
+
+## Recommended First Build
+
+Build the smallest useful version first:
+
+- one onboarding chapter at the top of Missions
+- one mission
+- first-time solo launch hook
+- two demons
+- one healing pickup
+- one short learn step
+- one end-of-demo choice
+
+That is enough to test whether an authored first session improves retention before building a larger tutorial campaign.
+
 ## Phase 7: Level Bosses As Readable Goals
 
 Each level should include one clearly stronger demon that acts as an optional focal encounter.

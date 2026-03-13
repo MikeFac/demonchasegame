@@ -84,6 +84,7 @@ class LocalNetwork {
                 quizSettings,
                 urlConfig.levels || null,
                 {
+                    disableLevelBoss: urlConfig.disableLevelBoss === true,
                     fixedMonsters: urlConfig.fixedMonsters || null,
                     randomSpawnsEnabled: urlConfig.randomSpawnsEnabled,
                     randomSpawnBudget: urlConfig.randomSpawnBudget,

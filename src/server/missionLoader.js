@@ -50,6 +50,12 @@ function buildMissionGameConfig(settings, GameConfig) {
     const quizSettings = settings.quizSettings || null;
     const gameConfig = GameConfig.createFromCustomBalance(balance, quizSettings, levels);
     gameConfig.mapStyle = mission.mapStyle || 'classic';
+    gameConfig.disableLevelBoss = mission.disableLevelBoss === true;
+    gameConfig.fixedMonsters = Array.isArray(mission.fixedMonsters) ? mission.fixedMonsters.slice() : [];
+    gameConfig.randomSpawnsEnabled = mission.randomSpawnsEnabled !== false;
+    gameConfig.randomSpawnBudget = typeof mission.randomSpawnBudget === 'number'
+      ? mission.randomSpawnBudget
+      : undefined;
 
     // Attach mission metadata so clients can identify this as a mission game
     gameConfig.missionId = mission.id;

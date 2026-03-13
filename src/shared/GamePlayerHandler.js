@@ -67,13 +67,22 @@
 
         // Spawn initial monsters if first player
         var playerCount = Object.keys(engine.gameState.players).length;
-        if (playerCount === 1 && engine.gameState.monsters.length === 0) {
+        var hasAuthoredEncounter = Array.isArray(engine.gameConfig.fixedMonsters) && engine.gameConfig.fixedMonsters.length > 0;
+        if (playerCount === 1 && !hasAuthoredEncounter) {
             var currentLevel = engine.gameState.gameLevel || 1;
-            var initialMonsterCount = Math.max(14, Math.ceil(engine.levelData[currentLevel].maxMonsters * 0.8));
-            console.log('First player joined - spawning ' + initialMonsterCount + ' initial monsters for level ' + currentLevel);
-            engine.monsterManager.spawnMonsterAtDistance(200, 350, true);
-            for (var i = 1; i < initialMonsterCount; i++) {
+            var targetOpeningCount = Math.max(14, Math.ceil(engine.levelData[currentLevel].maxMonsters * 0.8));
+            var existingMonsterCount = engine.gameState.monsters.length;
+            console.log('First player joined - targeting ' + targetOpeningCount + ' opening monsters for level ' + currentLevel + ' (existing=' + existingMonsterCount + ')');
+
+            if (engine.gameState.monsters.length < targetOpeningCount) {
+                engine.monsterManager.spawnMonsterAtDistance(200, 350, true);
+            }
+            while (engine.gameState.monsters.length < targetOpeningCount) {
+                var beforeCount = engine.gameState.monsters.length;
                 engine.monsterManager.spawnMonster();
+                if (engine.gameState.monsters.length === beforeCount) {
+                    break;
+                }
             }
         }
 

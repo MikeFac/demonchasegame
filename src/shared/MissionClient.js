@@ -130,6 +130,12 @@
                 
                 // XP multiplier for rewards
                 xpMultiplier: mission.xpMultiplier || 1.0,
+                disableLevelBoss: mission.disableLevelBoss === true,
+
+                // Optional authored encounter controls
+                fixedMonsters: Array.isArray(mission.fixedMonsters) ? mission.fixedMonsters.slice() : [],
+                randomSpawnsEnabled: mission.randomSpawnsEnabled !== false,
+                randomSpawnBudget: typeof mission.randomSpawnBudget === 'number' ? mission.randomSpawnBudget : undefined,
                 
                 // Single level game
                 maxLevels: 1

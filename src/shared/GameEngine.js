@@ -101,7 +101,9 @@
             if (Array.isArray(this.gameConfig.fixedMonsters) && this.gameConfig.fixedMonsters.length > 0) {
                 this.monsterManager.spawnFixedMonsters(this.gameConfig.fixedMonsters);
             }
-            this.monsterManager.spawnLevelBoss();
+            if (!this.gameConfig.disableLevelBoss) {
+                this.monsterManager.spawnLevelBoss();
+            }
 
             // Internal state
             this._levelAdvancing = false;

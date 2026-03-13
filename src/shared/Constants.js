@@ -77,6 +77,9 @@ const Constants = {
     // Freezing Aura (Fear, Doubt, Depression, Despair)
     FREEZE_AURA_RADIUS: 150,        // pixels - proximity range
     FREEZE_AURA_SLOW: 0.6,          // 40% slow (multiply speed by 0.6)
+    FREEZE_AURA_MAX_DURATION: 1500, // ms - capped continuous slow before recovery
+    FREEZE_AURA_RECOVERY: 2200,     // ms - grace period before slow can reapply
+    FREEZE_AURA_MIN_SPEED_FACTOR: 0.75, // never reduce below 75% of intended move speed
 
     // Erratic Movement (Confusion, Deception, Ignorance, Blindness)
     ERRATIC_CHANCE: 0.30,            // 30% chance per move update to zig-zag

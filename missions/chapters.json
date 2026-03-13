@@ -2,6 +2,18 @@
   "schemaVersion": 1,
   "chapters": [
     {
+      "id": "chapter0",
+      "slug": "chapter0-start-here",
+      "name": "Start Here",
+      "description": "A short guided first win so new players can grasp the loop fast",
+      "nodeShape": "star",
+      "theme": "stone",
+      "authorId": "system",
+      "visibility": "public",
+      "missionIds": ["intro-01"],
+      "unlockRequirement": null
+    },
+    {
       "id": "chapter1",
       "slug": "chapter1-foundations",
       "name": "Foundations of Faith",

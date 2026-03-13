@@ -409,3 +409,32 @@ Original prompt: Check the implementation of docs/multi-version-songs-implementa
 - Removed the last client-side fallback melee hit path. Close-range attacks now only fire when the current answer state is explicitly correct, so normal play cannot chip down demons without learning/answering first.
 - Restored probabilistic no-answer melee only for FUN mode. The fallback now requires the server-provided noQuizPenalty flag, so normal mode stays quiz-gated while FUN mode can still land chance-based melee hits without making them guaranteed.
 - Rebalanced level 1 pacing again: required kills reduced to 12 so the level stays short even with the denser spawn field. Bosses were made much tougher by doubling the previous boss HP and damage multipliers again (now 6x health, 3x damage relative to normal base stats).
+
+2026-03-13:
+- Added a low-risk first-pass onboarding mission instead of changing the core solo loop:
+  - new public chapter `chapter0` / `Start Here` at the top of `missions/chapters.json`
+  - new mission file `missions/chapter0-start-here.json`
+  - mission `intro-01` / `First Victory` uses `open` map, two fixed demons, no random spawns, no level boss
+- Kept the core game changes small:
+  - `game.js` now routes the menu Solo button through a tiny helper that auto-launches `chapter0/intro-01` only once per browser via `localStorage`
+  - standard mission launch now passes through `fixedMonsters`, `randomSpawnsEnabled`, `randomSpawnBudget`, and `disableLevelBoss`
+  - `GameConfig`, `LocalNetwork`, and `GameEngine` were updated just enough to honor `disableLevelBoss`
+  - `GamePlayerHandler` now skips the default opening monster wave when a mission already defines its own authored encounter
+- Verification:
+  - `node --check game.js`
+  - `node --check src/shared/MissionClient.js`
+  - `node --check src/server/missionLoader.js`
+  - `node --check src/client/LocalNetwork.js`
+  - `node --check src/shared/GameConfig.js`
+  - `node --check src/shared/GameEngine.js`
+  - `node --check src/shared/GamePlayerHandler.js`
+  - JSON parse check for `missions/chapters.json` and `missions/chapter0-start-here.json`
+  - Browser smoke after `./restart-server.sh`:
+    - Missions view shows `Start Here` first with `First Victory`
+    - fresh Solo click launches the authored onboarding encounter instead of the normal opening swarm
+    - screenshots:
+      - `output/web-game/onboarding-missions/shot-0.png`
+      - `output/web-game/onboarding-solo/shot-0.png`
+- Follow-up TODO:
+  - add one or two mission-specific onboarding prompts if the current first-pass mission still feels too implicit
+  - consider a short post-mission return hook that sends the player either to Missions or back to normal solo with clearer "come back" framing
