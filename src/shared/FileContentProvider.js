@@ -6,6 +6,7 @@
  */
 (function () {
     var ContentProvider;
+    var MISSION_CONTENT_VERSION = '20260313-1';
     
     if (typeof module !== 'undefined' && module.exports) {
         ContentProvider = require('./ContentProvider');
@@ -19,6 +20,11 @@
             this._worldsCache = null;
             this._missionsCache = {};
         }
+
+        _withVersion(url) {
+            var separator = url.indexOf('?') === -1 ? '?' : '&';
+            return url + separator + 'v=' + MISSION_CONTENT_VERSION;
+        }
         
         /**
          * Get list of all available worlds/chapters.
@@ -30,7 +36,7 @@
             }
             
             try {
-                const response = await fetch('/missions/chapters.json');
+                const response = await fetch(this._withVersion('/missions/chapters.json'));
                 if (!response.ok) {
                     throw new Error('Failed to load chapters.json: ' + response.status);
                 }
@@ -66,7 +72,7 @@
                 
                 // Load the world's mission file
                 const slug = worldMeta.slug || worldId;
-                const response = await fetch('/missions/' + slug + '.json');
+                const response = await fetch(this._withVersion('/missions/' + slug + '.json'));
                 
                 if (!response.ok) {
                     console.warn('Failed to load world file:', slug + '.json');
