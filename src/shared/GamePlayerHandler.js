@@ -69,7 +69,7 @@
         var playerCount = Object.keys(engine.gameState.players).length;
         if (playerCount === 1 && engine.gameState.monsters.length === 0) {
             var currentLevel = engine.gameState.gameLevel || 1;
-            var initialMonsterCount = Math.max(9, Math.ceil(engine.levelData[currentLevel].maxMonsters * 0.525));
+            var initialMonsterCount = Math.max(14, Math.ceil(engine.levelData[currentLevel].maxMonsters * 0.8));
             console.log('First player joined - spawning ' + initialMonsterCount + ' initial monsters for level ' + currentLevel);
             engine.monsterManager.spawnMonsterAtDistance(200, 350, true);
             for (var i = 1; i < initialMonsterCount; i++) {

@@ -322,22 +322,14 @@ class Renderer {
         this.ctx.font = '14px Arial';
         const statsText = t('ui.statsLine', player.health, player.xp, player.level, player.ammo || 0);
         this.ctx.fillText(statsText, 7, this.QUALITY_LINE_HEIGHT - 7);
+        const statsWidth = this.ctx.measureText(statsText).width;
 
         // VOTD damage bonus indicator (subtle fire icon after stats)
         if (player.votdDamageBonus) {
-            const statsWidth = this.ctx.measureText(statsText).width;
             this.ctx.fillStyle = '#ffd700';
             this.ctx.font = '12px Arial';
             this.ctx.fillText('\uD83D\uDD25', statsWidth + 12, this.QUALITY_LINE_HEIGHT - 7);
         }
-
-        const totalToKill = gameState.monstersToKill || 0;
-        const killed = gameState.monstersKilled || 0;
-        const remaining = Math.max(0, totalToKill - killed);
-        const statsWidth = this.ctx.measureText(statsText).width;
-        this.ctx.fillStyle = '#ffdd66';
-        this.ctx.font = '14px Arial';
-        this.ctx.fillText(`Demons: ${remaining}/${totalToKill}`, statsWidth + 26, this.QUALITY_LINE_HEIGHT - 7);
 
         // Game Level
         this.ctx.fillStyle = 'yellow';
@@ -345,6 +337,17 @@ class Renderer {
         const gameLevelText = `${gameState.gameLevel}`;
         const gameLevelWidth = this.ctx.measureText(gameLevelText).width;
         this.ctx.fillText(gameLevelText, this.canvas.width - gameLevelWidth - 7, 40);
+
+        const totalToKill = gameState.monstersToKill || 0;
+        const killed = gameState.monstersKilled || 0;
+        const remaining = Math.max(0, totalToKill - killed);
+        const progressText = `Demons to defeat: ${remaining}/${totalToKill}`;
+        const progressRightEdge = this.canvas.width - gameLevelWidth - 18;
+        this.ctx.fillStyle = '#ffdd66';
+        this.ctx.font = '14px Arial';
+        this.ctx.textAlign = 'right';
+        this.ctx.fillText(progressText, progressRightEdge, this.QUALITY_LINE_HEIGHT - 7);
+        this.ctx.textAlign = 'left';
     }
 
     drawDailyChallenge(canvas, dailyChallengeProgress, dailyChallengeGoal, dailyChallengeCompleted) {

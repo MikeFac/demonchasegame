@@ -166,11 +166,8 @@
             engine._sendToPlayer[pid]('walls', wallData);
         }
 
-        // Spawn collectibles for new level
-        engine.collectibleManager.initializeLevelCollectibles();
-
-        // Spawn initial monsters (about 50% more than the previous opening density, with a higher floor)
-        var initialMonsterCount = Math.max(9, Math.ceil(engine.levelData[level].maxMonsters * 0.525));
+        // Spawn initial monsters (another 50% more than the previous opening density, with a higher floor)
+        var initialMonsterCount = Math.max(14, Math.ceil(engine.levelData[level].maxMonsters * 0.8));
         console.log('Spawning ' + initialMonsterCount + ' initial monsters for level ' + level);
         engine.monsterManager.spawnLevelBoss();
         engine.monsterManager.spawnMonsterAtDistance(400, 700, true);

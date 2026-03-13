@@ -93,11 +93,11 @@
             this.playerManager = new PlayerManager(this.gameState, this.emitter, this.wallGrid, this.gameConfig);
             this.bulletManager = new BulletManager(this.emitter, this.monsterManager, this.wallGrid, this.gameState);
 
-            // Spawn initial healing points and collectibles
-            for (var i = 0; i < this.constants.MAX_HEALING_POINTS; i++) {
+            // Spawn initial healing points
+            var initialHealingCount = this._getHealingPointCapForLevel(1);
+            for (var i = 0; i < initialHealingCount; i++) {
                 this._spawnHealingPoint();
             }
-            this.collectibleManager.initializeLevelCollectibles();
             if (Array.isArray(this.gameConfig.fixedMonsters) && this.gameConfig.fixedMonsters.length > 0) {
                 this.monsterManager.spawnFixedMonsters(this.gameConfig.fixedMonsters);
             }
@@ -136,7 +136,7 @@
             // Healing Point Spawning Loop
             this.intervals.push(setInterval(function () {
                 if (!self.shouldRun) return;
-                if (self.gameState.healingPoints.length < self.constants.MAX_HEALING_POINTS) {
+                if (self.gameState.healingPoints.length < self._getHealingPointCapForLevel(self.gameState.gameLevel || 1)) {
                     self._spawnHealingPoint();
                 }
             }, this.constants.HEALING_SPAWN_INTERVAL));
@@ -211,6 +211,14 @@
 
         _resetLevelData(level) {
             GameLifecycle.resetLevelData(this, level);
+        }
+
+        _getHealingPointCapForLevel(level) {
+            var levelEntry = this.levelData[level] || {};
+            if (typeof levelEntry.maxHealingPoints === 'number') {
+                return levelEntry.maxHealingPoints;
+            }
+            return this.constants.MAX_HEALING_POINTS;
         }
 
         update() {
