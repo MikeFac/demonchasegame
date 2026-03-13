@@ -91,6 +91,12 @@ const Constants = {
     GUARD_RADIUS_MULTIPLIER: 4,      // Territory radius = 4x monster size
     GUARD_RETURN_THRESHOLD: 12,      // pixels from home before guard snaps into return mode
 
+    // Level boss tuning
+    BOSS_HEALTH_MULTIPLIER: 6.0,
+    BOSS_DAMAGE_MULTIPLIER: 3.0,
+    BOSS_SIZE_MULTIPLIER: 1.5,
+    BOSS_XP_BONUS: 75,
+
     // Spirit Drain (Poverty, Temptation)
     DRAIN_CHANCE: 0.40,              // 40% chance per hit on player
     POVERTY_XP_DRAIN: 5,             // XP drained per proc

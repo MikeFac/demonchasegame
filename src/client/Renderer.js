@@ -331,6 +331,14 @@ class Renderer {
             this.ctx.fillText('\uD83D\uDD25', statsWidth + 12, this.QUALITY_LINE_HEIGHT - 7);
         }
 
+        const totalToKill = gameState.monstersToKill || 0;
+        const killed = gameState.monstersKilled || 0;
+        const remaining = Math.max(0, totalToKill - killed);
+        const statsWidth = this.ctx.measureText(statsText).width;
+        this.ctx.fillStyle = '#ffdd66';
+        this.ctx.font = '14px Arial';
+        this.ctx.fillText(`Demons: ${remaining}/${totalToKill}`, statsWidth + 26, this.QUALITY_LINE_HEIGHT - 7);
+
         // Game Level
         this.ctx.fillStyle = 'yellow';
         this.ctx.font = 'bold 14px Arial';
@@ -776,7 +784,7 @@ class Renderer {
             }
 
             if (demonImage && demonImage.complete) {
-                this.ctx.drawImage(demonImage, screenX - monster.width / 2, screenY - monster.height / 2);
+                this.ctx.drawImage(demonImage, screenX - monster.width / 2, screenY - monster.height / 2, monster.width, monster.height);
             }
 
             // Pride armor indicator: golden shield overlay
@@ -877,6 +885,21 @@ class Renderer {
                 this.ctx.textAlign = 'center';
                 this.ctx.fillText(`${monster.health}`, screenX, healthBarY - 3);
                 this.ctx.textAlign = 'left';
+            }
+
+            if (monster.isBoss) {
+                this.ctx.save();
+                this.ctx.font = 'bold 12px Arial';
+                this.ctx.textAlign = 'center';
+                this.ctx.fillStyle = '#ffdc73';
+                this.ctx.strokeStyle = 'rgba(0, 0, 0, 0.85)';
+                this.ctx.lineWidth = 3;
+                const bossText = monster.bossLabel || `${monster.demonType} Guard`;
+                const bossTextY = screenY - monster.height / 2 - 22;
+                this.ctx.strokeText(bossText, screenX, bossTextY);
+                this.ctx.fillText(bossText, screenX, bossTextY);
+                this.ctx.textAlign = 'left';
+                this.ctx.restore();
             }
         });
     }

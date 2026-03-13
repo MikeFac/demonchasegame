@@ -138,14 +138,18 @@
                 if (targetMonster.health <= 0) {
                     var deathX = targetMonster.x;
                     var deathY = targetMonster.y;
+                    var isBoss = !!targetMonster.isBoss;
+                    var bossBonusXp = isBoss ? (targetMonster.bonusXp || Constants.BOSS_XP_BONUS) : 0;
 
                     var index = gameState.monsters.indexOf(targetMonster);
                     gameState.monsters.splice(index, 1);
 
-                    if (!gameState.monstersKilled) gameState.monstersKilled = 0;
-                    gameState.monstersKilled++;
+                    if (!isBoss) {
+                        if (!gameState.monstersKilled) gameState.monstersKilled = 0;
+                        gameState.monstersKilled++;
+                    }
 
-                    player.xp += 10;
+                    player.xp += 10 + bossBonusXp;
 
                     var xpReqs = LevelConfig.levelXPRequirements;
                     var nextLevelIndex = player.level;
@@ -156,7 +160,15 @@
                         console.log('Player ' + playerCode + ' reached level ' + player.level + '!');
                     }
 
-                    io.emit('monsterKilled', { monsterId: targetMonster.id, killer: playerCode, x: deathX, y: deathY });
+                    io.emit('monsterKilled', {
+                        monsterId: targetMonster.id,
+                        killer: playerCode,
+                        x: deathX,
+                        y: deathY,
+                        isBoss: isBoss,
+                        bossLabel: targetMonster.bossLabel || null,
+                        bonusXp: bossBonusXp
+                    });
 
                     if (targetMonster.chaser) {
                         gameState.chaseTrigger = true;

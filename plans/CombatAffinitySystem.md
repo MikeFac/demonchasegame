@@ -93,3 +93,35 @@ If affinity multipliers are increased further:
 - keep wrong-category combat possible, but clearly weaker
 - make strong-category combat noticeably better within a single encounter
 - preserve this hint as a beginner bridge rather than a permanent dependency
+
+## 6. Optional Level Bosses
+
+To give affinity a clearer tactical payoff, each level can include one optional boss encounter.
+
+### Boss design
+
+- one boss per level
+- same demon taxonomy as normal monsters
+- `guard` behavior
+- `3.0x` health multiplier
+- `1.5x` damage multiplier
+- `1.5x` size multiplier
+
+### Spawn design
+
+- spawn near a valid map corner instead of in the central combat lanes
+- prefer one of the four corners where the boss fully fits
+- if an exact corner tile is blocked, search inward from that corner until a safe location is found
+
+### Progression role
+
+- boss kills do **not** count as required for level completion
+- boss kills should award a large bonus so the encounter remains meaningful
+
+### System benefit
+
+This creates a stronger loop:
+
+- normal enemies advance the level
+- boss enemies test deeper mastery
+- affinity matters more because there is now a high-value target where category choice is strategically important

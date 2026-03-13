@@ -218,6 +218,48 @@ This is intentionally short, placed in-world above the player, and avoids introd
 
 If affinity becomes a stronger damage multiplier over time, this hint becomes more valuable, not less:
 
+## Phase 7: Level Bosses As Readable Goals
+
+Each level should include one clearly stronger demon that acts as an optional focal encounter.
+
+### Boss rules
+
+- exactly one boss per level
+- boss is not required for level completion
+- boss gives a large reward when killed
+- boss uses `guard` behavior so it feels territorial rather than randomly roaming
+- boss is visibly larger and more dangerous than normal demons of the same type
+
+### Spawn approach
+
+- spawn the boss in one of the four map corners
+- prefer the closest valid point that fully fits in the corner region
+- if the exact corner is blocked, fall back to the nearest safe point inside that corner search area
+
+### Stats
+
+- `3x` normal hit points for that monster type
+- `1.5x` normal damage
+- `1.5x` width
+- `1.5x` height
+
+### Why this helps onboarding and retention
+
+- it gives each level a memorable “main threat”
+- it creates a stronger reason to understand affinity and category counters
+- it adds optional mastery without turning level completion into a hard wall
+- it gives advanced players a bonus objective while beginners can still finish the level normally
+
+### Reward guidance
+
+Boss kills should provide a visible bonus, such as:
+
+- bonus XP
+- a large flash message
+- stronger kill feedback than normal enemies
+
+The reward should feel worth chasing, but the boss should remain optional until the wider progression loop is balanced around it.
+
 - beginners get a readable recovery action
 - category learning gains clear tactical value
 - the Scripture loop and combat loop reinforce each other

@@ -87,17 +87,25 @@ const LevelConfig = {
         1: {
             qualities: ['Faith', 'Courage', 'Knowledge'],
             monsters: ['Fear', 'Ignorance', 'Blindness', 'Doubt', 'Confusion'],
+            boss: {
+                demonType: 'Fear',
+                label: 'Fear Guard'
+            },
             monsterDamageFactor: 1,
             playerSpeed: 5,
             monsterSpeed: 5,
-            spawnRate: 16000, // 20% faster spawning than the previous 20s interval
-            maxMonsters: 30, // 20% more concurrent monsters than the previous 25
-            monstersToKill: 15, // Increased by 50% (was 10)
+            spawnRate: 12000, // Higher early pressure so level 1 doesn't feel empty
+            maxMonsters: 45, // 50% more concurrent monsters than the previous 30
+            monstersToKill: 12, // Keep level 1 short while the overall spawn pressure stays higher
             terrainTheme: 'stone'
         },
         2: {
             qualities: ['Love', 'Wisdom', 'Healing'],
             monsters: ['Strife', 'Confusion', 'Infirmity', 'Poverty', 'Shame', 'Deception', 'Fear'],
+            boss: {
+                demonType: 'Shame',
+                label: 'Shame Guard'
+            },
             monsterDamageFactor: 1.5,
             playerSpeed: 6,
             monsterSpeed: 7,
@@ -109,6 +117,10 @@ const LevelConfig = {
         3: {
             qualities: ['Forgiveness', 'Good News', 'Focus'],
             monsters: ['Condemnation', 'Unbelief', 'Depression', 'Doubt', 'Despair', 'Pride', 'Strife'],
+            boss: {
+                demonType: 'Condemnation',
+                label: 'Condemnation Guard'
+            },
             monsterDamageFactor: 1.5,
             playerSpeed: 6,
             monsterSpeed: 9,
@@ -120,6 +132,10 @@ const LevelConfig = {
         4: {
             qualities: ['Endurance', 'Hope', 'Prophecy'],
             monsters: ['Despair', 'Deception', 'Temptation', 'Swarm', 'Unbelief', 'Condemnation'],
+            boss: {
+                demonType: 'Temptation',
+                label: 'Temptation Guard'
+            },
             monsterDamageFactor: 2.0,
             playerSpeed: 7,
             monsterSpeed: 10,
@@ -131,6 +147,10 @@ const LevelConfig = {
         5: {
             qualities: ['Power', 'Identity', 'Good News'],
             monsters: ['Pride', 'Doubt', 'Fear', 'Condemnation', 'Unbelief', 'Swarm', 'Temptation', 'Poverty'],
+            boss: {
+                demonType: 'Pride',
+                label: 'Pride Guard'
+            },
             monsterDamageFactor: 2.5,
             playerSpeed: 8,
             monsterSpeed: 12,
@@ -182,6 +202,11 @@ const LevelConfig = {
         });
 
         return bestCategory;
+    },
+
+    getLevelBossConfig: function (level) {
+        var levelEntry = this.levelData && this.levelData[level];
+        return levelEntry && levelEntry.boss ? levelEntry.boss : null;
     }
 };
 

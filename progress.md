@@ -219,6 +219,26 @@ Original prompt: Check the implementation of docs/multi-version-songs-implementa
   - with seeded local `missionProgress`, overland showed `The Teachings of Jesus` unlocked and selectable
   - selected `Kingdom Call`, and both `Start Mission` / `Learn Verses` buttons appeared as expected
 
+2026-03-13:
+- Added a first pass at optional level bosses.
+- Documented the design in:
+  - `docs/plans/ONBOARDING_CLARITY_PLAN.md`
+  - `plans/CombatAffinitySystem.md`
+- Level config now defines one boss per level from the existing demon roster.
+- Bosses now:
+  - spawn near a safe map corner
+  - use `guard` behavior
+  - have `3x` health
+  - have `1.5x` damage
+  - have `1.5x` width and height
+  - do not count toward `monstersToKill`
+  - award a large XP bonus on kill
+- Updated monster movement collision checks to respect per-monster width/height so oversized bosses do not move as if they were normal-size.
+- Updated renderer and kill feedback so bosses are visibly labeled and boss kills show a larger reward message.
+- Verification pending:
+  - syntax checks
+  - browser smoke to confirm corner spawn and boss rendering
+
 2026-03-12:
 - Added a contextual combat struggle hint:
   - tracks hits taken from the same demon without dealing damage back
@@ -383,3 +403,9 @@ Original prompt: Check the implementation of docs/multi-version-songs-implementa
   - restarted app with `./restart-server.sh`
   - Playwright smoke on `http://localhost:3500/?viewMode=3d` clicking `#btnSolo`
   - screenshot confirmed brightened 3D scene: `output/web-game/shot-0.png`
+- Fixed a boss melee-range bug: enlarged bosses could block movement at their larger collision radius while combat still used the old fixed 60px range, so they could appear to touch the player without ever engaging. Combat range now scales from the monster width with a small padding.
+- Tightened default solo pressure after play feedback: normal/custom balance no longer grants free melee hits without a correct answer, opening spawn density increased to 35%% of max with a floor of 6, and level bosses now use chaser behavior instead of guard so they remain threatening even when the player has ammo.
+- Increased level 1 pressure again: faster spawn rate, 50%% more concurrent monsters, and a 50%% larger kill target so the opening level feels active and gives clearer progression. Added HUD text for "Demons to defeat: x out of m". Fixed the lingering free-hit issue by resetting the client melee-no-answer chance to 0.0 between games and by default. Boss speed multipliers are now applied, and bosses were set to 2x speed.
+- Removed the last client-side fallback melee hit path. Close-range attacks now only fire when the current answer state is explicitly correct, so normal play cannot chip down demons without learning/answering first.
+- Restored probabilistic no-answer melee only for FUN mode. The fallback now requires the server-provided noQuizPenalty flag, so normal mode stays quiz-gated while FUN mode can still land chance-based melee hits without making them guaranteed.
+- Rebalanced level 1 pacing again: required kills reduced to 12 so the level stays short even with the denser spawn field. Bosses were made much tougher by doubling the previous boss HP and damage multipliers again (now 6x health, 3x damage relative to normal base stats).

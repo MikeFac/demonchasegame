@@ -47,6 +47,41 @@
             this.randomSpawnBudget = typeof options.randomSpawnBudget === 'number' ? options.randomSpawnBudget : null;
         }
 
+        spawnLevelBoss() {
+            var level = this.gameState.gameLevel || 1;
+            var bossConfig = LevelConfig.getLevelBossConfig(level);
+            if (!bossConfig) return null;
+            if (this.gameState.monsters.some(function (monster) { return monster.isBoss; })) return null;
+
+            var bossWidth = Math.round(Constants.MONSTER_WIDTH * Constants.BOSS_SIZE_MULTIPLIER);
+            var bossHeight = Math.round(Constants.MONSTER_HEIGHT * Constants.BOSS_SIZE_MULTIPLIER);
+            var spawnPoint = this._findCornerSpawn(bossWidth, bossHeight);
+            if (!spawnPoint) {
+                console.warn('Unable to find safe corner spawn for level boss on level ' + level);
+                return null;
+            }
+
+            return this._spawnFixedMonster({
+                x: spawnPoint.x,
+                y: spawnPoint.y,
+                demonType: bossConfig.demonType,
+                behavior: {
+                    type: 'chaser',
+                    patrolRadius: 0,
+                    patrolPath: []
+                },
+                stats: {
+                    healthMultiplier: Constants.BOSS_HEALTH_MULTIPLIER,
+                    damageMultiplier: Constants.BOSS_DAMAGE_MULTIPLIER,
+                    speedMultiplier: 2.0,
+                    sizeMultiplier: Constants.BOSS_SIZE_MULTIPLIER
+                },
+                spawnTrigger: { type: 'immediate', value: 0 },
+                isBoss: true,
+                label: bossConfig.label || (bossConfig.demonType + ' Guard')
+            });
+        }
+
         spawnMonsterAtDistance(minDistance, maxDistance, isFirst) {
             if (isFirst === undefined) isFirst = false;
             var gameState = this.gameState;
@@ -178,6 +213,44 @@
             return monsters[Math.floor(Math.random() * monsters.length)];
         }
 
+        _findCornerSpawn(width, height) {
+            var worldWidth = Constants.WORLD_WIDTH;
+            var worldHeight = Constants.WORLD_HEIGHT;
+            var step = Constants.CELL_SIZE;
+            var maxDepth = Math.min(800, Math.floor(Math.min(worldWidth, worldHeight) / 3));
+            var halfWidth = width / 2;
+            var halfHeight = height / 2;
+            var corners = [
+                { startX: halfWidth, startY: halfHeight, dirX: 1, dirY: 1 },
+                { startX: worldWidth - halfWidth, startY: halfHeight, dirX: -1, dirY: 1 },
+                { startX: halfWidth, startY: worldHeight - halfHeight, dirX: 1, dirY: -1 },
+                { startX: worldWidth - halfWidth, startY: worldHeight - halfHeight, dirX: -1, dirY: -1 }
+            ];
+            var bestCandidate = null;
+
+            for (var c = 0; c < corners.length; c++) {
+                var corner = corners[c];
+                for (var depth = 0; depth <= maxDepth; depth += step) {
+                    for (var offset = 0; offset <= depth; offset += step) {
+                        var inwardX = depth - offset;
+                        var inwardY = offset;
+                        var candidateX = corner.startX + inwardX * corner.dirX;
+                        var candidateY = corner.startY + inwardY * corner.dirY;
+                        if (!Physics.isOverlapping(candidateX, candidateY, width, height, this.gameState, null, this.wallGrid)) {
+                            var score = depth;
+                            if (!bestCandidate || score < bestCandidate.score) {
+                                bestCandidate = { x: candidateX, y: candidateY, score: score };
+                            }
+                            break;
+                        }
+                    }
+                    if (bestCandidate && bestCandidate.score === depth) break;
+                }
+            }
+
+            return bestCandidate ? { x: bestCandidate.x, y: bestCandidate.y } : null;
+        }
+
         _createMonster(x, y, chaser, baseHealth, hpMult, demonType, behaviorType) {
             if (!demonType) demonType = this._randomDemonType();
             if (!behaviorType) behaviorType = chaser ? 'chaser' : 'wanderer';
@@ -225,11 +298,12 @@
             if (this.gameState.monsters.length >= this.levelData[this.gameState.gameLevel].maxMonsters) {
                 return null;
             }
+            var sizeMultiplier = (fixedMonster.stats && fixedMonster.stats.sizeMultiplier) || 1.0;
             if (Physics.isOverlapping(
                 fixedMonster.x,
                 fixedMonster.y,
-                Constants.MONSTER_WIDTH,
-                Constants.MONSTER_HEIGHT,
+                Math.round(Constants.MONSTER_WIDTH * sizeMultiplier),
+                Math.round(Constants.MONSTER_HEIGHT * sizeMultiplier),
                 this.gameState,
                 null,
                 this.wallGrid
@@ -242,7 +316,7 @@
             var chaser = behaviorType === 'chaser';
             var demonType = fixedMonster.demonType || this._randomDemonType();
             var hpMult = (fixedMonster.stats && fixedMonster.stats.healthMultiplier) || 1.0;
-            if (behaviorType === 'guard') {
+            if (behaviorType === 'guard' && !fixedMonster.isBoss) {
                 hpMult *= Constants.GUARD_HP_MULTIPLIER;
             }
             var monster = this._createMonster(fixedMonster.x, fixedMonster.y, chaser, baseHealth, hpMult, demonType, behaviorType);
@@ -261,12 +335,14 @@
             if (fixedMonster.stats && fixedMonster.stats.speedMultiplier) {
                 monster.speedMultiplier = fixedMonster.stats.speedMultiplier;
             }
+            if (fixedMonster.stats && fixedMonster.stats.sizeMultiplier) {
+                monster.width = Math.round(monster.width * fixedMonster.stats.sizeMultiplier);
+                monster.height = Math.round(monster.height * fixedMonster.stats.sizeMultiplier);
+            }
             if (fixedMonster.isBoss) {
                 monster.isBoss = true;
-                monster.width = Math.round(monster.width * 1.5);
-                monster.height = Math.round(monster.height * 1.5);
-                monster.health = Math.round(monster.health * 1.5);
-                monster.maxHealth = monster.health;
+                monster.bossLabel = fixedMonster.label || (monster.demonType + ' Guard');
+                monster.bonusXp = Constants.BOSS_XP_BONUS;
             }
             monster.guardRadius = Math.max(
                 Constants.GUARD_RADIUS_MULTIPLIER * Math.max(monster.width, monster.height),
@@ -353,14 +429,31 @@
             return false;
         }
 
+        _awardXp(player, amount, attackerPlayerCode) {
+            if (!player || !amount) return;
+            player.xp = (player.xp || 0) + amount;
+            var xpReqs = LevelConfig.levelXPRequirements;
+            var nextLevelIndex = player.level;
+            if (nextLevelIndex < xpReqs.length && player.xp >= xpReqs[nextLevelIndex]) {
+                player.level = nextLevelIndex + 1;
+                player.maxHealth = 50 + player.level * 50;
+                player.health = player.maxHealth;
+                console.log('Player ' + attackerPlayerCode + ' reached level ' + player.level + '!');
+            }
+        }
+
         _handleMonsterDeath(monsterIndex, monsterId, attackerPlayerCode) {
             var gameState = this.gameState;
             var monster = gameState.monsters[monsterIndex];
             var deathX = monster.x;
             var deathY = monster.y;
+            var isBoss = !!monster.isBoss;
+            var bossBonusXp = isBoss ? (monster.bonusXp || Constants.BOSS_XP_BONUS) : 0;
 
             gameState.monsters.splice(monsterIndex, 1);
-            gameState.monstersKilled = (gameState.monstersKilled || 0) + 1;
+            if (!isBoss) {
+                gameState.monstersKilled = (gameState.monstersKilled || 0) + 1;
+            }
 
             if (gameState.monstersKilled >= (gameState.monstersToKill || 999)) {
                 this.io.emit('levelProgress', { killed: gameState.monstersKilled, required: gameState.monstersToKill });
@@ -369,18 +462,18 @@
             // Award XP
             var player = gameState.players[attackerPlayerCode];
             if (player) {
-                player.xp = (player.xp || 0) + 10;
-                var xpReqs = LevelConfig.levelXPRequirements;
-                var nextLevelIndex = player.level;
-                if (nextLevelIndex < xpReqs.length && player.xp >= xpReqs[nextLevelIndex]) {
-                    player.level = nextLevelIndex + 1;
-                    player.maxHealth = 50 + player.level * 50;
-                    player.health = player.maxHealth;
-                    console.log('Player ' + attackerPlayerCode + ' reached level ' + player.level + '!');
-                }
+                this._awardXp(player, 10 + bossBonusXp, attackerPlayerCode);
             }
 
-            this.io.emit('monsterKilled', { monsterId: monsterId, killer: attackerPlayerCode, x: deathX, y: deathY });
+            this.io.emit('monsterKilled', {
+                monsterId: monsterId,
+                killer: attackerPlayerCode,
+                x: deathX,
+                y: deathY,
+                isBoss: isBoss,
+                bossLabel: monster.bossLabel || null,
+                bonusXp: bossBonusXp
+            });
 
             if (this.collectibleManager) {
                 var dropResult = this.collectibleManager.rollMonsterDrop(deathX, deathY);

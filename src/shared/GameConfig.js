@@ -59,7 +59,7 @@ const PRESETS = {
       healingSpawnRate: 1.0,
       maxMonsters: 1.0
     },
-    meleeHitProbabilityNoAnswer: 0.1  // 10% chance to hit without answering quiz
+    meleeHitProbabilityNoAnswer: 0.0  // Must answer quiz to hit in normal mode
   },
   hard: {
     name: 'Hard',
@@ -262,7 +262,7 @@ function createFromCustomBalance(balance, customQuizSettings, levelOverrides, ex
     multipliers: m,
     monsterHealthMultiplier: m.monsterHealth,
     quizSettings: quizSettings,
-    meleeHitProbabilityNoAnswer: 0.1  // Default for custom: 10% chance
+    meleeHitProbabilityNoAnswer: 0.0  // Default custom balance matches normal mode quiz discipline
   };
 
   if (extraOptions && typeof extraOptions === 'object') {

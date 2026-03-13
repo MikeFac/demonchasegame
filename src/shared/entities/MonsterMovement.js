@@ -20,7 +20,7 @@
 
             for (var i = 0; i < monsters.length; i++) {
                 var monster = monsters[i];
-                var speed = MonsterMovement._applySlowAura(monster, baseSpeed, gameState);
+                var speed = MonsterMovement._applySlowAura(monster, baseSpeed * (monster.speedMultiplier || 1.0), gameState);
                 MonsterMovement._moveMonster(monster, speed, gameState, wallGrid);
                 MonsterMovement._updateHealthBar(monster);
             }
@@ -81,7 +81,7 @@
             var dashSpeed = speed * Constants.DASH_SPEED_MULT;
             var newX = monster.x + (dx / distance) * dashSpeed;
             var newY = monster.y + (dy / distance) * dashSpeed;
-            if (!Physics.isOverlapping(newX, newY, Constants.MONSTER_WIDTH, Constants.MONSTER_HEIGHT, gameState, monster.id, wallGrid)) {
+            if (!Physics.isOverlapping(newX, newY, monster.width || Constants.MONSTER_WIDTH, monster.height || Constants.MONSTER_HEIGHT, gameState, monster.id, wallGrid)) {
                 monster.x = newX;
                 monster.y = newY;
             }
@@ -98,7 +98,7 @@
             }
             var newX = monster.x + Math.cos(moveAngle) * speed;
             var newY = monster.y + Math.sin(moveAngle) * speed;
-            if (!Physics.isOverlapping(newX, newY, Constants.MONSTER_WIDTH, Constants.MONSTER_HEIGHT, gameState, monster.id, wallGrid)) {
+            if (!Physics.isOverlapping(newX, newY, monster.width || Constants.MONSTER_WIDTH, monster.height || Constants.MONSTER_HEIGHT, gameState, monster.id, wallGrid)) {
                 monster.x = newX;
                 monster.y = newY;
             }
@@ -147,7 +147,7 @@
 
             var newX = monster.x + Math.cos(moveAngle) * speed;
             var newY = monster.y + Math.sin(moveAngle) * speed;
-            if (!Physics.isOverlapping(newX, newY, Constants.MONSTER_WIDTH, Constants.MONSTER_HEIGHT, gameState, monster.id, wallGrid)) {
+            if (!Physics.isOverlapping(newX, newY, monster.width || Constants.MONSTER_WIDTH, monster.height || Constants.MONSTER_HEIGHT, gameState, monster.id, wallGrid)) {
                 monster.x = newX;
                 monster.y = newY;
             }
@@ -176,7 +176,7 @@
                 return;
             }
 
-            if (!Physics.isOverlapping(newX, newY, Constants.MONSTER_WIDTH, Constants.MONSTER_HEIGHT, gameState, monster.id, wallGrid)) {
+            if (!Physics.isOverlapping(newX, newY, monster.width || Constants.MONSTER_WIDTH, monster.height || Constants.MONSTER_HEIGHT, gameState, monster.id, wallGrid)) {
                 monster.x = newX;
                 monster.y = newY;
                 monster.walkingDistance -= speed;
@@ -205,7 +205,7 @@
             var newX = monster.x + Math.cos(walkAngle) * speed;
             var newY = monster.y + Math.sin(walkAngle) * speed;
 
-            if (!Physics.isOverlapping(newX, newY, Constants.MONSTER_WIDTH, Constants.MONSTER_HEIGHT, gameState, monster.id, wallGrid)) {
+            if (!Physics.isOverlapping(newX, newY, monster.width || Constants.MONSTER_WIDTH, monster.height || Constants.MONSTER_HEIGHT, gameState, monster.id, wallGrid)) {
                 monster.x = newX;
                 monster.y = newY;
                 monster.walkingDistance -= speed;

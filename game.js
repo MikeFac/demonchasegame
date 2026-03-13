@@ -548,7 +548,7 @@ let menuOpen = false;
 
 // Multiplayer state
 let isSoloGame = true; // Updated from server gameConfig
-let meleeHitProbabilityNoAnswer = 0.1; // Probability to hit in melee without answering quiz (default: Normal 10%)
+let meleeHitProbabilityNoAnswer = 0.0; // Default normal-mode behavior: no free melee hits without a correct answer
 
 // Mission system state
 let overlandRenderer = null;
@@ -600,6 +600,12 @@ const COMBAT_HINT_TRIGGER_HITS = 2;
 const COMBAT_HINT_DURATION = 2200;
 const COMBAT_HINT_COOLDOWN = 25000;
 const COMBAT_HINT_ENCOUNTER_RESET_MS = 12000;
+
+function getCombatDistanceForMonster(monster) {
+    const monsterWidth = monster && typeof monster.width === 'number' ? monster.width : Constants.MONSTER_WIDTH;
+    const paddedBodyRange = (player.width / 2) + (monsterWidth / 2) + 6;
+    return Math.max(COMBAT_DISTANCE, paddedBodyRange);
+}
 
 const DEMON_TYPES = {
     Fear: `${scriptDirectory}/images/monsters/fear_demon.png`,
@@ -1036,6 +1042,10 @@ function resetGameState() {
     customLevelData = null;
     customMonsterHealthMultiplier = 1.0;
     urlConfig = null;
+    meleeHitProbabilityNoAnswer = 0.0;
+    window.funModeNoQuizPenalty = false;
+    window.funModeBonusHealth = 0;
+    window.funModeBonusAmmo = 0;
 
     // Camera
     camera = { x: 0, y: 0 };
@@ -1822,7 +1832,7 @@ async function init() {
                     console.error('Failed to load player sprite sheet');
                 };
             },
-            onMonsterKilled: ({ monsterId, x, y }) => {
+            onMonsterKilled: ({ monsterId, x, y, isBoss, bossLabel, bonusXp }) => {
                 if (window.Analytics) {
                     Analytics.trackMonsterKilled(gameState.gameLevel);
                     Analytics.updateHeartbeat(gameState.gameLevel, (gameState.monstersKilled || 0) + 1);
@@ -1859,6 +1869,21 @@ async function init() {
 
                 demonDies.play();
                 console.log(`Monster ${monsterId} was killed at (${x}, ${y})`);
+
+                if (isBoss) {
+                    flashMessages.push({
+                        text: `${bossLabel || 'Boss'} Defeated +${bonusXp || 0} XP`,
+                        color: '#ffdc73',
+                        x: canvas.width / 2,
+                        y: canvas.height / 2 - 90,
+                        startTime: Date.now(),
+                        duration: 3000,
+                        fontSize: 28,
+                        centered: true
+                    });
+                    screenShake = { x: Math.random() * 12 - 6, y: Math.random() * 12 - 6 };
+                    setTimeout(() => { screenShake = { x: 0, y: 0 }; }, 400);
+                }
 
                 // Spawn death particle animation
                 if (particleBurstImg && particleBurstImg.complete) {
@@ -2622,7 +2647,7 @@ async function init() {
                         const distToMonster = Math.sqrt(
                             Math.pow(m.x - player.x, 2) + Math.pow(m.y - player.y, 2)
                         );
-                        if (distToMonster >= COMBAT_DISTANCE) {
+                        if (distToMonster >= getCombatDistanceForMonster(m)) {
                             network.sendShoot({ x: worldX, y: worldY });
                         }
                         return true; // Handled (prevent movement)
@@ -3582,7 +3607,7 @@ function gameLoop(generation) {
                 const dy = lastAttackedMonster.y - player.y;
                 const distance = Math.sqrt(dx * dx + dy * dy);
                 
-                if (distance < COMBAT_DISTANCE) {
+                if (distance < getCombatDistanceForMonster(lastAttackedMonster)) {
                     const enemyText = `Enemy: ${lastAttackedMonster.demonType} ${lastAttackedMonster.health}`;
                     ctx.fillText(enemyText, ctx.measureText(`Health: ${player.health}  XP: ${player.xp}  Level: ${player.level}`).width + 14, QUALITY_LINE_HEIGHT - 7);
                 }
@@ -3854,19 +3879,16 @@ function gameLoop(generation) {
             let dy = monster.y - player.y;
             let distance = Math.sqrt(dx * dx + dy * dy);
 
-            if (distance < COMBAT_DISTANCE && (!player.state || player.state === 'alive')) {
+            if (distance < getCombatDistanceForMonster(monster) && (!player.state || player.state === 'alive')) {
                 // Handle combat (ghosts cannot fight)
                 if (currentTime - lastAttackTime > ATTACK_RATE) {
                     lastAttackTime = currentTime;
                     
-                    // Determine if attack hits
-                    let attackHits = false;
-                    if (isAnswerCorrect === true) {
-                        attackHits = true;  // Always hit if answered correctly
-                    } else if (meleeHitProbabilityNoAnswer > 0 && Math.random() < meleeHitProbabilityNoAnswer) {
-                        attackHits = true;  // Probability-based hit without answer
+                    let attackHits = isAnswerCorrect === true;
+                    if (!attackHits && window.funModeNoQuizPenalty && meleeHitProbabilityNoAnswer > 0) {
+                        attackHits = Math.random() < meleeHitProbabilityNoAnswer;
                     }
-                    
+
                     if (attackHits) {
                         attackSound.play(); // Play the attack sound effect
                         monster.isAttacked = true; // Set isAttacked to true when the monster is attacked
