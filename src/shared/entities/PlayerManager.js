@@ -144,10 +144,8 @@
                     var index = gameState.monsters.indexOf(targetMonster);
                     gameState.monsters.splice(index, 1);
 
-                    if (!isBoss) {
-                        if (!gameState.monstersKilled) gameState.monstersKilled = 0;
-                        gameState.monstersKilled++;
-                    }
+                    if (!gameState.monstersKilled) gameState.monstersKilled = 0;
+                    gameState.monstersKilled++;
 
                     player.xp += 10 + bossBonusXp;
 

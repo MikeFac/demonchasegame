@@ -294,20 +294,47 @@
             return monster;
         }
 
+        _findNearbyFixedSpawnPosition(targetX, targetY, width, height) {
+            var step = Constants.CELL_SIZE || 50;
+            var maxRadius = step * 8;
+            var isOpen = (x, y) => !Physics.isOverlapping(x, y, width, height, this.gameState, null, this.wallGrid);
+
+            if (isOpen(targetX, targetY)) {
+                return { x: targetX, y: targetY };
+            }
+
+            for (var radius = step; radius <= maxRadius; radius += step) {
+                for (var offsetX = -radius; offsetX <= radius; offsetX += step) {
+                    for (var offsetY = -radius; offsetY <= radius; offsetY += step) {
+                        if (Math.abs(offsetX) !== radius && Math.abs(offsetY) !== radius) continue;
+
+                        var candidateX = Math.max(width / 2, Math.min(Constants.WORLD_WIDTH - width / 2, targetX + offsetX));
+                        var candidateY = Math.max(height / 2, Math.min(Constants.WORLD_HEIGHT - height / 2, targetY + offsetY));
+
+                        if (isOpen(candidateX, candidateY)) {
+                            return { x: candidateX, y: candidateY };
+                        }
+                    }
+                }
+            }
+
+            return null;
+        }
+
         _spawnFixedMonster(fixedMonster) {
             if (this.gameState.monsters.length >= this.levelData[this.gameState.gameLevel].maxMonsters) {
                 return null;
             }
             var sizeMultiplier = (fixedMonster.stats && fixedMonster.stats.sizeMultiplier) || 1.0;
-            if (Physics.isOverlapping(
+            var spawnWidth = Math.round(Constants.MONSTER_WIDTH * sizeMultiplier);
+            var spawnHeight = Math.round(Constants.MONSTER_HEIGHT * sizeMultiplier);
+            var resolvedSpawn = this._findNearbyFixedSpawnPosition(
                 fixedMonster.x,
                 fixedMonster.y,
-                Math.round(Constants.MONSTER_WIDTH * sizeMultiplier),
-                Math.round(Constants.MONSTER_HEIGHT * sizeMultiplier),
-                this.gameState,
-                null,
-                this.wallGrid
-            )) {
+                spawnWidth,
+                spawnHeight
+            );
+            if (!resolvedSpawn) {
                 return null;
             }
 
@@ -319,7 +346,7 @@
             if (behaviorType === 'guard' && !fixedMonster.isBoss) {
                 hpMult *= Constants.GUARD_HP_MULTIPLIER;
             }
-            var monster = this._createMonster(fixedMonster.x, fixedMonster.y, chaser, baseHealth, hpMult, demonType, behaviorType);
+            var monster = this._createMonster(resolvedSpawn.x, resolvedSpawn.y, chaser, baseHealth, hpMult, demonType, behaviorType);
 
             monster.behaviorType = behaviorType;
             monster.fixedSpawn = true;
@@ -451,9 +478,8 @@
             var bossBonusXp = isBoss ? (monster.bonusXp || Constants.BOSS_XP_BONUS) : 0;
 
             gameState.monsters.splice(monsterIndex, 1);
-            if (!isBoss) {
-                gameState.monstersKilled = (gameState.monstersKilled || 0) + 1;
-            }
+            // Bosses should still advance kill-based objectives and level progress.
+            gameState.monstersKilled = (gameState.monstersKilled || 0) + 1;
 
             if (gameState.monstersKilled >= (gameState.monstersToKill || 999)) {
                 this.io.emit('levelProgress', { killed: gameState.monstersKilled, required: gameState.monstersToKill });
