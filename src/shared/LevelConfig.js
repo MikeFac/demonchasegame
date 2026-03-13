@@ -107,12 +107,12 @@ const LevelConfig = {
                 demonType: 'Shame',
                 label: 'Shame Guard'
             },
-            monsterDamageFactor: 1.5,
+            monsterDamageFactor: 1.35,
             playerSpeed: 6,
-            monsterSpeed: 7,
-            spawnRate: 8400, // 20% slower spawn pace than previous 7s interval
-            maxMonsters: 26, // 10% up from the reduced 24, still below the old 30
-            monstersToKill: 21, // Reduced clear target to make the level shorter overall
+            monsterSpeed: 6,
+            spawnRate: 9500, // Slightly slower pace to soften the jump from level 1
+            maxMonsters: 24,
+            monstersToKill: 18,
             terrainTheme: 'earth'
         },
         3: {
