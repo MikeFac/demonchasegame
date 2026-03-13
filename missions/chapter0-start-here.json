@@ -12,7 +12,7 @@
       "monsterDamageFactor": 0.65,
       "monsterSpeed": 4,
       "playerSpeed": 5,
-      "maxMonsters": 4,
+      "maxMonsters": 3,
       "monstersToKill": 2,
       "spawnRate": 999,
       "xpMultiplier": 0.75,
@@ -64,10 +64,11 @@
           "y": 1880,
           "demonType": "Doubt",
           "behavior": {
-            "type": "chaser"
+            "type": "guard",
+            "patrolRadius": 170
           },
           "stats": {
-            "healthMultiplier": 0.95,
+            "healthMultiplier": 1.2,
             "damageMultiplier": 0.95,
             "speedMultiplier": 0.9
           },
@@ -75,25 +76,7 @@
             "type": "immediate",
             "value": 0
           },
-          "label": "South Doubt"
-        },
-        {
-          "x": 1980,
-          "y": 1140,
-          "demonType": "Fear",
-          "behavior": {
-            "type": "chaser"
-          },
-          "stats": {
-            "healthMultiplier": 1.0,
-            "damageMultiplier": 1.0,
-            "speedMultiplier": 0.95
-          },
-          "spawnTrigger": {
-            "type": "immediate",
-            "value": 0
-          },
-          "label": "Outer Fear"
+          "label": "Doubt Guard"
         }
       ]
     }
