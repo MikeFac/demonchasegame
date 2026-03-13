@@ -742,6 +742,312 @@ Build the smallest useful version first:
 
 That is enough to test whether an authored first session improves retention before building a larger tutorial campaign.
 
+## Phase 9: Guided Onboarding Mission V2
+
+The first pass onboarding mission solves entry chaos, but it still asks the player to infer too much.
+
+The next version should be more explicit.
+
+### V2 goal
+
+Make the mission teach the loop without relying on player guesswork.
+
+The player should clearly understand:
+
+- where their health and progress are
+- that quiz answers power combat
+- where to go to learn verses
+- that some demons should be planned around, not rushed
+
+## V2 design rules
+
+- keep the mission short
+- do not add long text blocks
+- each prompt should explain one action only
+- use arrows and highlights more than extra words
+- do not pause the player constantly with full-screen modals
+- the second encounter should teach planning, not panic
+
+## V2 mission structure
+
+### Encounter 1: Fast Understanding
+
+Purpose:
+
+- teach movement
+- teach answer-to-attack loop
+- deliver a quick win
+
+Recommended enemy:
+
+- one weak chaser
+
+Recommended guidance:
+
+- short prompt above player:
+  - `Move to begin`
+- then:
+  - `Tap the right answer`
+
+UI help:
+
+- pulse/highlight the answer area
+- optional arrow from center screen down toward the answer buttons
+
+Success outcome:
+
+- first demon dies quickly
+- player sees an obvious win state fast
+
+### Encounter 2: Planned Victory
+
+Purpose:
+
+- teach that harder demons should be handled through learning
+- introduce a more intentional loop
+
+Recommended enemy:
+
+- one tougher guard-style mini-boss
+
+Why guard behavior is right here:
+
+- it gives the player time to think
+- it reduces panic during the teaching moment
+- it creates a clearer “retreat, learn, return” structure
+
+Recommended traits:
+
+- noticeably more health than the first demon
+- larger sprite or clear label
+- slower than a normal boss
+- territorial / guard behavior
+- not required to chase the player across the map
+
+Suggested label:
+
+- `Fear Guard`
+- or category-specific variant if needed
+
+## Guided prompt sequence
+
+### Prompt 1: HUD orientation
+
+Timing:
+
+- immediately on mission start or after first movement
+
+Text:
+
+- `This is your health`
+- `Defeat demons to finish the mission`
+
+UI treatment:
+
+- short arrow to the top bar
+- pulse highlight around the health / ammo / demons-to-defeat row
+
+Goal:
+
+- player understands that the top HUD matters
+
+### Prompt 2: First combat instruction
+
+Timing:
+
+- when first demon becomes active or visible
+
+Text:
+
+- `Answer correctly to fight back`
+
+UI treatment:
+
+- arrow or pulse on answer buttons
+- keep duration short
+
+Goal:
+
+- connect quiz and combat immediately
+
+### Prompt 3: First win reinforcement
+
+Timing:
+
+- after first demon dies
+
+Text:
+
+- `Correct answers make you stronger`
+
+UI treatment:
+
+- no modal
+- small celebratory overlay or toast in the safe lower-middle band
+
+Goal:
+
+- reinforce cause and effect
+
+### Prompt 4: Learn location explanation
+
+Timing:
+
+- when the second demon or mini-boss is introduced
+
+Text:
+
+- `This demon is harder`
+- `Learn verses here to beat it`
+
+UI treatment:
+
+- arrow to `Learn Verses Here`
+- pulse highlight on that button
+
+Goal:
+
+- remove ambiguity about where the learning action lives
+
+### Prompt 5: Retreat message
+
+Timing:
+
+- when player takes pressure from the second demon
+
+Text:
+
+- `Flee and Learn {category}`
+
+UI treatment:
+
+- in-world message above player
+- same style as the existing combat hint
+
+Goal:
+
+- teach the intended response under pressure
+
+### Prompt 6: Return message
+
+Timing:
+
+- after the short learn step is completed
+
+Text:
+
+- `Now return and fight`
+- or
+- `You are stronger now`
+
+UI treatment:
+
+- short center-screen message
+- optional brief arrow back toward the demon if readable
+
+Goal:
+
+- complete the loop cleanly
+
+## Arrow and highlight spec
+
+Arrows and highlights should be lightweight and temporary.
+
+### Elements to support
+
+1. `Top HUD`
+- highlight bar area
+- optional short arrow from center-top toward it
+
+2. `Answer buttons`
+- pulse border or glow around answer region
+- optional downward arrow from verse/question area
+
+3. `Learn Verses Here`
+- pulse the button
+- arrow from demon or center-screen cue toward the button
+
+4. `Healing pickup`
+- optional only if pickup understanding is still weak
+
+### Visual rules
+
+- use one accent color consistently
+- keep arrows large and obvious
+- animate with pulse or bounce
+- auto-dismiss once the required action is completed
+
+### Interaction rules
+
+- do not leave arrows on screen after the player understands the step
+- do not stack multiple arrows at once
+- only one primary teaching cue should be active at a time
+
+## Mini-boss spec for onboarding
+
+The second demon should be stronger than the first, but not oppressive.
+
+### Behavior
+
+- `guard`
+
+### Purpose
+
+- create a visible obstacle
+- encourage learning before brute force
+- give the player a stable target for the “return and beat it” moment
+
+### Tuning
+
+- more health than the first demon
+- slightly larger body
+- enough damage to feel threatening
+- not fast enough to create panic
+- no permanent immobilization or unfair trap loop
+
+### Success condition
+
+- mission can still complete at `2` kills total
+- the mini-boss should strongly imply “beat me with learning”
+
+## Implementation approach
+
+This should still avoid deep rewrites to core gameplay.
+
+### Preferred implementation
+
+1. extend the onboarding mission data
+- define the second demon as a stronger fixed `guard`
+
+2. add a small onboarding mission UI state
+- keyed to `chapter0/intro-01`
+- only active inside the onboarding mission
+
+3. drive cues from simple triggers
+- mission started
+- first movement
+- first demon visible
+- first correct answer
+- first demon death
+- second demon visible
+- learn button opened
+- learn step completed
+
+4. render arrows/highlights in UI layer
+- do not mix this deeply into combat logic
+
+## Minimal V2 build
+
+If implemented in the smallest useful way, V2 should include:
+
+- one short HUD explanation
+- one answer-area highlight
+- one `Learn Verses Here` arrow/highlight
+- second demon converted into a guard-style mini-boss
+- one brief “return and fight” cue after learning
+
+That is enough to make the onboarding mission far more explicit without turning it into a long tutorial.
+
 ## Phase 7: Level Bosses As Readable Goals
 
 Each level should include one clearly stronger demon that acts as an optional focal encounter.

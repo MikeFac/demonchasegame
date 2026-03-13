@@ -438,3 +438,23 @@ Original prompt: Check the implementation of docs/multi-version-songs-implementa
 - Follow-up TODO:
   - add one or two mission-specific onboarding prompts if the current first-pass mission still feels too implicit
   - consider a short post-mission return hook that sends the player either to Missions or back to normal solo with clearer "come back" framing
+
+2026-03-13:
+- Added onboarding mission v2 first slice:
+  - `First Victory` second encounter now includes a guard-style mini-boss (`Fear Guard`) in `missions/chapter0-start-here.json`
+  - added mission-specific onboarding guide state in `game.js`
+  - added canvas-rendered onboarding highlights/arrows in `src/client/Renderer.js`
+- Current onboarding guide flow:
+  - initial HUD explainer
+  - answer-area guidance after player movement
+  - `Learn Verses Here` guidance after first kill while the guard boss remains alive
+- Verification:
+  - `node --check game.js`
+  - `node --check src/client/Renderer.js`
+  - mission JSON parse check for `missions/chapter0-start-here.json`
+  - browser smoke screenshots:
+    - `output/web-game/onboarding-v2-hud/shot-0.png`
+    - `output/web-game/onboarding-v2-answer/shot-0.png`
+    - `output/web-game/onboarding-v2-answer-2/shot-0.png`
+- Follow-up TODO:
+  - the existing combat hint can visually overlap with the new onboarding HUD prompt at mission start; consider suppressing the combat hint during the opening onboarding cue window

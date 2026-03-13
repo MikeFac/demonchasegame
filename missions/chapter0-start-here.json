@@ -43,18 +43,21 @@
           "y": 1275,
           "demonType": "Fear",
           "behavior": {
-            "type": "chaser"
+            "type": "guard",
+            "patrolRadius": 180
           },
           "stats": {
-            "healthMultiplier": 0.9,
-            "damageMultiplier": 0.9,
-            "speedMultiplier": 0.9
+            "healthMultiplier": 2.2,
+            "damageMultiplier": 1.2,
+            "speedMultiplier": 0.85,
+            "sizeMultiplier": 1.25
           },
           "spawnTrigger": {
             "type": "immediate",
             "value": 0
           },
-          "label": "North Fear"
+          "isBoss": true,
+          "label": "Fear Guard"
         },
         {
           "x": 1500,

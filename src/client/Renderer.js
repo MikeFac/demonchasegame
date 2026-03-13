@@ -74,6 +74,9 @@ class Renderer {
         // Draw HUD (Health, Level, etc.)
         this.drawHUD(player, gameState);
 
+        // Draw onboarding guidance for the authored start mission.
+        this.drawOnboardingGuide(uiState);
+
         // Draw contextual combat hint above the player.
         this.drawCombatHint(player, camera, uiState.combatHint);
 
@@ -348,6 +351,90 @@ class Renderer {
         this.ctx.textAlign = 'right';
         this.ctx.fillText(progressText, progressRightEdge, this.QUALITY_LINE_HEIGHT - 7);
         this.ctx.textAlign = 'left';
+    }
+
+    drawOnboardingGuide(uiState) {
+        const guide = uiState && uiState.onboardingGuide;
+        if (!guide) return;
+
+        const pulse = 0.55 + 0.45 * Math.sin(Date.now() / 220);
+        let targetRect = null;
+        let box = null;
+
+        if (guide.target === 'hud') {
+            targetRect = { x: 5, y: 4, width: this.canvas.width - 10, height: this.QUALITY_LINE_HEIGHT - 8 };
+            box = { x: 20, y: this.QUALITY_LINE_HEIGHT + 10, width: this.canvas.width - 40, height: 56 };
+        } else if (guide.target === 'answers') {
+            targetRect = { x: 8, y: this.canvas.height - this.ANSWER_SECTION_HEIGHT - 8, width: this.canvas.width - 16, height: this.ANSWER_SECTION_HEIGHT + 2 };
+            box = { x: 24, y: this.canvas.height - this.ANSWER_SECTION_HEIGHT - 76, width: this.canvas.width - 48, height: 56 };
+        } else if (guide.target === 'learn') {
+            const lb = UILayout.learnVersesButton;
+            const btnX = (this.canvas.width - lb.width) / 2;
+            targetRect = { x: btnX - 4, y: lb.y - 3, width: lb.width + 8, height: lb.height + 6 };
+            box = { x: 24, y: this.QUALITY_LINE_HEIGHT + 14, width: this.canvas.width - 48, height: 56 };
+        }
+
+        if (!targetRect || !box) return;
+
+        this.ctx.save();
+
+        this.ctx.strokeStyle = `rgba(255, 214, 102, ${0.75 + pulse * 0.2})`;
+        this.ctx.lineWidth = 3;
+        this.ctx.strokeRect(targetRect.x, targetRect.y, targetRect.width, targetRect.height);
+        this.ctx.fillStyle = `rgba(255, 214, 102, ${0.08 + pulse * 0.06})`;
+        this.ctx.fillRect(targetRect.x, targetRect.y, targetRect.width, targetRect.height);
+
+        this.drawGuideArrow(
+            box.x + box.width / 2,
+            guide.target === 'answers' ? box.y + box.height : box.y,
+            targetRect.x + targetRect.width / 2,
+            guide.target === 'answers' ? targetRect.y + 2 : targetRect.y + targetRect.height
+        );
+
+        this.ctx.fillStyle = 'rgba(9, 12, 20, 0.92)';
+        this.ctx.strokeStyle = '#ffd666';
+        this.ctx.lineWidth = 2;
+        this.ctx.fillRect(box.x, box.y, box.width, box.height);
+        this.ctx.strokeRect(box.x, box.y, box.width, box.height);
+
+        this.ctx.fillStyle = '#ffffff';
+        this.ctx.font = 'bold 18px Arial';
+        this.ctx.textAlign = 'center';
+        this.ctx.fillText(guide.title, box.x + box.width / 2, box.y + 22);
+        this.ctx.font = '14px Arial';
+        this.ctx.fillStyle = '#d6deff';
+        this.ctx.fillText(guide.text, box.x + box.width / 2, box.y + 42);
+        this.ctx.textAlign = 'left';
+
+        this.ctx.restore();
+    }
+
+    drawGuideArrow(fromX, fromY, toX, toY) {
+        const angle = Math.atan2(toY - fromY, toX - fromX);
+        const headLength = 12;
+
+        this.ctx.save();
+        this.ctx.strokeStyle = '#ffd666';
+        this.ctx.lineWidth = 3;
+        this.ctx.beginPath();
+        this.ctx.moveTo(fromX, fromY);
+        this.ctx.lineTo(toX, toY);
+        this.ctx.stroke();
+
+        this.ctx.fillStyle = '#ffd666';
+        this.ctx.beginPath();
+        this.ctx.moveTo(toX, toY);
+        this.ctx.lineTo(
+            toX - headLength * Math.cos(angle - Math.PI / 6),
+            toY - headLength * Math.sin(angle - Math.PI / 6)
+        );
+        this.ctx.lineTo(
+            toX - headLength * Math.cos(angle + Math.PI / 6),
+            toY - headLength * Math.sin(angle + Math.PI / 6)
+        );
+        this.ctx.closePath();
+        this.ctx.fill();
+        this.ctx.restore();
     }
 
     drawDailyChallenge(canvas, dailyChallengeProgress, dailyChallengeGoal, dailyChallengeCompleted) {

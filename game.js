@@ -564,6 +564,8 @@ window.currentMission = null;
 const START_HERE_WORLD_ID = 'chapter0';
 const START_HERE_MISSION_ID = 'intro-01';
 const START_HERE_SEEN_KEY = 'hasSeenStartHereMission';
+const START_HERE_MOVE_DISTANCE = 70;
+let onboardingGuideState = null;
 
 // Verse Test shield setting (Option A/B)
 let verseTestShielded = localStorage.getItem('verseTestShielded') === 'true';
@@ -912,6 +914,67 @@ function getFreezeAuraMoveFactor(player, monsters, now) {
     return Math.max(Constants.FREEZE_AURA_SLOW, Constants.FREEZE_AURA_MIN_SPEED_FACTOR);
 }
 
+function isStartHereMission(mission) {
+    return !!(mission && mission.worldId === START_HERE_WORLD_ID && mission.id === START_HERE_MISSION_ID);
+}
+
+function resetOnboardingGuideState() {
+    onboardingGuideState = null;
+}
+
+function ensureOnboardingGuideState(player) {
+    if (!isStartHereMission(currentMission) || !player) {
+        onboardingGuideState = null;
+        return null;
+    }
+    if (!onboardingGuideState || onboardingGuideState.missionId !== currentMission.id) {
+        onboardingGuideState = {
+            missionId: currentMission.id,
+            startX: player.x,
+            startY: player.y,
+            hasMoved: false,
+            learnOpened: false
+        };
+    }
+    return onboardingGuideState;
+}
+
+function buildStartHereGuide(player, monsters) {
+    const state = ensureOnboardingGuideState(player);
+    if (!state || window.gameMode !== 'game') return null;
+
+    const movedDistance = Math.hypot((player.x || 0) - state.startX, (player.y || 0) - state.startY);
+    if (movedDistance >= START_HERE_MOVE_DISTANCE) {
+        state.hasMoved = true;
+    }
+
+    if ((gameState.monstersKilled || 0) <= 0) {
+        if (!state.hasMoved) {
+            return {
+                target: 'hud',
+                title: 'This is your health',
+                text: 'Defeat 2 demons to finish this mission.'
+            };
+        }
+        return {
+            target: 'answers',
+            title: 'Tap the right answer',
+            text: 'Correct answers power your attack.'
+        };
+    }
+
+    const guardBossAlive = (monsters || []).some((monster) => monster && monster.isBoss && monster.health > 0);
+    if (guardBossAlive && !state.learnOpened) {
+        return {
+            target: 'learn',
+            title: 'This demon is harder',
+            text: 'Learn verses here to beat the Fear Guard.'
+        };
+    }
+
+    return null;
+}
+
 function captureBaseContentState() {
     if (!baseOrganizedVerses && organizedVerses) {
         baseOrganizedVerses = organizedVerses;
@@ -1098,6 +1161,7 @@ function resetGameState() {
     screenShake = { x: 0, y: 0, intensity: 0, duration: 0 };
     clearCombatHint();
     resetCombatStruggleState();
+    resetOnboardingGuideState();
 
     // Inventory & buffs
     inventory = { sword: 0, belt: 0, helmet: 0, breastplate: 0, sandals: 0, shield: 0 };
@@ -2476,6 +2540,9 @@ async function init() {
                 menuOpen = false;
 
                 if (itemId === 'review') {
+                    if (isStartHereMission(currentMission) && onboardingGuideState) {
+                        onboardingGuideState.learnOpened = true;
+                    }
                     ReviewMode.saveGameState();
                     ReviewMode.startReviewMode({ returnTo: 'game' });
                 } else if (itemId === 'playPause') {
@@ -3459,6 +3526,7 @@ function gameLoop(generation) {
         const uiState = {
             vQuality: (currentQuiz && currentQuiz.contentCategory) ? currentQuiz.contentCategory : window.vQuality,
             currentCombatCategory: player ? player.currentCombatCategory : null,
+            onboardingGuide: buildStartHereGuide(player, monsters),
             combatHint,
             categoryPickerOpen,
             allCategories: QUALITIES,
