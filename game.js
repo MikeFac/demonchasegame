@@ -918,6 +918,10 @@ function isStartHereMission(mission) {
     return !!(mission && mission.worldId === START_HERE_WORLD_ID && mission.id === START_HERE_MISSION_ID);
 }
 
+function shouldShowIntroMissionPitch() {
+    return isStartHereMission(currentMission);
+}
+
 function resetOnboardingGuideState() {
     onboardingGuideState = null;
 }
@@ -2120,6 +2124,7 @@ async function init() {
                     versesLearned: versesLearned,
                     timePlayed: sessionDuration,
                     isMission: !!currentMission,
+                    showIntroMissionPitch: shouldShowIntroMissionPitch(),
                     isSoloGame: true  // offline/solo games always true; multiplayer uses server.js
                 };
                 console.log('[GAMEOVER] finalStats.isMission set to:', finalStats.isMission);
@@ -4117,10 +4122,14 @@ function gameLoop(generation) {
 
                                 const sessionDuration = Math.floor((Date.now() - sessionStartTime) / 1000);
                                 finalStats = {
+                                    result: 'defeat',
                                     level: gameState.gameLevel || 1,
                                     monstersKilled: gameState.monstersKilled || 0,
                                     versesLearned: versesLearned,
-                                    timePlayed: sessionDuration
+                                    timePlayed: sessionDuration,
+                                    isMission: !!currentMission,
+                                    showIntroMissionPitch: shouldShowIntroMissionPitch(),
+                                    isSoloGame: true
                                 };
                                 console.log("Game Over - Final Stats:", finalStats);
                             }

@@ -487,6 +487,11 @@ class Renderer {
         const isDefeat = finalStats.result === 'defeat';
         const isMultiplayer = !!finalStats.playerStats;
 
+        if (finalStats.showIntroMissionPitch) {
+            this.drawIntroMissionPitchModal(canvas, restartButtonRect);
+            return;
+        }
+
         // Full-screen semi-transparent overlay
         ctx.fillStyle = 'rgba(0, 0, 0, 0.85)';
         ctx.fillRect(0, 0, canvas.width, canvas.height);
@@ -596,6 +601,95 @@ class Renderer {
             buttonLabel = t('ui.tryAgain');
         }
         ctx.fillText(buttonLabel, canvas.width / 2, buttonY + 26);
+    }
+
+    drawIntroMissionPitchModal(canvas, restartButtonRect) {
+        const ctx = this.ctx;
+
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.88)';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        const modalWidth = Math.min(336, canvas.width - 24);
+        const modalHeight = Math.min(455, canvas.height - 28);
+        const modalX = (canvas.width - modalWidth) / 2;
+        const modalY = (canvas.height - modalHeight) / 2;
+
+        ctx.fillStyle = 'rgba(12, 16, 26, 0.96)';
+        ctx.fillRect(modalX, modalY, modalWidth, modalHeight);
+        ctx.strokeStyle = '#ffd666';
+        ctx.lineWidth = 3;
+        ctx.strokeRect(modalX, modalY, modalWidth, modalHeight);
+
+        ctx.textAlign = 'center';
+        ctx.fillStyle = '#ffd666';
+        ctx.font = 'bold 28px Arial';
+        ctx.fillText('VERSE BATTLES', canvas.width / 2, modalY + 38);
+
+        ctx.fillStyle = '#ffffff';
+        ctx.font = 'bold 15px Arial';
+        ctx.fillText('Build Scripture engagement that lasts.', canvas.width / 2, modalY + 62);
+
+        const bulletGroups = [
+            [
+                'Lets you create a group and see',
+                'verses your team learned.'
+            ],
+            [
+                'Features a powerful meditation app',
+                'for hearing and learning verses.'
+            ],
+            [
+                'Features quality devotions',
+                'on each verse.'
+            ],
+            [
+                'Has a multiplayer mode.'
+            ],
+            [
+                'Allows you to configure',
+                'difficulty and gameplay.'
+            ],
+            [
+                'Registered users may',
+                'design worlds.'
+            ]
+        ];
+
+        ctx.textAlign = 'left';
+        ctx.font = '15px Arial';
+        let lineY = modalY + 102;
+        bulletGroups.forEach((group) => {
+            ctx.fillStyle = '#ffd666';
+            ctx.fillText('- ', modalX + 18, lineY);
+            ctx.fillStyle = '#edf2ff';
+            ctx.fillText(group[0], modalX + 34, lineY);
+            if (group[1]) {
+                ctx.fillText(group[1], modalX + 34, lineY + 18);
+            }
+            lineY += group[1] ? 48 : 36;
+        });
+
+        const buttonWidth = 190;
+        const buttonHeight = 42;
+        const buttonX = (canvas.width - buttonWidth) / 2;
+        const buttonY = modalY + modalHeight - 58;
+
+        restartButtonRect.x = buttonX;
+        restartButtonRect.y = buttonY;
+        restartButtonRect.width = buttonWidth;
+        restartButtonRect.height = buttonHeight;
+
+        ctx.fillStyle = '#2f7f47';
+        ctx.fillRect(buttonX, buttonY, buttonWidth, buttonHeight);
+        ctx.strokeStyle = '#ffffff';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(buttonX, buttonY, buttonWidth, buttonHeight);
+
+        ctx.fillStyle = '#ffffff';
+        ctx.font = 'bold 16px Arial';
+        ctx.textAlign = 'center';
+        ctx.fillText('Press to Return', canvas.width / 2, buttonY + 27);
+        ctx.textAlign = 'left';
     }
 
     drawMessages(uiState) {
