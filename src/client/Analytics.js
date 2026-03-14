@@ -196,6 +196,25 @@
         track('review_mode_used', { verses_viewed: versesViewed });
     }
 
+    function trackOnboardingMissionStarted(missionId, missionName) {
+        track('onboarding_mission_started', {
+            mission_id: missionId,
+            mission_name: missionName || null
+        });
+    }
+
+    function trackOnboardingMissionStep(stepName, params) {
+        track('onboarding_mission_step', Object.assign({
+            step_name: stepName
+        }, params || {}));
+    }
+
+    function trackOnboardingMissionFinished(result, params) {
+        track('onboarding_mission_finished', Object.assign({
+            result: result
+        }, params || {}));
+    }
+
     function trackLobbyEnter() {
         track('lobby_enter', {});
     }
@@ -252,6 +271,9 @@
         trackMenuClick: trackMenuClick,
         trackOfflineToggle: trackOfflineToggle,
         trackReviewModeUsed: trackReviewModeUsed,
+        trackOnboardingMissionStarted: trackOnboardingMissionStarted,
+        trackOnboardingMissionStep: trackOnboardingMissionStep,
+        trackOnboardingMissionFinished: trackOnboardingMissionFinished,
         trackLobbyEnter: trackLobbyEnter,
         trackRoomCreated: trackRoomCreated,
         trackRoomJoined: trackRoomJoined,

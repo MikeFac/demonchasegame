@@ -966,7 +966,10 @@ function ensureOnboardingGuideState(player) {
             startX: player.x,
             startY: player.y,
             hasMoved: false,
+            moveTracked: false,
             learnOpened: false,
+            learnTracked: false,
+            firstKillTracked: false,
             moveTarget: buildMoveTarget(introTarget),
             moveTargetReached: false,
             bossMoveTarget: buildMoveTarget(bossTarget),
@@ -984,6 +987,12 @@ function buildStartHereGuide(player, monsters) {
     if (movedDistance >= START_HERE_MOVE_DISTANCE) {
         state.hasMoved = true;
     }
+    if (state.hasMoved && !state.moveTracked && window.Analytics) {
+        state.moveTracked = true;
+        Analytics.trackOnboardingMissionStep('move_completed', {
+            mission_id: currentMission.id
+        });
+    }
     if (state.moveTarget) {
         const moveTargetDistance = Math.hypot((player.x || 0) - state.moveTarget.x, (player.y || 0) - state.moveTarget.y);
         if (moveTargetDistance <= START_HERE_MOVE_DISTANCE) {
@@ -995,6 +1004,12 @@ function buildStartHereGuide(player, monsters) {
         if (bossMoveTargetDistance <= START_HERE_MOVE_DISTANCE) {
             state.bossMoveTargetReached = true;
         }
+    }
+    if (state.learnOpened && !state.learnTracked && window.Analytics) {
+        state.learnTracked = true;
+        Analytics.trackOnboardingMissionStep('learn_opened', {
+            mission_id: currentMission.id
+        });
     }
 
     if ((gameState.monstersKilled || 0) <= 0) {
@@ -2084,6 +2099,13 @@ async function init() {
                 if (window.Analytics) {
                     Analytics.trackMonsterKilled(gameState.gameLevel);
                     Analytics.updateHeartbeat(gameState.gameLevel, projectedKills);
+                    if (isStartHereMission(currentMission) && onboardingGuideState && !onboardingGuideState.firstKillTracked) {
+                        onboardingGuideState.firstKillTracked = true;
+                        Analytics.trackOnboardingMissionStep('first_kill', {
+                            mission_id: currentMission.id,
+                            boss_kill: !!isBoss
+                        });
+                    }
                 }
 
                 if (!firstGameTips.firstKill && isInOnboardingWindow()) {
@@ -3557,6 +3579,9 @@ async function startMission(worldId, missionId) {
         currentMissionConfig = missionClient.missionToGameConfig(mission);
         if (worldId === START_HERE_WORLD_ID && missionId === START_HERE_MISSION_ID) {
             localStorage.setItem(START_HERE_SEEN_KEY, 'true');
+            if (window.Analytics) {
+                Analytics.trackOnboardingMissionStarted(mission.id, mission.name);
+            }
         }
         if (mission.type === 'discipleship' && window.discipleshipMissionManager) {
             pendingMissionContentOverride = await window.discipleshipMissionManager.buildMissionOverride(mission);
@@ -3610,6 +3635,13 @@ function completeMission(stars) {
     const xpEarned = Math.floor(100 * (currentMission.xpMultiplier || 1.0) * stars / 3);
     if (currentMission.worldId === START_HERE_WORLD_ID && currentMission.id === START_HERE_MISSION_ID) {
         localStorage.setItem(START_HERE_SEEN_KEY, 'true');
+        if (window.Analytics) {
+            Analytics.trackOnboardingMissionFinished('complete', {
+                mission_id: currentMission.id,
+                stars: stars,
+                xp_earned: xpEarned
+            });
+        }
     }
     
     if (window.progressManager) {
@@ -4350,6 +4382,13 @@ function gameLoop(generation) {
                                     showIntroMissionPitch: shouldShowIntroMissionPitch(),
                                     isSoloGame: true
                                 };
+                                if (isStartHereMission(currentMission) && window.Analytics) {
+                                    Analytics.trackOnboardingMissionFinished('failed', {
+                                        mission_id: currentMission.id,
+                                        kills: gameState.monstersKilled || 0,
+                                        time_played: sessionDuration
+                                    });
+                                }
                                 console.log("Game Over - Final Stats:", finalStats);
                             }
                             // Multiplayer: server handles ghost state via playerDied event

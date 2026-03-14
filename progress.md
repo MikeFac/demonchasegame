@@ -472,3 +472,4 @@ Original prompt: Check the implementation of docs/multi-version-songs-implementa
 - 2026-03-14: Added explicit menu mode to the main loop and raised menu z-index while hiding/neutralizing the canvas, so returning from learn cannot keep rendering review behind the menu.
 - 2026-03-14: Fixed main menu buttons after learn deeplink by initializing menu button listeners for all entry paths, not just the standard menu branch.
 - 2026-03-14: When exiting the learn deeplink to overland, the app now strips mode=learn/quality/category from the URL via history.replaceState. Also shortened the HUD copy from "Demons to defeat" to "Demons left" for fit/readability.
+- 2026-03-14: Added GA onboarding mission funnel events for Start Here: mission started, move completed, first kill, learn opened, mission finished (complete/failed).
