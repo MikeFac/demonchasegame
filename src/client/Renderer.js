@@ -344,7 +344,7 @@ class Renderer {
         const totalToKill = gameState.monstersToKill || 0;
         const killed = gameState.monstersKilled || 0;
         const remaining = Math.max(0, totalToKill - killed);
-        const progressText = `Demons to defeat: ${remaining}/${totalToKill}`;
+        const progressText = `Demons left: ${remaining}/${totalToKill}`;
         const progressRightEdge = this.canvas.width - gameLevelWidth - 18;
         this.ctx.fillStyle = '#ffdd66';
         this.ctx.font = '14px Arial';

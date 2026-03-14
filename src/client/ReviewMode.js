@@ -11,6 +11,7 @@
     let repeatTimer = null;
     let meditationMode = false; // Toggle for continuous repeat
     let returnToMode = 'game'; // Where to return when exiting review ('game' or 'overland')
+    let currentReviewVerseIndex = 0;
     let lastRenderedVerseIndex = -1; // Track verse changes to trigger new background
     let musicWasPlayingOnEntry = false;
     let currentDiscipleshipPageIndex = 0;
@@ -225,21 +226,20 @@
         
 
         
-        // Set vQuality if provided
-        if (options.vQuality) {
-            window.vQuality = options.vQuality;
-        } else if (!window.vQuality) {
-            // Default to first available quality
-            const qualities = Object.keys(organizedVerses || []);
-            window.vQuality = qualities.length > 0 ? qualities[0] : 'Faith';
+        // Pick a valid category with verses for first render.
+        const availableQualities = Object.keys(organizedVerses || {}).filter(function (quality) {
+            return organizedVerses[quality] && organizedVerses[quality].length > 0;
+        });
+        const requestedQuality = options.vQuality;
+        const existingQuality = window.vQuality;
+
+        if (requestedQuality && availableQualities.includes(requestedQuality)) {
+            window.vQuality = requestedQuality;
+        } else if (!existingQuality || !availableQualities.includes(existingQuality)) {
+            window.vQuality = availableQualities.length > 0 ? availableQualities[0] : 'Faith';
         }
-        
-        currentReviewVerseIndex = 0;
-        currentDiscipleshipPageIndex = 0;
-        repeatEnabled = false;
-        meditationMode = false;
-        reviewCategoryPickerOpen = false;
-        delayDropdownOpen = false;
+
+        resetReviewPresentationState();
         musicWasPlayingOnEntry = Boolean(
             window.MusicManager &&
             typeof window.MusicManager.getIsPlaying === 'function' &&
@@ -253,6 +253,7 @@
         
         window.gameMode = 'review';
         ctx.clearRect(0, 0, canvas.width, canvas.height);
+        displayReviewVerseScreen();
 
 
         if (window.Analytics) {
@@ -322,6 +323,20 @@
         });
 
         return items;
+    }
+
+    function resetReviewPresentationState() {
+        currentReviewMode = 'quality';
+        currentReviewVerseIndex = 0;
+        currentDiscipleshipPageIndex = 0;
+        lastRenderedVerseIndex = -1;
+        repeatEnabled = false;
+        meditationMode = false;
+        hasPlayed = false;
+        reviewCategoryPickerOpen = false;
+        delayDropdownOpen = false;
+        stopAudio();
+        clearRepeatTimer();
     }
 
     function drawWrappedParagraph(text, x, startY, maxWidth, font, color, lineHeight, maxLines) {
@@ -879,15 +894,7 @@
                     clickedY >= itemY && clickedY <= itemY + itemH) {
                     // Category selected
                     window.vQuality = categories[idx];
-                    currentReviewVerseIndex = 0;
-                    currentDiscipleshipPageIndex = 0;
-                    reviewCategoryPickerOpen = false;
-                    stopAudio();
-                    clearRepeatTimer();
-                    repeatEnabled = false;
-                    meditationMode = false;
-                    hasPlayed = false;
-                    delayDropdownOpen = false;
+                    resetReviewPresentationState();
                     displayReviewVerseScreen();
                     return;
                 }

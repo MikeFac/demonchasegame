@@ -458,3 +458,17 @@ Original prompt: Check the implementation of docs/multi-version-songs-implementa
     - `output/web-game/onboarding-v2-answer-2/shot-0.png`
 - Follow-up TODO:
   - the existing combat hint can visually overlap with the new onboarding HUD prompt at mission start; consider suppressing the combat hint during the opening onboarding cue window
+
+2026-03-14:
+- Fixed learn deeplink session teardown so review mode no longer leaves an active solo session running underneath.
+- Added a dedicated gameplay-detach step before deeplink learn review starts and stopped non-game loop player sync from running in review/overland states.
+- Verification: node --check game.js
+- 2026-03-14: Fixed learn deeplink review startup so it always selects a valid category with verses on first render instead of waiting for a manual category change.
+- 2026-03-14: Matched learn-mode startup to category-reselection behavior by forcing an immediate first review render and resetting hasPlayed on entry.
+- 2026-03-14: Unified learn-mode startup and category-reselection review reset logic so first render uses the same state initialization path.
+- 2026-03-14: Fixed learn-mode blank-screen runtime error by declaring currentReviewVerseIndex inside ReviewMode.js and cache-busting ReviewMode again.
+- 2026-03-14: Added explicit review/deeplink cleanup on return-to-menu and before next solo launch to avoid learn-mode state contaminating later starts.
+- 2026-03-14: Returning to the main menu now performs a full teardown via showMainMenu(), sets gameMode=menu, stops the live loop chain, and disables canvas pointer events while the menu is visible.
+- 2026-03-14: Added explicit menu mode to the main loop and raised menu z-index while hiding/neutralizing the canvas, so returning from learn cannot keep rendering review behind the menu.
+- 2026-03-14: Fixed main menu buttons after learn deeplink by initializing menu button listeners for all entry paths, not just the standard menu branch.
+- 2026-03-14: When exiting the learn deeplink to overland, the app now strips mode=learn/quality/category from the URL via history.replaceState. Also shortened the HUD copy from "Demons to defeat" to "Demons left" for fit/readability.

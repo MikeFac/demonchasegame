@@ -516,7 +516,7 @@ let spawnsLeft = 10; //should be updated by server
 const currentScriptPath = document.currentScript.src;
 const scriptDirectory = currentScriptPath.substring(0, currentScriptPath.lastIndexOf('/'));
 
-window.gameMode = 'game'; // Possible values: 'game', 'review', 'overland', 'votd'
+window.gameMode = 'game'; // Possible values: 'game', 'review', 'overland', 'votd', 'menu'
 let repeatEnabled = false;
 let repeatTimeout = null;
 let hasPlayed = false;
@@ -1282,6 +1282,42 @@ function resetGameState() {
     clientWallGrid = null;
 }
 
+function detachActiveGameplayForLearnMode() {
+    const preservedEnterReview = window._enterReviewAfterInit;
+    resetGameState();
+    window._enterReviewAfterInit = preservedEnterReview;
+    window.gameMode = 'review';
+    canvas.style.display = 'block';
+}
+
+function clearReviewAndLearnDeeplinkState() {
+    window._enterReviewAfterInit = false;
+    pendingMissionContentOverride = null;
+    currentMission = null;
+    currentMissionConfig = null;
+    window.currentMission = null;
+    clearMissionContentOverride();
+    if (reviewClickHandler) {
+        canvas.removeEventListener('click', reviewClickHandler);
+        reviewClickHandler = null;
+    }
+}
+
+function showMainMenu() {
+    clearReviewAndLearnDeeplinkState();
+    resetGameState();
+    window.gameMode = 'menu';
+    const menuScreen = document.getElementById('menuScreen');
+    if (menuScreen) {
+        menuScreen.style.display = '';
+        menuScreen.style.pointerEvents = 'auto';
+        menuScreen.style.zIndex = '20';
+    }
+    canvas.style.display = 'none';
+    canvas.style.pointerEvents = 'none';
+    canvas.style.zIndex = '0';
+}
+
 function startGame(mode, roomId, missionOpts) {
     // Remove overland click handler so it doesn't fire during gameplay
     if (overlandClickHandler) {
@@ -1310,6 +1346,8 @@ function startGame(mode, roomId, missionOpts) {
         const menuScreen = document.getElementById('menuScreen');
         if (menuScreen) menuScreen.style.display = 'none';
         canvas.style.display = 'block';
+        canvas.style.pointerEvents = 'auto';
+        canvas.style.zIndex = '1';
         
         // Show FUN mode indicator (after canvas is displayed)
         setTimeout(() => {
@@ -1388,6 +1426,8 @@ function startGame(mode, roomId, missionOpts) {
         const menuScreen = document.getElementById('menuScreen');
         if (menuScreen) menuScreen.style.display = 'none';
         canvas.style.display = 'block';
+        canvas.style.pointerEvents = 'auto';
+        canvas.style.zIndex = '1';
 
         init().then(() => {
             // Use custom config settings - pass full urlConfig for level overrides
@@ -1407,7 +1447,8 @@ function startGame(mode, roomId, missionOpts) {
     // No URL config - check for saved config to pre-fill sliders
     if (mode === 'solo') {
         const savedConfig = loadSavedConfig();
-        if (savedConfig && savedConfig.balance) {
+        const skipSavedConfig = !!(window._enterReviewAfterInit && window._enterReviewAfterInit.deeplinkLearn);
+        if (!skipSavedConfig && savedConfig && savedConfig.balance) {
             console.log('Using saved config from localStorage');
             applyConfig(savedConfig);
         }
@@ -1444,6 +1485,8 @@ function startGame(mode, roomId, missionOpts) {
     const menuScreen = document.getElementById('menuScreen');
     if (menuScreen) menuScreen.style.display = 'none';
     canvas.style.display = 'block';
+    canvas.style.pointerEvents = 'auto';
+    canvas.style.zIndex = '1';
 
     init().then(() => {
         if (mode === 'solo') {
@@ -1467,12 +1510,28 @@ function startGame(mode, roomId, missionOpts) {
 
         // If launched from "Learn Verses" button, immediately enter review mode
         if (window._enterReviewAfterInit) {
+            const reviewLaunchOptions = window._enterReviewAfterInit === true
+                ? {}
+                : { ...window._enterReviewAfterInit };
             window._enterReviewAfterInit = false;
             // Small delay to let the game state fully initialize
             setTimeout(() => {
                 if (window.ReviewMode) {
+                    if (reviewLaunchOptions && reviewLaunchOptions.requestedQuality) {
+                        const resolvedQuality = normalizeRequestedLearnQuality(reviewLaunchOptions.requestedQuality);
+                        if (resolvedQuality) {
+                            reviewLaunchOptions.vQuality = resolvedQuality;
+                        }
+                        delete reviewLaunchOptions.requestedQuality;
+                    }
+                    const shouldDetachGameplay = !!reviewLaunchOptions.deeplinkLearn;
+                    delete reviewLaunchOptions.deeplinkLearn;
+                    if (shouldDetachGameplay) {
+                        detachActiveGameplayForLearnMode();
+                        if (!_gameLoopRunning) gameLoop();
+                    }
                     ReviewMode.saveGameState();
-                    ReviewMode.startReviewMode();
+                    ReviewMode.startReviewMode(reviewLaunchOptions);
                 }
             }, 500);
         }
@@ -1489,6 +1548,67 @@ function getQuizSettingsFromSliders() {
         settings[slider.dataset.mode] = parseInt(slider.value, 10);
     });
     return settings;
+}
+
+let mainMenuButtonsInitialized = false;
+
+function setupMainMenuButtons() {
+    if (mainMenuButtonsInitialized) return;
+    mainMenuButtonsInitialized = true;
+
+    document.getElementById('btnSolo').addEventListener('click', () => {
+        if (window.Analytics) Analytics.trackMenuClick('solo');
+        startDefaultSoloExperience();
+    });
+    document.getElementById('btnMultiplayer').addEventListener('click', () => {
+        if (window.Analytics) Analytics.trackMenuClick('multiplayer');
+        if (!navigator.onLine) {
+            showToast(t('toasts.multiplayerRequiresInternet'), 3000);
+            return;
+        }
+        window.location.href = '/lobby';
+    });
+    document.getElementById('btnCustomGame').addEventListener('click', () => {
+        if (window.Analytics) Analytics.trackMenuClick('custom_game');
+        window.location.href = '/config';
+    });
+    document.getElementById('btnMissions').addEventListener('click', () => {
+        if (window.Analytics) Analytics.trackMenuClick('missions');
+        const menuScreen = document.getElementById('menuScreen');
+        if (menuScreen) menuScreen.style.display = 'none';
+        showOverland();
+    });
+    const discipleshipTrackLink = document.getElementById('discipleshipTrackLink');
+    if (discipleshipTrackLink) {
+        discipleshipTrackLink.addEventListener('click', (event) => {
+            event.preventDefault();
+            if (window.Analytics) Analytics.trackMenuClick('discipleship_track');
+            openDiscipleshipTrackMenu().catch((error) => {
+                console.error('Failed to open discipleship track', error);
+            });
+        });
+    }
+    document.getElementById('btnFunMode').addEventListener('click', () => {
+        if (window.Analytics) Analytics.trackMenuClick('fun_mode');
+        startGame('fun');
+    });
+    document.getElementById('btnLearnVerses').addEventListener('click', () => {
+        if (window.Analytics) Analytics.trackMenuClick('learn_verses');
+        window._enterReviewAfterInit = { returnTo: 'game' };
+        startGame('solo');
+    });
+    document.getElementById('btnGroups').addEventListener('click', () => {
+        if (window.Analytics) Analytics.trackMenuClick('groups');
+        showGroupsPanel();
+    });
+    const worldsLink = document.getElementById('worldsLink');
+    if (worldsLink) {
+        worldsLink.addEventListener('click', (event) => {
+            event.preventDefault();
+            if (window.Analytics) Analytics.trackMenuClick('worlds');
+            showWorldBrowserPanel();
+        });
+    }
 }
 
 // Track verses already passed in verse test (reset each game session)
@@ -1543,10 +1663,12 @@ document.addEventListener('DOMContentLoaded', function () {
     }
     ctx = canvas.getContext('2d');
     installCombatHintDebugHooks();
+    setupMainMenuButtons();
 
     // Parse URL params
     const roomId = urlParams.get('room');
     const mode = urlParams.get('mode');
+    const requestedLearnQuality = urlParams.get('quality') || urlParams.get('category');
     persistViewMode(resolveInitialViewMode(urlParams));
     console.log('View mode:', viewMode);
 
@@ -1564,6 +1686,17 @@ document.addEventListener('DOMContentLoaded', function () {
     if (roomId) {
         // Coming from lobby redirect — skip menu, join game
         startGame('join', roomId);
+    } else if (mode === 'learn') {
+        if (!hasVisited) {
+            localStorage.setItem('hasVisited', 'true');
+        }
+        if (!navigator.onLine || persistedOffline) {
+            offlineMode = true;
+            updateUIForOfflineMode();
+        }
+        if (window.Analytics) Analytics.trackMenuClick('learn_deeplink');
+        prepareLearnDeeplinkLaunch(requestedLearnQuality);
+        startGame('solo');
     } else if (mode === 'solo') {
         // Lobby "Practice (Solo)" shortcut — skip menu
         startGame('solo');
@@ -1606,65 +1739,6 @@ document.addEventListener('DOMContentLoaded', function () {
             updateUIForOfflineMode();
         }
         
-        // Show menu, wait for button click (standard flow)
-        document.getElementById('btnSolo').addEventListener('click', () => {
-            if (window.Analytics) Analytics.trackMenuClick('solo');
-            startDefaultSoloExperience();
-        });
-        document.getElementById('btnMultiplayer').addEventListener('click', () => {
-            if (window.Analytics) Analytics.trackMenuClick('multiplayer');
-            if (!navigator.onLine) {
-                showToast(t('toasts.multiplayerRequiresInternet'), 3000);
-                return;
-            }
-            window.location.href = '/lobby';
-        });
-        document.getElementById('btnCustomGame').addEventListener('click', () => {
-            if (window.Analytics) Analytics.trackMenuClick('custom_game');
-            window.location.href = '/config';
-        });
-        document.getElementById('btnMissions').addEventListener('click', () => {
-            if (window.Analytics) Analytics.trackMenuClick('missions');
-            // Hide menu screen and show overland
-            const menuScreen = document.getElementById('menuScreen');
-            if (menuScreen) menuScreen.style.display = 'none';
-            showOverland();
-        });
-        const discipleshipTrackLink = document.getElementById('discipleshipTrackLink');
-        if (discipleshipTrackLink) {
-            discipleshipTrackLink.addEventListener('click', (event) => {
-                event.preventDefault();
-                if (window.Analytics) Analytics.trackMenuClick('discipleship_track');
-                openDiscipleshipTrackMenu().catch((error) => {
-                    console.error('Failed to open discipleship track', error);
-                });
-            });
-        }
-        document.getElementById('btnFunMode').addEventListener('click', () => {
-            if (window.Analytics) Analytics.trackMenuClick('fun_mode');
-            startGame('fun');
-        });
-        document.getElementById('btnLearnVerses').addEventListener('click', () => {
-            if (window.Analytics) Analytics.trackMenuClick('learn_verses');
-            // Start a solo game, then immediately enter review mode
-            window._enterReviewAfterInit = true;
-            startGame('solo');
-        });
-        
-        // Groups button
-        document.getElementById('btnGroups').addEventListener('click', () => {
-            if (window.Analytics) Analytics.trackMenuClick('groups');
-            showGroupsPanel();
-        });
-        const worldsLink = document.getElementById('worldsLink');
-        if (worldsLink) {
-            worldsLink.addEventListener('click', (event) => {
-                event.preventDefault();
-                if (window.Analytics) Analytics.trackMenuClick('worlds');
-                showWorldBrowserPanel();
-            });
-        }
-
         if (captureMode === 'worlds') {
             window.setTimeout(() => {
                 showWorldBrowserPanel().catch((error) => {
@@ -2955,8 +3029,64 @@ let overlandTouchMoveHandler = null;
 let overlandTouchEndHandler = null;
 let reviewClickHandler = null;
 
+function normalizeRequestedLearnQuality(rawQuality) {
+    if (!rawQuality) return null;
+
+    const requested = String(rawQuality).trim().toLowerCase();
+    if (!requested) return null;
+
+    const availableQualities = Object.keys(organizedVerses || {});
+    for (const quality of availableQualities) {
+        if (String(quality).trim().toLowerCase() === requested) {
+            return quality;
+        }
+    }
+
+    return null;
+}
+
+function prepareLearnDeeplinkLaunch(rawQuality) {
+    pendingMissionContentOverride = null;
+    currentMission = null;
+    currentMissionConfig = null;
+    window.currentMission = null;
+    incorrectAnswerReferences = [];
+    currentReviewMode = 'quality';
+    clearMissionContentOverride();
+    if (typeof gameCategory !== 'undefined') {
+        gameCategory = 'All';
+    }
+    loadVersesFromBundle();
+    ALL_QUALITIES = Object.keys(organizedVerses || {});
+    QUALITIES = ALL_QUALITIES.slice();
+    baseOrganizedVerses = organizedVerses;
+    baseAllQualities = ALL_QUALITIES.slice();
+
+    window._enterReviewAfterInit = {
+        deeplinkLearn: true,
+        returnTo: 'overland',
+        requestedQuality: rawQuality || null
+    };
+}
+
+function clearLearnDeeplinkUrlState() {
+    try {
+        const currentUrl = new URL(window.location.href);
+        if (!currentUrl.searchParams.has('mode')) return;
+        if (currentUrl.searchParams.get('mode') !== 'learn') return;
+        currentUrl.searchParams.delete('mode');
+        currentUrl.searchParams.delete('quality');
+        currentUrl.searchParams.delete('category');
+        const nextUrl = currentUrl.pathname + (currentUrl.searchParams.toString() ? `?${currentUrl.searchParams.toString()}` : '') + currentUrl.hash;
+        window.history.replaceState({}, document.title, nextUrl);
+    } catch (error) {
+        console.warn('Unable to clear learn deeplink URL state:', error);
+    }
+}
+
 async function showOverland() {
 window.gameMode = 'overland';
+    clearLearnDeeplinkUrlState();
     
     // Ensure canvas is properly sized
     ensureCanvasSize();
@@ -2980,6 +3110,7 @@ window.gameMode = 'overland';
     
     // Make sure canvas is visible
     canvas.style.display = 'block';
+    canvas.style.pointerEvents = 'auto';
     
     // Note: Click handling for overland mode is done via InputHandler._handleClick
     // which checks gameMode === 'overland' and calls the onOverlandClick callback
@@ -3059,7 +3190,7 @@ function shouldLaunchStartHereMission() {
 }
 
 function startDefaultSoloExperience() {
-    window._enterReviewAfterInit = false;
+    clearReviewAndLearnDeeplinkState();
     if (shouldLaunchStartHereMission()) {
         startMission(START_HERE_WORLD_ID, START_HERE_MISSION_ID);
         return;
@@ -3275,11 +3406,7 @@ function handleOverlandClick(x, y) {
     // Check for Back to Menu button first
     if (overlandRenderer.isMenuClicked(x, y)) {
         console.log('Menu button clicked, returning to menu');
-        window.gameMode = 'game';
-        // Show menu screen and hide canvas
-        const menuScreen = document.getElementById('menuScreen');
-        if (menuScreen) menuScreen.style.display = '';
-        canvas.style.display = 'none';
+        showMainMenu();
         // Remove overland click handler
         if (overlandClickHandler) {
             canvas.removeEventListener('click', overlandClickHandler);
@@ -3531,6 +3658,11 @@ function gameLoop(generation) {
     _gameLoopRunning = true;
     const gen = _gameGeneration; // Capture for requestAnimationFrame callbacks
     const nextFrame = () => requestAnimationFrame(() => gameLoop(gen));
+
+    if (window.gameMode === 'menu') {
+        nextFrame();
+        return;
+    }
 
     // Handle Overland mode FIRST (doesn't need playerCode or game to be loaded)
     if (window.gameMode === 'overland') {
@@ -4387,7 +4519,7 @@ function gameLoop(generation) {
         ReviewMode.displayReviewVerseScreen();
     }
 
-    if (elapsedTime >= UPDATE_INTERVAL) {
+    if (window.gameMode === 'game' && elapsedTime >= UPDATE_INTERVAL) {
         const playerData = {
             x: player.x,
             y: player.y,
