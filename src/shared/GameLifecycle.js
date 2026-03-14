@@ -167,7 +167,7 @@
         }
 
         // Spawn initial monsters (another 50% more than the previous opening density, with a higher floor)
-        var initialMonsterCount = Math.max(14, Math.ceil(engine.levelData[level].maxMonsters * 0.8));
+        var initialMonsterCount = Math.max(10, Math.ceil(engine.levelData[level].maxMonsters * 0.56));
         console.log('Spawning ' + initialMonsterCount + ' initial monsters for level ' + level);
         engine.monsterManager.spawnLevelBoss();
         engine.monsterManager.spawnMonsterAtDistance(400, 700, true);

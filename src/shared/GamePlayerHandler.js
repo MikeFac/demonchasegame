@@ -70,7 +70,7 @@
         var hasAuthoredEncounter = Array.isArray(engine.gameConfig.fixedMonsters) && engine.gameConfig.fixedMonsters.length > 0;
         if (playerCount === 1 && !hasAuthoredEncounter) {
             var currentLevel = engine.gameState.gameLevel || 1;
-            var targetOpeningCount = Math.max(14, Math.ceil(engine.levelData[currentLevel].maxMonsters * 0.8));
+            var targetOpeningCount = Math.max(10, Math.ceil(engine.levelData[currentLevel].maxMonsters * 0.56));
             var existingMonsterCount = engine.gameState.monsters.length;
             console.log('First player joined - targeting ' + targetOpeningCount + ' opening monsters for level ' + currentLevel + ' (existing=' + existingMonsterCount + ')');
 
