@@ -565,6 +565,7 @@ const START_HERE_WORLD_ID = 'chapter0';
 const START_HERE_MISSION_ID = 'intro-01';
 const START_HERE_SEEN_KEY = 'hasSeenStartHereMission';
 const START_HERE_MOVE_DISTANCE = 70;
+const START_HERE_HEALTH_GUIDE_MS = 3200;
 let onboardingGuideState = null;
 
 // Verse Test shield setting (Option A/B)
@@ -932,12 +933,44 @@ function ensureOnboardingGuideState(player) {
         return null;
     }
     if (!onboardingGuideState || onboardingGuideState.missionId !== currentMission.id) {
+        const introMonsters = ((currentMission && currentMission.fixedMonsters) || []).filter((monster) => monster && typeof monster.x === 'number' && typeof monster.y === 'number');
+        const introTarget = introMonsters
+            .filter((monster) => !monster.isBoss)
+            .sort((a, b) => {
+                const healthA = (a.stats && a.stats.healthMultiplier) || 1;
+                const healthB = (b.stats && b.stats.healthMultiplier) || 1;
+                if (healthA !== healthB) return healthA - healthB;
+                const distA = Math.hypot((player.x || 0) - a.x, (player.y || 0) - a.y);
+                const distB = Math.hypot((player.x || 0) - b.x, (player.y || 0) - b.y);
+                return distA - distB;
+            })[0];
+        const bossTarget = introMonsters.find((monster) => monster && monster.isBoss);
+        const buildMoveTarget = (targetMonster) => {
+            if (!targetMonster) {
+                return {
+                    x: (player.x || 0) + 120,
+                    y: player.y || 0
+                };
+            }
+            const dx = (player.x || 0) - targetMonster.x;
+            const dy = (player.y || 0) - targetMonster.y;
+            const distance = Math.max(1, Math.hypot(dx, dy));
+            return {
+                x: targetMonster.x + (dx / distance) * 180,
+                y: targetMonster.y + (dy / distance) * 180
+            };
+        };
         onboardingGuideState = {
             missionId: currentMission.id,
+            createdAt: Date.now(),
             startX: player.x,
             startY: player.y,
             hasMoved: false,
-            learnOpened: false
+            learnOpened: false,
+            moveTarget: buildMoveTarget(introTarget),
+            moveTargetReached: false,
+            bossMoveTarget: buildMoveTarget(bossTarget),
+            bossMoveTargetReached: false
         };
     }
     return onboardingGuideState;
@@ -951,13 +984,34 @@ function buildStartHereGuide(player, monsters) {
     if (movedDistance >= START_HERE_MOVE_DISTANCE) {
         state.hasMoved = true;
     }
+    if (state.moveTarget) {
+        const moveTargetDistance = Math.hypot((player.x || 0) - state.moveTarget.x, (player.y || 0) - state.moveTarget.y);
+        if (moveTargetDistance <= START_HERE_MOVE_DISTANCE) {
+            state.moveTargetReached = true;
+        }
+    }
+    if (state.bossMoveTarget) {
+        const bossMoveTargetDistance = Math.hypot((player.x || 0) - state.bossMoveTarget.x, (player.y || 0) - state.bossMoveTarget.y);
+        if (bossMoveTargetDistance <= START_HERE_MOVE_DISTANCE) {
+            state.bossMoveTargetReached = true;
+        }
+    }
 
     if ((gameState.monstersKilled || 0) <= 0) {
-        if (!state.hasMoved) {
+        if (Date.now() - state.createdAt < START_HERE_HEALTH_GUIDE_MS) {
             return {
                 target: 'hud',
                 title: 'This is your health',
-                text: 'Defeat 2 demons to finish this mission.'
+                text: 'Keep this high while you learn the basics.'
+            };
+        }
+        if (!state.moveTargetReached && state.moveTarget) {
+            return {
+                target: 'move',
+                title: 'Click here to move',
+                text: 'Move into range before you attack.',
+                worldX: state.moveTarget.x,
+                worldY: state.moveTarget.y
             };
         }
         return {
@@ -968,11 +1022,20 @@ function buildStartHereGuide(player, monsters) {
     }
 
     const guardBossAlive = (monsters || []).some((monster) => monster && monster.isBoss && monster.health > 0);
+    if (guardBossAlive && !state.bossMoveTargetReached && state.bossMoveTarget) {
+        return {
+            target: 'move',
+            title: 'Move to the Fear Guard',
+            text: 'Step closer before you learn how to beat it.',
+            worldX: state.bossMoveTarget.x,
+            worldY: state.bossMoveTarget.y
+        };
+    }
     if (guardBossAlive && !state.learnOpened) {
         return {
             target: 'learn',
-            title: 'This demon is harder',
-            text: 'Learn verses here to beat the Fear Guard.'
+            title: 'Learn before you fight',
+            text: 'The Fear Guard is tougher. Learn verses here first.'
         };
     }
 
@@ -1942,9 +2005,11 @@ async function init() {
                 };
             },
             onMonsterKilled: ({ monsterId, x, y, isBoss, bossLabel, bonusXp }) => {
+                const projectedKills = (gameState.monstersKilled || 0) + 1;
+                const completedIntroMission = isStartHereMission(currentMission) && projectedKills >= (gameState.monstersToKill || 0);
                 if (window.Analytics) {
                     Analytics.trackMonsterKilled(gameState.gameLevel);
-                    Analytics.updateHeartbeat(gameState.gameLevel, (gameState.monstersKilled || 0) + 1);
+                    Analytics.updateHeartbeat(gameState.gameLevel, projectedKills);
                 }
 
                 if (!firstGameTips.firstKill && isInOnboardingWindow()) {
@@ -2023,6 +2088,28 @@ async function init() {
                     if (window.SoundEffects && typeof SoundEffects.playHeavenlyKill === 'function') {
                         SoundEffects.playHeavenlyKill();
                     }
+                }
+
+                if (completedIntroMission) {
+                    flashMessages.push({
+                        text: 'Mission Complete!',
+                        color: '#a8ffb0',
+                        x: canvas.width / 2,
+                        y: canvas.height / 2 - 30,
+                        startTime: Date.now(),
+                        duration: 2600,
+                        fontSize: 34,
+                        centered: true
+                    });
+                    deathParticles.push({
+                        x: x,
+                        y: y - 10,
+                        frame: 0,
+                        frameTimer: 0,
+                        startTime: Date.now(),
+                        type: 'confetti',
+                        maxFrames: 22
+                    });
                 }
 
                 // Clear enemy HUD if this was the monster we were tracking

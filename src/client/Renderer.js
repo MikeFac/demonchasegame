@@ -75,7 +75,7 @@ class Renderer {
         this.drawHUD(player, gameState);
 
         // Draw onboarding guidance for the authored start mission.
-        this.drawOnboardingGuide(uiState);
+        this.drawOnboardingGuide(uiState, player, camera);
 
         // Draw contextual combat hint above the player.
         this.drawCombatHint(player, camera, uiState.combatHint);
@@ -353,43 +353,65 @@ class Renderer {
         this.ctx.textAlign = 'left';
     }
 
-    drawOnboardingGuide(uiState) {
+    drawOnboardingGuide(uiState, player, camera) {
         const guide = uiState && uiState.onboardingGuide;
         if (!guide) return;
 
         const pulse = 0.55 + 0.45 * Math.sin(Date.now() / 220);
         let targetRect = null;
         let box = null;
+        let arrowFrom = null;
+        let arrowTo = null;
+        let worldMarker = null;
 
         if (guide.target === 'hud') {
-            targetRect = { x: 5, y: 4, width: this.canvas.width - 10, height: this.QUALITY_LINE_HEIGHT - 8 };
-            box = { x: 20, y: this.QUALITY_LINE_HEIGHT + 10, width: this.canvas.width - 40, height: 56 };
+            targetRect = { x: 8, y: 6, width: 130, height: this.QUALITY_LINE_HEIGHT - 12 };
+            box = { x: 34, y: this.QUALITY_LINE_HEIGHT + 18, width: 240, height: 64 };
+            arrowFrom = { x: box.x + 104, y: box.y - 2 };
+            arrowTo = { x: targetRect.x + 18, y: targetRect.y + 28 };
+        } else if (guide.target === 'move') {
+            box = { x: 36, y: this.QUALITY_LINE_HEIGHT + 18, width: 280, height: 64 };
+            if (guide.worldX != null && guide.worldY != null && camera) {
+                worldMarker = {
+                    x: guide.worldX - camera.x,
+                    y: guide.worldY - camera.y
+                };
+                arrowFrom = { x: box.x + 164, y: box.y + 4 };
+                arrowTo = { x: worldMarker.x, y: worldMarker.y - 10 };
+            }
         } else if (guide.target === 'answers') {
             targetRect = { x: 8, y: this.canvas.height - this.ANSWER_SECTION_HEIGHT - 8, width: this.canvas.width - 16, height: this.ANSWER_SECTION_HEIGHT + 2 };
             box = { x: 24, y: this.canvas.height - this.ANSWER_SECTION_HEIGHT - 76, width: this.canvas.width - 48, height: 56 };
+            arrowFrom = { x: box.x + box.width / 2, y: box.y + box.height };
+            arrowTo = { x: targetRect.x + targetRect.width / 2, y: targetRect.y + 2 };
         } else if (guide.target === 'learn') {
             const lb = UILayout.learnVersesButton;
             const btnX = (this.canvas.width - lb.width) / 2;
             targetRect = { x: btnX - 4, y: lb.y - 3, width: lb.width + 8, height: lb.height + 6 };
             box = { x: 24, y: this.QUALITY_LINE_HEIGHT + 14, width: this.canvas.width - 48, height: 56 };
+            arrowFrom = { x: box.x + box.width / 2, y: box.y };
+            arrowTo = { x: targetRect.x + targetRect.width / 2, y: targetRect.y + targetRect.height };
         }
 
-        if (!targetRect || !box) return;
+        if (!box) return;
 
         this.ctx.save();
 
-        this.ctx.strokeStyle = `rgba(255, 214, 102, ${0.75 + pulse * 0.2})`;
-        this.ctx.lineWidth = 3;
-        this.ctx.strokeRect(targetRect.x, targetRect.y, targetRect.width, targetRect.height);
-        this.ctx.fillStyle = `rgba(255, 214, 102, ${0.08 + pulse * 0.06})`;
-        this.ctx.fillRect(targetRect.x, targetRect.y, targetRect.width, targetRect.height);
+        if (targetRect) {
+            this.ctx.strokeStyle = `rgba(255, 214, 102, ${0.75 + pulse * 0.2})`;
+            this.ctx.lineWidth = 3;
+            this.ctx.strokeRect(targetRect.x, targetRect.y, targetRect.width, targetRect.height);
+            this.ctx.fillStyle = `rgba(255, 214, 102, ${0.08 + pulse * 0.06})`;
+            this.ctx.fillRect(targetRect.x, targetRect.y, targetRect.width, targetRect.height);
+        }
 
-        this.drawGuideArrow(
-            box.x + box.width / 2,
-            guide.target === 'answers' ? box.y + box.height : box.y,
-            targetRect.x + targetRect.width / 2,
-            guide.target === 'answers' ? targetRect.y + 2 : targetRect.y + targetRect.height
-        );
+        if (worldMarker) {
+            this.drawMoveGuideMarker(worldMarker.x, worldMarker.y, pulse);
+        }
+
+        if (arrowFrom && arrowTo) {
+            this.drawGuideArrow(arrowFrom.x, arrowFrom.y, arrowTo.x, arrowTo.y, 5);
+        }
 
         this.ctx.fillStyle = 'rgba(9, 12, 20, 0.92)';
         this.ctx.strokeStyle = '#ffd666';
@@ -409,13 +431,13 @@ class Renderer {
         this.ctx.restore();
     }
 
-    drawGuideArrow(fromX, fromY, toX, toY) {
+    drawGuideArrow(fromX, fromY, toX, toY, lineWidth = 3) {
         const angle = Math.atan2(toY - fromY, toX - fromX);
-        const headLength = 12;
+        const headLength = 18;
 
         this.ctx.save();
         this.ctx.strokeStyle = '#ffd666';
-        this.ctx.lineWidth = 3;
+        this.ctx.lineWidth = lineWidth;
         this.ctx.beginPath();
         this.ctx.moveTo(fromX, fromY);
         this.ctx.lineTo(toX, toY);
@@ -434,6 +456,24 @@ class Renderer {
         );
         this.ctx.closePath();
         this.ctx.fill();
+        this.ctx.restore();
+    }
+
+    drawMoveGuideMarker(screenX, screenY, pulse) {
+        this.ctx.save();
+        this.ctx.strokeStyle = `rgba(255, 214, 102, ${0.85 + pulse * 0.1})`;
+        this.ctx.fillStyle = `rgba(255, 214, 102, ${0.16 + pulse * 0.08})`;
+        this.ctx.lineWidth = 4;
+        this.ctx.beginPath();
+        this.ctx.arc(screenX, screenY, 26 + pulse * 6, 0, Math.PI * 2);
+        this.ctx.fill();
+        this.ctx.stroke();
+
+        this.ctx.fillStyle = '#fff7d1';
+        this.ctx.font = 'bold 18px Georgia';
+        this.ctx.textAlign = 'center';
+        this.ctx.fillText('MOVE', screenX, screenY + 6);
+        this.ctx.textAlign = 'left';
         this.ctx.restore();
     }
 
@@ -2261,6 +2301,10 @@ class Renderer {
                         this._drawHeavenlyKillEffect2D(particle, camera);
                         return;
                     }
+                    if (particle.type === 'confetti') {
+                        this._drawConfettiBurst2D(particle, camera);
+                        return;
+                    }
                     const screenX = particle.x - camera.x;
                     const screenY = particle.y - camera.y;
                     const radius = 10 + (particle.frame * 2); // Expand over time
@@ -2285,6 +2329,10 @@ class Renderer {
         deathParticles.forEach(particle => {
             if (particle.type === 'heavenly') {
                 this._drawHeavenlyKillEffect2D(particle, camera);
+                return;
+            }
+            if (particle.type === 'confetti') {
+                this._drawConfettiBurst2D(particle, camera);
                 return;
             }
 
@@ -2361,6 +2409,35 @@ class Renderer {
         this.ctx.font = `bold ${Math.round(18 + glowRadius * 0.42)}px Georgia`;
         this.ctx.textAlign = 'center';
         this.ctx.fillText('✦', screenX, screenY + 8);
+
+        this.ctx.restore();
+    }
+
+    _drawConfettiBurst2D(particle, camera) {
+        const progress = Math.min(1, (particle.frame || 0) / Math.max(1, (particle.maxFrames || 12) - 1));
+        const alpha = 1 - progress;
+        const originX = particle.x - camera.x;
+        const originY = particle.y - camera.y - progress * 18;
+        const colors = ['#ffd166', '#ef476f', '#06d6a0', '#118ab2', '#ffffff', '#f78c6b'];
+
+        this.ctx.save();
+        this.ctx.globalAlpha = alpha;
+
+        for (let i = 0; i < 18; i++) {
+            const angle = (Math.PI * 2 * i) / 18;
+            const burstRadius = 18 + progress * 85 + (i % 3) * 6;
+            const pieceX = originX + Math.cos(angle) * burstRadius;
+            const pieceY = originY + Math.sin(angle) * (burstRadius * 0.75) + progress * 22;
+            const width = 6 + (i % 3);
+            const height = 10 + (i % 4);
+
+            this.ctx.save();
+            this.ctx.translate(pieceX, pieceY);
+            this.ctx.rotate(angle + progress * 6);
+            this.ctx.fillStyle = colors[i % colors.length];
+            this.ctx.fillRect(-width / 2, -height / 2, width, height);
+            this.ctx.restore();
+        }
 
         this.ctx.restore();
     }
