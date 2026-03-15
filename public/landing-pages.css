@@ -78,6 +78,10 @@ a {
   align-items: center;
 }
 
+.hero-grid-wide {
+  align-items: start;
+}
+
 .eyebrow {
   display: inline-block;
   padding: 7px 12px;
@@ -182,6 +186,21 @@ a {
   font-size: 1rem;
 }
 
+.hero-card-short {
+  min-height: 280px;
+}
+
+.showcase-stack {
+  display: grid;
+  gap: 18px;
+}
+
+.duo-captures {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+}
+
 .capture-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -218,6 +237,10 @@ a {
   margin: 0;
   color: #4d5b6b;
   line-height: 1.55;
+}
+
+.capture-card.compact img {
+  height: 180px;
 }
 
 .audience-band {
@@ -320,6 +343,56 @@ a {
   margin-bottom: 6px;
 }
 
+.form-panel {
+  display: grid;
+  grid-template-columns: 0.95fr 1.05fr;
+  gap: 24px;
+  padding: 28px;
+  border-radius: 28px;
+  background: rgba(255, 255, 255, 0.72);
+  box-shadow: 0 18px 40px rgba(15, 23, 32, 0.08);
+}
+
+.contact-form {
+  display: grid;
+  gap: 14px;
+}
+
+.contact-form label {
+  display: grid;
+  gap: 8px;
+  color: #162435;
+  font-weight: 700;
+}
+
+.contact-form input,
+.contact-form textarea {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 14px 16px;
+  border: 1px solid rgba(22, 36, 53, 0.14);
+  border-radius: 16px;
+  background: #fffdf7;
+  color: #162435;
+  font: inherit;
+}
+
+.contact-form textarea {
+  resize: vertical;
+  min-height: 150px;
+}
+
+.form-submit {
+  border: 0;
+  cursor: pointer;
+}
+
+.form-note {
+  margin: 0;
+  color: #667284;
+  font-size: 0.92rem;
+}
+
 .final-cta {
   padding: 36px;
   border-radius: 28px;
@@ -350,7 +423,9 @@ a {
   .hero-grid,
   .card-grid,
   .capture-grid,
-  .mini-proof {
+  .mini-proof,
+  .duo-captures,
+  .form-panel {
     grid-template-columns: 1fr;
   }
 

@@ -50,6 +50,14 @@ app.get('/youth-pastors', (req, res) => {
   res.sendFile(path.join(__dirname, 'youth-pastors.html'));
 });
 
+app.get('/leaders', (req, res) => {
+  res.sendFile(path.join(__dirname, 'leaders.html'));
+});
+
+app.get('/builders', (req, res) => {
+  res.sendFile(path.join(__dirname, 'builders.html'));
+});
+
 app.get('/parents', (req, res) => {
   res.sendFile(path.join(__dirname, 'parents.html'));
 });

@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>VerseBattles for Builders</title>
+  <meta name="description" content="Host and customize VerseBattles for your church, school, or ministry. Explore the AGPL codebase and use the platform as a starting point for your own Bible game deployment.">
+  <link rel="stylesheet" href="/landing-pages.css">
+</head>
+<body data-landing-audience="builders">
+  <div class="landing-shell">
+    <section class="hero">
+      <div class="hero-inner">
+        <div class="nav">
+          <a class="brand" href="/">
+            <img src="/images/VerseBattles-logo.png" alt="VerseBattles logo">
+            <span>VerseBattles</span>
+          </a>
+          <div class="nav-links">
+            <a href="/leaders">Leaders</a>
+            <a href="/players">Players</a>
+            <a class="nav-cta" href="#builder-contact" data-cta="nav_contact_builder">Talk About The Codebase</a>
+          </div>
+        </div>
+        <div class="hero-grid hero-grid-wide">
+          <div>
+            <div class="audience-band">For Builders</div>
+            <h1>Run your own Bible battle system and shape it to your ministry.</h1>
+            <p class="lead">VerseBattles is not only a game to play. It can also be an AGPL starting point for churches, schools, and technical collaborators who want ownership, customization, and the freedom to host their own version.</p>
+            <div class="cta-row">
+              <a class="btn-primary" href="#builder-contact" data-cta="hero_builder_contact">Request Builder Access</a>
+              <a class="btn-secondary" href="/leaders" data-cta="hero_leader_page">See The Leader Use Case</a>
+            </div>
+            <div class="hero-points">
+              <div>Adapt the experience for your own community, curriculum, or event format.</div>
+              <div>Host your own deployment instead of depending on a locked platform.</div>
+              <div>Use the existing game loop and visuals as a base rather than starting from zero.</div>
+            </div>
+          </div>
+          <div class="showcase-stack">
+            <div class="hero-card hero-card-short">
+              <img src="/landing/worlds-screen.png" alt="VerseBattles worlds browser">
+              <div class="card-overlay"></div>
+              <div class="card-note">
+                <strong>Creator-oriented surface area</strong>
+                Worlds, missions, and content paths make the product more extensible than a one-mode Bible quiz.
+              </div>
+            </div>
+            <div class="duo-captures">
+              <div class="capture-card compact">
+                <img src="/landing/menu-screen.png" alt="VerseBattles menu screenshot">
+                <div class="caption">
+                  <strong>Multiple entry points</strong>
+                  Enough existing structure to fork, refine, and deploy.
+                </div>
+              </div>
+              <div class="capture-card compact">
+                <img src="/landing/gameplay-screen.png" alt="VerseBattles action gameplay">
+                <div class="caption">
+                  <strong>Playable core loop</strong>
+                  A working game base, not just a wireframe.
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="section-inner">
+        <h2>Why the AGPL angle matters</h2>
+        <p class="section-intro">If your audience wants ownership, extensibility, or local hosting, the open-system story is stronger than asking them to become one more passive user on somebody else’s platform.</p>
+        <div class="card-grid">
+          <div class="info-card">
+            <h3>Customize the experience</h3>
+            <p>Tailor content, structure, deployment, and game flow around your own church, school, or ministry context.</p>
+          </div>
+          <div class="info-card">
+            <h3>Keep platform control</h3>
+            <p>AGPL positioning speaks to teams that would rather host and adapt than rent a closed tool forever.</p>
+          </div>
+          <div class="info-card">
+            <h3>Attract committed collaborators</h3>
+            <p>The builder audience is smaller than the player audience, but much more likely to care deeply and contribute.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section alt">
+      <div class="section-inner">
+        <h2>Who this page is for</h2>
+        <div class="card-grid">
+          <div class="quote-card">
+            <h3>Technical ministry teams</h3>
+            <p>Churches or ministries with someone who can host, adapt, and maintain a customized version.</p>
+          </div>
+          <div class="quote-card">
+            <h3>Christian schools</h3>
+            <p>Schools that want a Scripture game framework they can align with curriculum and school identity.</p>
+          </div>
+          <div class="quote-card">
+            <h3>Open-source contributors</h3>
+            <p>Builders who resonate with the mission and want to help shape a playable Bible game platform.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="section-inner">
+        <div class="form-panel" id="builder-contact">
+          <div>
+            <div class="eyebrow">Builder Inquiry</div>
+            <h2>Interested in hosting, contributing, or adapting VerseBattles?</h2>
+            <p class="section-intro">This is wired to a Formspree placeholder endpoint for now. Replace the action URL with your real Formspree form ID and it will email you directly.</p>
+            <div class="stack-list">
+              <div class="row">
+                <strong>Good asks</strong>
+                Deployment details, codebase access, customization discussions, or partnership ideas.
+              </div>
+              <div class="row">
+                <strong>Strong positioning</strong>
+                Emphasize ownership, local fit, and the ability to shape the system rather than simply use it.
+              </div>
+            </div>
+          </div>
+          <form class="contact-form" action="https://formspree.io/f/your-form-id" method="POST">
+            <input type="hidden" name="_subject" value="VerseBattles builder interest">
+            <label>
+              Name
+              <input type="text" name="name" placeholder="Your name" required>
+            </label>
+            <label>
+              Email
+              <input type="email" name="email" placeholder="you@example.com" required>
+            </label>
+            <label>
+              Team or organization
+              <input type="text" name="organization" placeholder="Church, school, company, or open-source team">
+            </label>
+            <label>
+              What are you hoping to build or deploy?
+              <textarea name="message" rows="6" placeholder="Tell me what you want to host, customize, or contribute." required></textarea>
+            </label>
+            <button class="btn-primary form-submit" type="submit" data-cta="builder_form_submit">Send Builder Inquiry</button>
+            <p class="form-note">Placeholder only: swap `your-form-id` for your actual Formspree ID before publishing live.</p>
+          </form>
+        </div>
+      </div>
+    </section>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        <span>Copyright 2026 Michael Fackerell · <a href="/privacy.html">Privacy Policy</a></span>
+        <span><a href="/leaders">Leaders</a> · <a href="/players">Players</a> · <a href="/">Play</a></span>
+      </div>
+    </footer>
+  </div>
+  <script src="/reddit-analytics.js"></script>
+  <script src="/landing-analytics.js"></script>
+</body>
+</html>
