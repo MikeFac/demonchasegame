@@ -1,0 +1,15 @@
+{
+  "schemaVersion": 1,
+  "id": "chapter5",
+  "missions": [
+    {
+      "id": "wave-01",
+      "name": "Wave Assault: Fear's Onslaught",
+      "description": "Survive 5 waves of demons raining down from above! Dodge their dive attacks and answer verse challenges for bonus health.",
+      "gameMode": "wave",
+      "waves": 5,
+      "qualities": ["Faith", "Courage", "Love"],
+      "xpMultiplier": 1.5
+    }
+  ]
+}

@@ -129,6 +129,40 @@ class LocalNetwork {
     }
 
     /**
+     * Start a local wave assault game. Creates and starts the WaveGameEngine.
+     * @param {Object} waveConfig - Optional overrides (totalWaves, etc.)
+     */
+    sendStartWaveGame(waveConfig) {
+        var self = this;
+
+        // Create emitter that routes events to our callbacks
+        var emitter = {
+            emit: function (event, data) {
+                self._handleEngineEvent(event, data);
+            }
+        };
+
+        // Create and start the wave engine
+        this.engine = new WaveGameEngine(emitter, waveConfig || {});
+        this.playerCode = this.engine.playerCode;
+        this.isConnected = true;
+
+        // Start the game loop
+        this.engine.start();
+    }
+
+    /**
+     * Send input to the wave game engine (horizontal movement, firing).
+     * @param {string} event - Input event name
+     * @param {*} data - Input data
+     */
+    sendWaveInput(event, data) {
+        if (this.engine && typeof this.engine.handleInput === 'function') {
+            this.engine.handleInput(event, data);
+        }
+    }
+
+    /**
      * Route engine events to the appropriate callbacks.
      */
     _handleEngineEvent(event, data) {

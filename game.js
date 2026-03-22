@@ -3591,6 +3591,31 @@ async function startMission(worldId, missionId) {
 
         console.log('Starting mission:', mission.name);
 
+        // ===== WAVE MODE: Launch wave assault if mission has gameMode "wave" =====
+        if (mission.gameMode === 'wave') {
+            console.log('Starting WAVE mode mission:', mission.name);
+            if (window.WaveGameLauncher) {
+                WaveGameLauncher.start({
+                    canvas: document.getElementById('gameCanvas'),
+                    ctx: document.getElementById('gameCanvas').getContext('2d'),
+                    demonImages: demonImages,
+                    waveConfig: {
+                        totalWaves: mission.waves || 5
+                    },
+                    mission: mission,
+                    onEndGame: function () {
+                        if (currentMission) {
+                            completeMission(3);
+                        }
+                        returnToOverland();
+                    }
+                });
+            } else {
+                console.error('WaveGameLauncher not available');
+            }
+            return;
+        }
+
         // Build mission config in URL config format (same shape as loadUrlConfig)
         // Mission JSON stores spawnRate in seconds (e.g., 18 = 18s)
         // balance multipliers are ratios against base LevelConfig values
@@ -3692,6 +3717,12 @@ function gameLoop(generation) {
     const nextFrame = () => requestAnimationFrame(() => gameLoop(gen));
 
     if (window.gameMode === 'menu') {
+        nextFrame();
+        return;
+    }
+
+    // Wave game mode uses its own render loop (WaveGameLauncher)
+    if (window.gameMode === 'waveGame') {
         nextFrame();
         return;
     }
