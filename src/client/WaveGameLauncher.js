@@ -20,10 +20,16 @@
     var _waveAnimFrame = null;
     var demonImages = {};
 
+    var WAVE_QUIZ_QUESTION_COUNT = 2;
+    var WAVE_QUIZ_MIN_ANSWER_DELAY_MS = 2000;
+    var WAVE_QUIZ_OPTION_COUNT = 6;
+    var WAVE_CLICK_SUPPRESSION_MS = 250;
+    var ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
+
     // Input state
     var _keysDown = {};
-    var _touchX = null;
     var _isTouching = false;
+    var _pointerSuppressedUntil = 0;
 
     // Quiz state
     var _quizPaused = false;
@@ -36,11 +42,11 @@
      * Start a wave assault game.
      * @param {Object} opts
      *   opts.canvas      — game canvas element
-     *   opts.ctx          — canvas 2d context
-     *   opts.demonImages  — pre-loaded demon Image objects { type: Image }
-     *   opts.waveConfig   — optional overrides (totalWaves, etc.)
-     *   opts.onEndGame    — callback when game ends (return to menu)
-     *   opts.mission      — mission object (for progress tracking)
+     *   opts.ctx         — canvas 2d context
+     *   opts.demonImages — pre-loaded demon Image objects { type: Image }
+     *   opts.waveConfig  — optional overrides (totalWaves, etc.)
+     *   opts.onEndGame   — callback when game ends (return to menu)
+     *   opts.mission     — mission object (for progress tracking)
      */
     function startWaveGame(opts) {
         canvas = opts.canvas;
@@ -48,17 +54,14 @@
         demonImages = opts.demonImages || {};
         _onEndGame = opts.onEndGame || function () { window.location.reload(); };
 
-        // Ensure canvas is visible
         canvas.style.display = 'block';
         canvas.style.pointerEvents = 'auto';
         canvas.style.zIndex = '1';
         var menuScreen = document.getElementById('menuScreen');
         if (menuScreen) menuScreen.style.display = 'none';
 
-        // Create renderer
         waveRenderer = new WaveRenderer(canvas, ctx, demonImages);
 
-        // Create network (LocalNetwork for offline wave game)
         network = new LocalNetwork();
         network.setCallbacks({
             onWaveGameState: function (state) {
@@ -96,39 +99,29 @@
                 if (data.type === 'correct') {
                     waveRenderer.addFlashMessage('+15 HP  +250 Score!', '#44ff44', 2500);
                 } else {
-                    waveRenderer.addFlashMessage('Wrong! Demons speed up!', '#ff4444', 2500);
+                    var penaltySeconds = Math.round((data.fireLockoutMs || 0) / 1000) || 15;
+                    waveRenderer.addFlashMessage('Wrong! Cannons disabled for ' + penaltySeconds + 's!', '#ff4444', 2800);
                     waveRenderer.triggerShake(4, 8);
                 }
             },
             onGameEnded: function (data) {
                 console.log('Wave game ended:', data.result);
-                // Let the renderer show victory/defeat screen —
-                // handle click to return to menu
                 _setupEndGameClick(data);
             },
-            onArmorAbsorb: function (data) {
+            onArmorAbsorb: function () {
                 waveRenderer.addFlashMessage('ARMOR!', '#8888ff', 1500);
             }
         });
 
-        // Start wave engine
         network.sendStartWaveGame(opts.waveConfig || {});
-
-        // Set up input handlers
         _setupInputHandlers();
-
-        // Start render loop
         _waveLoopRunning = true;
         _waveLoop();
 
-        // Set game mode
         window.gameMode = 'waveGame';
         console.log('WaveGameLauncher: Wave game started');
     }
 
-    /**
-     * Stop and clean up the wave game.
-     */
     function stopWaveGame() {
         _waveLoopRunning = false;
         if (_waveAnimFrame) {
@@ -140,6 +133,7 @@
             network = null;
         }
         _removeInputHandlers();
+        _removeQuizOverlay();
         lastWaveState = null;
         _quizPaused = false;
         window.gameMode = 'menu';
@@ -154,7 +148,6 @@
         if (lastWaveState && waveRenderer) {
             waveRenderer.render(lastWaveState);
 
-            // If quiz is paused, draw quiz overlay on top
             if (_quizPaused) {
                 waveRenderer.drawQuizPause({});
             }
@@ -177,13 +170,23 @@
         network.sendWaveInput('setPosition', { x: arenaPos.x });
     }
 
+    function _cancelWaveFireInput() {
+        _isTouching = false;
+        delete _keysDown[' '];
+        delete _keysDown.Spacebar;
+        if (network) network.sendWaveInput('fire', false);
+    }
+
     function _setupInputHandlers() {
-        // Keyboard
         _keydownHandler = function (e) {
+            if (_quizPaused) {
+                if (e.key === ' ' || e.key === 'Spacebar') e.preventDefault();
+                return;
+            }
+
             _keysDown[e.key] = true;
             _updateMovement();
 
-            // Space = fire
             if (e.key === ' ' || e.key === 'Spacebar') {
                 e.preventDefault();
                 if (network) network.sendWaveInput('fire', true);
@@ -201,14 +204,13 @@
         document.addEventListener('keydown', _keydownHandler);
         document.addEventListener('keyup', _keyupHandler);
 
-        // Mouse / touch: move player to x position, fire only while pressed
         _mousemoveHandler = function (e) {
             _sendPointerPosition(e.clientX);
         };
         _mousedownHandler = function (e) {
+            if (_quizPaused || Date.now() < _pointerSuppressedUntil) return;
             _isTouching = true;
 
-            // Check end-game button click
             if (lastWaveState && (lastWaveState.waveState === 'victory' || lastWaveState.waveState === 'defeat')) {
                 if (waveRenderer && waveRenderer.endButtonRect) {
                     var rect = canvas.getBoundingClientRect();
@@ -235,9 +237,9 @@
         canvas.addEventListener('mousedown', _mousedownHandler);
         canvas.addEventListener('mouseup', _mouseupHandler);
 
-        // Touch
         _touchstartHandler = function (e) {
             e.preventDefault();
+            if (_quizPaused || Date.now() < _pointerSuppressedUntil) return;
             _isTouching = true;
             var touch = e.touches[0];
             _sendPointerPosition(touch.clientX);
@@ -245,8 +247,8 @@
         };
         _touchmoveHandler = function (e) {
             e.preventDefault();
-            var touch = e.touches[0];
-            _sendPointerPosition(touch.clientX);
+            if (!e.touches || !e.touches[0]) return;
+            _sendPointerPosition(e.touches[0].clientX);
         };
         _touchendHandler = function (e) {
             e.preventDefault();
@@ -273,8 +275,8 @@
     }
 
     function _updateMovement() {
-        var left = _keysDown['ArrowLeft'] || _keysDown['a'] || _keysDown['A'];
-        var right = _keysDown['ArrowRight'] || _keysDown['d'] || _keysDown['D'];
+        var left = _keysDown['ArrowLeft'] || _keysDown.a || _keysDown.A;
+        var right = _keysDown['ArrowRight'] || _keysDown.d || _keysDown.D;
         if (network) {
             network.sendWaveInput('moveLeft', !!left);
             network.sendWaveInput('moveRight', !!right);
@@ -283,112 +285,256 @@
 
     // ==================== QUIZ ====================
 
-    function _triggerQuizUI() {
-        // Use the existing QuizManager to generate a quiz question
-        // For the prototype, we'll create a simple quiz popup overlay
-        if (typeof QuizManager !== 'undefined' && QuizManager.pickQualityVerse) {
-            QuizManager.pickQualityVerse();
-        }
-
-        // Create a DOM overlay for quiz
-        var overlay = document.createElement('div');
-        overlay.id = 'waveQuizOverlay';
-        overlay.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,20,0.85);z-index:100;display:flex;align-items:center;justify-content:center;';
-
-        var panel = document.createElement('div');
-        panel.style.cssText = 'background:linear-gradient(135deg,#1a1a2e,#16213e);border:2px solid #4a90e2;border-radius:15px;padding:25px;max-width:400px;width:90%;color:#fff;text-align:center;';
-
-        panel.innerHTML = '<h2 style="color:#6699ff;margin-bottom:15px;">⚔️ VERSE CHALLENGE ⚔️</h2>' +
-            '<p style="font-size:14px;opacity:0.8;margin-bottom:20px;">Answer correctly for +15 HP and +250 Score!</p>' +
-            '<p style="font-size:16px;margin-bottom:20px;" id="waveQuizQuestion">Loading verse...</p>' +
-            '<div id="waveQuizOptions" style="display:flex;flex-direction:column;gap:10px;"></div>';
-
-        overlay.appendChild(panel);
-        document.body.appendChild(overlay);
-
-        // Generate quiz content
-        _generateQuizContent(panel);
+    function _removeQuizOverlay() {
+        var overlay = document.getElementById('waveQuizOverlay');
+        if (overlay) overlay.remove();
     }
 
-    function _generateQuizContent(panel) {
-        // Get current verse for quiz
-        var vQuality = window.vQuality || 'Faith';
-        var verseData = null;
+    function _pickWaveQuizQuality() {
+        var missionQualities = (window.currentMission && Array.isArray(window.currentMission.qualities))
+            ? window.currentMission.qualities
+            : [];
+        var preferredQuality = window.vQuality || missionQualities[0] || 'Faith';
 
-        if (window.organizedVerses && window.organizedVerses[vQuality]) {
-            var verses = window.organizedVerses[vQuality];
-            verseData = verses[Math.floor(Math.random() * verses.length)];
+        if (window.organizedVerses && window.organizedVerses[preferredQuality] && window.organizedVerses[preferredQuality].length > 0) {
+            return preferredQuality;
         }
 
-        if (!verseData) {
-            // Fallback: skip quiz
-            _answerQuiz(true);
-            return;
-        }
-
-        var questionEl = panel.querySelector('#waveQuizQuestion');
-        var optionsEl = panel.querySelector('#waveQuizOptions');
-
-        // Simple missing word quiz
-        var words = verseData.Text.split(' ');
-        var targetIdx = Math.floor(Math.random() * Math.max(1, words.length - 2)) + 1;
-        var correctWord = words[targetIdx];
-        words[targetIdx] = '______';
-        questionEl.textContent = '"' + words.join(' ') + '" — ' + verseData.Reference;
-
-        // Generate options
-        var options = [correctWord];
-        var decoyWords = ['faith', 'love', 'hope', 'grace', 'truth', 'spirit', 'peace', 'mercy', 'power', 'glory'];
-        while (options.length < 4) {
-            var decoy = decoyWords[Math.floor(Math.random() * decoyWords.length)];
-            if (!options.includes(decoy) && decoy !== correctWord.toLowerCase()) {
-                options.push(decoy);
+        for (var i = 0; i < missionQualities.length; i++) {
+            if (window.organizedVerses && window.organizedVerses[missionQualities[i]] && window.organizedVerses[missionQualities[i]].length > 0) {
+                return missionQualities[i];
             }
         }
 
-        // Shuffle
+        var allQualities = window.organizedVerses ? Object.keys(window.organizedVerses) : [];
+        for (var qi = 0; qi < allQualities.length; qi++) {
+            if (window.organizedVerses[allQualities[qi]] && window.organizedVerses[allQualities[qi]].length > 0) {
+                return allQualities[qi];
+            }
+        }
+
+        return preferredQuality;
+    }
+
+    function _getCandidateWords(verseText) {
+        var words = String(verseText || '').split(/\s+/);
+        var candidates = [];
+        for (var i = 0; i < words.length; i++) {
+            var clean = words[i].replace(/[^A-Za-z']/g, '');
+            if (clean.length >= 4 && /^[A-Za-z]/.test(clean)) {
+                candidates.push({
+                    index: i,
+                    cleanWord: clean
+                });
+            }
+        }
+        return candidates;
+    }
+
+    function _buildLetterOptions(correctLetter) {
+        var options = [correctLetter];
+        var used = {};
+        used[correctLetter] = true;
+
+        while (options.length < WAVE_QUIZ_OPTION_COUNT) {
+            var nextLetter = ALPHABET[Math.floor(Math.random() * ALPHABET.length)];
+            if (!used[nextLetter]) {
+                used[nextLetter] = true;
+                options.push(nextLetter);
+            }
+        }
+
         for (var i = options.length - 1; i > 0; i--) {
             var j = Math.floor(Math.random() * (i + 1));
             var temp = options[i];
             options[i] = options[j];
             options[j] = temp;
         }
+        return options;
+    }
 
-        for (var oi = 0; oi < options.length; oi++) {
+    function _buildWaveQuestion(verseData) {
+        if (!verseData || !verseData.Text) return null;
+
+        var candidates = _getCandidateWords(verseData.Text);
+        if (!candidates.length) return null;
+
+        var picked = candidates[Math.floor(Math.random() * candidates.length)];
+        var words = verseData.Text.split(/\s+/);
+        var cleanWord = picked.cleanWord;
+        var maskedWord = Array(cleanWord.length + 1).join('_');
+        words[picked.index] = words[picked.index].replace(cleanWord, maskedWord);
+
+        return {
+            verseReference: verseData.Reference || '',
+            promptText: 'Choose the first letter of the hidden word.',
+            questionText: '"' + words.join(' ') + '"',
+            correctLetter: cleanWord.charAt(0).toUpperCase(),
+            options: _buildLetterOptions(cleanWord.charAt(0).toUpperCase())
+        };
+    }
+
+    function _buildWaveQuizSession() {
+        var quality = _pickWaveQuizQuality();
+        var verses = (window.organizedVerses && window.organizedVerses[quality]) ? window.organizedVerses[quality].slice() : [];
+        if (!verses.length) return null;
+
+        var questions = [];
+        while (questions.length < WAVE_QUIZ_QUESTION_COUNT && verses.length > 0) {
+            var verseIndex = Math.floor(Math.random() * verses.length);
+            var verseData = verses.splice(verseIndex, 1)[0];
+            var question = _buildWaveQuestion(verseData);
+            if (question) {
+                questions.push(question);
+            }
+        }
+
+        if (!questions.length) return null;
+
+        return {
+            currentIndex: 0,
+            questions: questions,
+            unlockAt: 0
+        };
+    }
+
+    function _setQuizUnlock(panel) {
+        if (!_currentQuiz) return;
+
+        var countdownEl = panel.querySelector('#waveQuizCountdown');
+        var buttons = panel.querySelectorAll('#waveQuizOptions button');
+        _currentQuiz.unlockAt = Date.now() + WAVE_QUIZ_MIN_ANSWER_DELAY_MS;
+
+        buttons.forEach(function (button) {
+            button.disabled = true;
+            button.style.opacity = '0.55';
+            button.style.cursor = 'not-allowed';
+        });
+
+        function tick() {
+            if (!_currentQuiz) return;
+
+            var remainingMs = Math.max(0, _currentQuiz.unlockAt - Date.now());
+            if (countdownEl) {
+                countdownEl.textContent = remainingMs > 0
+                    ? 'Answering unlocks in ' + (remainingMs / 1000).toFixed(1) + 's'
+                    : 'Answer now';
+            }
+            if (remainingMs <= 0) {
+                buttons.forEach(function (button) {
+                    button.disabled = false;
+                    button.style.opacity = '1';
+                    button.style.cursor = 'pointer';
+                });
+                return;
+            }
+            setTimeout(tick, 100);
+        }
+
+        tick();
+    }
+
+    function _renderWaveQuizQuestion(panel) {
+        if (!_currentQuiz || !_currentQuiz.questions.length) return;
+
+        var question = _currentQuiz.questions[_currentQuiz.currentIndex];
+        var progressEl = panel.querySelector('#waveQuizProgress');
+        var promptEl = panel.querySelector('#waveQuizPrompt');
+        var questionEl = panel.querySelector('#waveQuizQuestion');
+        var optionsEl = panel.querySelector('#waveQuizOptions');
+
+        progressEl.textContent = 'Question ' + (_currentQuiz.currentIndex + 1) + ' / ' + _currentQuiz.questions.length;
+        promptEl.textContent = question.promptText + ' ' + question.verseReference;
+        questionEl.textContent = question.questionText;
+        optionsEl.innerHTML = '';
+
+        question.options.forEach(function (letter) {
             var btn = document.createElement('button');
-            btn.textContent = options[oi];
-            btn.style.cssText = 'padding:12px;border:1px solid #4a90e2;background:rgba(74,144,226,0.2);color:#fff;border-radius:8px;cursor:pointer;font-size:15px;transition:background 0.2s;';
-            btn.dataset.correct = (options[oi] === correctWord) ? 'true' : 'false';
-            btn.addEventListener('click', function () {
-                var isCorrect = this.dataset.correct === 'true';
-                _answerQuiz(isCorrect);
+            btn.type = 'button';
+            btn.textContent = letter;
+            btn.style.cssText = 'padding:14px;border:1px solid #4a90e2;background:rgba(74,144,226,0.2);color:#fff;border-radius:8px;cursor:pointer;font-size:22px;font-weight:bold;transition:background 0.2s;';
+            btn.dataset.correct = (letter === question.correctLetter) ? 'true' : 'false';
+            btn.addEventListener('click', function (event) {
+                event.preventDefault();
+                event.stopPropagation();
+                if (!_currentQuiz || Date.now() < _currentQuiz.unlockAt || btn.disabled) return;
+
+                if (btn.dataset.correct !== 'true') {
+                    _answerQuiz(false);
+                    return;
+                }
+
+                if (_currentQuiz.currentIndex >= _currentQuiz.questions.length - 1) {
+                    _answerQuiz(true);
+                    return;
+                }
+
+                _currentQuiz.currentIndex++;
+                _renderWaveQuizQuestion(panel);
             });
             btn.addEventListener('mouseenter', function () {
-                this.style.background = 'rgba(74,144,226,0.5)';
+                if (!btn.disabled) btn.style.background = 'rgba(74,144,226,0.5)';
             });
             btn.addEventListener('mouseleave', function () {
-                this.style.background = 'rgba(74,144,226,0.2)';
+                btn.style.background = 'rgba(74,144,226,0.2)';
             });
             optionsEl.appendChild(btn);
+        });
+
+        _setQuizUnlock(panel);
+    }
+
+    function _triggerQuizUI() {
+        _cancelWaveFireInput();
+        _pointerSuppressedUntil = Date.now() + WAVE_CLICK_SUPPRESSION_MS;
+        _currentQuiz = _buildWaveQuizSession();
+
+        if (!_currentQuiz) {
+            _answerQuiz(true);
+            return;
         }
+
+        _removeQuizOverlay();
+
+        var overlay = document.createElement('div');
+        overlay.id = 'waveQuizOverlay';
+        overlay.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,20,0.85);z-index:100;display:flex;align-items:center;justify-content:center;';
+        overlay.addEventListener('click', function (event) {
+            if (_currentQuiz && Date.now() < _currentQuiz.unlockAt) {
+                event.preventDefault();
+                event.stopPropagation();
+            }
+        }, true);
+
+        var panel = document.createElement('div');
+        panel.style.cssText = 'background:linear-gradient(135deg,#1a1a2e,#16213e);border:2px solid #4a90e2;border-radius:15px;padding:25px;max-width:420px;width:90%;color:#fff;text-align:center;';
+        panel.innerHTML = '<h2 style="color:#6699ff;margin-bottom:15px;">⚔️ VERSE CHALLENGE ⚔️</h2>' +
+            '<p style="font-size:14px;opacity:0.8;margin-bottom:8px;">Answer both correctly for +15 HP and +250 Score.</p>' +
+            '<p id="waveQuizProgress" style="font-size:13px;color:#a5c8ff;margin:0 0 10px 0;">Question 1 / ' + _currentQuiz.questions.length + '</p>' +
+            '<p id="waveQuizCountdown" style="font-size:13px;color:#ffd166;margin:0 0 12px 0;">Answering unlocks in 2.0s</p>' +
+            '<p id="waveQuizPrompt" style="font-size:14px;opacity:0.9;margin-bottom:10px;"></p>' +
+            '<p id="waveQuizQuestion" style="font-size:16px;margin-bottom:20px;line-height:1.45;">Loading verse...</p>' +
+            '<div id="waveQuizOptions" style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;"></div>';
+
+        overlay.appendChild(panel);
+        document.body.appendChild(overlay);
+        _renderWaveQuizQuestion(panel);
     }
 
     function _answerQuiz(correct) {
         _quizPaused = false;
-        var overlay = document.getElementById('waveQuizOverlay');
-        if (overlay) overlay.remove();
+        _pointerSuppressedUntil = Date.now() + WAVE_CLICK_SUPPRESSION_MS;
+        _removeQuizOverlay();
+        _currentQuiz = null;
 
         if (network) {
             network.sendWaveInput('quizAnswer', { correct: correct });
         }
     }
 
-    function _setupEndGameClick(data) {
-        // End game click is handled in mousedown handler
-        // We just store the data for the return callback
+    function _setupEndGameClick() {
+        // End game click is handled in mousedown handler.
     }
-
-    // ==================== EXPOSE ====================
 
     window.WaveGameLauncher = {
         start: startWaveGame,

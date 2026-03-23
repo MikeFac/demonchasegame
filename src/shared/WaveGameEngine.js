@@ -63,6 +63,7 @@
             this._bulletIdCounter = 0;
             this._lastFireTime = 0;
             this._autoFire = false;
+            this._fireDisabledUntil = 0;
 
             // Quiz pause
             this._lastQuizTime = 0;
@@ -219,6 +220,7 @@
 
         _updateFiring() {
             if (!this._firing) return;
+            if (Date.now() < this._fireDisabledUntil) return;
             var now = Date.now();
             if (now - this._lastFireTime < WaveConfig.FIRE_COOLDOWN) return;
 
@@ -402,10 +404,11 @@
                     scoreBonus: 250
                 });
             } else {
-                // Penalty: speed up current wave monsters
+                this._fireDisabledUntil = Date.now() + WaveConfig.QUIZ_FAIL_FIRE_LOCKOUT_MS;
                 this.emitter.emit('quizBonus', {
                     type: 'incorrect',
-                    penalty: 'speedBoost'
+                    penalty: 'fireLockout',
+                    fireLockoutMs: WaveConfig.QUIZ_FAIL_FIRE_LOCKOUT_MS
                 });
             }
         }
@@ -425,7 +428,8 @@
                     health: this.player.health,
                     maxHealth: this.player.maxHealth,
                     score: this.player.score,
-                    state: this.player.state
+                    state: this.player.state,
+                    fireDisabledMs: Math.max(0, this._fireDisabledUntil - Date.now())
                 },
                 monsters: this.monsterManager.getMonsters(),
                 projectiles: this.projectiles.map(function (p) {

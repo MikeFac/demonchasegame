@@ -29,6 +29,7 @@ var PROJECTILE_SPEED = 12;
 var PROJECTILE_WIDTH = 6;
 var PROJECTILE_HEIGHT = 14;
 var FIRE_COOLDOWN = 250; // ms between shots
+var QUIZ_FAIL_FIRE_LOCKOUT_MS = 15000; // ms unable to fire after failing a quiz
 
 var QUIZ_PAUSE_INTERVAL = 10000; // ms between quiz pauses
 var INITIAL_QUIZ_PAUSE_DELAY = 4500; // ms before the first quiz appears
@@ -41,10 +42,10 @@ var WAVE_DATA = {
         demons: ['Fear', 'Doubt'],
         formationSpeed: 1.0,
         swayRange: 100,
-        diveChance: 0.001,
-        maxDivers: 1,
-        diveSpeed: 3,
-        diveTrackingFactor: 0.015
+        diveChance: 0.0018,
+        maxDivers: 2,
+        diveSpeed: 3.8,
+        diveTrackingFactor: 0.028
     },
     2: {
         name: 'Shadows of Shame',
@@ -53,10 +54,10 @@ var WAVE_DATA = {
         demons: ['Shame', 'Confusion', 'Fear'],
         formationSpeed: 1.3,
         swayRange: 120,
-        diveChance: 0.0018,
-        maxDivers: 2,
-        diveSpeed: 3.5,
-        diveTrackingFactor: 0.02
+        diveChance: 0.0026,
+        maxDivers: 3,
+        diveSpeed: 4.2,
+        diveTrackingFactor: 0.032
     },
     3: {
         name: 'Deceptive Forces',
@@ -65,10 +66,10 @@ var WAVE_DATA = {
         demons: ['Deception', 'Blindness', 'Ignorance', 'Confusion'],
         formationSpeed: 1.5,
         swayRange: 130,
-        diveChance: 0.002,
-        maxDivers: 2,
-        diveSpeed: 4,
-        diveTrackingFactor: 0.02
+        diveChance: 0.003,
+        maxDivers: 3,
+        diveSpeed: 4.8,
+        diveTrackingFactor: 0.038
     },
     4: {
         name: 'Stronghold Assault',
@@ -77,10 +78,10 @@ var WAVE_DATA = {
         demons: ['Condemnation', 'Unbelief', 'Strife', 'Despair'],
         formationSpeed: 1.8,
         swayRange: 140,
-        diveChance: 0.0025,
-        maxDivers: 3,
-        diveSpeed: 4.5,
-        diveTrackingFactor: 0.025
+        diveChance: 0.0035,
+        maxDivers: 4,
+        diveSpeed: 5.2,
+        diveTrackingFactor: 0.045
     },
     5: {
         name: 'Pride\'s Last Stand',
@@ -89,10 +90,10 @@ var WAVE_DATA = {
         demons: ['Pride', 'Temptation', 'Strife', 'Fear'],
         formationSpeed: 2.0,
         swayRange: 150,
-        diveChance: 0.003,
-        maxDivers: 3,
-        diveSpeed: 5,
-        diveTrackingFactor: 0.03,
+        diveChance: 0.004,
+        maxDivers: 4,
+        diveSpeed: 5.8,
+        diveTrackingFactor: 0.05,
         boss: {
             demonType: 'Pride',
             label: 'Pride Lord',
@@ -116,6 +117,7 @@ var WaveConfig = {
     PROJECTILE_WIDTH: PROJECTILE_WIDTH,
     PROJECTILE_HEIGHT: PROJECTILE_HEIGHT,
     FIRE_COOLDOWN: FIRE_COOLDOWN,
+    QUIZ_FAIL_FIRE_LOCKOUT_MS: QUIZ_FAIL_FIRE_LOCKOUT_MS,
     QUIZ_PAUSE_INTERVAL: QUIZ_PAUSE_INTERVAL,
     INITIAL_QUIZ_PAUSE_DELAY: INITIAL_QUIZ_PAUSE_DELAY,
     WAVE_DATA: WAVE_DATA,

@@ -252,6 +252,34 @@ Original prompt: Check the implementation of docs/multi-version-songs-implementa
     - demon sprites rendered as actual art rather than fallback text blocks
     - screenshot: `output/web-game/wave-assault-smoke/wave-after-click.png`
 
+2026-03-23:
+- Follow-up wave-assault tuning after commit `748d9a1`.
+- Updated the wave quiz interaction in `src/client/WaveGameLauncher.js`:
+  - quiz open now cancels active firing and suppresses immediate follow-on pointer clicks
+  - each question enforces a 2 second answer lockout before buttons become clickable
+  - each quiz pause now asks 2 questions instead of 1
+  - answer format changed from obvious missing-word options to 6-letter first-letter choices
+  - quiz progress now shows `Question 1 / 2` and `Question 2 / 2`
+- Added a failed-quiz weapon lockout in `src/shared/WaveConfig.js` and `src/shared/WaveGameEngine.js`:
+  - constant `QUIZ_FAIL_FIRE_LOCKOUT_MS = 15000`
+  - incorrect quiz answers now disable firing for 15 seconds
+  - engine state now carries remaining `fireDisabledMs`
+- Verification:
+  - `node --check src/client/WaveGameLauncher.js`
+  - `node --check src/shared/WaveGameEngine.js`
+  - `node --check src/shared/WaveConfig.js`
+  - direct local engine check confirmed:
+    - incorrect answer sets ~15s fire lockout
+    - projectiles do not spawn while locked
+    - projectiles resume after lockout expires
+  - headless browser smoke captured under `output/web-game/wave-assault-quiz-v2/`
+    - summary: `output/web-game/wave-assault-quiz-v2/summary.json`
+    - initial buttons disabled during lockout
+    - 6 answer buttons rendered
+    - first correct answer advanced to `Question 2 / 2`
+    - second stage started locked again for the enforced delay
+    - overlay closed after the second correct answer
+
 2026-03-13:
 - Added a first pass at optional level bosses.
 - Documented the design in:
