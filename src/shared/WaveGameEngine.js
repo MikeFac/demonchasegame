@@ -84,6 +84,7 @@
             this._moveLeft = false;
             this._moveRight = false;
             this._firing = false;
+            this._pointerTargetX = null;
 
             // Tick management
             this._tickCount = 0;
@@ -125,16 +126,17 @@
         handleInput(event, data) {
             if (event === 'moveLeft') {
                 this._moveLeft = data;
+                if (data) this._pointerTargetX = null;
             } else if (event === 'moveRight') {
                 this._moveRight = data;
+                if (data) this._pointerTargetX = null;
             } else if (event === 'fire') {
                 this._firing = data;
             } else if (event === 'quizAnswer') {
                 this._handleQuizAnswer(data);
             } else if (event === 'setPosition') {
-                // Direct position set (for touch/mouse)
                 if (data && typeof data.x === 'number') {
-                    this.player.x = Math.max(
+                    this._pointerTargetX = Math.max(
                         this.player.width / 2,
                         Math.min(WaveConfig.ARENA_WIDTH - this.player.width / 2, data.x)
                     );
@@ -209,6 +211,15 @@
             }
             if (this._moveRight) {
                 this.player.x += speed;
+            }
+            if (!this._moveLeft && !this._moveRight && typeof this._pointerTargetX === 'number') {
+                var dx = this._pointerTargetX - this.player.x;
+                var pointerSpeed = WaveConfig.PLAYER_POINTER_SPEED || speed;
+                if (Math.abs(dx) <= pointerSpeed) {
+                    this.player.x = this._pointerTargetX;
+                } else {
+                    this.player.x += dx > 0 ? pointerSpeed : -pointerSpeed;
+                }
             }
 
             // Clamp to arena
