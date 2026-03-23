@@ -67,7 +67,8 @@
             // Quiz pause
             this._lastQuizTime = 0;
             this._quizPaused = false;
-            this.quizPauseInterval = WaveConfig.QUIZ_PAUSE_INTERVAL;
+            this.quizPauseInterval = this.gameConfig.quizPauseInterval || WaveConfig.QUIZ_PAUSE_INTERVAL;
+            this.initialQuizPauseDelay = this.gameConfig.initialQuizPauseDelay || WaveConfig.INITIAL_QUIZ_PAUSE_DELAY;
 
             // Stats
             this.stats = {
@@ -92,7 +93,7 @@
         start() {
             var self = this;
             this.shouldRun = true;
-            this._lastQuizTime = Date.now();
+            this._lastQuizTime = Date.now() - Math.max(0, this.quizPauseInterval - this.initialQuizPauseDelay);
 
             // Start first wave
             this._startNextWave();

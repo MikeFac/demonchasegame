@@ -219,6 +219,39 @@ Original prompt: Check the implementation of docs/multi-version-songs-implementa
   - with seeded local `missionProgress`, overland showed `The Teachings of Jesus` unlocked and selectable
   - selected `Kingdom Call`, and both `Start Mission` / `Learn Verses` buttons appeared as expected
 
+2026-03-23:
+- Fixed the new missions `Wave Assault` branch issues on `feature/wave-assault-mode`.
+- Wave mode fixes:
+  - stopped implicit auto-fire in `src/client/WaveGameLauncher.js`
+    - removed startup auto-fire
+    - pointer movement now updates position without forcing `fire=true`
+    - mouse/touch only fire while actively pressed
+  - sped up the first verse challenge in `src/shared/WaveConfig.js` and `src/shared/WaveGameEngine.js`
+    - first quiz now appears after ~4.5s
+    - recurring wave quizzes now use a shorter interval than the original 15s delay
+  - fixed demon sprite loading for missions-launched wave mode in `game.js`
+    - demon asset URLs now resolve from a stable asset base URL
+    - added `ensureDemonImagesLoaded()` so wave mode can preload demon sprites even when `init()` has not run
+    - wave mission start now loads demon sprites before launching the wave renderer
+  - fixed wave quiz data setup for direct missions launch
+    - `game.js` now ensures verse data is loaded/exposed to `window.organizedVerses` on the wave mission path
+    - `src/client/QuizManager.js` now initializes its local `vQuality` state safely instead of relying on an undeclared global
+    - wave mission start now seeds `window.vQuality` from mission qualities when needed
+- Verification:
+  - `node --check game.js`
+  - `node --check src/client/QuizManager.js`
+  - `node --check src/client/WaveGameLauncher.js`
+  - `node --check src/shared/WaveGameEngine.js`
+  - `node --check src/shared/WaveConfig.js`
+  - restarted local server via `./restart-server.sh`
+  - headless browser smoke via Playwright against `startMission('chapter5', 'wave-01')`
+    - final summary file: `output/web-game/wave-assault-smoke/summary.json`
+    - no browser console/page errors in final run
+    - quiz overlay visibly rendered with real verse content
+    - screenshot: `output/web-game/wave-assault-smoke/wave-quiz-window.png`
+    - demon sprites rendered as actual art rather than fallback text blocks
+    - screenshot: `output/web-game/wave-assault-smoke/wave-after-click.png`
+
 2026-03-13:
 - Added a first pass at optional level bosses.
 - Documented the design in:
@@ -473,3 +506,4 @@ Original prompt: Check the implementation of docs/multi-version-songs-implementa
 - 2026-03-14: Fixed main menu buttons after learn deeplink by initializing menu button listeners for all entry paths, not just the standard menu branch.
 - 2026-03-14: When exiting the learn deeplink to overland, the app now strips mode=learn/quality/category from the URL via history.replaceState. Also shortened the HUD copy from "Demons to defeat" to "Demons left" for fit/readability.
 - 2026-03-14: Added GA onboarding mission funnel events for Start Here: mission started, move completed, first kill, learn opened, mission finished (complete/failed).
+- 2026-03-14: Simplified learn-route music fix by resuming MusicManager on review exit to overland as well as exit back to game.

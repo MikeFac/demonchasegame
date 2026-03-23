@@ -30,7 +30,8 @@ var PROJECTILE_WIDTH = 6;
 var PROJECTILE_HEIGHT = 14;
 var FIRE_COOLDOWN = 250; // ms between shots
 
-var QUIZ_PAUSE_INTERVAL = 15000; // ms between quiz pauses
+var QUIZ_PAUSE_INTERVAL = 10000; // ms between quiz pauses
+var INITIAL_QUIZ_PAUSE_DELAY = 4500; // ms before the first quiz appears
 
 var WAVE_DATA = {
     1: {
@@ -116,6 +117,7 @@ var WaveConfig = {
     PROJECTILE_HEIGHT: PROJECTILE_HEIGHT,
     FIRE_COOLDOWN: FIRE_COOLDOWN,
     QUIZ_PAUSE_INTERVAL: QUIZ_PAUSE_INTERVAL,
+    INITIAL_QUIZ_PAUSE_DELAY: INITIAL_QUIZ_PAUSE_DELAY,
     WAVE_DATA: WAVE_DATA,
     TOTAL_WAVES: Object.keys(WAVE_DATA).length,
 

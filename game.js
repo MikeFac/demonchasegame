@@ -515,6 +515,22 @@ let spawnsLeft = 10; //should be updated by server
 // Get the current script path
 const currentScriptPath = document.currentScript.src;
 const scriptDirectory = currentScriptPath.substring(0, currentScriptPath.lastIndexOf('/'));
+const assetBaseUrl = (function () {
+    try {
+        return new URL('./', currentScriptPath).href;
+    } catch (error) {
+        return window.location.origin + '/';
+    }
+})();
+
+function resolveAssetUrl(relativePath) {
+    const cleanPath = String(relativePath || '').replace(/^\/+/, '');
+    try {
+        return new URL(cleanPath, assetBaseUrl).href;
+    } catch (error) {
+        return '/' + cleanPath;
+    }
+}
 
 window.gameMode = 'game'; // Possible values: 'game', 'review', 'overland', 'votd', 'menu'
 let repeatEnabled = false;
@@ -614,24 +630,72 @@ function getCombatDistanceForMonster(monster) {
 }
 
 const DEMON_TYPES = {
-    Fear: `${scriptDirectory}/images/monsters/fear_demon.png`,
-    Condemnation: `${scriptDirectory}/images/monsters/condemnation_demon.png`,
-    Unbelief: `${scriptDirectory}/images/monsters/unbelief_demon.png`,
-    Ignorance: `${scriptDirectory}/images/monsters/ignorance_spirit.png`,
-    Depression: `${scriptDirectory}/images/monsters/depression_spirit.png`,
-    Strife: `${scriptDirectory}/images/monsters/strife_spirit.png`,
-    Confusion: `${scriptDirectory}/images/monsters/confusion_spirit.png`,
-    Infirmity: `${scriptDirectory}/images/monsters/infirmity_spirit.png`,
-    Doubt: `${scriptDirectory}/images/monsters/doubt_spirit.png`,
-    Deception: `${scriptDirectory}/images/monsters/DECEPTION_SPIRIT1.png`,
-    Despair: `${scriptDirectory}/images/monsters/DISCOURAGEMENT.png`,
-    Pride: `${scriptDirectory}/images/monsters/PRIDE.png`,
-    Temptation: `${scriptDirectory}/images/monsters/JEZEBEL.png`,
-    Poverty: `${scriptDirectory}/images/monsters/DEMON-OF-POVERTY.png`,
-    Shame: `${scriptDirectory}/images/monsters/SHAME-ACCUSATION.png`,
-    Blindness: `${scriptDirectory}/images/monsters/SPIRITUALBLINDNESS.png`,
-    Swarm: `${scriptDirectory}/images/monsters/DEMON-SWARM.png`
+    Fear: resolveAssetUrl('images/monsters/fear_demon.png'),
+    Condemnation: resolveAssetUrl('images/monsters/condemnation_demon.png'),
+    Unbelief: resolveAssetUrl('images/monsters/unbelief_demon.png'),
+    Ignorance: resolveAssetUrl('images/monsters/ignorance_spirit.png'),
+    Depression: resolveAssetUrl('images/monsters/depression_spirit.png'),
+    Strife: resolveAssetUrl('images/monsters/strife_spirit.png'),
+    Confusion: resolveAssetUrl('images/monsters/confusion_spirit.png'),
+    Infirmity: resolveAssetUrl('images/monsters/infirmity_spirit.png'),
+    Doubt: resolveAssetUrl('images/monsters/doubt_spirit.png'),
+    Deception: resolveAssetUrl('images/monsters/DECEPTION_SPIRIT1.png'),
+    Despair: resolveAssetUrl('images/monsters/DISCOURAGEMENT.png'),
+    Pride: resolveAssetUrl('images/monsters/PRIDE.png'),
+    Temptation: resolveAssetUrl('images/monsters/JEZEBEL.png'),
+    Poverty: resolveAssetUrl('images/monsters/DEMON-OF-POVERTY.png'),
+    Shame: resolveAssetUrl('images/monsters/SHAME-ACCUSATION.png'),
+    Blindness: resolveAssetUrl('images/monsters/SPIRITUALBLINDNESS.png'),
+    Swarm: resolveAssetUrl('images/monsters/DEMON-SWARM.png')
 };
+
+async function ensureDemonImagesLoaded() {
+    const demonTypes = Object.keys(DEMON_TYPES);
+    const hasAllLoadedSprites = demonImages
+        && demonTypes.every((demonType) => {
+            const img = demonImages[demonType];
+            return img && img.complete && img.naturalWidth > 0;
+        });
+
+    if (hasAllLoadedSprites) {
+        return demonImages;
+    }
+
+    demonImages = demonImages || {};
+
+    const demonImagePromises = demonTypes.map((demonType) => {
+        return new Promise((resolve, reject) => {
+            const expectedSrc = DEMON_TYPES[demonType];
+            let img = demonImages[demonType];
+
+            if (img && img.complete && img.naturalWidth > 0 && img.src === expectedSrc) {
+                resolve(img);
+                return;
+            }
+
+            img = new Image();
+            demonImages[demonType] = img;
+
+            img.onload = function () {
+                img.onload = null;
+                img.onerror = null;
+                console.log(`${demonType} demon image loaded`);
+                resolve(img);
+            };
+            img.onerror = function (error) {
+                img.onload = null;
+                img.onerror = null;
+                console.error(`Error loading ${demonType} demon image`);
+                reject(error || new Error(`Failed to load ${demonType} demon image`));
+            };
+            img.src = expectedSrc;
+        });
+    });
+
+    await Promise.all(demonImagePromises);
+    console.log('All demon images loaded');
+    return demonImages;
+}
 
 const levelXPRequirements = LevelConfig.levelXPRequirements;
 
@@ -875,6 +939,9 @@ function loadVersesFromBundle() {
     }
     
     organizedVerses = QuizManager.organizeByCategory2(filteredVerses);
+    if (typeof window !== 'undefined') {
+        window.organizedVerses = organizedVerses;
+    }
 }
 
 function getFreezeAuraMoveFactor(player, monsters, now) {
@@ -1073,6 +1140,7 @@ function applyMissionContentOverride(override) {
     ALL_QUALITIES = override.allQualities.slice();
     QUALITIES = override.allQualities.slice();
     window._discipleshipMissionContent = override;
+    window.organizedVerses = organizedVerses;
     return true;
 }
 
@@ -1086,6 +1154,7 @@ function clearMissionContentOverride() {
         ALL_QUALITIES = baseAllQualities.slice();
         QUALITIES = baseAllQualities.slice();
     }
+    window.organizedVerses = organizedVerses;
 }
 
 // === Custom Config Loading (from URL or localStorage) ===
@@ -2657,26 +2726,8 @@ async function init() {
             shieldImg = null;
         };
 
-        // Load demon images
-        demonImages = {};
-        const demonImagePromises = Object.keys(DEMON_TYPES).map((demonType) => {
-            return new Promise((resolve, reject) => {
-                demonImages[demonType] = new Image();
-                demonImages[demonType].src = DEMON_TYPES[demonType];
-                demonImages[demonType].onload = function () {
-                    console.log(`${demonType} demon image loaded`);
-                    resolve();
-                };
-                demonImages[demonType].onerror = function () {
-                    console.error(`Error loading ${demonType} demon image`);
-                    reject();
-                };
-            });
-        });
-
         try {
-            await Promise.all(demonImagePromises);
-            console.log('All demon images loaded');
+            await ensureDemonImagesLoaded();
         } catch (error) {
             console.error('Error loading demon images:', error);
         }
@@ -3594,7 +3645,19 @@ async function startMission(worldId, missionId) {
         // ===== WAVE MODE: Launch wave assault if mission has gameMode "wave" =====
         if (mission.gameMode === 'wave') {
             console.log('Starting WAVE mode mission:', mission.name);
+            if (!organizedVerses || Object.keys(organizedVerses).length === 0) {
+                loadVersesFromBundle();
+            }
+            window.organizedVerses = organizedVerses;
+            if (!window.vQuality) {
+                window.vQuality = (mission.qualities && mission.qualities[0]) || 'Faith';
+            }
             if (window.WaveGameLauncher) {
+                try {
+                    await ensureDemonImagesLoaded();
+                } catch (error) {
+                    console.error('Failed to load demon images for wave mode:', error);
+                }
                 WaveGameLauncher.start({
                     canvas: document.getElementById('gameCanvas'),
                     ctx: document.getElementById('gameCanvas').getContext('2d'),
@@ -5555,5 +5618,3 @@ function checkWallCollision(x, y, width, height) {
     }
     return false;
 }
-
-

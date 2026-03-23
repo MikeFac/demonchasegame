@@ -3,6 +3,7 @@
 (function () {
     // Private state
     let answerResultTimeout = null;
+    let vQuality = (typeof window !== 'undefined' && window.vQuality) ? window.vQuality : 'Faith';
     // answerFullVerse is declared in game.js (global scope) so game loop can read it
     // currentQuiz is declared in game.js (global scope) so renderer/input can read it
 

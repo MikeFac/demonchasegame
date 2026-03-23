@@ -168,6 +168,15 @@
     var _keydownHandler, _keyupHandler, _mousemoveHandler, _mousedownHandler, _mouseupHandler;
     var _touchstartHandler, _touchmoveHandler, _touchendHandler;
 
+    function _sendPointerPosition(clientX) {
+        if (!lastWaveState || !waveRenderer || !network) return;
+
+        var rect = canvas.getBoundingClientRect();
+        var canvasX = clientX - rect.left;
+        var arenaPos = waveRenderer.canvasToArena(canvasX, 0, lastWaveState.arenaWidth, lastWaveState.arenaHeight);
+        network.sendWaveInput('setPosition', { x: arenaPos.x });
+    }
+
     function _setupInputHandlers() {
         // Keyboard
         _keydownHandler = function (e) {
@@ -192,16 +201,9 @@
         document.addEventListener('keydown', _keydownHandler);
         document.addEventListener('keyup', _keyupHandler);
 
-        // Mouse / touch: move player to x position, always firing
+        // Mouse / touch: move player to x position, fire only while pressed
         _mousemoveHandler = function (e) {
-            if (!_isTouching && e.buttons === 0) return;
-            var rect = canvas.getBoundingClientRect();
-            var canvasX = e.clientX - rect.left;
-            // Convert to arena coords
-            if (lastWaveState && waveRenderer) {
-                var arenaPos = waveRenderer.canvasToArena(canvasX, 0, lastWaveState.arenaWidth, lastWaveState.arenaHeight);
-                if (network) network.sendWaveInput('setPosition', { x: arenaPos.x, firing: true });
-            }
+            _sendPointerPosition(e.clientX);
         };
         _mousedownHandler = function (e) {
             _isTouching = true;
@@ -221,13 +223,8 @@
                 }
             }
 
-            // Normal interaction - set position + fire
-            var rect2 = canvas.getBoundingClientRect();
-            var canvasX = e.clientX - rect2.left;
-            if (lastWaveState && waveRenderer) {
-                var arenaPos = waveRenderer.canvasToArena(canvasX, 0, lastWaveState.arenaWidth, lastWaveState.arenaHeight);
-                if (network) network.sendWaveInput('setPosition', { x: arenaPos.x, firing: true });
-            }
+            _sendPointerPosition(e.clientX);
+            if (network) network.sendWaveInput('fire', true);
         };
         _mouseupHandler = function () {
             _isTouching = false;
@@ -243,22 +240,13 @@
             e.preventDefault();
             _isTouching = true;
             var touch = e.touches[0];
-            var rect = canvas.getBoundingClientRect();
-            var canvasX = touch.clientX - rect.left;
-            if (lastWaveState && waveRenderer) {
-                var arenaPos = waveRenderer.canvasToArena(canvasX, 0, lastWaveState.arenaWidth, lastWaveState.arenaHeight);
-                if (network) network.sendWaveInput('setPosition', { x: arenaPos.x, firing: true });
-            }
+            _sendPointerPosition(touch.clientX);
+            if (network) network.sendWaveInput('fire', true);
         };
         _touchmoveHandler = function (e) {
             e.preventDefault();
             var touch = e.touches[0];
-            var rect = canvas.getBoundingClientRect();
-            var canvasX = touch.clientX - rect.left;
-            if (lastWaveState && waveRenderer) {
-                var arenaPos = waveRenderer.canvasToArena(canvasX, 0, lastWaveState.arenaWidth, lastWaveState.arenaHeight);
-                if (network) network.sendWaveInput('setPosition', { x: arenaPos.x, firing: true });
-            }
+            _sendPointerPosition(touch.clientX);
         };
         _touchendHandler = function (e) {
             e.preventDefault();
@@ -269,9 +257,6 @@
         canvas.addEventListener('touchstart', _touchstartHandler, { passive: false });
         canvas.addEventListener('touchmove', _touchmoveHandler, { passive: false });
         canvas.addEventListener('touchend', _touchendHandler, { passive: false });
-
-        // Auto-fire by default (can be toggled)
-        if (network) network.sendWaveInput('fire', true);
     }
 
     function _removeInputHandlers() {
