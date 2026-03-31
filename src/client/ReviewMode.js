@@ -252,6 +252,9 @@
 
         
         window.gameMode = 'review';
+        if (window.ModeManager && typeof window.ModeManager.adopt === 'function') {
+            window.ModeManager.adopt('review', options);
+        }
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         displayReviewVerseScreen();
 
@@ -283,6 +286,9 @@
             showOverland();
         } else {
             window.gameMode = 'game';
+            if (window.ModeManager && typeof window.ModeManager.adopt === 'function') {
+                window.ModeManager.adopt('soloDungeon');
+            }
             if (musicWasPlayingOnEntry &&
                 window.MusicManager &&
                 typeof window.MusicManager.resume === 'function') {

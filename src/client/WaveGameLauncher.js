@@ -131,6 +131,9 @@
         _waveLoop();
 
         window.gameMode = 'waveGame';
+        if (window.ModeManager && typeof window.ModeManager.adopt === 'function') {
+            window.ModeManager.adopt('wave', opts);
+        }
         console.log('WaveGameLauncher: Wave game started');
     }
 
@@ -151,6 +154,9 @@
         _quizPaused = false;
         _waveMenuOpen = false;
         window.gameMode = 'menu';
+        if (window.ModeManager && typeof window.ModeManager.adopt === 'function') {
+            window.ModeManager.adopt('menu');
+        }
         console.log('WaveGameLauncher: Wave game stopped');
     }
 

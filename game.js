@@ -127,6 +127,9 @@ function handleResize() {
     const newHeight = Math.min(600, window.innerHeight - 80);
     canvas.width = newWidth;
     canvas.height = newHeight;
+    if (window.ModeManager && typeof window.ModeManager.handleResize === 'function') {
+        window.ModeManager.handleResize({ width: newWidth, height: newHeight });
+    }
 }
 window.addEventListener('resize', handleResize);
 window.addEventListener('orientationchange', handleResize);
@@ -1044,7 +1047,7 @@ function handleStartHereSummaryAction(actionId) {
     }
 
     if (actionId === 'learn') {
-        ReviewMode.startReviewMode({ returnTo: 'overland', vQuality: reviewQuality });
+        startReviewModeManaged({ returnTo: 'overland', vQuality: reviewQuality });
         return;
     }
 
@@ -1511,7 +1514,87 @@ function clearReviewAndLearnDeeplinkState() {
     }
 }
 
-function showMainMenu() {
+let modeManagerInitialized = false;
+
+function initializeModeManager() {
+    if (modeManagerInitialized || !window.ModeManager) return;
+
+    ModeManager.register({
+        id: 'menu',
+        legacyGameMode: 'menu',
+        start: function () {
+            showMainMenuInternal();
+        }
+    });
+
+    ModeManager.register({
+        id: 'soloDungeon',
+        legacyGameMode: 'game',
+        start: function (context) {
+            context = context || {};
+            _startGameInternal(context.mode, context.roomId, context.missionOpts);
+        },
+        handleResize: function () {
+            ensureCanvasSize();
+        }
+    });
+
+    ModeManager.register({
+        id: 'wave',
+        legacyGameMode: 'waveGame',
+        canStart: function (context) {
+            return !!(context && typeof context.launch === 'function');
+        },
+        start: function (context) {
+            return context.launch();
+        },
+        stop: function () {
+            if (window.WaveGameLauncher && typeof WaveGameLauncher.isRunning === 'function' && WaveGameLauncher.isRunning()) {
+                WaveGameLauncher.stop();
+            }
+        },
+        handleResize: function () {
+            ensureCanvasSize();
+        }
+    });
+
+    ModeManager.register({
+        id: 'overland',
+        legacyGameMode: 'overland',
+        start: function () {
+            return showOverlandInternal();
+        },
+        handleResize: function () {
+            ensureCanvasSize();
+        }
+    });
+
+    ModeManager.register({
+        id: 'review',
+        legacyGameMode: 'review',
+        canStart: function () {
+            return !!window.ReviewMode;
+        },
+        start: function (context) {
+            context = context || {};
+            return ReviewMode.startReviewMode(context.options || {});
+        },
+        handleResize: function () {
+            ensureCanvasSize();
+        }
+    });
+
+    modeManagerInitialized = true;
+}
+
+function startReviewModeManaged(options) {
+    if (window.ModeManager && typeof window.ModeManager.start === 'function') {
+        return ModeManager.start('review', { options: options || {} });
+    }
+    return ReviewMode.startReviewMode(options || {});
+}
+
+function showMainMenuInternal() {
     clearReviewAndLearnDeeplinkState();
     resetGameState();
     window.gameMode = 'menu';
@@ -1526,7 +1609,14 @@ function showMainMenu() {
     canvas.style.zIndex = '0';
 }
 
-function startGame(mode, roomId, missionOpts) {
+function showMainMenu() {
+    if (window.ModeManager && typeof window.ModeManager.start === 'function') {
+        return ModeManager.start('menu');
+    }
+    showMainMenuInternal();
+}
+
+function _startGameInternal(mode, roomId, missionOpts) {
     // Remove overland click handler so it doesn't fire during gameplay
     if (overlandClickHandler) {
         canvas.removeEventListener('click', overlandClickHandler);
@@ -1739,13 +1829,25 @@ function startGame(mode, roomId, missionOpts) {
                         if (!_gameLoopRunning) gameLoop();
                     }
                     ReviewMode.saveGameState();
-                    ReviewMode.startReviewMode(reviewLaunchOptions);
+                    startReviewModeManaged(reviewLaunchOptions);
                 }
             }, 500);
         }
     }).catch((error) => {
         console.error('Error initializing game:', error);
     });
+}
+
+function startGame(mode, roomId, missionOpts) {
+    if (window.ModeManager && typeof window.ModeManager.start === 'function' &&
+        (mode === 'solo' || mode === 'join' || mode === 'fun')) {
+        return ModeManager.start('soloDungeon', {
+            mode: mode,
+            roomId: roomId,
+            missionOpts: missionOpts
+        });
+    }
+    return _startGameInternal(mode, roomId, missionOpts);
 }
 
 // Get quiz settings from sliders (for solo game)
@@ -1870,6 +1972,7 @@ document.addEventListener('DOMContentLoaded', function () {
         return;
     }
     ctx = canvas.getContext('2d');
+    initializeModeManager();
     installCombatHintDebugHooks();
     setupMainMenuButtons();
 
@@ -2959,7 +3062,7 @@ async function init() {
                         onboardingGuideState.learnOpened = true;
                     }
                     ReviewMode.saveGameState();
-                    ReviewMode.startReviewMode({ returnTo: 'game' });
+                    startReviewModeManaged({ returnTo: 'game' });
                 } else if (itemId === 'playPause') {
                     MusicManager.togglePlay();
                     console.log('Music playing:', MusicManager.getIsPlaying());
@@ -3340,6 +3443,13 @@ function clearLearnDeeplinkUrlState() {
 }
 
 async function showOverland() {
+    if (window.ModeManager && typeof window.ModeManager.start === 'function') {
+        return ModeManager.start('overland');
+    }
+    return showOverlandInternal();
+}
+
+async function showOverlandInternal() {
 window.gameMode = 'overland';
     clearLearnDeeplinkUrlState();
     
@@ -3729,7 +3839,7 @@ function handleOverlandClick(x, y) {
             };
 
             const startReview = function () {
-                ReviewMode.startReviewMode(reviewOptions);
+                startReviewModeManaged(reviewOptions);
                 setupReviewClickHandler();
             };
 
@@ -3843,27 +3953,37 @@ async function startMission(worldId, missionId) {
                 } catch (error) {
                     console.error('Failed to load demon images for wave mode:', error);
                 }
-                WaveGameLauncher.start({
-                    canvas: document.getElementById('gameCanvas'),
-                    ctx: document.getElementById('gameCanvas').getContext('2d'),
-                    demonImages: demonImages,
-                    waveConfig: {
-                        totalWaves: mission.waves || 5
-                    },
-                    mission: mission,
-                    onEndGame: function () {
-                        if (currentMission) {
-                            completeMission(3);
+                const launchWaveMode = function () {
+                    WaveGameLauncher.start({
+                        canvas: document.getElementById('gameCanvas'),
+                        ctx: document.getElementById('gameCanvas').getContext('2d'),
+                        demonImages: demonImages,
+                        waveConfig: {
+                            totalWaves: mission.waves || 5
+                        },
+                        mission: mission,
+                        onEndGame: function () {
+                            if (currentMission) {
+                                completeMission(3);
+                            }
+                            returnToOverland();
+                        },
+                        onLeaveGame: function () {
+                            returnToOverland();
+                        },
+                        onRestartGame: function () {
+                            startMission(mission.worldId, mission.id);
                         }
-                        returnToOverland();
-                    },
-                    onLeaveGame: function () {
-                        returnToOverland();
-                    },
-                    onRestartGame: function () {
-                        startMission(mission.worldId, mission.id);
-                    }
-                });
+                    });
+                };
+                if (window.ModeManager && typeof window.ModeManager.start === 'function') {
+                    ModeManager.start('wave', {
+                        mission: mission,
+                        launch: launchWaveMode
+                    });
+                } else {
+                    launchWaveMode();
+                }
             } else {
                 console.error('WaveGameLauncher not available');
             }

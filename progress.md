@@ -218,6 +218,37 @@ Original prompt: Check the implementation of docs/multi-version-songs-implementa
   - Headless browser smoke on `http://localhost:3500/?mode=solo&viewMode=3d`
     - screenshots captured under `output/web-game/3d-smoke/`, `output/web-game/3d-fire/`, and `output/web-game/3d-healcheck/`
     - browser run showed only expected autoplay-audio `NotAllowedError` noise after scripted load
+
+2026-04-01:
+- Implemented the compatibility-first mode shell from `plans/ModeManagerImplementationPlan.md`:
+  - added `src/client/ModeManager.js`
+  - loaded it from `index.html`
+  - registered `menu`, `soloDungeon`, `wave`, `overland`, and `review` in `game.js`
+  - routed the main shell launches through `ModeManager.start(...)` while keeping `window.gameMode` as a compatibility mirror
+  - forwarded resize handling through `ModeManager.handleResize(...)`
+  - added `startReviewModeManaged(...)` so review launches use the manager instead of ad hoc direct calls
+- Added compatibility adoption hooks for legacy-owned transitions:
+  - `src/client/ReviewMode.js` now adopts `review` on enter and `soloDungeon` on return-to-game
+  - `src/client/WaveGameLauncher.js` now adopts `wave` on start and `menu` on stop
+- Added focused browser validation script:
+  - `scripts/test-mode-manager-smoke.js`
+- Verification:
+  - `node --check game.js`
+  - `node --check src/client/ModeManager.js`
+  - `node --check src/client/ReviewMode.js`
+  - `node --check src/client/WaveGameLauncher.js`
+  - `node --check scripts/test-mode-manager-smoke.js`
+  - browser smoke `node scripts/test-mode-manager-smoke.js`
+  - artifacts under `output/web-game/mode-manager-smoke/`
+  - verified managed transitions:
+    - menu -> `menu`
+    - solo launch -> `soloDungeon`
+    - overland launch -> `overland`
+    - review launch/return -> `review` then back to `overland`
+    - wave mission launch -> `wave`
+    - wave menu leave -> back to `overland`
+- Residual note:
+  - the review-mode screenshot still shows the green combat tip toast carried over from dungeon gameplay; this looked pre-existing and was not addressed in the mode-manager refactor
 - Follow-up TODO:
   - browser-capture a scene with a visible healing pickup after movement so the new cross rendering is visually confirmed in-frame
   - browser-capture a confirmed demon kill in 3D mode to visually confirm the death burst
