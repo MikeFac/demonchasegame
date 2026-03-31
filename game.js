@@ -3008,6 +3008,12 @@ async function init() {
                     if (window.AffinityHelpOverlay) {
                         window.AffinityHelpOverlay.open();
                     }
+                } else if (itemId === 'futureFeatures') {
+                    const futureFeaturesUrl = '/future-features';
+                    const opened = window.open(futureFeaturesUrl, '_blank', 'noopener');
+                    if (!opened) {
+                        window.location.href = futureFeaturesUrl;
+                    }
                 } else if (itemId === 'switchViewMode') {
                     reloadWithViewMode(viewMode === '3d' ? '2d' : '3d');
                 } else if (itemId === 'shareGame') {

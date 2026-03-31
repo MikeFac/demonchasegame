@@ -70,6 +70,14 @@ app.get('/missions', (req, res) => {
   res.sendFile(path.join(__dirname, 'missions.html'));
 });
 
+app.get('/future-features', (req, res) => {
+  res.sendFile(path.join(__dirname, 'future-features.html'));
+});
+
+app.get('/future-review-system', (req, res) => {
+  res.sendFile(path.join(__dirname, 'future-review-system.html'));
+});
+
 app.get('/content-maker', (req, res) => {
   res.set('X-Robots-Tag', 'noindex, nofollow');
   res.sendFile(path.join(__dirname, 'content-maker.html'));
