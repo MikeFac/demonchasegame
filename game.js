@@ -3317,6 +3317,13 @@ async function init() {
                     localStorage.setItem('hasSeenVerseHint', 'true');
                 }
             }, 8000);
+
+            setTimeout(() => {
+                if (window.gameMode === 'game' && isInOnboardingWindow() && !isStartHereMission(currentMission) && !localStorage.getItem('hasSeenSettingsDifficultyHint')) {
+                    showToast(t('toasts.settingsDifficultyHint'), 5000);
+                    localStorage.setItem('hasSeenSettingsDifficultyHint', 'true');
+                }
+            }, 60000);
         }
 
         // Set up onboarding modal dismiss handler

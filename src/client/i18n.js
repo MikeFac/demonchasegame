@@ -49,6 +49,7 @@ const I18n = (function () {
             earnAmmo: "Answer correctly to earn ammo!",
             quizTipDamage: "Answer quiz to damage demon!",
             goToMenuLearn: "Go to menu to learn verses first",
+            settingsDifficultyHint: "Monster speed and difficulty can be adjusted in Options.",
             healingCrosses: "Collect crosses to heal!",
             multiplayerRequiresInternet: "Multiplayer requires internet",
             thanksForSharing: "Thanks for sharing!",
