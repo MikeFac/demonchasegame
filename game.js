@@ -580,7 +580,7 @@ window.currentMission = null;
 const START_HERE_WORLD_ID = 'chapter0';
 const START_HERE_MISSION_ID = 'intro-01';
 const START_HERE_SEEN_KEY = 'hasSeenStartHereMission';
-const START_HERE_AUTO_LAUNCH_ENABLED = false;
+const START_HERE_AUTO_LAUNCH_ENABLED = true;
 const START_HERE_MOVE_DISTANCE = 70;
 const START_HERE_HEALTH_GUIDE_MS = 3200;
 const START_HERE_STEP_MOVE = 'move_intro';
@@ -1933,7 +1933,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
         // Show quick-start overlay, then start game
         showQuickStartOverlay().then(() => {
-            startGame('solo');
+            startDefaultSoloExperience();
         });
     } else {
         // === RETURNING USER (or first-time without ?play=1) ===

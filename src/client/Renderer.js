@@ -12,6 +12,26 @@ class Renderer {
         this.ANSWER_SECTION_HEIGHT = UI.ANSWER_SECTION_HEIGHT;
         this.BUTTON_WIDTH = UI.BUTTON_WIDTH;
         this.BUTTON_PADDING = UI.BUTTON_PADDING;
+
+        this.ONBOARDING_GUIDE_LAYOUT = {
+            bodyLineHeight: 18,
+            bodyMaxLines: 3,
+            boxPaddingX: 16,
+            defaultHeight: 56,
+            hudBox: { x: 34, yOffset: 18, width: 240, height: 64 },
+            moveBox: { x: 36, yOffset: 18, width: 280, height: 64 },
+            answersBox: { x: 24, widthInset: 48, minTopOffset: 18, safeBottomOffset: 198, targetGap: 14 },
+            learnBox: { x: 24, yOffset: 14, widthInset: 48, height: 56 },
+            titleY: 22,
+            bodyStartY: 42
+        };
+
+        this.START_HERE_SUMMARY_LAYOUT = {
+            maxWidth: 420,
+            outerInsetX: 24,
+            outerInsetY: 28,
+            buttonInsetX: 64
+        };
     }
 
     clear() {
@@ -363,7 +383,10 @@ class Renderer {
         const guide = uiState && uiState.onboardingGuide;
         if (!guide) return;
 
+        const layout = this.ONBOARDING_GUIDE_LAYOUT;
         const pulse = 0.55 + 0.45 * Math.sin(Date.now() / 220);
+        const titleFont = 'bold 18px Arial';
+        const bodyFont = '14px Arial';
         let targetRect = null;
         let box = null;
         let arrowFrom = null;
@@ -372,11 +395,21 @@ class Renderer {
 
         if (guide.target === 'hud') {
             targetRect = { x: 8, y: 6, width: 130, height: this.QUALITY_LINE_HEIGHT - 12 };
-            box = { x: 34, y: this.QUALITY_LINE_HEIGHT + 18, width: 240, height: 64 };
+            box = {
+                x: layout.hudBox.x,
+                y: this.QUALITY_LINE_HEIGHT + layout.hudBox.yOffset,
+                width: layout.hudBox.width,
+                height: layout.hudBox.height
+            };
             arrowFrom = { x: box.x + 104, y: box.y - 2 };
             arrowTo = { x: targetRect.x + 18, y: targetRect.y + 28 };
         } else if (guide.target === 'move') {
-            box = { x: 36, y: this.QUALITY_LINE_HEIGHT + 18, width: 280, height: 64 };
+            box = {
+                x: layout.moveBox.x,
+                y: this.QUALITY_LINE_HEIGHT + layout.moveBox.yOffset,
+                width: layout.moveBox.width,
+                height: layout.moveBox.height
+            };
             if (guide.worldX != null && guide.worldY != null && camera) {
                 worldMarker = {
                     x: guide.worldX - camera.x,
@@ -387,19 +420,48 @@ class Renderer {
             }
         } else if (guide.target === 'answers') {
             targetRect = { x: 8, y: this.canvas.height - this.ANSWER_SECTION_HEIGHT - 8, width: this.canvas.width - 16, height: this.ANSWER_SECTION_HEIGHT + 2 };
-            box = { x: 24, y: this.canvas.height - this.ANSWER_SECTION_HEIGHT - 76, width: this.canvas.width - 48, height: 56 };
+            const answerGuideY = Math.max(this.QUALITY_LINE_HEIGHT + layout.answersBox.minTopOffset, this.canvas.height - layout.answersBox.safeBottomOffset);
+            box = {
+                x: layout.answersBox.x,
+                y: answerGuideY,
+                width: this.canvas.width - layout.answersBox.widthInset,
+                height: layout.defaultHeight
+            };
             arrowFrom = { x: box.x + box.width / 2, y: box.y + box.height };
             arrowTo = { x: targetRect.x + targetRect.width / 2, y: targetRect.y + 2 };
         } else if (guide.target === 'learn') {
             const lb = UILayout.learnVersesButton;
             const btnX = (this.canvas.width - lb.width) / 2;
             targetRect = { x: btnX - 4, y: lb.y - 3, width: lb.width + 8, height: lb.height + 6 };
-            box = { x: 24, y: this.QUALITY_LINE_HEIGHT + 14, width: this.canvas.width - 48, height: 56 };
+            box = {
+                x: layout.learnBox.x,
+                y: this.QUALITY_LINE_HEIGHT + layout.learnBox.yOffset,
+                width: this.canvas.width - layout.learnBox.widthInset,
+                height: layout.learnBox.height
+            };
             arrowFrom = { x: box.x + box.width / 2, y: box.y };
             arrowTo = { x: targetRect.x + targetRect.width / 2, y: targetRect.y + targetRect.height };
         }
 
         if (!box) return;
+
+        this.ctx.save();
+        this.ctx.font = bodyFont;
+        const bodyLines = this.wrapText(guide.text || '', Math.max(120, box.width - layout.boxPaddingX * 2));
+        const visibleBodyLines = bodyLines.slice(0, layout.bodyMaxLines);
+        box.height = Math.max(box.height, layout.bodyStartY + visibleBodyLines.length * layout.bodyLineHeight + 12);
+        this.ctx.restore();
+
+        if (guide.target === 'answers') {
+            const maxBottom = targetRect.y - layout.answersBox.targetGap;
+            box.y = Math.min(box.y, maxBottom - box.height);
+        }
+
+        if (arrowFrom && guide.target === 'answers') {
+            arrowFrom = { x: box.x + box.width / 2, y: box.y + box.height };
+        } else if (arrowFrom && guide.target === 'learn') {
+            arrowFrom = { x: box.x + box.width / 2, y: box.y };
+        }
 
         this.ctx.save();
 
@@ -426,12 +488,14 @@ class Renderer {
         this.ctx.strokeRect(box.x, box.y, box.width, box.height);
 
         this.ctx.fillStyle = '#ffffff';
-        this.ctx.font = 'bold 18px Arial';
+        this.ctx.font = titleFont;
         this.ctx.textAlign = 'center';
-        this.ctx.fillText(guide.title, box.x + box.width / 2, box.y + 22);
-        this.ctx.font = '14px Arial';
+        this.ctx.fillText(guide.title, box.x + box.width / 2, box.y + layout.titleY);
+        this.ctx.font = bodyFont;
         this.ctx.fillStyle = '#d6deff';
-        this.ctx.fillText(guide.text, box.x + box.width / 2, box.y + 42);
+        visibleBodyLines.forEach((line, index) => {
+            this.ctx.fillText(line, box.x + box.width / 2, box.y + layout.bodyStartY + index * layout.bodyLineHeight);
+        });
         this.ctx.textAlign = 'left';
 
         this.ctx.restore();
@@ -654,12 +718,13 @@ class Renderer {
         const canvas = this.canvas;
         const summary = summaryState || {};
         const buttons = Array.isArray(summary.buttons) ? summary.buttons : [];
+        const layout = this.START_HERE_SUMMARY_LAYOUT;
 
         ctx.fillStyle = 'rgba(0, 0, 0, 0.88)';
         ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-        const modalWidth = Math.min(348, canvas.width - 24);
-        const modalHeight = Math.min(420, canvas.height - 28);
+        const modalWidth = Math.min(layout.maxWidth, canvas.width - layout.outerInsetX);
+        const modalHeight = Math.min(420, canvas.height - layout.outerInsetY);
         const modalX = (canvas.width - modalWidth) / 2;
         const modalY = (canvas.height - modalHeight) / 2;
 
@@ -685,7 +750,7 @@ class Renderer {
         ctx.font = 'bold 17px Arial';
         ctx.fillText(summary.ctaLabel || 'Choose what to do next', canvas.width / 2, modalY + 206);
 
-        const buttonWidth = modalWidth - 64;
+        const buttonWidth = modalWidth - layout.buttonInsetX;
         const buttonHeight = 42;
         const buttonGap = 14;
         const startY = modalY + 232;
