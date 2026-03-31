@@ -248,6 +248,22 @@ class InputHandler {
             return;
         }
 
+        const startHereSummary = (typeof window !== 'undefined' && window.startHereSummaryState)
+            ? window.startHereSummaryState
+            : null;
+        if (startHereSummary && Array.isArray(startHereSummary.buttonRects) && startHereSummary.buttonRects.length) {
+            for (const rect of startHereSummary.buttonRects) {
+                if (clickedX >= rect.x && clickedX <= rect.x + rect.width &&
+                    clickedY >= rect.y && clickedY <= rect.y + rect.height) {
+                    if (typeof window.handleStartHereSummaryClick === 'function') {
+                        window.handleStartHereSummaryClick(rect.id);
+                    }
+                    return;
+                }
+            }
+            return;
+        }
+
         // Check if game-over modal is visible (highest priority)
         if (this.gameOverModalVisible && this.restartButtonRect) {
             const { x: btnX, y: btnY, width: btnW, height: btnH } = this.restartButtonRect;

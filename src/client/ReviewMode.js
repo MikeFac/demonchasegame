@@ -266,10 +266,18 @@
 
     function restoreGameState() {
         clearRepeatTimer();
+        if (typeof window.onReviewModeReturn === 'function') {
+            window.onReviewModeReturn(returnToMode);
+        }
         
         if (returnToMode === 'overland' && typeof showOverland === 'function') {
             if (typeof clearMissionContentOverride === 'function' && !window.currentMission) {
                 clearMissionContentOverride();
+            }
+            if (musicWasPlayingOnEntry &&
+                window.MusicManager &&
+                typeof window.MusicManager.resume === 'function') {
+                window.MusicManager.resume();
             }
             window.gameMode = 'overland';
             showOverland();

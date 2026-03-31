@@ -29,6 +29,11 @@ class Renderer {
     drawGame(gameState, player, playerCode, monsters, healingPoints, camera, uiState, inventoryState, walls, screenShake = { x: 0, y: 0 }, damageNumbers = [], deathParticles = [], mouseX = null, mouseY = null) {
         this.clear();
 
+        if (uiState.startHereSummaryVisible) {
+            this.drawStartHereSummaryModal(uiState.startHereSummaryState);
+            return;
+        }
+
         // Draw game-over modal if visible (overlays everything)
         if (uiState.gameOverModalVisible) {
             this.drawGameOverModal(this.canvas, uiState.finalStats, uiState.restartButtonRect);
@@ -641,6 +646,67 @@ class Renderer {
             buttonLabel = t('ui.tryAgain');
         }
         ctx.fillText(buttonLabel, canvas.width / 2, buttonY + 26);
+    }
+
+    drawStartHereSummaryModal(summaryState) {
+        const ctx = this.ctx;
+        const canvas = this.canvas;
+        const summary = summaryState || {};
+        const buttons = Array.isArray(summary.buttons) ? summary.buttons : [];
+
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.88)';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        const modalWidth = Math.min(348, canvas.width - 24);
+        const modalHeight = Math.min(420, canvas.height - 28);
+        const modalX = (canvas.width - modalWidth) / 2;
+        const modalY = (canvas.height - modalHeight) / 2;
+
+        ctx.fillStyle = 'rgba(12, 16, 26, 0.97)';
+        ctx.fillRect(modalX, modalY, modalWidth, modalHeight);
+        ctx.strokeStyle = '#ffd666';
+        ctx.lineWidth = 3;
+        ctx.strokeRect(modalX, modalY, modalWidth, modalHeight);
+
+        ctx.textAlign = 'center';
+        ctx.fillStyle = '#ffd666';
+        ctx.font = 'bold 28px Arial';
+        ctx.fillText(summary.title || 'Mission Complete', canvas.width / 2, modalY + 42);
+
+        ctx.fillStyle = '#d6deff';
+        ctx.font = '16px Arial';
+        const lines = Array.isArray(summary.lines) ? summary.lines : [];
+        lines.forEach((line, index) => {
+            ctx.fillText(line, canvas.width / 2, modalY + 86 + index * 32);
+        });
+
+        ctx.fillStyle = '#ffffff';
+        ctx.font = 'bold 17px Arial';
+        ctx.fillText(summary.ctaLabel || 'Choose what to do next', canvas.width / 2, modalY + 206);
+
+        const buttonWidth = modalWidth - 64;
+        const buttonHeight = 42;
+        const buttonGap = 14;
+        const startY = modalY + 232;
+        summary.buttonRects = [];
+
+        buttons.forEach((button, index) => {
+            const x = modalX + 32;
+            const y = startY + index * (buttonHeight + buttonGap);
+            summary.buttonRects.push({ id: button.id, x, y, width: buttonWidth, height: buttonHeight });
+
+            ctx.fillStyle = index === 0 ? '#2f7d45' : 'rgba(255, 255, 255, 0.08)';
+            ctx.fillRect(x, y, buttonWidth, buttonHeight);
+            ctx.strokeStyle = index === 0 ? '#b7efc5' : '#ffffff';
+            ctx.lineWidth = 2;
+            ctx.strokeRect(x, y, buttonWidth, buttonHeight);
+
+            ctx.fillStyle = '#ffffff';
+            ctx.font = 'bold 16px Arial';
+            ctx.fillText(button.label, x + buttonWidth / 2, y + 27);
+        });
+
+        ctx.textAlign = 'left';
     }
 
     drawIntroMissionPitchModal(canvas, restartButtonRect) {

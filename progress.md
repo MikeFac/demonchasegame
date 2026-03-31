@@ -78,6 +78,79 @@ Original prompt: Check the implementation of docs/multi-version-songs-implementa
   - `public/landing/menu-screen.png`
   - `public/landing/tutorial-screen.png`
   - `public/landing/worlds-screen.png`
+
+2026-03-31:
+- Created branch `feature/start-here-ftue` from the current Wave Assault branch so FTUE mission work can continue without losing that code path.
+- Disabled automatic first-play `Start Here` launch behind `START_HERE_AUTO_LAUNCH_ENABLED = false`; the mission still exists under Missions.
+- Reworked `missions/chapter0-start-here.json` first slice:
+  - opening encounter now starts with one weak fixed demon
+  - `Fear Guard` now uses `spawnTrigger: { type: "killCount", value: 1 }`
+  - removed the extra simultaneous opening demon
+  - mission quiz settings now request `cloze: 100`
+- Added step-driven Start Here guidance in `game.js`:
+  - `move_intro`
+  - `answer_intro`
+  - `first_kill`
+  - `learn_gate`
+  - `finish`
+- Suppressed the overlapping combat hint while the onboarding guide is active.
+- Added a Learn-mode return hook so the tutorial can detect “opened Learn and came back.”
+- Verification:
+  - `node --check game.js`
+  - `node --check src/client/ReviewMode.js`
+  - `node --check src/shared/MissionClient.js`
+  - `node --check src/server/missionLoader.js`
+  - JSON parse check for `missions/chapter0-start-here.json`
+  - Playwright/browser smoke:
+    - Missions screen renders `Start Here` / `First Victory`
+    - direct in-browser `startMission('chapter0','intro-01')` launches gameplay successfully
+    - screenshot: `output/web-game/start-here-direct/shot-0.png`
+- Runtime finding:
+  - mission-level quiz settings arrive correctly as `{ firstLetter: 0, missingWord: 0, categoryMatch: 0, trueFalse: 0, cloze: 100 }`
+  - but the first generated quiz still starts as `first_letter`
+  - manually calling `QuizManager.pickQualityVerse()` immediately after launch switches it to `cloze`
+- Next TODO:
+  - fix mission startup ordering so Start Here regenerates its first quiz after mission quiz settings are applied
+  - rerun Playwright after that fix and then validate the full teaching loop beyond the first prompt
+
+2026-03-31:
+- Fixed the Start Here first-quiz ordering bug in `game.js`:
+  - when mission quiz settings arrive for Start Here, the client now regenerates the current quiz once so the opening prompt matches the mission config
+- Playwright verification after the fix:
+  - direct `startMission('chapter0','intro-01')` launch now opens with:
+    - `currentQuiz.mode = "cloze"`
+    - `questionLabel = "Fill in the blanks:"`
+  - artifacts:
+    - `output/web-game/start-here-direct-fixed/shot-0.png`
+    - `output/web-game/start-here-direct-fixed/state-0.json`
+- Basic Solo regression smoke:
+  - `#btnSolo` launches normal gameplay with `currentMission: null`
+  - screenshot confirms standard map/combat view still renders:
+    - `output/web-game/basic-solo-regression/shot-0.png`
+  - runtime state confirms the generic correct-answer path still works:
+    - before: `isAnswerCorrect = null`, `answerFullVerse = null`
+    - after correct answer: `isAnswerCorrect = true`, verse answer revealed, ammo increased
+  - artifact:
+    - `output/web-game/basic-solo-regression/state-0.json`
+- Remaining FTUE TODO:
+  - play through more of Start Here end-to-end
+  - tune the guard encounter and Learn-return step based on real play feel, not just startup correctness
+
+2026-03-31:
+- Automated FTUE slice testing after startup fixes:
+  - `output/web-game/start-here-slice-2/state-0.json`
+  - confirmed first demon can be killed through the real gameplay path
+  - confirmed tutorial advances from `move_intro` / `answer_intro` into `learn_gate`
+  - confirmed `Fear Guard` spawns after kill 1
+- Automated Learn-return FTUE slice:
+  - `output/web-game/start-here-learn-return/state-0.json`
+  - before Learn: `step = "learn_gate"`
+  - after Learn return: `step = "finish"`, `learnOpened = true`, `learnReturned = true`
+  - post-return guide now instructs: `Use what you learned`
+  - screenshot: `output/web-game/start-here-learn-return/shot-0.png`
+- Remaining UI issue:
+  - stacked toast/flash messages can crowd the finish-step guide near the bottom of the screen
+  - likely worth suppressing some generic toast messaging during Start Here so the authored FTUE prompts stay visually dominant
   - `public/landing/gameplay-screen.png`
 - Verification:
   - `node --check server.js`
@@ -86,6 +159,50 @@ Original prompt: Check the implementation of docs/multi-version-songs-implementa
   - browser-smoke the three landing-page routes once the local server is running in a stable foreground/background session again
   - decide whether to add a fourth audience page for Christian schools or homeschool groups
   - simple 3D mode technical plan added at `docs/plans/SIMPLE_3D_MODE_IMPLEMENTATION_PLAN.md`
+
+2026-03-31:
+- Verified the Start Here post-mission summary/CTA implementation with a dedicated local Playwright helper:
+  - added `scripts/test-start-here-summary.js`
+- Summary overlay validation:
+  - direct summary invocation shows the intended modal with all three CTA buttons
+  - screenshot: `output/web-game/start-here-summary-final/summary-direct.png`
+  - state: `output/web-game/start-here-summary-final/summary-direct-state.json`
+- End-to-end FTUE completion validation:
+  - confirmed the current mission completion path still requires the second kill (`monstersToKill: 2` in `missions/chapter0-start-here.json`), so the Fear Guard kill remains the actual win gate
+  - verified the Start Here completion path displays the custom summary overlay instead of the normal game-over modal
+  - screenshot: `output/web-game/start-here-summary-final/summary-end-to-end.png`
+  - state: `output/web-game/start-here-summary-final/summary-end-to-end-state.json`
+- CTA verification:
+  - `Play Missions` clears the summary, clears `currentMission`, and returns the player to `overland`
+  - state: `output/web-game/start-here-summary-final/summary-missions-action-state.json`
+- Errors/log capture:
+  - `output/web-game/start-here-summary-final/errors.json`
+
+2026-03-31:
+- Added reusable local test-script documentation:
+  - `docs/test-scripts.md`
+- Added `scripts/test-multiplayer-regression.js` for focused multiplayer regression:
+  - registers two temporary users via `/api/register`
+  - creates and starts a real room via socket events
+  - opens two headless clients on `/?room=<roomId>`
+  - verifies two-player join state
+  - verifies position sync from one client to the other
+  - verifies disconnect handling using the real grace-period behavior (`state: "disconnected"`)
+- Successful multiplayer regression artifacts:
+  - `output/web-game/multiplayer-regression/room.json`
+  - `output/web-game/multiplayer-regression/initial-state.json`
+  - `output/web-game/multiplayer-regression/post-move-state.json`
+  - `output/web-game/multiplayer-regression/disconnect-state.json`
+  - `output/web-game/multiplayer-regression/pageA-final.png`
+  - `output/web-game/multiplayer-regression/logs.json`
+- Verified results:
+  - both clients received distinct player codes
+  - both clients saw `connectedPlayers: 2`
+  - remote position sync updated from `x: 725` to `x: 965` across clients
+  - after closing one client, the remaining client kept the remote player with `state: "disconnected"` as expected
+- Residual log noise in the multiplayer run:
+  - autoplay audio `NotAllowedError` in headless Chrome
+  - Clerk development-key warning
 
 2026-03-09:
 - Advanced optional `viewMode=3d` without touching the default 2D path:

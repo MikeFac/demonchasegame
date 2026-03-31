@@ -12,10 +12,17 @@
       "monsterDamageFactor": 0.65,
       "monsterSpeed": 4,
       "playerSpeed": 5,
-      "maxMonsters": 3,
+      "maxMonsters": 2,
       "monstersToKill": 2,
       "spawnRate": 999,
       "xpMultiplier": 0.75,
+      "quizSettings": {
+        "firstLetter": 0,
+        "missingWord": 0,
+        "categoryMatch": 0,
+        "trueFalse": 0,
+        "cloze": 100
+      },
       "disableLevelBoss": true,
       "randomSpawnsEnabled": false,
       "randomSpawnBudget": 0,
@@ -48,36 +55,17 @@
             "patrolRadius": 165
           },
           "stats": {
-            "healthMultiplier": 2.2,
-            "damageMultiplier": 1.2,
-            "speedMultiplier": 0.85,
+            "healthMultiplier": 1.8,
+            "damageMultiplier": 1.05,
+            "speedMultiplier": 0.8,
             "sizeMultiplier": 1.25
           },
           "spawnTrigger": {
-            "type": "immediate",
-            "value": 0
+            "type": "killCount",
+            "value": 1
           },
           "isBoss": true,
           "label": "Fear Guard"
-        },
-        {
-          "x": 1930,
-          "y": 1760,
-          "demonType": "Doubt",
-          "behavior": {
-            "type": "guard",
-            "patrolRadius": 150
-          },
-          "stats": {
-            "healthMultiplier": 0.95,
-            "damageMultiplier": 0.9,
-            "speedMultiplier": 0.85
-          },
-          "spawnTrigger": {
-            "type": "immediate",
-            "value": 0
-          },
-          "label": "Doubt Guard"
         }
       ]
     }

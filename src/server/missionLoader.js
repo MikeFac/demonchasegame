@@ -48,7 +48,8 @@ function buildMissionGameConfig(settings, GameConfig) {
     }];
 
     const quizSettings = settings.quizSettings || null;
-    const gameConfig = GameConfig.createFromCustomBalance(balance, quizSettings, levels);
+    const resolvedQuizSettings = mission.quizSettings || quizSettings || null;
+    const gameConfig = GameConfig.createFromCustomBalance(balance, resolvedQuizSettings, levels);
     gameConfig.mapStyle = mission.mapStyle || 'classic';
     gameConfig.disableLevelBoss = mission.disableLevelBoss === true;
     gameConfig.fixedMonsters = Array.isArray(mission.fixedMonsters) ? mission.fixedMonsters.slice() : [];
@@ -62,6 +63,7 @@ function buildMissionGameConfig(settings, GameConfig) {
     gameConfig.worldId = settings.worldId;
     gameConfig.missionName = mission.name;
     gameConfig.xpMultiplier = mission.xpMultiplier || 1.0;
+    gameConfig.quizSettings = resolvedQuizSettings || gameConfig.quizSettings;
     gameConfig.missionType = mission.type || 'verse';
     gameConfig.packId = mission.packId || null;
     gameConfig.unitIds = Array.isArray(mission.unitIds) ? mission.unitIds.slice() : null;

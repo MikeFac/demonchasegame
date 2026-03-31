@@ -130,6 +130,7 @@
                 
                 // XP multiplier for rewards
                 xpMultiplier: mission.xpMultiplier || 1.0,
+                quizSettings: mission.quizSettings || null,
                 disableLevelBoss: mission.disableLevelBoss === true,
 
                 // Optional authored encounter controls

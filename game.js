@@ -580,8 +580,14 @@ window.currentMission = null;
 const START_HERE_WORLD_ID = 'chapter0';
 const START_HERE_MISSION_ID = 'intro-01';
 const START_HERE_SEEN_KEY = 'hasSeenStartHereMission';
+const START_HERE_AUTO_LAUNCH_ENABLED = false;
 const START_HERE_MOVE_DISTANCE = 70;
 const START_HERE_HEALTH_GUIDE_MS = 3200;
+const START_HERE_STEP_MOVE = 'move_intro';
+const START_HERE_STEP_ANSWER = 'answer_intro';
+const START_HERE_STEP_KILL = 'first_kill';
+const START_HERE_STEP_LEARN = 'learn_gate';
+const START_HERE_STEP_FINISH = 'finish';
 let onboardingGuideState = null;
 
 // Verse Test shield setting (Option A/B)
@@ -728,6 +734,7 @@ const TOTAL_VERSES = 1618;  // Total verses in bible-verses.js
 
 // Game-Over Modal State
 let gameOverModalVisible = false;
+let startHereSummaryState = null;
 let sessionStartTime = null;  // Set when game starts
 let finalStats = {
     level: 1,
@@ -736,6 +743,7 @@ let finalStats = {
     timePlayed: 0  // seconds
 };
 let restartButtonRect = { x: 0, y: 0, width: 0, height: 0 };
+window.startHereSummaryState = null;
 
 // Onboarding tips tracking - shown only once per game session
 let firstGameTips = {
@@ -994,6 +1002,57 @@ function resetOnboardingGuideState() {
     onboardingGuideState = null;
 }
 
+function clearStartHereSummaryState() {
+    startHereSummaryState = null;
+    window.startHereSummaryState = null;
+}
+
+function showStartHereSummary() {
+    const learnedCategory = window.vQuality || 'Faith';
+    startHereSummaryState = {
+        title: 'First Victory Complete',
+        lines: [
+            'You moved into range before fighting.',
+            'Correct verse answers power your attacks.',
+            'Learning verses prepared you to defeat the Fear Guard.'
+        ],
+        ctaLabel: 'Choose what to do next',
+        buttons: [
+            { id: 'missions', label: 'Play Missions' },
+            { id: 'solo', label: 'Play Solo' },
+            { id: 'learn', label: 'Learn Verses', vQuality: learnedCategory }
+        ],
+        buttonRects: []
+    };
+    window.startHereSummaryState = startHereSummaryState;
+}
+
+function handleStartHereSummaryAction(actionId) {
+    if (!startHereSummaryState || !currentMission) return;
+
+    const selectedButton = (startHereSummaryState.buttons || []).find((button) => button.id === actionId);
+    const reviewQuality = selectedButton && selectedButton.vQuality ? selectedButton.vQuality : window.vQuality;
+
+    completeMission(3);
+    gameOverFlag = false;
+    gameOverModalVisible = false;
+    clearStartHereSummaryState();
+
+    if (actionId === 'missions') {
+        returnToOverland();
+        return;
+    }
+
+    if (actionId === 'learn') {
+        ReviewMode.startReviewMode({ returnTo: 'overland', vQuality: reviewQuality });
+        return;
+    }
+
+    startGame('solo');
+}
+
+window.handleStartHereSummaryClick = handleStartHereSummaryAction;
+
 function ensureOnboardingGuideState(player) {
     if (!isStartHereMission(currentMission) || !player) {
         onboardingGuideState = null;
@@ -1032,18 +1091,44 @@ function ensureOnboardingGuideState(player) {
             createdAt: Date.now(),
             startX: player.x,
             startY: player.y,
+            step: START_HERE_STEP_MOVE,
             hasMoved: false,
             moveTracked: false,
+            firstCorrectTracked: false,
             learnOpened: false,
             learnTracked: false,
+            learnReturned: false,
+            learnReturnedTracked: false,
             firstKillTracked: false,
             moveTarget: buildMoveTarget(introTarget),
             moveTargetReached: false,
             bossMoveTarget: buildMoveTarget(bossTarget),
-            bossMoveTargetReached: false
+            bossMoveTargetReached: false,
+            finishReady: false
         };
     }
     return onboardingGuideState;
+}
+
+function advanceStartHereStep(nextStep) {
+    if (!onboardingGuideState || !nextStep) return;
+    onboardingGuideState.step = nextStep;
+}
+
+function markStartHereLearnReturned() {
+    if (!isStartHereMission(currentMission)) return;
+    const state = ensureOnboardingGuideState(player);
+    if (!state) return;
+    state.learnReturned = true;
+    if (!state.learnReturnedTracked && window.Analytics) {
+        state.learnReturnedTracked = true;
+        Analytics.trackOnboardingMissionStep('learn_returned', {
+            mission_id: currentMission.id
+        });
+    }
+    if (state.step === START_HERE_STEP_LEARN) {
+        advanceStartHereStep(START_HERE_STEP_FINISH);
+    }
 }
 
 function buildStartHereGuide(player, monsters) {
@@ -1053,6 +1138,7 @@ function buildStartHereGuide(player, monsters) {
     const movedDistance = Math.hypot((player.x || 0) - state.startX, (player.y || 0) - state.startY);
     if (movedDistance >= START_HERE_MOVE_DISTANCE) {
         state.hasMoved = true;
+        state.moveTargetReached = true;
     }
     if (state.hasMoved && !state.moveTracked && window.Analytics) {
         state.moveTracked = true;
@@ -1078,8 +1164,10 @@ function buildStartHereGuide(player, monsters) {
             mission_id: currentMission.id
         });
     }
+    const guardBossAlive = (monsters || []).some((monster) => monster && monster.isBoss && monster.health > 0);
+    const kills = gameState.monstersKilled || 0;
 
-    if ((gameState.monstersKilled || 0) <= 0) {
+    if (state.step === START_HERE_STEP_MOVE) {
         if (Date.now() - state.createdAt < START_HERE_HEALTH_GUIDE_MS) {
             return {
                 target: 'hud',
@@ -1087,38 +1175,73 @@ function buildStartHereGuide(player, monsters) {
                 text: 'Keep this high while you learn the basics.'
             };
         }
-        if (!state.moveTargetReached && state.moveTarget) {
+        if (state.moveTargetReached) {
+            advanceStartHereStep(START_HERE_STEP_ANSWER);
+        } else {
             return {
                 target: 'move',
-                title: 'Click here to move',
-                text: 'Move into range before you attack.',
+                title: 'Move here',
+                text: 'Step close enough to fight the demon.',
                 worldX: state.moveTarget.x,
                 worldY: state.moveTarget.y
             };
         }
-        return {
-            target: 'answers',
-            title: 'Tap the right answer',
-            text: 'Correct answers power your attack.'
-        };
     }
 
-    const guardBossAlive = (monsters || []).some((monster) => monster && monster.isBoss && monster.health > 0);
-    if (guardBossAlive && !state.bossMoveTargetReached && state.bossMoveTarget) {
-        return {
-            target: 'move',
-            title: 'Move to the Fear Guard',
-            text: 'Step closer before you learn how to beat it.',
-            worldX: state.bossMoveTarget.x,
-            worldY: state.bossMoveTarget.y
-        };
+    if (state.step === START_HERE_STEP_ANSWER) {
+        if (state.firstCorrectTracked) {
+            advanceStartHereStep(START_HERE_STEP_KILL);
+        } else {
+            return {
+                target: 'answers',
+                title: 'Tap the right answer',
+                text: 'A correct cloze verse answer powers your attack.'
+            };
+        }
     }
-    if (guardBossAlive && !state.learnOpened) {
-        return {
-            target: 'learn',
-            title: 'Learn before you fight',
-            text: 'The Fear Guard is tougher. Learn verses here first.'
-        };
+
+    if (state.step === START_HERE_STEP_KILL) {
+        if (kills >= 1) {
+            advanceStartHereStep(START_HERE_STEP_LEARN);
+        } else {
+            return {
+                target: 'answers',
+                title: 'Good. Now finish it',
+                text: 'Keep answering Scripture to defeat the demon.'
+            };
+        }
+    }
+
+    if (state.step === START_HERE_STEP_LEARN) {
+        if (guardBossAlive && !state.bossMoveTargetReached && state.bossMoveTarget) {
+            return {
+                target: 'move',
+                title: 'Move to the Fear Guard',
+                text: 'Step closer so you can face the stronger demon.',
+                worldX: state.bossMoveTarget.x,
+                worldY: state.bossMoveTarget.y
+            };
+        }
+        if (state.learnReturned) {
+            advanceStartHereStep(START_HERE_STEP_FINISH);
+        } else {
+            return {
+                target: 'learn',
+                title: 'Learn verses here',
+                text: 'This guard is tougher. Learn first, then come back.'
+            };
+        }
+    }
+
+    if (state.step === START_HERE_STEP_FINISH) {
+        state.finishReady = true;
+        if (guardBossAlive) {
+            return {
+                target: 'answers',
+                title: 'Use what you learned',
+                text: 'Answer the cloze verse and defeat the Fear Guard.'
+            };
+        }
     }
 
     return null;
@@ -1352,6 +1475,7 @@ function resetGameState() {
     goalsOverlayVisible = false;
     menuOpen = false;
     categoryPickerOpen = false;
+    clearStartHereSummaryState();
     modalPaused = false;
     modalPauseStartTime = 0;
     verseTestShieldActive = false;
@@ -1965,6 +2089,7 @@ window.onQuizCorrectAnswer = function (quizMode, verseReference, combatCategory)
     // Store reference for display in UI
     lastAnsweredReference = verseReference;
     const isDiscipleshipMission = currentMission && currentMission.type === 'discipleship';
+    const isStartHere = isStartHereMission(currentMission);
 
     if (player && combatCategory) {
         player.currentCombatCategory = combatCategory;
@@ -1974,6 +2099,15 @@ window.onQuizCorrectAnswer = function (quizMode, verseReference, combatCategory)
 
     if (window.Analytics) {
         Analytics.trackQuizCorrect(quizMode, verseReference);
+        if (isStartHere && onboardingGuideState && !onboardingGuideState.firstCorrectTracked) {
+            onboardingGuideState.firstCorrectTracked = true;
+            Analytics.trackOnboardingMissionStep('first_correct_answer', {
+                mission_id: currentMission.id,
+                quiz_mode: quizMode
+            });
+        }
+    } else if (isStartHere && onboardingGuideState && !onboardingGuideState.firstCorrectTracked) {
+        onboardingGuideState.firstCorrectTracked = true;
     }
 
     if (window.SoundEffects) {
@@ -2014,23 +2148,37 @@ window.onQuizCorrectAnswer = function (quizMode, verseReference, combatCategory)
     if (!firstGameTips.firstCorrectAnswer && isInOnboardingWindow()) {
         firstGameTips.firstCorrectAnswer = true;
         if (window.Analytics) Analytics.trackFtueTip('first_correct_answer');
+        if (!isStartHere) {
+            flashMessages.push({
+                text: '⚡ POWERED UP! ⚡',
+                color: '#FFD700',
+                x: canvas.width / 2,
+                y: canvas.height / 2 - 50,
+                startTime: Date.now(),
+                duration: 2000,
+                fontSize: 32,
+                centered: true
+            });
+        }
+    }
+
+    if (isStartHere && onboardingGuideState && onboardingGuideState.step === START_HERE_STEP_ANSWER) {
         flashMessages.push({
-            text: '⚡ POWERED UP! ⚡',
-            color: '#FFD700',
-            x: canvas.width / 2,
-            y: canvas.height / 2 - 50,
+            text: 'Correct answers power your attack',
+            color: '#ffd666',
             startTime: Date.now(),
-            duration: 2000,
-            fontSize: 32,
-            centered: true
+            duration: 2200
         });
+        screenShake = { x: 0, y: 0, intensity: 5, duration: 180 };
     }
 
     // ===== ONBOARDING: Detect first ammo earned =====
     if (!firstGameTips.ammoEarned && isInOnboardingWindow()) {
         firstGameTips.ammoEarned = true;
         if (window.Analytics) Analytics.trackFtueTip('ammo_earned');
-        showToast(t('toasts.earnAmmo'));
+        if (!isStartHere) {
+            showToast(t('toasts.earnAmmo'));
+        }
     }
 
     // Track daily challenge progress (only first_letter mode)
@@ -2078,12 +2226,14 @@ window.onQuizCorrectAnswer = function (quizMode, verseReference, combatCategory)
                     versesLearned = progressManager.getVersesLearnedCount();
                     
                     // Flash: new verse learned
-                    flashMessages.push({
-                        text: `New verse learned! (${versesLearned}/${TOTAL_VERSES})`,
-                        color: '#ffcc00',
-                        startTime: Date.now(),
-                        duration: 2000
-                    });
+                    if (!isStartHere) {
+                        flashMessages.push({
+                            text: `New verse learned! (${versesLearned}/${TOTAL_VERSES})`,
+                            color: '#ffcc00',
+                            startTime: Date.now(),
+                            duration: 2000
+                        });
+                    }
                     console.log(`Verse learned! Total: ${versesLearned}/${TOTAL_VERSES}`);
                 }
             } else {
@@ -2095,12 +2245,14 @@ window.onQuizCorrectAnswer = function (quizMode, verseReference, combatCategory)
                     localStorage.setItem('versesLearned', versesLearned.toString());
 
                     // Flash: new verse learned
-                    flashMessages.push({
-                        text: `New verse learned! (${versesLearned}/${TOTAL_VERSES})`,
-                        color: '#ffcc00',
-                        startTime: Date.now(),
-                        duration: 2000
-                    });
+                    if (!isStartHere) {
+                        flashMessages.push({
+                            text: `New verse learned! (${versesLearned}/${TOTAL_VERSES})`,
+                            color: '#ffcc00',
+                            startTime: Date.now(),
+                            duration: 2000
+                        });
+                    }
                     console.log(`Verse learned! Total: ${versesLearned}/${TOTAL_VERSES}`);
                 }
             }
@@ -2111,6 +2263,12 @@ window.onQuizCorrectAnswer = function (quizMode, verseReference, combatCategory)
 window.onQuizWrongAnswer = function (quizMode, verseReference) {
     if (window.Analytics) {
         Analytics.trackQuizWrong(quizMode, verseReference);
+    }
+};
+
+window.onReviewModeReturn = function (returnToMode) {
+    if (returnToMode === 'game') {
+        markStartHereLearnReturned();
     }
 };
 
@@ -2183,17 +2341,19 @@ async function init() {
                     if (window.SoundEffects) {
                         SoundEffects.playFirstKill();
                     }
-                    // Epic first kill message
-                    flashMessages.push({
-                        text: '🔥 FIRST BLOOD! 🔥',
-                        color: '#FF4444',
-                        x: canvas.width / 2,
-                        y: canvas.height / 2 - 50,
-                        startTime: Date.now(),
-                        duration: 2500,
-                        fontSize: 36,
-                        centered: true
-                    });
+                    if (!isStartHereMission(currentMission)) {
+                        // Epic first kill message
+                        flashMessages.push({
+                            text: '🔥 FIRST BLOOD! 🔥',
+                            color: '#FF4444',
+                            x: canvas.width / 2,
+                            y: canvas.height / 2 - 50,
+                            startTime: Date.now(),
+                            duration: 2500,
+                            fontSize: 36,
+                            centered: true
+                        });
+                    }
                     // Extra screen shake for first kill
                     screenShake = { x: Math.random() * 10 - 5, y: Math.random() * 10 - 5 };
                     setTimeout(() => { screenShake = { x: 0, y: 0 }; }, 300);
@@ -2203,7 +2363,9 @@ async function init() {
                 if (!firstGameTips.monsterKilled && isInOnboardingWindow()) {
                     firstGameTips.monsterKilled = true;
                     if (window.Analytics) Analytics.trackFtueTip('monster_killed_tip');
-                    showToast(t('toasts.xpLevelUp'));
+                    if (!isStartHereMission(currentMission)) {
+                        showToast(t('toasts.xpLevelUp'));
+                    }
                 }
 
                 demonDies.play();
@@ -2380,6 +2542,10 @@ async function init() {
                     isSoloGame: true  // offline/solo games always true; multiplayer uses server.js
                 };
                 console.log('[GAMEOVER] finalStats.isMission set to:', finalStats.isMission);
+                if (data.result === 'victory' && isStartHereMission(currentMission)) {
+                    gameOverModalVisible = false;
+                    showStartHereSummary();
+                }
             },
             onWalls: (data) => {
                 clientWalls = data.walls;
@@ -2558,6 +2724,16 @@ async function init() {
                             slider.disabled = true;
                         }
                     });
+                    // Start Here needs the first prompt to reflect mission quiz settings,
+                    // but the initial quiz may have been seeded before config arrived.
+                    if (isStartHereMission(currentMission)
+                        && window.QuizManager
+                        && typeof QuizManager.pickQualityVerse === 'function'
+                        && window.gameMode === 'game'
+                        && currentQuiz
+                        && !answerFullVerse) {
+                        QuizManager.pickQualityVerse();
+                    }
                 }
             },
             onGameSpeedUpdate: (speed) => {
@@ -3015,13 +3191,13 @@ async function init() {
         // ===== FIRST 60 SECONDS: Show pre-game tip (only on first game) =====
         if (!_gameLoopRunning) {
             setTimeout(() => {
-                if (isInOnboardingWindow()) {
+                if (isInOnboardingWindow() && !isStartHereMission(currentMission)) {
                     showToast(t('toasts.quizTipDamage'), 4000);
                 }
             }, 1000);
 
             setTimeout(() => {
-                if (isInOnboardingWindow() && !localStorage.getItem('hasSeenVerseHint')) {
+                if (isInOnboardingWindow() && !isStartHereMission(currentMission) && !localStorage.getItem('hasSeenVerseHint')) {
                     showToast(t('toasts.goToMenuLearn'), 5000);
                     localStorage.setItem('hasSeenVerseHint', 'true');
                 }
@@ -3259,6 +3435,9 @@ window.gameMode = 'overland';
 }
 
 function shouldLaunchStartHereMission() {
+    if (!START_HERE_AUTO_LAUNCH_ENABLED) {
+        return false;
+    }
     return !localStorage.getItem(START_HERE_SEEN_KEY);
 }
 
@@ -3699,6 +3878,7 @@ async function startMission(worldId, missionId) {
                 maxMonsters: mission.maxMonsters,
                 spawnRate: mission.spawnRate || 18
             }],
+            quizSettings: mission.quizSettings || null,
             disableLevelBoss: mission.disableLevelBoss === true,
             fixedMonsters: Array.isArray(mission.fixedMonsters) ? mission.fixedMonsters.slice() : [],
             randomSpawnsEnabled: mission.randomSpawnsEnabled !== false,
@@ -3873,11 +4053,14 @@ function gameLoop(generation) {
     }
 
     if (window.gameMode === 'game') {
+        const onboardingGuide = buildStartHereGuide(player, monsters);
         const uiState = {
             vQuality: (currentQuiz && currentQuiz.contentCategory) ? currentQuiz.contentCategory : window.vQuality,
             currentCombatCategory: player ? player.currentCombatCategory : null,
-            onboardingGuide: buildStartHereGuide(player, monsters),
-            combatHint,
+            onboardingGuide,
+            combatHint: onboardingGuide ? null : combatHint,
+            startHereSummaryVisible: !!startHereSummaryState,
+            startHereSummaryState,
             categoryPickerOpen,
             allCategories: QUALITIES,
             gameOverFlag,
@@ -3900,12 +4083,12 @@ function gameLoop(generation) {
                 verseTestShielded,
                 viewMode
             },
-            combatHint: combatHint ? {
+            combatHint: onboardingGuide ? null : (combatHint ? {
                 line1: combatHint.line1,
                 line2: combatHint.line2,
                 duration: combatHint.duration,
                 remainingMs: Math.max(0, combatHint.duration - (Date.now() - combatHint.startTime))
-            } : null,
+            } : null),
             dailyChallengeProgress,
             dailyChallengeGoal,
             dailyChallengeCompleted,
@@ -4394,7 +4577,7 @@ function gameLoop(generation) {
                         noteMonsterPressure(monster, damage);
 
                         // ===== ONBOARDING: Show modal on first damage taken =====
-                        if (!firstGameTips.demonAppeared && isInOnboardingWindow() && damage > 0) {
+                        if (!firstGameTips.demonAppeared && isInOnboardingWindow() && damage > 0 && !isStartHereMission(currentMission)) {
                             firstGameTips.demonAppeared = true;
                             if (window.Analytics) Analytics.trackFtueTip('first_damage');
                             showOnboardingModal(
