@@ -252,6 +252,9 @@
 
         
         window.gameMode = 'review';
+        if (typeof window.clearToasts === 'function') {
+            window.clearToasts();
+        }
         if (window.ModeManager && typeof window.ModeManager.adopt === 'function') {
             window.ModeManager.adopt('review', options);
         }

@@ -828,6 +828,12 @@ function showToast(message, duration = 3500) {
     }, duration);
 }
 
+function clearToasts() {
+    const container = document.getElementById('toastContainer');
+    if (!container) return;
+    container.innerHTML = '';
+}
+
 /**
  * Show quick-start overlay for FTUE (auto-dismisses after 4 seconds)
  * @returns {Promise} Resolves when overlay is dismissed
@@ -3300,13 +3306,13 @@ async function init() {
         // ===== FIRST 60 SECONDS: Show pre-game tip (only on first game) =====
         if (!_gameLoopRunning) {
             setTimeout(() => {
-                if (isInOnboardingWindow() && !isStartHereMission(currentMission)) {
+                if (window.gameMode === 'game' && isInOnboardingWindow() && !isStartHereMission(currentMission)) {
                     showToast(t('toasts.quizTipDamage'), 4000);
                 }
             }, 1000);
 
             setTimeout(() => {
-                if (isInOnboardingWindow() && !isStartHereMission(currentMission) && !localStorage.getItem('hasSeenVerseHint')) {
+                if (window.gameMode === 'game' && isInOnboardingWindow() && !isStartHereMission(currentMission) && !localStorage.getItem('hasSeenVerseHint')) {
                     showToast(t('toasts.goToMenuLearn'), 5000);
                     localStorage.setItem('hasSeenVerseHint', 'true');
                 }
