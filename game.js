@@ -3856,6 +3856,12 @@ async function startMission(worldId, missionId) {
                             completeMission(3);
                         }
                         returnToOverland();
+                    },
+                    onLeaveGame: function () {
+                        returnToOverland();
+                    },
+                    onRestartGame: function () {
+                        startMission(mission.worldId, mission.id);
                     }
                 });
             } else {

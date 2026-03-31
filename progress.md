@@ -652,3 +652,20 @@ Original prompt: Check the implementation of docs/multi-version-songs-implementa
 - 2026-03-14: When exiting the learn deeplink to overland, the app now strips mode=learn/quality/category from the URL via history.replaceState. Also shortened the HUD copy from "Demons to defeat" to "Demons left" for fit/readability.
 - 2026-03-14: Added GA onboarding mission funnel events for Start Here: mission started, move completed, first kill, learn opened, mission finished (complete/failed).
 - 2026-03-14: Simplified learn-route music fix by resuming MusicManager on review exit to overland as well as exit back to game.
+
+2026-03-31:
+- Updated Wave Assault menu and Cloze behavior:
+  - added a wave-mode menu button with `Songs`, `Affinity Help`, `Restart Mission`, and `Leave Mission`
+  - `Leave Mission` now returns to overland without awarding mission completion
+  - `Restart Mission` re-launches the same wave mission instead of doing a full page reload
+  - wave quiz prompt now treats the "2 answers" request as one verse with 2 blanks, answered progressively as `Blank 1 / 2`, `Blank 2 / 2`
+- Verification:
+  - `node --check src/client/WaveGameLauncher.js`
+  - `node --check game.js`
+  - local server restart via `./restart-server.sh`
+  - headless Playwright smoke captured under `output/web-game/wave-menu-smoke/`
+    - `summary.json` shows the new menu items
+    - `wave-menu-open.png` confirms the menu is visible in wave mode
+  - headless Playwright smoke captured under `output/web-game/wave-cloze-smoke/`
+    - `summary.json` shows `Blank 1 / 2` and a single verse with two blanks
+    - `wave-quiz.png` confirms the one-verse/two-blank cloze UI rendered with 6 letter choices

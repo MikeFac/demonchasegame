@@ -19,8 +19,10 @@
     var _waveLoopRunning = false;
     var _waveAnimFrame = null;
     var demonImages = {};
+    var _launchOpts = null;
 
-    var WAVE_QUIZ_QUESTION_COUNT = 2;
+    var WAVE_QUIZ_QUESTION_COUNT = 1;
+    var WAVE_CLOZE_BLANK_COUNT = 2;
     var WAVE_QUIZ_MIN_ANSWER_DELAY_MS = 2000;
     var WAVE_QUIZ_OPTION_COUNT = 6;
     var WAVE_CLICK_SUPPRESSION_MS = 250;
@@ -37,6 +39,11 @@
 
     // Callbacks to return to menu/overland
     var _onEndGame = null;
+    var _onLeaveGame = null;
+    var _onRestartGame = null;
+
+    // Wave menu state
+    var _waveMenuOpen = false;
 
     /**
      * Start a wave assault game.
@@ -49,10 +56,14 @@
      *   opts.mission     — mission object (for progress tracking)
      */
     function startWaveGame(opts) {
+        _launchOpts = opts;
         canvas = opts.canvas;
         ctx = opts.ctx;
         demonImages = opts.demonImages || {};
         _onEndGame = opts.onEndGame || function () { window.location.reload(); };
+        _onLeaveGame = opts.onLeaveGame || function () { window.location.href = '/'; };
+        _onRestartGame = opts.onRestartGame || function () { window.location.reload(); };
+        _waveMenuOpen = false;
 
         canvas.style.display = 'block';
         canvas.style.pointerEvents = 'auto';
@@ -115,6 +126,7 @@
 
         network.sendStartWaveGame(opts.waveConfig || {});
         _setupInputHandlers();
+        _ensureWaveMenu();
         _waveLoopRunning = true;
         _waveLoop();
 
@@ -134,10 +146,26 @@
         }
         _removeInputHandlers();
         _removeQuizOverlay();
+        _removeWaveMenu();
         lastWaveState = null;
         _quizPaused = false;
+        _waveMenuOpen = false;
         window.gameMode = 'menu';
         console.log('WaveGameLauncher: Wave game stopped');
+    }
+
+    function _leaveWaveGame() {
+        stopWaveGame();
+        if (_onLeaveGame) _onLeaveGame();
+    }
+
+    function _restartWaveGame() {
+        stopWaveGame();
+        if (_onRestartGame) {
+            _onRestartGame();
+        } else if (_launchOpts) {
+            startWaveGame(_launchOpts);
+        }
     }
 
     // ==================== RENDER LOOP ====================
@@ -179,7 +207,7 @@
 
     function _setupInputHandlers() {
         _keydownHandler = function (e) {
-            if (_quizPaused) {
+            if (_quizPaused || _waveMenuOpen) {
                 if (e.key === ' ' || e.key === 'Spacebar') e.preventDefault();
                 return;
             }
@@ -205,10 +233,12 @@
         document.addEventListener('keyup', _keyupHandler);
 
         _mousemoveHandler = function (e) {
+            if (_waveMenuOpen) return;
             _sendPointerPosition(e.clientX);
         };
         _mousedownHandler = function (e) {
-            if (_quizPaused || Date.now() < _pointerSuppressedUntil) return;
+            if (_handleWaveMenuClick(e)) return;
+            if (_quizPaused || _waveMenuOpen || Date.now() < _pointerSuppressedUntil) return;
             _isTouching = true;
 
             if (lastWaveState && (lastWaveState.waveState === 'victory' || lastWaveState.waveState === 'defeat')) {
@@ -239,7 +269,7 @@
 
         _touchstartHandler = function (e) {
             e.preventDefault();
-            if (_quizPaused || Date.now() < _pointerSuppressedUntil) return;
+            if (_quizPaused || _waveMenuOpen || Date.now() < _pointerSuppressedUntil) return;
             _isTouching = true;
             var touch = e.touches[0];
             _sendPointerPosition(touch.clientX);
@@ -359,18 +389,34 @@
         var candidates = _getCandidateWords(verseData.Text);
         if (!candidates.length) return null;
 
-        var picked = candidates[Math.floor(Math.random() * candidates.length)];
+        for (var shuffleIndex = candidates.length - 1; shuffleIndex > 0; shuffleIndex--) {
+            var swapIndex = Math.floor(Math.random() * (shuffleIndex + 1));
+            var tempCandidate = candidates[shuffleIndex];
+            candidates[shuffleIndex] = candidates[swapIndex];
+            candidates[swapIndex] = tempCandidate;
+        }
+
+        var blankCount = Math.min(WAVE_CLOZE_BLANK_COUNT, candidates.length);
+        var selected = candidates.slice(0, blankCount).sort(function (a, b) {
+            return a.index - b.index;
+        });
         var words = verseData.Text.split(/\s+/);
-        var cleanWord = picked.cleanWord;
-        var maskedWord = Array(cleanWord.length + 1).join('_');
-        words[picked.index] = words[picked.index].replace(cleanWord, maskedWord);
+
+        selected.forEach(function (picked) {
+            var maskedWord = Array(picked.cleanWord.length + 1).join('_');
+            words[picked.index] = words[picked.index].replace(picked.cleanWord, maskedWord);
+        });
 
         return {
             verseReference: verseData.Reference || '',
-            promptText: 'Choose the first letter of the hidden word.',
+            promptText: selected.length > 1
+                ? 'Fill both blanks by choosing the first letter of each missing word.'
+                : 'Choose the first letter of the hidden word.',
             questionText: '"' + words.join(' ') + '"',
-            correctLetter: cleanWord.charAt(0).toUpperCase(),
-            options: _buildLetterOptions(cleanWord.charAt(0).toUpperCase())
+            answers: selected.map(function (entry) { return entry.cleanWord; }),
+            revealedAnswers: [],
+            currentAnswerIndex: 0,
+            options: _buildLetterOptions(selected[0].cleanWord.charAt(0).toUpperCase())
         };
     }
 
@@ -443,9 +489,9 @@
         var questionEl = panel.querySelector('#waveQuizQuestion');
         var optionsEl = panel.querySelector('#waveQuizOptions');
 
-        progressEl.textContent = 'Question ' + (_currentQuiz.currentIndex + 1) + ' / ' + _currentQuiz.questions.length;
+        progressEl.textContent = 'Blank ' + (question.currentAnswerIndex + 1) + ' / ' + question.answers.length;
         promptEl.textContent = question.promptText + ' ' + question.verseReference;
-        questionEl.textContent = question.questionText;
+        questionEl.textContent = _getWaveQuestionDisplayText(question);
         optionsEl.innerHTML = '';
 
         question.options.forEach(function (letter) {
@@ -453,7 +499,7 @@
             btn.type = 'button';
             btn.textContent = letter;
             btn.style.cssText = 'padding:14px;border:1px solid #4a90e2;background:rgba(74,144,226,0.2);color:#fff;border-radius:8px;cursor:pointer;font-size:22px;font-weight:bold;transition:background 0.2s;';
-            btn.dataset.correct = (letter === question.correctLetter) ? 'true' : 'false';
+            btn.dataset.correct = (letter === question.answers[question.currentAnswerIndex].charAt(0).toUpperCase()) ? 'true' : 'false';
             btn.addEventListener('click', function (event) {
                 event.preventDefault();
                 event.stopPropagation();
@@ -461,6 +507,15 @@
 
                 if (btn.dataset.correct !== 'true') {
                     _answerQuiz(false);
+                    return;
+                }
+
+                question.revealedAnswers.push(question.answers[question.currentAnswerIndex]);
+                question.currentAnswerIndex++;
+
+                if (question.currentAnswerIndex < question.answers.length) {
+                    question.options = _buildLetterOptions(question.answers[question.currentAnswerIndex].charAt(0).toUpperCase());
+                    _renderWaveQuizQuestion(panel);
                     return;
                 }
 
@@ -482,6 +537,21 @@
         });
 
         _setQuizUnlock(panel);
+    }
+
+    function _getWaveQuestionDisplayText(question) {
+        var text = question && question.questionText ? question.questionText : '';
+        var parts = text.split(/_+/);
+        if (parts.length <= 1) return text;
+
+        var display = parts[0];
+        for (var i = 0; i < question.answers.length; i++) {
+            display += i < question.revealedAnswers.length ? question.revealedAnswers[i] : '_____';
+            if (i + 1 < parts.length) {
+                display += parts[i + 1];
+            }
+        }
+        return display;
     }
 
     function _triggerQuizUI() {
@@ -510,7 +580,7 @@
         panel.style.cssText = 'background:linear-gradient(135deg,#1a1a2e,#16213e);border:2px solid #4a90e2;border-radius:15px;padding:25px;max-width:420px;width:90%;color:#fff;text-align:center;';
         panel.innerHTML = '<h2 style="color:#6699ff;margin-bottom:15px;">⚔️ VERSE CHALLENGE ⚔️</h2>' +
             '<p style="font-size:14px;opacity:0.8;margin-bottom:8px;">Answer both correctly for +15 HP and +250 Score.</p>' +
-            '<p id="waveQuizProgress" style="font-size:13px;color:#a5c8ff;margin:0 0 10px 0;">Question 1 / ' + _currentQuiz.questions.length + '</p>' +
+            '<p id="waveQuizProgress" style="font-size:13px;color:#a5c8ff;margin:0 0 10px 0;">Blank 1 / ' + _currentQuiz.questions[0].answers.length + '</p>' +
             '<p id="waveQuizCountdown" style="font-size:13px;color:#ffd166;margin:0 0 12px 0;">Answering unlocks in 2.0s</p>' +
             '<p id="waveQuizPrompt" style="font-size:14px;opacity:0.9;margin-bottom:10px;"></p>' +
             '<p id="waveQuizQuestion" style="font-size:16px;margin-bottom:20px;line-height:1.45;">Loading verse...</p>' +
@@ -534,6 +604,113 @@
 
     function _setupEndGameClick() {
         // End game click is handled in mousedown handler.
+    }
+
+    function _ensureWaveMenu() {
+        _removeWaveMenu();
+
+        var menuButton = document.createElement('button');
+        menuButton.id = 'waveMenuButton';
+        menuButton.type = 'button';
+        menuButton.textContent = 'Menu';
+        menuButton.style.cssText = 'position:fixed;top:8px;right:10px;z-index:130;padding:8px 14px;border:2px solid rgba(255,255,255,0.7);border-radius:8px;background:rgba(12,16,28,0.88);color:#fff;font-weight:bold;cursor:pointer;';
+        menuButton.addEventListener('click', function (event) {
+            event.preventDefault();
+            event.stopPropagation();
+            _waveMenuOpen = !_waveMenuOpen;
+            _renderWaveMenuState();
+        });
+
+        var menuPanel = document.createElement('div');
+        menuPanel.id = 'waveMenuPanel';
+        menuPanel.style.cssText = 'display:none;position:fixed;top:52px;right:10px;z-index:131;min-width:220px;background:rgba(12,16,28,0.96);border:2px solid #ffd666;border-radius:10px;padding:10px;box-shadow:0 10px 30px rgba(0,0,0,0.45);';
+        menuPanel.innerHTML =
+            '<button type="button" data-wave-menu-item="songs" style="display:block;width:100%;margin:0 0 8px 0;padding:10px 12px;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.18);border-radius:8px;color:#fff;text-align:left;cursor:pointer;">Songs</button>' +
+            '<button type="button" data-wave-menu-item="affinityHelp" style="display:block;width:100%;margin:0 0 8px 0;padding:10px 12px;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.18);border-radius:8px;color:#fff;text-align:left;cursor:pointer;">Affinity Help</button>' +
+            '<button type="button" data-wave-menu-item="restart" style="display:block;width:100%;margin:0 0 8px 0;padding:10px 12px;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.18);border-radius:8px;color:#fff;text-align:left;cursor:pointer;">Restart Mission</button>' +
+            '<button type="button" data-wave-menu-item="leave" style="display:block;width:100%;padding:10px 12px;background:rgba(255,68,68,0.2);border:1px solid rgba(255,100,100,0.45);border-radius:8px;color:#fff;text-align:left;cursor:pointer;">Leave Mission</button>';
+
+        menuPanel.addEventListener('click', function (event) {
+            var button = event.target && event.target.closest ? event.target.closest('[data-wave-menu-item]') : null;
+            if (!button) return;
+            event.preventDefault();
+            event.stopPropagation();
+            _handleWaveMenuAction(button.getAttribute('data-wave-menu-item'));
+        });
+
+        document.body.appendChild(menuButton);
+        document.body.appendChild(menuPanel);
+        document.addEventListener('mousedown', _handleWaveMenuOutsideClick, true);
+        document.addEventListener('touchstart', _handleWaveMenuOutsideClick, true);
+    }
+
+    function _removeWaveMenu() {
+        var menuButton = document.getElementById('waveMenuButton');
+        var menuPanel = document.getElementById('waveMenuPanel');
+        if (menuButton) menuButton.remove();
+        if (menuPanel) menuPanel.remove();
+        document.removeEventListener('mousedown', _handleWaveMenuOutsideClick, true);
+        document.removeEventListener('touchstart', _handleWaveMenuOutsideClick, true);
+    }
+
+    function _renderWaveMenuState() {
+        var menuPanel = document.getElementById('waveMenuPanel');
+        if (menuPanel) {
+            menuPanel.style.display = _waveMenuOpen ? 'block' : 'none';
+        }
+    }
+
+    function _handleWaveMenuOutsideClick(event) {
+        if (!_waveMenuOpen) return;
+        var menuPanel = document.getElementById('waveMenuPanel');
+        var menuButton = document.getElementById('waveMenuButton');
+        var target = event.target;
+        if ((menuPanel && menuPanel.contains(target)) || (menuButton && menuButton.contains(target))) {
+            return;
+        }
+        _waveMenuOpen = false;
+        _renderWaveMenuState();
+    }
+
+    function _handleWaveMenuClick(event) {
+        if (!_waveMenuOpen) return false;
+        var menuPanel = document.getElementById('waveMenuPanel');
+        var menuButton = document.getElementById('waveMenuButton');
+        var target = event.target;
+        if ((menuPanel && menuPanel.contains(target)) || (menuButton && menuButton.contains(target))) {
+            return true;
+        }
+        _waveMenuOpen = false;
+        _renderWaveMenuState();
+        return false;
+    }
+
+    function _handleWaveMenuAction(itemId) {
+        _waveMenuOpen = false;
+        _renderWaveMenuState();
+
+        if (itemId === 'songs') {
+            if (window.SongLibraryOverlay) {
+                window.SongLibraryOverlay.open({ currentReference: null });
+            }
+            return;
+        }
+
+        if (itemId === 'affinityHelp') {
+            if (window.AffinityHelpOverlay) {
+                window.AffinityHelpOverlay.open();
+            }
+            return;
+        }
+
+        if (itemId === 'restart') {
+            _restartWaveGame();
+            return;
+        }
+
+        if (itemId === 'leave') {
+            _leaveWaveGame();
+        }
     }
 
     window.WaveGameLauncher = {
