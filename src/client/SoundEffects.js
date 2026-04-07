@@ -1,16 +1,20 @@
 /**
- * SoundEffects - Generate simple sound effects using Web Audio API
- * No external files needed - all sounds are procedurally generated
+ * SoundEffects - Generate sound effects using Web Audio API
+ * Procedural sounds with variety and better attack/damage feedback
  */
 const SoundEffects = (function() {
     let audioContext = null;
+    let masterVolume = 0.5;
 
-    // Initialize audio context on first use (user gesture required)
     function getAudioContext() {
         if (!audioContext) {
             audioContext = new (window.AudioContext || window.webkitAudioContext)();
         }
         return audioContext;
+    }
+
+    function setMasterVolume(vol) {
+        masterVolume = Math.max(0, Math.min(1, vol));
     }
 
     /**
@@ -24,13 +28,11 @@ const SoundEffects = (function() {
         oscillator.connect(gainNode);
         gainNode.connect(ctx.destination);
 
-        // Bright ding tone
         oscillator.type = 'sine';
-        oscillator.frequency.setValueAtTime(800, ctx.currentTime); // High pitch
+        oscillator.frequency.setValueAtTime(800, ctx.currentTime);
         oscillator.frequency.exponentialRampToValueAtTime(1200, ctx.currentTime + 0.1);
 
-        // Quick fade out
-        gainNode.gain.setValueAtTime(0.3, ctx.currentTime);
+        gainNode.gain.setValueAtTime(0.3 * masterVolume, ctx.currentTime);
         gainNode.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.2);
 
         oscillator.start(ctx.currentTime);
@@ -120,7 +122,7 @@ const SoundEffects = (function() {
             oscillator.frequency.exponentialRampToValueAtTime(note.freq * 1.12, start + note.delay + 0.3);
 
             gainNode.gain.setValueAtTime(0.001, start + note.delay);
-            gainNode.gain.exponentialRampToValueAtTime(note.gain, start + note.delay + 0.04);
+            gainNode.gain.exponentialRampToValueAtTime(note.gain * masterVolume, start + note.delay + 0.04);
             gainNode.gain.exponentialRampToValueAtTime(0.001, start + note.delay + 0.62);
 
             oscillator.start(start + note.delay);
@@ -128,11 +130,228 @@ const SoundEffects = (function() {
         });
     }
 
+    /**
+     * Play attack sound with variation
+     */
+    function playAttack() {
+        const ctx = getAudioContext();
+        const variation = Math.random();
+        
+        if (variation < 0.33) {
+            playSwordWhoosh(ctx);
+        } else if (variation < 0.66) {
+            playPunchImpact(ctx);
+        } else {
+            playEnergyBlast(ctx);
+        }
+    }
+
+    function playSwordWhoosh(ctx) {
+        const noise = ctx.createBufferSource();
+        const buffer = ctx.createBuffer(1, ctx.sampleRate * 0.15, ctx.sampleRate);
+        const data = buffer.getChannelData(0);
+        
+        for (let i = 0; i < buffer.length; i++) {
+            data[i] = (Math.random() * 2 - 1) * Math.exp(-i / (buffer.length * 0.3));
+        }
+        
+        noise.buffer = buffer;
+        
+        const filter = ctx.createBiquadFilter();
+        filter.type = 'bandpass';
+        filter.frequency.setValueAtTime(1500 + Math.random() * 500, ctx.currentTime);
+        filter.Q.setValueAtTime(2, ctx.currentTime);
+        
+        const gainNode = ctx.createGain();
+        gainNode.gain.setValueAtTime(0.4 * masterVolume, ctx.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.15);
+        
+        noise.connect(filter);
+        filter.connect(gainNode);
+        gainNode.connect(ctx.destination);
+        
+        noise.start(ctx.currentTime);
+    }
+
+    function playPunchImpact(ctx) {
+        const oscillator = ctx.createOscillator();
+        const gainNode = ctx.createGain();
+        
+        oscillator.type = 'sine';
+        oscillator.frequency.setValueAtTime(150 + Math.random() * 50, ctx.currentTime);
+        oscillator.frequency.exponentialRampToValueAtTime(50, ctx.currentTime + 0.08);
+        
+        gainNode.gain.setValueAtTime(0.5 * masterVolume, ctx.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.1);
+        
+        oscillator.connect(gainNode);
+        gainNode.connect(ctx.destination);
+        
+        oscillator.start(ctx.currentTime);
+        oscillator.stop(ctx.currentTime + 0.1);
+    }
+
+    function playEnergyBlast(ctx) {
+        const oscillator1 = ctx.createOscillator();
+        const oscillator2 = ctx.createOscillator();
+        const gainNode = ctx.createGain();
+        
+        oscillator1.type = 'sawtooth';
+        oscillator1.frequency.setValueAtTime(200 + Math.random() * 100, ctx.currentTime);
+        oscillator1.frequency.exponentialRampToValueAtTime(80, ctx.currentTime + 0.15);
+        
+        oscillator2.type = 'square';
+        oscillator2.frequency.setValueAtTime(400 + Math.random() * 100, ctx.currentTime);
+        oscillator2.frequency.exponentialRampToValueAtTime(150, ctx.currentTime + 0.12);
+        
+        gainNode.gain.setValueAtTime(0.2 * masterVolume, ctx.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.15);
+        
+        oscillator1.connect(gainNode);
+        oscillator2.connect(gainNode);
+        gainNode.connect(ctx.destination);
+        
+        oscillator1.start(ctx.currentTime);
+        oscillator1.stop(ctx.currentTime + 0.15);
+        oscillator2.start(ctx.currentTime);
+        oscillator2.stop(ctx.currentTime + 0.12);
+    }
+
+    /**
+     * Play damage sound with variation
+     */
+    function playDamage() {
+        const ctx = getAudioContext();
+        const variation = Math.random();
+        
+        if (variation < 0.5) {
+            playHeavyHit(ctx);
+        } else {
+            playGrittyImpact(ctx);
+        }
+    }
+
+    function playHeavyHit(ctx) {
+        const oscillator = ctx.createOscillator();
+        const gainNode = ctx.createGain();
+        
+        oscillator.type = 'triangle';
+        oscillator.frequency.setValueAtTime(100 + Math.random() * 30, ctx.currentTime);
+        oscillator.frequency.exponentialRampToValueAtTime(40, ctx.currentTime + 0.2);
+        
+        gainNode.gain.setValueAtTime(0.6 * masterVolume, ctx.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.2);
+        
+        oscillator.connect(gainNode);
+        gainNode.connect(ctx.destination);
+        
+        oscillator.start(ctx.currentTime);
+        oscillator.stop(ctx.currentTime + 0.2);
+    }
+
+    function playGrittyImpact(ctx) {
+        const noise = ctx.createBufferSource();
+        const buffer = ctx.createBuffer(1, ctx.sampleRate * 0.2, ctx.sampleRate);
+        const data = buffer.getChannelData(0);
+        
+        for (let i = 0; i < buffer.length; i++) {
+            data[i] = (Math.random() * 2 - 1) * Math.exp(-i / (buffer.length * 0.15));
+        }
+        
+        noise.buffer = buffer;
+        
+        const filter = ctx.createBiquadFilter();
+        filter.type = 'lowpass';
+        filter.frequency.setValueAtTime(800, ctx.currentTime);
+        filter.frequency.exponentialRampToValueAtTime(200, ctx.currentTime + 0.2);
+        
+        const gainNode = ctx.createGain();
+        gainNode.gain.setValueAtTime(0.35 * masterVolume, ctx.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.2);
+        
+        noise.connect(filter);
+        filter.connect(gainNode);
+        gainNode.connect(ctx.destination);
+        
+        noise.start(ctx.currentTime);
+    }
+
+    /**
+     * Play bullet/missile sound
+     */
+    function playBullet() {
+        const ctx = getAudioContext();
+        const oscillator = ctx.createOscillator();
+        const gainNode = ctx.createGain();
+        
+        oscillator.type = 'sawtooth';
+        oscillator.frequency.setValueAtTime(600 + Math.random() * 200, ctx.currentTime);
+        oscillator.frequency.exponentialRampToValueAtTime(200, ctx.currentTime + 0.08);
+        
+        gainNode.gain.setValueAtTime(0.25 * masterVolume, ctx.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.08);
+        
+        oscillator.connect(gainNode);
+        gainNode.connect(ctx.destination);
+        
+        oscillator.start(ctx.currentTime);
+        oscillator.stop(ctx.currentTime + 0.08);
+    }
+
+    /**
+     * Play monster death explosion
+     */
+    function playMonsterDeath() {
+        const ctx = getAudioContext();
+        
+        const noise = ctx.createBufferSource();
+        const buffer = ctx.createBuffer(1, ctx.sampleRate * 0.4, ctx.sampleRate);
+        const data = buffer.getChannelData(0);
+        
+        for (let i = 0; i < buffer.length; i++) {
+            data[i] = (Math.random() * 2 - 1) * Math.exp(-i / (buffer.length * 0.2));
+        }
+        
+        noise.buffer = buffer;
+        
+        const filter = ctx.createBiquadFilter();
+        filter.type = 'lowpass';
+        filter.frequency.setValueAtTime(2000, ctx.currentTime);
+        filter.frequency.exponentialRampToValueAtTime(100, ctx.currentTime + 0.4);
+        
+        const gainNode = ctx.createGain();
+        gainNode.gain.setValueAtTime(0.5 * masterVolume, ctx.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.4);
+        
+        noise.connect(filter);
+        filter.connect(gainNode);
+        gainNode.connect(ctx.destination);
+        
+        noise.start(ctx.currentTime);
+        
+        const oscillator = ctx.createOscillator();
+        const oscGain = ctx.createGain();
+        oscillator.type = 'sine';
+        oscillator.frequency.setValueAtTime(200, ctx.currentTime);
+        oscillator.frequency.exponentialRampToValueAtTime(50, ctx.currentTime + 0.3);
+        oscGain.gain.setValueAtTime(0.3 * masterVolume, ctx.currentTime);
+        oscGain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.3);
+        oscillator.connect(oscGain);
+        oscGain.connect(ctx.destination);
+        oscillator.start(ctx.currentTime);
+        oscillator.stop(ctx.currentTime + 0.3);
+    }
+
     return {
         playDing,
         playFirstKill,
         playLevelComplete,
-        playHeavenlyKill
+        playHeavenlyKill,
+        playAttack,
+        playDamage,
+        playBullet,
+        playMonsterDeath,
+        setMasterVolume
     };
 })();
 

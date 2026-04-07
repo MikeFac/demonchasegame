@@ -708,17 +708,72 @@ async function ensureDemonImagesLoaded() {
 
 const levelXPRequirements = LevelConfig.levelXPRequirements;
 
-// Audio assets - New sound effects
+// Audio assets - Enhanced sound effects with variety
 const bulletImpact = new Audio(`${scriptDirectory}/sounds/bullet_impact.mp3`);
 const monsterExplosion = new Audio(`${scriptDirectory}/sounds/monster_explosion.mp3`);
 const levelUpSound = new Audio(`${scriptDirectory}/sounds/level_up.mp3`);
 const playerHit = new Audio(`${scriptDirectory}/sounds/player_attacked.mp3`);
 const attackSound = new Audio(`${scriptDirectory}/sounds/monster_attacked.mp3`);
 
+const swordStrike = new Audio(`${scriptDirectory}/sounds/sword-strikes-armor-2765.mp3`);
+const punchSound = new Audio(`${scriptDirectory}/sounds/punch-through-air-2141.mp3`);
+const arrowSound = new Audio(`${scriptDirectory}/sounds/arrow-shot-through-air-2771.mp3`);
+const healPickup = new Audio(`${scriptDirectory}/sounds/heal_pickup.mp3`);
+
 // Legacy sounds (keeping preferred old ones)
 const healingRecharge = new Audio(`${scriptDirectory}/sounds/healing_recharge.mp3`);
-const demonDies = monsterExplosion; // Using new explosion sound
+const demonDies = monsterExplosion;
 const gameOver = new Audio(`${scriptDirectory}/sounds/game_over.mp3`);
+
+// Sound pools for variety
+const attackSounds = [attackSound, swordStrike, punchSound, arrowSound];
+const damageSounds = [playerHit, bulletImpact];
+let attackSoundIndex = 0;
+let damageSoundIndex = 0;
+
+function playAttackSound() {
+    if (Math.random() < 0.4) {
+        SoundEffects.playAttack();
+    } else {
+        const sound = attackSounds[attackSoundIndex];
+        attackSoundIndex = (attackSoundIndex + 1) % attackSounds.length;
+        sound.currentTime = 0;
+        sound.volume = 0.5;
+        sound.play().catch(() => {});
+    }
+}
+
+function playDamageSound() {
+    if (Math.random() < 0.3) {
+        SoundEffects.playDamage();
+    } else {
+        const sound = damageSounds[damageSoundIndex];
+        damageSoundIndex = (damageSoundIndex + 1) % damageSounds.length;
+        sound.currentTime = 0;
+        sound.volume = 0.6;
+        sound.play().catch(() => {});
+    }
+}
+
+function playBulletSound() {
+    if (Math.random() < 0.5) {
+        SoundEffects.playBullet();
+    } else {
+        bulletImpact.currentTime = 0;
+        bulletImpact.volume = 0.4;
+        bulletImpact.play().catch(() => {});
+    }
+}
+
+function playMonsterDeathSound() {
+    if (Math.random() < 0.4) {
+        SoundEffects.playMonsterDeath();
+    } else {
+        monsterExplosion.currentTime = 0;
+        monsterExplosion.volume = 0.7;
+        monsterExplosion.play().catch(() => {});
+    }
+}
 
 let currentVerseIndex = null; // Index of the currently displayed verse
 let verseTimer = null; // Timer for displaying the next verse
@@ -1557,6 +1612,25 @@ function initializeModeManager() {
         stop: function () {
             if (window.WaveGameLauncher && typeof WaveGameLauncher.isRunning === 'function' && WaveGameLauncher.isRunning()) {
                 WaveGameLauncher.stop();
+            }
+        },
+        handleResize: function () {
+            ensureCanvasSize();
+        }
+    });
+
+    ModeManager.register({
+        id: 'scriptureMaze',
+        legacyGameMode: 'scriptureMaze',
+        canStart: function (context) {
+            return !!(context && typeof context.launch === 'function');
+        },
+        start: function (context) {
+            return context.launch();
+        },
+        stop: function () {
+            if (window.ScriptureMazeLauncher && typeof ScriptureMazeLauncher.isRunning === 'function' && ScriptureMazeLauncher.isRunning()) {
+                ScriptureMazeLauncher.stop();
             }
         },
         handleResize: function () {
@@ -2477,7 +2551,10 @@ async function init() {
                     }
                 }
 
-                demonDies.play();
+                demonDies.currentTime = 0;
+                demonDies.volume = 0.6;
+                demonDies.play().catch(() => {});
+                SoundEffects.playHeavenlyKill();
                 console.log(`Monster ${monsterId} was killed at (${x}, ${y})`);
 
                 if (isBoss) {
@@ -2554,8 +2631,7 @@ async function init() {
                 }
             },
             onBulletHit: ({ x, y, damage, multiplier, category, monsterType }) => {
-                // Play bullet impact sound
-                bulletImpact.play();
+                playBulletSound();
 
                 if (typeof damage === 'number') {
                     noteSuccessfulDamage();
@@ -4003,6 +4079,50 @@ async function startMission(worldId, missionId) {
             return;
         }
 
+        if (mission.gameMode === 'scriptureMaze') {
+            console.log('Starting SCRIPTURE MAZE mission:', mission.name);
+            if (!organizedVerses || Object.keys(organizedVerses).length === 0) {
+                loadVersesFromBundle();
+            }
+            window.organizedVerses = organizedVerses;
+            if (window.ScriptureMazeLauncher) {
+                try {
+                    await ensureDemonImagesLoaded();
+                } catch (error) {
+                    console.error('Failed to load demon images for scripture maze:', error);
+                }
+                const launchScriptureMaze = function () {
+                    ScriptureMazeLauncher.start({
+                        canvas: document.getElementById('gameCanvas'),
+                        ctx: document.getElementById('gameCanvas').getContext('2d'),
+                        demonImages: demonImages,
+                        playerSpriteUrl: `${scriptDirectory}/images/player1-sprite96.png`,
+                        mission: mission,
+                        onEndGame: function () {
+                            if (currentMission) {
+                                completeMission(3);
+                            }
+                            returnToOverland();
+                        },
+                        onLeaveGame: function () {
+                            returnToOverland();
+                        }
+                    });
+                };
+                if (window.ModeManager && typeof window.ModeManager.start === 'function') {
+                    ModeManager.start('scriptureMaze', {
+                        mission: mission,
+                        launch: launchScriptureMaze
+                    });
+                } else {
+                    launchScriptureMaze();
+                }
+            } else {
+                console.error('ScriptureMazeLauncher not available');
+            }
+            return;
+        }
+
         // Build mission config in URL config format (same shape as loadUrlConfig)
         // Mission JSON stores spawnRate in seconds (e.g., 18 = 18s)
         // balance multipliers are ratios against base LevelConfig values
@@ -4111,6 +4231,12 @@ function gameLoop(generation) {
 
     // Wave game mode uses its own render loop (WaveGameLauncher)
     if (window.gameMode === 'waveGame') {
+        nextFrame();
+        return;
+    }
+
+    // Scripture Maze mode uses its own render loop
+    if (window.gameMode === 'scriptureMaze') {
         nextFrame();
         return;
     }
@@ -4677,11 +4803,11 @@ function gameLoop(generation) {
                     }
 
                     if (attackHits) {
-                        attackSound.play(); // Play the attack sound effect
-                        monster.isAttacked = true; // Set isAttacked to true when the monster is attacked
+                        playAttackSound();
+                        monster.isAttacked = true;
                         setTimeout(() => {
-                            monster.isAttacked = false; // Set isAttacked back to false after a short duration
-                        }, 200); // Adjust the duration as needed
+                            monster.isAttacked = false;
+                        }, 200);
 
                         // Screen shake effect
                         screenShake = {
@@ -4758,7 +4884,7 @@ function gameLoop(generation) {
                             }
                         }
 
-                        playerHit.play();
+                        playDamageSound();
 
                         // Helmet of Salvation: auto-revive on death
                         if (player.health <= 0 && inventory.helmet > 0) {
@@ -4774,7 +4900,9 @@ function gameLoop(generation) {
                             console.log('Helmet of Salvation auto-revive! HP:', player.health);
                         } else if (player.health <= 0 && !gameOverModalVisible) {
                             if (isSoloGame) {
-                                gameOver.play();
+                                gameOver.currentTime = 0;
+                                gameOver.volume = 0.7;
+                                gameOver.play().catch(() => {});
                                 gameOverFlag = true;
                                 gameOverModalVisible = true;
 
@@ -4892,7 +5020,9 @@ function gameLoop(generation) {
                 if (window.Analytics) Analytics.trackItemCollected('healing');
 
                 network.sendCollectHealingPoint(healingPoint.id);
-                healingRecharge.play(); // Play the attack sound effect
+                healPickup.currentTime = 0;
+                healPickup.volume = 0.5;
+                healPickup.play().catch(() => {});
             }
         });
 
@@ -4913,7 +5043,9 @@ function gameLoop(generation) {
 
                 inventory[item.type]++;
                 network.sendCollectCollectible(item.id);
-                healingRecharge.play();
+                healingRecharge.currentTime = 0;
+                healingRecharge.volume = 0.5;
+                healingRecharge.play().catch(() => {});
                 const name = COLLECTIBLE_NAMES[item.type] || item.type;
                 flashMessages.push({
                     text: `Collected: ${name}`,
