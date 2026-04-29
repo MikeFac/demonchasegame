@@ -78,6 +78,18 @@
       "visibility": "public",
       "missionIds": ["wave-01"],
       "unlockRequirement": null
+    },
+    {
+      "id": "chapter6",
+      "slug": "chapter6-scripture-maze",
+      "name": "Scripture Maze",
+      "description": "A sudden-death chase through a scripture maze. Answer correctly to earn bullets and destroy demons.",
+      "nodeShape": "star",
+      "theme": "forest",
+      "authorId": "system",
+      "visibility": "public",
+      "missionIds": ["maze-01"],
+      "unlockRequirement": null
     }
   ]
 }

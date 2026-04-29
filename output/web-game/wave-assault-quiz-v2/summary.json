@@ -1,0 +1,10 @@
+{
+  "disabledInitially": true,
+  "countdownText": "Answering unlocks in 1.7s",
+  "progressBefore": "Question 1 / 2",
+  "buttonCount": 6,
+  "progressAfterFirst": "Question 2 / 2",
+  "disabledSecondStage": true,
+  "overlayStillVisible": false,
+  "errors": []
+}

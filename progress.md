@@ -220,6 +220,64 @@ Original prompt: Check the implementation of docs/multi-version-songs-implementa
     - browser run showed only expected autoplay-audio `NotAllowedError` noise after scripted load
 
 2026-04-01:
+- Investigated the new Flash Run / Scripture Maze mode.
+- Added explicit canvas pointer controls:
+  - on-screen `LEFT/RIGHT/UP/DOWN` buttons
+  - tap-to-steer from either the buttons or the maze area relative to the player
+  - pointer/touch prompt answering and a one-tap `FIRE` button
+- Removed the renderer's per-frame canvas resize/context reset, which was forcing an expensive full canvas reinitialization every frame.
+- Tightened demon path selection so demons recover from blocked directions faster and prefer to keep moving instead of dithering at turns.
+- Increased default Scripture Maze movement speeds slightly to improve responsiveness after the input fix.
+
+2026-04-01:
+- Added a first-draft standalone `Scripture Maze` mode:
+  - `src/shared/ScriptureMazeConfig.js`
+  - `src/shared/ScriptureMazeEngine.js`
+  - `src/client/ScriptureMazeRenderer.js`
+  - `src/client/ScriptureMazeLauncher.js`
+- Wired the mode into the shell:
+  - added script includes in `index.html`
+  - added LocalNetwork support for offline scripture-maze runs
+- Added one authored mission path:
+  - `missions/chapter6-scripture-maze.json`
+  - added `chapter6` entry to `missions/chapters.json`
+- Remaining TODO:
+  - patch `game.js` mode registration and mission launch wiring
+  - smoke-test the mission in browser and fix launch/input/render issues
+
+2026-04-01:
+- Finished the main app wiring for the first-draft `Scripture Maze` mode:
+  - added `ModeManager` registration in `game.js`
+  - added mission launch branch in `startMission()`
+  - `gameLoop()` now yields while `window.gameMode === 'scriptureMaze'`
+- Added focused smoke-test coverage:
+  - generic Playwright client run to open Missions:
+    - `output/web-game/scripture-maze-missions/shot-0.png`
+  - direct mission launch script:
+    - `scripts/test-scripture-maze.js`
+    - artifacts:
+      - `output/web-game/scripture-maze-direct/shot-0.png`
+      - `output/web-game/scripture-maze-direct/state-0.json`
+- Verified from direct smoke state:
+  - mission launches into `mode: "scriptureMaze"`
+  - player, demons, prompt node, ammo/progress counters, and message all serialize through `render_game_to_text`
+  - no browser error artifact file was produced in the smoke run
+- Residual issue:
+  - headless screenshot still shows stale/transparent shared-canvas visuals behind the maze overlay even after renderer reset attempts
+  - state and lifecycle look correct, but the rendered surface still needs follow-up in a real browser/dev loop
+
+2026-04-01:
+- Resolved the remaining standalone-mode shell issue for `Scripture Maze`:
+  - the stale visuals were not a renderer bug; the fixed-position splash screen was still visible during fast direct mission launches and bleeding into canvas screenshots
+  - `src/client/ScriptureMazeLauncher.js` now force-hides `#splashScreen`, `#quickStartOverlay`, and `#votdModal` before taking over the canvas
+  - applied the same overlay cleanup in `src/client/WaveGameLauncher.js` so the other standalone mission mode does not regress in the same path
+- Verification:
+  - `node --check src/client/ScriptureMazeLauncher.js`
+  - `node --check src/client/WaveGameLauncher.js`
+  - reran `node scripts/test-scripture-maze.js`
+  - fresh screenshot `output/web-game/scripture-maze-direct/shot-0.png` now shows only the maze scene with no splash bleed-through
+
+2026-04-01:
 - Implemented the compatibility-first mode shell from `plans/ModeManagerImplementationPlan.md`:
   - added `src/client/ModeManager.js`
   - loaded it from `index.html`

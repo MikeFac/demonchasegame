@@ -1,0 +1,6 @@
+[
+  {
+    "type": "console.error",
+    "text": "Error playing audio: NotAllowedError: play() failed because the user didn't interact with the document first. https://goo.gl/xX8pDD"
+  }
+]

@@ -152,11 +152,36 @@ class LocalNetwork {
     }
 
     /**
+     * Start a local Scripture Maze game.
+     * @param {Object} missionConfig - Mission definition for this mode
+     */
+    sendStartScriptureMazeGame(missionConfig) {
+        var self = this;
+
+        var emitter = {
+            emit: function (event, data) {
+                self._handleEngineEvent(event, data);
+            }
+        };
+
+        this.engine = new ScriptureMazeEngine(emitter, missionConfig || {});
+        this.playerCode = 'scripture-maze-local';
+        this.isConnected = true;
+        this.engine.start();
+    }
+
+    /**
      * Send input to the wave game engine (horizontal movement, firing).
      * @param {string} event - Input event name
      * @param {*} data - Input data
      */
     sendWaveInput(event, data) {
+        if (this.engine && typeof this.engine.handleInput === 'function') {
+            this.engine.handleInput(event, data);
+        }
+    }
+
+    sendScriptureMazeInput(event, data) {
         if (this.engine && typeof this.engine.handleInput === 'function') {
             this.engine.handleInput(event, data);
         }

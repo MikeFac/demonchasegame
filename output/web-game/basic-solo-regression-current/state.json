@@ -1,0 +1,422 @@
+{
+  "before": {
+    "gameMode": "game",
+    "modeManagerId": "soloDungeon",
+    "currentMission": "intro-01",
+    "player": null,
+    "quiz": null
+  },
+  "after": {
+    "gameMode": "game",
+    "modeManagerId": "soloDungeon",
+    "player": null,
+    "quiz": null
+  },
+  "consoleMessages": [
+    {
+      "type": "log",
+      "text": "Loaded verses (en): 1632"
+    },
+    {
+      "type": "log",
+      "text": "MusicManager initialized with 1 tracks"
+    },
+    {
+      "type": "log",
+      "text": "[RedditAnalytics] wrapper loaded"
+    },
+    {
+      "type": "log",
+      "text": "[RedditAnalytics] created rdt stub"
+    },
+    {
+      "type": "log",
+      "text": "[RedditAnalytics] injected reddit pixel.js"
+    },
+    {
+      "type": "log",
+      "text": "[RedditAnalytics] called rdt init a2_fepjisq7z9u8"
+    },
+    {
+      "type": "log",
+      "text": "[RedditAnalytics] pixel already ready"
+    },
+    {
+      "type": "log",
+      "text": "[RedditAnalytics] track PageVisit"
+    },
+    {
+      "type": "log",
+      "text": "VotdMenuOverlay init called"
+    },
+    {
+      "type": "log",
+      "text": "View mode: 2d"
+    },
+    {
+      "type": "log",
+      "text": "Service Worker registered (scope: http://localhost:3500/)"
+    },
+    {
+      "type": "log",
+      "text": "[RedditAnalytics] loaded reddit pixel.js"
+    },
+    {
+      "type": "warning",
+      "text": "Clerk: Clerk has been loaded with development keys. Development instances have strict usage limits and should not be used when deploying your application to production. Learn more: https://clerk.com/docs/deployments/overview"
+    },
+    {
+      "type": "log",
+      "text": "[AUTH] Clerk listener fired, user = false"
+    },
+    {
+      "type": "log",
+      "text": "[AUTH] User signed out"
+    },
+    {
+      "type": "log",
+      "text": "[AUTH] State changed: {isAuthenticated: false, isRegistered: false, registrationKnown: false, hasDbUser: false, username: undefined}"
+    },
+    {
+      "type": "log",
+      "text": "showVOTDOverlay called"
+    },
+    {
+      "type": "log",
+      "text": "VOTD menu overlay disabled in settings"
+    },
+    {
+      "type": "log",
+      "text": "[5.536][MISSION] startMission called! worldId=chapter0 missionId=intro-01 window.gameMode=game gameOverFlag=false killed=undefined/undefined"
+    },
+    {
+      "type": "trace",
+      "text": "[MISSION] startMission call stack"
+    },
+    {
+      "type": "log",
+      "text": "MissionClient: Initialized successfully"
+    },
+    {
+      "type": "log",
+      "text": "Starting mission: First Victory"
+    },
+    {
+      "type": "log",
+      "text": "[MISSION] Restored mission state after resetGameState: First Victory"
+    },
+    {
+      "type": "log",
+      "text": "Starting mission game with config"
+    },
+    {
+      "type": "log",
+      "text": "No URL config found"
+    },
+    {
+      "type": "log",
+      "text": "Auto-starting with mission config"
+    },
+    {
+      "type": "log",
+      "text": "Custom config applied: {preset: custom, presetName: Custom, description: Custom game configuration, constants: Object, levelData: Object}"
+    },
+    {
+      "type": "log",
+      "text": "LocalNetwork callbacks set (offline mode)"
+    },
+    {
+      "type": "log",
+      "text": "Other player sprite ready (grey tint)"
+    },
+    {
+      "type": "log",
+      "text": "Healing point image loaded successfully"
+    },
+    {
+      "type": "log",
+      "text": "Loading particle sprite from: http://localhost:3500/images/effects/red-particle-burst__1_-removebg-preview.png"
+    },
+    {
+      "type": "log",
+      "text": "✅ Particle burst sprite sheet loaded successfully 384 x 384"
+    },
+    {
+      "type": "log",
+      "text": "✅ Building tiles loaded (4x4 sheet, 16 tiles) 400 x 400"
+    },
+    {
+      "type": "log",
+      "text": "✅ Terrain tiles loaded (8x8 sheet, 64 tiles) 256 x 256"
+    },
+    {
+      "type": "log",
+      "text": "otherPLayer and healingPointImg loaded successfully"
+    },
+    {
+      "type": "log",
+      "text": "Custom level 1 qualities applied: [Faith, Courage]"
+    },
+    {
+      "type": "log",
+      "text": "Canvas width: 512"
+    },
+    {
+      "type": "log",
+      "text": "Canvas height: 600"
+    },
+    {
+      "type": "log",
+      "text": "Learn:Faith, Index: 0out of101"
+    },
+    {
+      "type": "log",
+      "text": "Initialised currentVerseIndex: 0"
+    },
+    {
+      "type": "log",
+      "text": "Healing point image loaded"
+    },
+    {
+      "type": "log",
+      "text": "Shield of Faith image loaded"
+    },
+    {
+      "type": "log",
+      "text": "Fear demon image loaded"
+    },
+    {
+      "type": "log",
+      "text": "Condemnation demon image loaded"
+    },
+    {
+      "type": "log",
+      "text": "Unbelief demon image loaded"
+    },
+    {
+      "type": "log",
+      "text": "Ignorance demon image loaded"
+    },
+    {
+      "type": "log",
+      "text": "🎵 Now playing verse song: Romans 10:17"
+    },
+    {
+      "type": "log",
+      "text": "🎵 Playing educational music for: Romans 10:17"
+    },
+    {
+      "type": "log",
+      "text": "Depression demon image loaded"
+    },
+    {
+      "type": "log",
+      "text": "Strife demon image loaded"
+    },
+    {
+      "type": "log",
+      "text": "Confusion demon image loaded"
+    },
+    {
+      "type": "log",
+      "text": "Infirmity demon image loaded"
+    },
+    {
+      "type": "log",
+      "text": "Doubt demon image loaded"
+    },
+    {
+      "type": "log",
+      "text": "Deception demon image loaded"
+    },
+    {
+      "type": "log",
+      "text": "Despair demon image loaded"
+    },
+    {
+      "type": "log",
+      "text": "Pride demon image loaded"
+    },
+    {
+      "type": "log",
+      "text": "Temptation demon image loaded"
+    },
+    {
+      "type": "log",
+      "text": "Poverty demon image loaded"
+    },
+    {
+      "type": "log",
+      "text": "Shame demon image loaded"
+    },
+    {
+      "type": "log",
+      "text": "Blindness demon image loaded"
+    },
+    {
+      "type": "log",
+      "text": "Swarm demon image loaded"
+    },
+    {
+      "type": "log",
+      "text": "All demon images loaded"
+    },
+    {
+      "type": "log",
+      "text": "Daily Challenge: 0/5 (Completed: false)"
+    },
+    {
+      "type": "log",
+      "text": "Verses Learned: 0/1618"
+    },
+    {
+      "type": "log",
+      "text": "Game initialized"
+    },
+    {
+      "type": "log",
+      "text": "Generating map with style: open"
+    },
+    {
+      "type": "log",
+      "text": "[GameEngine] addPlayer local-player at (1500, 1500) wallCollides=false"
+    },
+    {
+      "type": "log",
+      "text": "Player bd3f15 spawned at maze position (1500.0, 1500.0)"
+    },
+    {
+      "type": "log",
+      "text": "[5.602][INIT] onPlayerCode=bd3f15 canvas=(512,600)"
+    },
+    {
+      "type": "log",
+      "text": "Received player number: 1"
+    },
+    {
+      "type": "log",
+      "text": "Game loaded"
+    },
+    {
+      "type": "log",
+      "text": "[5.603][SYNC] eng=(1500,1500) cli=(256,300) drift=1728 hp=100 xp=0 ammo=0"
+    },
+    {
+      "type": "log",
+      "text": "Player bd3f15 connected. Total: 1"
+    },
+    {
+      "type": "log",
+      "text": "[5.605][WALLS] onWalls: server-player position from (256,300) to (1500,1500)"
+    },
+    {
+      "type": "log",
+      "text": "[WallSpawn] onWalls: moved player from (256.0, 300.0) to spawn (1500, 1500) wallCollides=false w=48 h=48"
+    },
+    {
+      "type": "log",
+      "text": "Received walls: 1052 tiles"
+    },
+    {
+      "type": "log",
+      "text": "Received game config from server: {quizSettings: Object, preset: custom, presetName: Custom, isSoloGame: true, meleeHitProbabilityNoAnswer: 0}"
+    },
+    {
+      "type": "log",
+      "text": "Learn:Faith, Index: 0out of101"
+    },
+    {
+      "type": "log",
+      "text": "GameEngine started (room: solo-local)"
+    },
+    {
+      "type": "log",
+      "text": "[5.607][POS] (1500,1500) hp=100 ammo=0 ans=null target=none killed=0/2"
+    },
+    {
+      "type": "log",
+      "text": "🎵 Playing educational music for: Romans 10:17"
+    },
+    {
+      "type": "log",
+      "text": "Player 1 sprite ready (tint: none)"
+    },
+    {
+      "type": "log",
+      "text": "Explosion image loaded"
+    },
+    {
+      "type": "log",
+      "text": "[7.622][POS] (1500,1500) hp=100 ammo=0 ans=null target=none killed=0/2"
+    },
+    {
+      "type": "log",
+      "text": "[9.623][POS] (1500,1500) hp=100 ammo=0 ans=null target=none killed=0/2"
+    },
+    {
+      "type": "log",
+      "text": "[11.639][POS] (1500,1500) hp=100 ammo=0 ans=null target=none killed=0/2"
+    },
+    {
+      "type": "log",
+      "text": "[13.656][POS] (1500,1500) hp=100 ammo=0 ans=null target=none killed=0/2"
+    },
+    {
+      "type": "log",
+      "text": "[15.672][POS] (1500,1500) hp=100 ammo=0 ans=null target=none killed=0/2"
+    },
+    {
+      "type": "log",
+      "text": "[17.689][POS] (1500,1500) hp=100 ammo=0 ans=null target=none killed=0/2"
+    },
+    {
+      "type": "log",
+      "text": "[19.705][POS] (1500,1500) hp=100 ammo=0 ans=null target=none killed=0/2"
+    },
+    {
+      "type": "log",
+      "text": "[21.722][POS] (1500,1500) hp=100 ammo=0 ans=null target=none killed=0/2"
+    },
+    {
+      "type": "log",
+      "text": "[23.739][POS] (1500,1500) hp=100 ammo=0 ans=null target=none killed=0/2"
+    },
+    {
+      "type": "log",
+      "text": "Learn:Faith, Index: 0out of101"
+    },
+    {
+      "type": "log",
+      "text": "🎵 Playing educational music for: Romans 10:17"
+    },
+    {
+      "type": "log",
+      "text": "[25.755][POS] (1500,1500) hp=100 ammo=0 ans=null target=none killed=0/2"
+    },
+    {
+      "type": "log",
+      "text": "[27.772][POS] (1500,1500) hp=100 ammo=0 ans=null target=none killed=0/2"
+    },
+    {
+      "type": "log",
+      "text": "[29.788][POS] (1500,1500) hp=100 ammo=0 ans=null target=none killed=0/2"
+    },
+    {
+      "type": "log",
+      "text": "[31.805][POS] (1500,1500) hp=100 ammo=0 ans=null target=none killed=0/2"
+    },
+    {
+      "type": "log",
+      "text": "[33.821][POS] (1500,1500) hp=100 ammo=0 ans=null target=none killed=0/2"
+    },
+    {
+      "type": "log",
+      "text": "[35.822][POS] (1500,1500) hp=100 ammo=0 ans=null target=none killed=0/2"
+    },
+    {
+      "type": "log",
+      "text": "[37.838][POS] (1500,1500) hp=100 ammo=0 ans=null target=none killed=0/2"
+    }
+  ],
+  "pageErrors": []
+}

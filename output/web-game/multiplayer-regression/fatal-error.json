@@ -1,0 +1,4 @@
+{
+  "message": "page.waitForFunction: Timeout 30000ms exceeded.",
+  "stack": "page.waitForFunction: Timeout 30000ms exceeded.\n    at main (/home/michael/proj/dcgame/scripts/test-multiplayer-regression.js:255:15)"
+}

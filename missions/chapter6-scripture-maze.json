@@ -1,0 +1,22 @@
+{
+  "schemaVersion": 1,
+  "id": "chapter6",
+  "missions": [
+    {
+      "id": "maze-01",
+      "name": "Faith Run",
+      "description": "Click through a simpler maze, pass short 2-letter scripture tests, and eat demons while power mode is active.",
+      "gameMode": "scriptureMaze",
+      "type": "verse",
+      "qualities": ["Faith", "Courage", "Hope", "Love"],
+      "demonRoster": ["Fear", "Doubt", "Confusion", "Fear", "Doubt", "Confusion", "Fear", "Confusion"],
+      "mazeId": "faith-maze-01",
+      "targetDemonsToEat": 12,
+      "promptRespawnMs": 900,
+      "powerModeMs": 7200,
+      "playerSpeed": 138,
+      "demonSpeed": 94,
+      "xpMultiplier": 1.5
+    }
+  ]
+}

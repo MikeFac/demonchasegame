@@ -45,6 +45,20 @@
     // Wave menu state
     var _waveMenuOpen = false;
 
+    function _hideNonGameplayOverlays() {
+        var splashScreen = document.getElementById('splashScreen');
+        if (splashScreen) {
+            splashScreen.classList.remove('fade-out');
+            splashScreen.style.display = 'none';
+        }
+
+        var quickStartOverlay = document.getElementById('quickStartOverlay');
+        if (quickStartOverlay) quickStartOverlay.style.display = 'none';
+
+        var votdModal = document.getElementById('votdModal');
+        if (votdModal) votdModal.style.display = 'none';
+    }
+
     /**
      * Start a wave assault game.
      * @param {Object} opts
@@ -65,6 +79,7 @@
         _onRestartGame = opts.onRestartGame || function () { window.location.reload(); };
         _waveMenuOpen = false;
 
+        _hideNonGameplayOverlays();
         canvas.style.display = 'block';
         canvas.style.pointerEvents = 'auto';
         canvas.style.zIndex = '1';

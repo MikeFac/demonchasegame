@@ -1,0 +1,35 @@
+{
+  "beforeLearn": {
+    "gameMode": "game",
+    "step": "learn_gate",
+    "learnOpened": false,
+    "learnReturned": false,
+    "guide": {
+      "target": "move",
+      "title": "Move to the Fear Guard",
+      "text": "Step closer so you can face the stronger demon.",
+      "worldX": 1500,
+      "worldY": 1375
+    },
+    "kills": 1,
+    "bossAlive": true
+  },
+  "afterReturn": {
+    "gameMode": "game",
+    "step": "finish",
+    "learnOpened": true,
+    "learnReturned": true,
+    "guide": {
+      "target": "answers",
+      "title": "Use what you learned",
+      "text": "Answer the cloze verse again and finish the guard."
+    },
+    "kills": 1,
+    "bossAlive": true,
+    "currentQuiz": {
+      "mode": "cloze",
+      "questionLabel": "Fill in the blanks:",
+      "promptText": "_____ faith it is impossible to be well pleasing to him, for he who comes to God must _____ that he exists, and that he is a rewarder of those who seek him."
+    }
+  }
+}

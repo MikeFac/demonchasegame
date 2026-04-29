@@ -1,0 +1,29 @@
+{
+  "batchId": "one-song-test-faith",
+  "createdAt": "2026-03-07T18:12:36.014Z",
+  "purpose": "Create one new version for a single category test verse",
+  "dryRun": false,
+  "oneSong": true,
+  "category": "Faith",
+  "totalTargets": 1,
+  "entries": [
+    {
+      "category": "Faith",
+      "verseReference": "Romans 10:17",
+      "normalizedVerseReference": "romans10-17",
+      "existingVersionCount": 1,
+      "newVersion": 2,
+      "generationStyle": "yacht rock + aor",
+      "dryRun": false,
+      "status": "processing",
+      "recordId": "69ac6a94b51f76aecf1d153f",
+      "generationRequestId": "11b28897b93bd3809abf136544ada80d",
+      "generationAttempts": 0,
+      "generationError": null
+    }
+  ],
+  "summary": {
+    "processing": 1
+  },
+  "completedAt": "2026-03-07T18:12:36.970Z"
+}

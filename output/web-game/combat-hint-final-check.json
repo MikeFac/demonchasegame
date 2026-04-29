@@ -1,0 +1,48 @@
+{
+  "before": {
+    "combatHint": null,
+    "struggleState": {
+      "monsterId": null,
+      "hitsWithoutDamage": 0,
+      "lastHitAt": 0,
+      "lastHintAt": 0
+    }
+  },
+  "after": {
+    "combatHint": {
+      "line1": "Flee and Learn",
+      "line2": "Courage",
+      "duration": 2200,
+      "remainingMs": 2200
+    },
+    "struggleState": {
+      "monsterId": "debug-Fear",
+      "hitsWithoutDamage": 2,
+      "lastHitAt": 1773316096465,
+      "lastHintAt": 1773316096465
+    }
+  },
+  "hasHintDraw": true,
+  "tailTexts": [
+    "hoping",
+    "praying",
+    "Joy ▼",
+    "📖 LEARN VERSES HERE!",
+    "You",
+    "7",
+    "Health: 100  XP: 0  Level: 1  Ammo: 0",
+    "1",
+    "Flee and Learn",
+    "Courage",
+    "i",
+    "T",
+    "Now may the God of hope fill you with all joy and peace in _____",
+    "that you may abound in hope in the power of the Holy Spirit.",
+    "Romans 15:13",
+    "Fill in the missing word:",
+    "believing",
+    "trusting",
+    "hoping",
+    "praying"
+  ]
+}

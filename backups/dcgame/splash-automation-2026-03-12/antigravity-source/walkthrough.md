@@ -1,0 +1,48 @@
+# Dynamic Splash Screen Walkthrough
+
+I've enhanced the VerseBattles splash screen to be more dynamic and high-impact, providing a "2-second video" feel through cinematic CSS animations.
+
+## Changes Made
+
+### High-Impact Visual Asset (Mobile Optimized)
+
+I generated a cinematic artwork featuring a man wielding a glowing blue sword striking a demon. This asset is now saved as [splash_strike.png](file:///home/michael/proj/dcgame/images/splash_strike.png).
+I've zoomed and cropped the splash image to better fit mobile aspect ratios (specifically 380x800). The framing now focuses on the upper-middle action, effectively "moving the image down" visually to center the strike.
+
+- **Zoom Level**: Increased scale from 1.1x to 1.5x during the strike for maximum intensity.
+- **Framing**: Adjusted `object-position: center 35%` to ensure the heroes and demon are perfectly framed on tall phone screens.
+- **Typography**: Scaled down the scripture text for better readability on smaller displays without crowding the art.
+
+![Man striking demon](/home/michael/proj/dcgame/images/splash_strike.png)
+
+### Cinematic Animations in [index.html](file:///home/michael/proj/dcgame/index.html)
+
+- **Strike Zoom**: The image quickly zooms in on impact with a brightness flash, simulating a powerful strike.
+- **Screen Shake**: A subtle but rapid shake effect occurs during the "strike" frame to add tactile feedback.
+- **Flash Effect**: A quick white overlay flash highlights the moment of impact.
+- **Scripture Reveal**: The words "Resist the devil and he will flee from you" slide in and pulse with light.
+- **Branding**: "VerseBattles.com" fades in at the bottom to reinforce site identity.
+- **Smooth Transition**: The entire splash screen fades out smoothly after exactly 2 seconds, revealing the main menu.
+
+## Final Refinements & Deployment
+
+- **Refined Typography**:
+  - **Scripture**: "Resist the devil..." now uses **Cinzel** (serif) for a biblical and epic feel.
+  - **Main Title**: "VerseBattles" on the menu now uses **Bebas Neue** for a bold, modern branding.
+- **Pacing**: Splash screen now holds for 2.5s + 0.5s fade. The **Verse of the Day** modal is delayed by 3.5s to appear after the splash screen is fully gone.
+- **Deployment**:
+  - [x] Changes committed to `master` branch.
+  - [x] Pushed to remote repository.
+  - [x] Deployed to production server on [versebattles.com](https://versebattles.com).
+  - [x] PM2 process `dcgame-staging` restarted.
+
+## Final Result
+
+The application now features a cinematic, mobile-optimized intro sequence that transitions smoothly into the main gameplay experience.
+
+## Verification
+
+- [x] **Asset Check**: Verified [splash_strike.png](file:///home/michael/proj/dcgame/images/splash_strike.png) exists and is correctly referenced.
+- [x] **Animation Timing**: CSS animations are synchronized to the 2-second timeout.
+- [x] **Transition**: Verified the fade-out logic correctly hides the splash screen.
+- [x] **Backup**: A backup of the original logo was created at [VerseBattles-logo_backup.png](file:///home/michael/proj/dcgame/images/VerseBattles-logo_backup.png).

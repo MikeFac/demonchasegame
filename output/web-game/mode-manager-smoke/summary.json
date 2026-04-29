@@ -1,0 +1,744 @@
+{
+  "finalState": {
+    "modeManagerId": "overland",
+    "gameMode": "overland",
+    "mission": null,
+    "menuVisible": false,
+    "canvasVisible": true,
+    "overlandVisible": false,
+    "reviewVisible": false,
+    "waveMenuVisible": false,
+    "renderText": null
+  },
+  "consoleMessages": [
+    {
+      "type": "log",
+      "text": "Loaded verses (en): 1632"
+    },
+    {
+      "type": "log",
+      "text": "MusicManager initialized with 1 tracks"
+    },
+    {
+      "type": "log",
+      "text": "[RedditAnalytics] wrapper loaded"
+    },
+    {
+      "type": "log",
+      "text": "[RedditAnalytics] created rdt stub"
+    },
+    {
+      "type": "log",
+      "text": "[RedditAnalytics] injected reddit pixel.js"
+    },
+    {
+      "type": "log",
+      "text": "[RedditAnalytics] called rdt init a2_fepjisq7z9u8"
+    },
+    {
+      "type": "log",
+      "text": "[RedditAnalytics] pixel already ready"
+    },
+    {
+      "type": "log",
+      "text": "[RedditAnalytics] track PageVisit"
+    },
+    {
+      "type": "log",
+      "text": "VotdMenuOverlay init called"
+    },
+    {
+      "type": "log",
+      "text": "View mode: 2d"
+    },
+    {
+      "type": "log",
+      "text": "Service Worker registered (scope: http://localhost:3500/)"
+    },
+    {
+      "type": "log",
+      "text": "[RedditAnalytics] loaded reddit pixel.js"
+    },
+    {
+      "type": "warning",
+      "text": "Clerk: Clerk has been loaded with development keys. Development instances have strict usage limits and should not be used when deploying your application to production. Learn more: https://clerk.com/docs/deployments/overview"
+    },
+    {
+      "type": "log",
+      "text": "[AUTH] Clerk listener fired, user = false"
+    },
+    {
+      "type": "log",
+      "text": "[AUTH] User signed out"
+    },
+    {
+      "type": "log",
+      "text": "[AUTH] State changed: {isAuthenticated: false, isRegistered: false, registrationKnown: false, hasDbUser: false, username: undefined}"
+    },
+    {
+      "type": "log",
+      "text": "showVOTDOverlay called"
+    },
+    {
+      "type": "log",
+      "text": "VOTD menu overlay disabled in settings"
+    },
+    {
+      "type": "log",
+      "text": "No URL config found"
+    },
+    {
+      "type": "log",
+      "text": "LocalNetwork callbacks set (offline mode)"
+    },
+    {
+      "type": "log",
+      "text": "Other player sprite ready (grey tint)"
+    },
+    {
+      "type": "log",
+      "text": "Healing point image loaded successfully"
+    },
+    {
+      "type": "log",
+      "text": "Loading particle sprite from: http://localhost:3500/images/effects/red-particle-burst__1_-removebg-preview.png"
+    },
+    {
+      "type": "log",
+      "text": "✅ Particle burst sprite sheet loaded successfully 384 x 384"
+    },
+    {
+      "type": "log",
+      "text": "✅ Building tiles loaded (4x4 sheet, 16 tiles) 400 x 400"
+    },
+    {
+      "type": "log",
+      "text": "✅ Terrain tiles loaded (8x8 sheet, 64 tiles) 256 x 256"
+    },
+    {
+      "type": "log",
+      "text": "otherPLayer and healingPointImg loaded successfully"
+    },
+    {
+      "type": "log",
+      "text": "Canvas width: 512"
+    },
+    {
+      "type": "log",
+      "text": "Canvas height: 600"
+    },
+    {
+      "type": "log",
+      "text": "Learn:Faith, Index: 0out of101"
+    },
+    {
+      "type": "log",
+      "text": "Initialised currentVerseIndex: 0"
+    },
+    {
+      "type": "log",
+      "text": "Healing point image loaded"
+    },
+    {
+      "type": "log",
+      "text": "Shield of Faith image loaded"
+    },
+    {
+      "type": "log",
+      "text": "Fear demon image loaded"
+    },
+    {
+      "type": "log",
+      "text": "Condemnation demon image loaded"
+    },
+    {
+      "type": "log",
+      "text": "Unbelief demon image loaded"
+    },
+    {
+      "type": "log",
+      "text": "Ignorance demon image loaded"
+    },
+    {
+      "type": "log",
+      "text": "Depression demon image loaded"
+    },
+    {
+      "type": "log",
+      "text": "Blindness demon image loaded"
+    },
+    {
+      "type": "log",
+      "text": "Strife demon image loaded"
+    },
+    {
+      "type": "log",
+      "text": "Confusion demon image loaded"
+    },
+    {
+      "type": "log",
+      "text": "Infirmity demon image loaded"
+    },
+    {
+      "type": "log",
+      "text": "Doubt demon image loaded"
+    },
+    {
+      "type": "log",
+      "text": "Swarm demon image loaded"
+    },
+    {
+      "type": "log",
+      "text": "Deception demon image loaded"
+    },
+    {
+      "type": "log",
+      "text": "Despair demon image loaded"
+    },
+    {
+      "type": "log",
+      "text": "Pride demon image loaded"
+    },
+    {
+      "type": "log",
+      "text": "Temptation demon image loaded"
+    },
+    {
+      "type": "log",
+      "text": "Poverty demon image loaded"
+    },
+    {
+      "type": "log",
+      "text": "Shame demon image loaded"
+    },
+    {
+      "type": "log",
+      "text": "All demon images loaded"
+    },
+    {
+      "type": "log",
+      "text": "Daily Challenge: 0/5 (Completed: false)"
+    },
+    {
+      "type": "log",
+      "text": "Verses Learned: 0/1618"
+    },
+    {
+      "type": "log",
+      "text": "Game initialized"
+    },
+    {
+      "type": "log",
+      "text": "Generating map with style: classic"
+    },
+    {
+      "type": "log",
+      "text": "[GameEngine] addPlayer local-player at (2587.5, 962.5) wallCollides=false"
+    },
+    {
+      "type": "log",
+      "text": "Player 47898a spawned at maze position (2587.5, 962.5)"
+    },
+    {
+      "type": "log",
+      "text": "[5.621][INIT] onPlayerCode=47898a canvas=(512,600)"
+    },
+    {
+      "type": "log",
+      "text": "Received player number: 1"
+    },
+    {
+      "type": "log",
+      "text": "Game loaded"
+    },
+    {
+      "type": "log",
+      "text": "[5.622][SYNC] eng=(2588,963) cli=(256,300) drift=2424 hp=100 xp=0 ammo=0"
+    },
+    {
+      "type": "log",
+      "text": "Player 47898a connected. Total: 1"
+    },
+    {
+      "type": "log",
+      "text": "[5.624][WALLS] onWalls: server-player position from (256,300) to (2587.5,962.5)"
+    },
+    {
+      "type": "log",
+      "text": "[WallSpawn] onWalls: moved player from (256.0, 300.0) to spawn (2587.5, 962.5) wallCollides=false w=48 h=48"
+    },
+    {
+      "type": "log",
+      "text": "Received walls: 12008 tiles"
+    },
+    {
+      "type": "log",
+      "text": "Received game config from server: {quizSettings: Object, preset: easy, presetName: Easy, isSoloGame: true, meleeHitProbabilityNoAnswer: 0.2}"
+    },
+    {
+      "type": "log",
+      "text": "First player joined - targeting 18 opening monsters for level 1 (existing=1)"
+    },
+    {
+      "type": "log",
+      "text": "Spawning FIRST CHASER monster"
+    },
+    {
+      "type": "log",
+      "text": "Monster spawned. Total monsters: 2"
+    },
+    {
+      "type": "log",
+      "text": "Spawning CHASER monster"
+    },
+    {
+      "type": "log",
+      "text": "Monster spawned. Total monsters: 3"
+    },
+    {
+      "type": "log",
+      "text": "Spawning CHASER monster"
+    },
+    {
+      "type": "log",
+      "text": "Monster spawned. Total monsters: 4"
+    },
+    {
+      "type": "log",
+      "text": "Spawning RANDOM WALKER monster"
+    },
+    {
+      "type": "log",
+      "text": "Monster spawned. Total monsters: 5"
+    },
+    {
+      "type": "log",
+      "text": "Spawning RANDOM WALKER monster"
+    },
+    {
+      "type": "log",
+      "text": "Monster spawned. Total monsters: 6"
+    },
+    {
+      "type": "log",
+      "text": "Spawning RANDOM WALKER monster"
+    },
+    {
+      "type": "log",
+      "text": "Monster spawned. Total monsters: 7"
+    },
+    {
+      "type": "log",
+      "text": "Spawning CHASER monster"
+    },
+    {
+      "type": "log",
+      "text": "Monster spawned. Total monsters: 8"
+    },
+    {
+      "type": "log",
+      "text": "Spawning CHASER monster"
+    },
+    {
+      "type": "log",
+      "text": "Monster spawned. Total monsters: 9"
+    },
+    {
+      "type": "log",
+      "text": "Spawning CHASER monster"
+    },
+    {
+      "type": "log",
+      "text": "Monster spawned. Total monsters: 10"
+    },
+    {
+      "type": "log",
+      "text": "Spawning CHASER monster"
+    },
+    {
+      "type": "log",
+      "text": "Monster spawned. Total monsters: 11"
+    },
+    {
+      "type": "log",
+      "text": "Spawning RANDOM WALKER monster"
+    },
+    {
+      "type": "log",
+      "text": "Monster spawned. Total monsters: 12"
+    },
+    {
+      "type": "log",
+      "text": "Spawning RANDOM WALKER monster"
+    },
+    {
+      "type": "log",
+      "text": "Monster spawned. Total monsters: 13"
+    },
+    {
+      "type": "log",
+      "text": "Spawning RANDOM WALKER monster"
+    },
+    {
+      "type": "log",
+      "text": "Monster spawned. Total monsters: 14"
+    },
+    {
+      "type": "log",
+      "text": "Spawning RANDOM WALKER monster"
+    },
+    {
+      "type": "log",
+      "text": "Monster spawned. Total monsters: 15"
+    },
+    {
+      "type": "log",
+      "text": "Spawning RANDOM WALKER monster"
+    },
+    {
+      "type": "log",
+      "text": "Monster spawned. Total monsters: 16"
+    },
+    {
+      "type": "log",
+      "text": "Spawning CHASER monster"
+    },
+    {
+      "type": "log",
+      "text": "Monster spawned. Total monsters: 17"
+    },
+    {
+      "type": "log",
+      "text": "Spawning CHASER monster"
+    },
+    {
+      "type": "log",
+      "text": "Monster spawned. Total monsters: 18"
+    },
+    {
+      "type": "log",
+      "text": "GameEngine started (room: solo-local)"
+    },
+    {
+      "type": "log",
+      "text": "[5.639][POS] (2588,963) hp=100 ammo=0 ans=null target=none killed=0/12"
+    },
+    {
+      "type": "log",
+      "text": "Player 1 sprite ready (tint: none)"
+    },
+    {
+      "type": "log",
+      "text": "Explosion image loaded"
+    },
+    {
+      "type": "log",
+      "text": "🎵 Now playing verse song: Romans 10:17"
+    },
+    {
+      "type": "log",
+      "text": "🎵 Playing educational music for: Romans 10:17"
+    },
+    {
+      "type": "log",
+      "text": "MissionClient: Initialized successfully"
+    },
+    {
+      "type": "log",
+      "text": "Loaded worlds: [Object, Object, Object, Object, Object, Object, Object]"
+    },
+    {
+      "type": "log",
+      "text": "ProgressManager: World unlocked chapter0"
+    },
+    {
+      "type": "log",
+      "text": "ProgressManager: World unlocked chapter4"
+    },
+    {
+      "type": "log",
+      "text": "ProgressManager: World unlocked chapter5"
+    },
+    {
+      "type": "log",
+      "text": "ProgressManager: World unlocked chapter6"
+    },
+    {
+      "type": "log",
+      "text": "MissionClient: Initialized successfully"
+    },
+    {
+      "type": "log",
+      "text": "Loaded worlds: [Object, Object, Object, Object, Object, Object, Object]"
+    },
+    {
+      "type": "log",
+      "text": "OverlandRenderer created with 7 worlds"
+    },
+    {
+      "type": "log",
+      "text": "Missions initialized: 7 chapters"
+    },
+    {
+      "type": "log",
+      "text": "showOverland: starting game loop, canvas display: block"
+    },
+    {
+      "type": "log",
+      "text": "OverlandRenderer created with 7 worlds"
+    },
+    {
+      "type": "log",
+      "text": "Missions initialized: 7 chapters"
+    },
+    {
+      "type": "log",
+      "text": "OverlandRenderer created with 7 worlds"
+    },
+    {
+      "type": "log",
+      "text": "Missions initialized: 7 chapters"
+    },
+    {
+      "type": "log",
+      "text": "OverlandRenderer created with 7 worlds"
+    },
+    {
+      "type": "log",
+      "text": "Missions initialized: 7 chapters"
+    },
+    {
+      "type": "log",
+      "text": "Reference to convert: Romans 10:17"
+    },
+    {
+      "type": "log",
+      "text": "Verse directory and file:ROM-10-17"
+    },
+    {
+      "type": "log",
+      "text": "Review mode render, canvas: 512 600"
+    },
+    {
+      "type": "log",
+      "text": "Review mode render, canvas: 512 600"
+    },
+    {
+      "type": "log",
+      "text": "Review mode render, canvas: 512 600"
+    },
+    {
+      "type": "log",
+      "text": "Review mode render, canvas: 512 600"
+    },
+    {
+      "type": "log",
+      "text": "Review mode render, canvas: 512 600"
+    },
+    {
+      "type": "log",
+      "text": "Review mode render, canvas: 512 600"
+    },
+    {
+      "type": "log",
+      "text": "Review mode render, canvas: 512 600"
+    },
+    {
+      "type": "log",
+      "text": "Review mode render, canvas: 512 600"
+    },
+    {
+      "type": "log",
+      "text": "Review mode render, canvas: 512 600"
+    },
+    {
+      "type": "log",
+      "text": "Review mode render, canvas: 512 600"
+    },
+    {
+      "type": "log",
+      "text": "Review mode render, canvas: 512 600"
+    },
+    {
+      "type": "log",
+      "text": "Review mode render, canvas: 512 600"
+    },
+    {
+      "type": "log",
+      "text": "Review mode render, canvas: 512 600"
+    },
+    {
+      "type": "log",
+      "text": "Review mode render, canvas: 512 600"
+    },
+    {
+      "type": "log",
+      "text": "Review mode render, canvas: 512 600"
+    },
+    {
+      "type": "log",
+      "text": "Review mode render, canvas: 512 600"
+    },
+    {
+      "type": "log",
+      "text": "Review mode render, canvas: 512 600"
+    },
+    {
+      "type": "log",
+      "text": "Review mode render, canvas: 512 600"
+    },
+    {
+      "type": "log",
+      "text": "Review mode render, canvas: 512 600"
+    },
+    {
+      "type": "log",
+      "text": "Review mode render, canvas: 512 600"
+    },
+    {
+      "type": "log",
+      "text": "Review mode render, canvas: 512 600"
+    },
+    {
+      "type": "log",
+      "text": "Review mode render, canvas: 512 600"
+    },
+    {
+      "type": "log",
+      "text": "Review mode render, canvas: 512 600"
+    },
+    {
+      "type": "log",
+      "text": "Review mode render, canvas: 512 600"
+    },
+    {
+      "type": "log",
+      "text": "Review mode render, canvas: 512 600"
+    },
+    {
+      "type": "log",
+      "text": "Review mode render, canvas: 512 600"
+    },
+    {
+      "type": "log",
+      "text": "Review mode render, canvas: 512 600"
+    },
+    {
+      "type": "log",
+      "text": "Review mode render, canvas: 512 600"
+    },
+    {
+      "type": "log",
+      "text": "Review mode render, canvas: 512 600"
+    },
+    {
+      "type": "log",
+      "text": "Review mode render, canvas: 512 600"
+    },
+    {
+      "type": "log",
+      "text": "Review mode render, canvas: 512 600"
+    },
+    {
+      "type": "log",
+      "text": "Review mode render, canvas: 512 600"
+    },
+    {
+      "type": "log",
+      "text": "Review mode render, canvas: 512 600"
+    },
+    {
+      "type": "log",
+      "text": "Review mode render, canvas: 512 600"
+    },
+    {
+      "type": "log",
+      "text": "Review mode render, canvas: 512 600"
+    },
+    {
+      "type": "log",
+      "text": "Review mode render, canvas: 512 600"
+    },
+    {
+      "type": "log",
+      "text": "Review mode render, canvas: 512 600"
+    },
+    {
+      "type": "log",
+      "text": "Review mode render, canvas: 512 600"
+    },
+    {
+      "type": "log",
+      "text": "Review mode render, canvas: 512 600"
+    },
+    {
+      "type": "log",
+      "text": "Review mode render, canvas: 512 600"
+    },
+    {
+      "type": "log",
+      "text": "Review mode render, canvas: 512 600"
+    },
+    {
+      "type": "log",
+      "text": "Review mode render, canvas: 512 600"
+    },
+    {
+      "type": "log",
+      "text": "Review mode render, canvas: 512 600"
+    },
+    {
+      "type": "log",
+      "text": "showOverland: starting game loop, canvas display: block"
+    },
+    {
+      "type": "log",
+      "text": "[8.566][MISSION] startMission called! worldId=chapter5 missionId=wave-01 window.gameMode=overland gameOverFlag=false killed=0/12"
+    },
+    {
+      "type": "trace",
+      "text": "[MISSION] startMission call stack"
+    },
+    {
+      "type": "log",
+      "text": "Starting mission: Wave Assault: Fear's Onslaught"
+    },
+    {
+      "type": "log",
+      "text": "Starting WAVE mode mission: Wave Assault: Fear's Onslaught"
+    },
+    {
+      "type": "log",
+      "text": "Wave 1 started: The Fearful"
+    },
+    {
+      "type": "log",
+      "text": "Wave 1 started: The Fearful"
+    },
+    {
+      "type": "log",
+      "text": "WaveGameEngine started"
+    },
+    {
+      "type": "log",
+      "text": "WaveGameLauncher: Wave game started"
+    },
+    {
+      "type": "log",
+      "text": "WaveGameEngine stopped"
+    },
+    {
+      "type": "log",
+      "text": "LocalNetwork: Disconnected (offline mode)"
+    },
+    {
+      "type": "log",
+      "text": "WaveGameLauncher: Wave game stopped"
+    },
+    {
+      "type": "log",
+      "text": "showOverland: starting game loop, canvas display: block"
+    }
+  ],
+  "pageErrors": []
+}

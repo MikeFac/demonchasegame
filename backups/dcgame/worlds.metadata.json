@@ -1,0 +1,1 @@
+{"indexes":[{"v":{"$numberInt":"2"},"key":{"_id":{"$numberInt":"1"}},"name":"_id_"},{"v":{"$numberInt":"2"},"key":{"slug":{"$numberInt":"1"}},"name":"slug_1","unique":true},{"v":{"$numberInt":"2"},"key":{"shareCode":{"$numberInt":"1"}},"name":"shareCode_1","unique":true,"sparse":true}],"uuid":"a8a7e1c705274c0bb32cf2a97bb672da","collectionName":"worlds","type":"collection"}

@@ -1,0 +1,93 @@
+{
+  "summary": {
+    "gameOverFlag": false,
+    "gameOverModalVisible": false,
+    "startHereSummary": null,
+    "currentMission": {
+      "id": "intro-01",
+      "worldId": "chapter0"
+    },
+    "gameMode": "game"
+  },
+  "afterClick": {
+    "gameMode": "game",
+    "currentMission": {
+      "id": "intro-01",
+      "name": "First Victory",
+      "description": "Beat one demon, then one more. This is the shortest path to understanding VerseBattles.",
+      "mapStyle": "open",
+      "qualities": [
+        "Faith",
+        "Courage"
+      ],
+      "monsters": [
+        "Fear",
+        "Doubt"
+      ],
+      "monsterDamageFactor": 0.65,
+      "monsterSpeed": 4,
+      "playerSpeed": 5,
+      "maxMonsters": 2,
+      "monstersToKill": 2,
+      "spawnRate": 999,
+      "xpMultiplier": 0.75,
+      "quizSettings": {
+        "firstLetter": 0,
+        "missingWord": 0,
+        "categoryMatch": 0,
+        "trueFalse": 0,
+        "cloze": 100
+      },
+      "disableLevelBoss": true,
+      "randomSpawnsEnabled": false,
+      "randomSpawnBudget": 0,
+      "fixedMonsters": [
+        {
+          "x": 1885,
+          "y": 1460,
+          "demonType": "Fear",
+          "behavior": {
+            "type": "guard",
+            "patrolRadius": 150
+          },
+          "stats": {
+            "healthMultiplier": 0.8,
+            "damageMultiplier": 0.85,
+            "speedMultiplier": 0.9
+          },
+          "spawnTrigger": {
+            "type": "immediate",
+            "value": 0
+          },
+          "label": "First Fear"
+        },
+        {
+          "x": 1500,
+          "y": 1195,
+          "demonType": "Fear",
+          "behavior": {
+            "type": "guard",
+            "patrolRadius": 165
+          },
+          "stats": {
+            "healthMultiplier": 1.8,
+            "damageMultiplier": 1.05,
+            "speedMultiplier": 0.8,
+            "sizeMultiplier": 1.25
+          },
+          "spawnTrigger": {
+            "type": "killCount",
+            "value": 1
+          },
+          "isBoss": true,
+          "label": "Fear Guard"
+        }
+      ],
+      "worldId": "chapter0",
+      "worldName": "Start Here",
+      "worldTheme": "stone",
+      "nodeShape": "star"
+    },
+    "summaryVisible": false
+  }
+}

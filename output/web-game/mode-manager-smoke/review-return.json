@@ -1,0 +1,11 @@
+{
+  "modeManagerId": "overland",
+  "gameMode": "overland",
+  "mission": null,
+  "menuVisible": false,
+  "canvasVisible": true,
+  "overlandVisible": false,
+  "reviewVisible": false,
+  "waveMenuVisible": false,
+  "renderText": null
+}

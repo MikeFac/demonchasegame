@@ -1,0 +1,20 @@
+{
+  "connectedPlayers": 2,
+  "playerCount": 2,
+  "expectedRemoteCode": "91c642",
+  "remotePlayerState": "disconnected",
+  "players": {
+    "0fb510": {
+      "x": 965,
+      "y": 2150,
+      "health": 100,
+      "state": "alive"
+    },
+    "91c642": {
+      "x": 600.7511232958682,
+      "y": 1825.308826932825,
+      "health": 95,
+      "state": "disconnected"
+    }
+  }
+}

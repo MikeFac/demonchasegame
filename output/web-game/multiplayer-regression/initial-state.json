@@ -1,0 +1,48 @@
+{
+  "initialA": {
+    "label": "pageA",
+    "playerCode": "0fb510",
+    "gameMode": "game",
+    "connectedPlayers": 2,
+    "playerCount": 2,
+    "players": {
+      "0fb510": {
+        "x": 725,
+        "y": 2150,
+        "health": 100,
+        "state": "alive",
+        "username": null
+      },
+      "91c642": {
+        "x": 600.7511232958682,
+        "y": 1825.308826932825,
+        "health": 95,
+        "state": "alive",
+        "username": null
+      }
+    }
+  },
+  "initialB": {
+    "label": "pageB",
+    "playerCode": "91c642",
+    "gameMode": "game",
+    "connectedPlayers": 2,
+    "playerCount": 2,
+    "players": {
+      "0fb510": {
+        "x": 725,
+        "y": 2150,
+        "health": 100,
+        "state": "alive",
+        "username": null
+      },
+      "91c642": {
+        "x": 600.7511232958682,
+        "y": 1825.308826932825,
+        "health": 95,
+        "state": "alive",
+        "username": null
+      }
+    }
+  }
+}

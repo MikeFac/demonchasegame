@@ -1,0 +1,46 @@
+{
+  "before": {
+    "summaryVisible": true,
+    "summary": {
+      "title": "First Victory Complete",
+      "buttons": [
+        "missions",
+        "solo",
+        "learn"
+      ],
+      "rects": [
+        {
+          "id": "missions",
+          "x": 114,
+          "y": 322,
+          "width": 284,
+          "height": 42
+        },
+        {
+          "id": "solo",
+          "x": 114,
+          "y": 378,
+          "width": 284,
+          "height": 42
+        },
+        {
+          "id": "learn",
+          "x": 114,
+          "y": 434,
+          "width": 284,
+          "height": 42
+        }
+      ]
+    },
+    "currentMission": {
+      "id": "intro-01",
+      "worldId": "chapter0"
+    },
+    "gameMode": "game"
+  },
+  "after": {
+    "summaryVisible": false,
+    "currentMission": null,
+    "gameMode": "overland"
+  }
+}

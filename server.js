@@ -14,6 +14,7 @@ const progressRouter = require('./src/server/routes/progress');
 const worldRouter = require('./src/server/routes/worlds');
 const groupsRouter = require('./src/server/routes/groups');
 const contentMakerRouter = require('./src/server/routes/contentMaker');
+const printRouter = require('./src/server/routes/print');
 const { retryFailedGenerations } = require('./src/server/jobs/retryFailedGenerations');
 
 const app = express();
@@ -156,6 +157,9 @@ app.use('/api/groups', groupsRouter);
 
 // Content Maker Routes
 app.use('/api/content-maker', contentMakerRouter);
+
+// Print booklet preview and PDF routes
+app.use(printRouter);
 
 // ==================== Socket.IO ====================
 

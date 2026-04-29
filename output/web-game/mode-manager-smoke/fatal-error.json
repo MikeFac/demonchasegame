@@ -1,0 +1,4 @@
+{
+  "message": "page.waitForFunction: Timeout 30000ms exceeded.",
+  "stack": "page.waitForFunction: Timeout 30000ms exceeded.\n    at waitForMode (/home/michael/proj/dcgame/scripts/test-mode-manager-smoke.js:49:14)\n    at main (/home/michael/proj/dcgame/scripts/test-mode-manager-smoke.js:124:9)"
+}

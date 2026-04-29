@@ -1,0 +1,24 @@
+{
+  "batchId": "one-per-category-2026-03-07T17-48-34-285Z",
+  "createdAt": "2026-03-07T17:48:34.286Z",
+  "purpose": "Create one new version for a single category test verse",
+  "dryRun": true,
+  "oneSong": true,
+  "totalTargets": 1,
+  "entries": [
+    {
+      "category": "Courage",
+      "verseReference": "Psalms 118:6",
+      "normalizedVerseReference": "psalms118-6",
+      "existingVersionCount": 1,
+      "newVersion": 2,
+      "generationStyle": "80s rock",
+      "dryRun": true,
+      "status": "planned"
+    }
+  ],
+  "summary": {
+    "planned": 1
+  },
+  "completedAt": "2026-03-07T17:48:34.344Z"
+}

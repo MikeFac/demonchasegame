@@ -1,0 +1,41 @@
+{
+  "archivedAt": "2026-03-07T23:56:37.093Z",
+  "deletedBy": {
+    "email": null,
+    "username": "Mike777",
+    "clerkId": "user_3APEc0y18fKuLaNWz7M8dMlirCg"
+  },
+  "sourceAudioPath": "/home/michael/proj/dcgame/public/audio/deuteronomy31-6-c1ed1fe9-4879-4ab6-8c7f-979e02cb9cd3.mp3",
+  "archivedAudioPath": "/home/michael/proj/dcgame/archived/deleted-songs/2026-03-07/1772927797093-deuteronomy31-6-c1ed1fe9-4879-4ab6-8c7f-979e02cb9cd3.mp3",
+  "song": {
+    "_id": "698eed0a1aa3ab9610d6ad8d",
+    "verseReference": "deuteronomy31-6",
+    "book": "Deuteronomy",
+    "chapter": 31,
+    "startVerse": 6,
+    "category": "Courage",
+    "verseText": "Be strong and courageous. Don’t be afraid or scared of them, for Yahweh your God himself is who goes with you. He will not fail you nor forsake you.",
+    "generationStyle": "rock",
+    "generationStatus": "completed",
+    "generationAttempts": 0,
+    "playCount": 1,
+    "learnCount": 1,
+    "averageRetention": 1,
+    "status": "active",
+    "createdAt": "2026-02-13T09:21:14.945Z",
+    "updatedAt": "2026-03-07T21:47:32.305Z",
+    "__v": 0,
+    "generationPrompt": "Be strong and courageous. Don’t be afraid or scared of them, for Yahweh your God himself is who goes with you. He will not fail you nor forsake you.\n\nBe strong and courageous. Don’t be afraid or scared of them, for Yahweh your God himself is who goes with you. He will not fail you nor forsake you.\n\nBe strong and courageous. Don’t be afraid or scared of them, for Yahweh your God himself is who goes with you. He will not fail you nor forsake you.",
+    "generationRequestId": "5ce272d322d0cd0a0f9f7a690d2ebceb",
+    "audioPath": "/home/michael/proj/dcgame/public/audio/deuteronomy31-6-c1ed1fe9-4879-4ab6-8c7f-979e02cb9cd3.mp3",
+    "audioUrl": "/audio/deuteronomy31-6-c1ed1fe9-4879-4ab6-8c7f-979e02cb9cd3.mp3",
+    "duration": 218.16,
+    "generatedAt": "2026-02-13T10:09:55.817Z",
+    "sunoId": "c1ed1fe9-4879-4ab6-8c7f-979e02cb9cd3",
+    "isActiveVersion": true,
+    "qualityScore": 100,
+    "version": 2,
+    "lastPlayedAt": "2026-03-07T17:14:55.098Z",
+    "verseReferenceFull": "Deuteronomy 31:6"
+  }
+}

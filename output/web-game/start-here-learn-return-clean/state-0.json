@@ -1,0 +1,12 @@
+{
+  "step": "finish",
+  "learnOpened": true,
+  "learnReturned": true,
+  "guide": {
+    "target": "answers",
+    "title": "Use what you learned",
+    "text": "Answer the cloze verse again and finish the guard."
+  },
+  "kills": 1,
+  "bossAlive": true
+}

@@ -1,0 +1,224 @@
+{
+  "batchId": "one-per-category-2026-03-07T17-48-29-525Z",
+  "createdAt": "2026-03-07T17:48:29.526Z",
+  "purpose": "Create one new version for the first verse in each category",
+  "dryRun": true,
+  "oneSong": false,
+  "totalTargets": 21,
+  "entries": [
+    {
+      "category": "Courage",
+      "verseReference": "Psalms 118:6",
+      "normalizedVerseReference": "psalms118-6",
+      "existingVersionCount": 1,
+      "newVersion": 2,
+      "generationStyle": "80s rock",
+      "dryRun": true,
+      "status": "planned"
+    },
+    {
+      "category": "Faith",
+      "verseReference": "Romans 10:17",
+      "normalizedVerseReference": "romans10-17",
+      "existingVersionCount": 1,
+      "newVersion": 2,
+      "generationStyle": "yacht rock + aor",
+      "dryRun": true,
+      "status": "planned"
+    },
+    {
+      "category": "Wisdom",
+      "verseReference": "James 1:5",
+      "normalizedVerseReference": "james1-5",
+      "existingVersionCount": 1,
+      "newVersion": 2,
+      "generationStyle": "acoustic",
+      "dryRun": true,
+      "status": "planned"
+    },
+    {
+      "category": "Knowledge",
+      "verseReference": "2 Timothy 2:15",
+      "normalizedVerseReference": "2timothy2-15",
+      "existingVersionCount": 0,
+      "newVersion": 1,
+      "generationStyle": "celtic",
+      "dryRun": true,
+      "status": "planned"
+    },
+    {
+      "category": "Love",
+      "verseReference": "John 3:16",
+      "normalizedVerseReference": "john3-16",
+      "existingVersionCount": 1,
+      "newVersion": 2,
+      "generationStyle": "pop",
+      "dryRun": true,
+      "status": "planned"
+    },
+    {
+      "category": "Healing",
+      "verseReference": "Matthew 4:23",
+      "normalizedVerseReference": "matthew4-23",
+      "existingVersionCount": 1,
+      "newVersion": 2,
+      "generationStyle": "soul",
+      "dryRun": true,
+      "status": "planned"
+    },
+    {
+      "category": "Joy",
+      "verseReference": "Romans 15:13",
+      "normalizedVerseReference": "romans15-13",
+      "existingVersionCount": 1,
+      "newVersion": 2,
+      "generationStyle": "disco",
+      "dryRun": true,
+      "status": "planned"
+    },
+    {
+      "category": "Focus",
+      "verseReference": "Proverbs 16:3",
+      "normalizedVerseReference": "proverbs16-3",
+      "existingVersionCount": 1,
+      "newVersion": 2,
+      "generationStyle": "lo-fi",
+      "dryRun": true,
+      "status": "planned"
+    },
+    {
+      "category": "Prosperity",
+      "verseReference": "Deuteronomy 8:18",
+      "normalizedVerseReference": "deuteronomy8-18",
+      "existingVersionCount": 1,
+      "newVersion": 2,
+      "generationStyle": "jazz",
+      "dryRun": true,
+      "status": "planned"
+    },
+    {
+      "category": "Purity",
+      "verseReference": "Matthew 5:8",
+      "normalizedVerseReference": "matthew5-8",
+      "existingVersionCount": 1,
+      "newVersion": 2,
+      "generationStyle": "ambient",
+      "dryRun": true,
+      "status": "planned"
+    },
+    {
+      "category": "Humility",
+      "verseReference": "Proverbs 22:4",
+      "normalizedVerseReference": "proverbs22-4",
+      "existingVersionCount": 1,
+      "newVersion": 2,
+      "generationStyle": "folk",
+      "dryRun": true,
+      "status": "planned"
+    },
+    {
+      "category": "Forgiveness",
+      "verseReference": "1 John 1:9",
+      "normalizedVerseReference": "1john1-9",
+      "existingVersionCount": 0,
+      "newVersion": 1,
+      "generationStyle": "r&b",
+      "dryRun": true,
+      "status": "planned"
+    },
+    {
+      "category": "Hope",
+      "verseReference": "Jeremiah 29:11",
+      "normalizedVerseReference": "jeremiah29-11",
+      "existingVersionCount": 1,
+      "newVersion": 2,
+      "generationStyle": "uplifting pop",
+      "dryRun": true,
+      "status": "planned"
+    },
+    {
+      "category": "Praise",
+      "verseReference": "Psalm 71:8",
+      "normalizedVerseReference": "psalm71-8",
+      "existingVersionCount": 1,
+      "newVersion": 2,
+      "generationStyle": "gospel",
+      "dryRun": true,
+      "status": "planned"
+    },
+    {
+      "category": "Prayer",
+      "verseReference": "Romans 8:26",
+      "normalizedVerseReference": "romans8-26",
+      "existingVersionCount": 1,
+      "newVersion": 2,
+      "generationStyle": "worship",
+      "dryRun": true,
+      "status": "planned"
+    },
+    {
+      "category": "Prophecy",
+      "verseReference": "Amos 3:7",
+      "normalizedVerseReference": "amos3-7",
+      "existingVersionCount": 1,
+      "newVersion": 2,
+      "generationStyle": "electronic",
+      "dryRun": true,
+      "status": "planned"
+    },
+    {
+      "category": "Endurance",
+      "verseReference": "Romans 5:3-4",
+      "normalizedVerseReference": "romans5-3-4",
+      "existingVersionCount": 1,
+      "newVersion": 2,
+      "generationStyle": "80s rock",
+      "dryRun": true,
+      "status": "planned"
+    },
+    {
+      "category": "Good News",
+      "verseReference": "John 10:10",
+      "normalizedVerseReference": "john10-10",
+      "existingVersionCount": 1,
+      "newVersion": 2,
+      "generationStyle": "pop rock",
+      "dryRun": true,
+      "status": "planned"
+    },
+    {
+      "category": "Identity",
+      "verseReference": "Genesis 1:27",
+      "normalizedVerseReference": "genesis1-27",
+      "existingVersionCount": 1,
+      "newVersion": 2,
+      "generationStyle": "indie rock",
+      "dryRun": true,
+      "status": "planned"
+    },
+    {
+      "category": "Deliverance",
+      "verseReference": "Matthew 6:13",
+      "normalizedVerseReference": "matthew6-13",
+      "existingVersionCount": 1,
+      "newVersion": 2,
+      "generationStyle": "hip-hop",
+      "dryRun": true,
+      "status": "planned"
+    },
+    {
+      "category": "Power",
+      "verseReference": "Acts 1:8",
+      "normalizedVerseReference": "acts1-8",
+      "existingVersionCount": 1,
+      "newVersion": 2,
+      "generationStyle": "anthemic pop",
+      "dryRun": true,
+      "status": "planned"
+    }
+  ],
+  "summary": {
+    "planned": 21
+  },
+  "completedAt": "2026-03-07T17:48:29.613Z"
+}

@@ -1,0 +1,132 @@
+{
+  "before": {
+    "mode": "scriptureMaze",
+    "note": "origin top-left, x right, y down",
+    "player": {
+      "x": 240,
+      "y": 368,
+      "radius": 10.56,
+      "facing": "left",
+      "alive": true
+    },
+    "demons": [
+      {
+        "x": 271,
+        "y": 240,
+        "type": "Fear",
+        "behavior": "chaser"
+      },
+      {
+        "x": 305,
+        "y": 240,
+        "type": "Doubt",
+        "behavior": "ambusher"
+      },
+      {
+        "x": 335,
+        "y": 240,
+        "type": "Confusion",
+        "behavior": "wanderer"
+      }
+    ],
+    "bullets": 0,
+    "promptNode": {
+      "x": 304,
+      "y": 432
+    },
+    "prompt": null,
+    "ammo": 0,
+    "progress": 0,
+    "target": 6,
+    "status": "playing",
+    "message": "Answer scripture prompts to earn bullets."
+  },
+  "afterDown": {
+    "mode": "scriptureMaze",
+    "note": "origin top-left, x right, y down",
+    "player": {
+      "x": 240,
+      "y": 397.17200000000025,
+      "radius": 10.56,
+      "facing": "down",
+      "alive": true
+    },
+    "demons": [
+      {
+        "x": 255,
+        "y": 243,
+        "type": "Fear",
+        "behavior": "chaser"
+      },
+      {
+        "x": 326,
+        "y": 240,
+        "type": "Doubt",
+        "behavior": "ambusher"
+      },
+      {
+        "x": 316,
+        "y": 240,
+        "type": "Confusion",
+        "behavior": "wanderer"
+      }
+    ],
+    "bullets": 0,
+    "promptNode": {
+      "x": 304,
+      "y": 432
+    },
+    "prompt": null,
+    "ammo": 0,
+    "progress": 0,
+    "target": 6,
+    "status": "playing",
+    "message": "Answer scripture prompts to earn bullets."
+  },
+  "afterAreaClick": {
+    "mode": "scriptureMaze",
+    "note": "origin top-left, x right, y down",
+    "player": {
+      "x": 240,
+      "y": 402.112,
+      "radius": 10.56,
+      "facing": "down",
+      "alive": true
+    },
+    "demons": [
+      {
+        "x": 255,
+        "y": 263,
+        "type": "Fear",
+        "behavior": "chaser"
+      },
+      {
+        "x": 338,
+        "y": 240,
+        "type": "Doubt",
+        "behavior": "ambusher"
+      },
+      {
+        "x": 303,
+        "y": 240,
+        "type": "Confusion",
+        "behavior": "wanderer"
+      }
+    ],
+    "bullets": 0,
+    "promptNode": {
+      "x": 304,
+      "y": 432
+    },
+    "prompt": null,
+    "ammo": 0,
+    "progress": 0,
+    "target": 6,
+    "status": "playing",
+    "message": "Answer scripture prompts to earn bullets."
+  },
+  "checks": {
+    "downButtonMovedPlayerDown": true,
+    "mazeAreaClickMovedPlayerDown": true
+  }
+}

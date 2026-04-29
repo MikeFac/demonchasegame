@@ -1,0 +1,57 @@
+{
+  "summaryVisibleDirect": true,
+  "gameMode": "game",
+  "currentMission": {
+    "id": "intro-01",
+    "worldId": "chapter0"
+  },
+  "startHereSummaryVisible": true,
+  "startHereSummaryState": {
+    "title": "First Victory Complete",
+    "lines": [
+      "You moved into range before fighting.",
+      "Correct verse answers power your attacks.",
+      "Learning verses prepared you to defeat the Fear Guard."
+    ],
+    "ctaLabel": "Choose what to do next",
+    "buttons": [
+      {
+        "id": "missions",
+        "label": "Play Missions"
+      },
+      {
+        "id": "solo",
+        "label": "Play Solo"
+      },
+      {
+        "id": "learn",
+        "label": "Learn Verses",
+        "vQuality": "Faith"
+      }
+    ],
+    "buttonRects": [
+      {
+        "id": "missions",
+        "x": 78,
+        "y": 322,
+        "width": 356,
+        "height": 42
+      },
+      {
+        "id": "solo",
+        "x": 78,
+        "y": 378,
+        "width": 356,
+        "height": 42
+      },
+      {
+        "id": "learn",
+        "x": 78,
+        "y": 434,
+        "width": 356,
+        "height": 42
+      }
+    ]
+  },
+  "renderText": null
+}

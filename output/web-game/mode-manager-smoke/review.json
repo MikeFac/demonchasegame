@@ -1,0 +1,11 @@
+{
+  "modeManagerId": "review",
+  "gameMode": "review",
+  "mission": null,
+  "menuVisible": false,
+  "canvasVisible": true,
+  "overlandVisible": false,
+  "reviewVisible": false,
+  "waveMenuVisible": false,
+  "renderText": null
+}

@@ -1,0 +1,11 @@
+{
+  "modeManagerId": "menu",
+  "gameMode": "menu",
+  "mission": null,
+  "menuVisible": true,
+  "canvasVisible": false,
+  "overlandVisible": false,
+  "reviewVisible": false,
+  "waveMenuVisible": false,
+  "renderText": null
+}

@@ -1,0 +1,15 @@
+{
+  "modeManagerId": "wave",
+  "gameMode": "waveGame",
+  "mission": {
+    "id": "wave-01",
+    "worldId": "chapter5",
+    "gameMode": "wave"
+  },
+  "menuVisible": false,
+  "canvasVisible": true,
+  "overlandVisible": false,
+  "reviewVisible": false,
+  "waveMenuVisible": true,
+  "renderText": null
+}

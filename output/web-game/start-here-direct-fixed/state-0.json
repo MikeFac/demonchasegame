@@ -1,0 +1,12 @@
+{
+  "gameMode": "game",
+  "currentMission": {
+    "id": "intro-01",
+    "worldId": "chapter0"
+  },
+  "currentQuiz": {
+    "mode": "cloze",
+    "questionLabel": "Fill in the blanks:",
+    "promptText": "So faith comes by _____ and _____ by the word of God."
+  }
+}

@@ -1,0 +1,18 @@
+{
+  "summary": {
+    "gameMode": "waveGame",
+    "progress": "Blank 1 / 2",
+    "prompt": "Fill both blanks by choosing the first letter of each missing word. 1 Corinthians 16:13",
+    "question": "\"_____! _____ firm in the faith! Be courageous! Be strong!\"",
+    "optionCount": 6,
+    "options": [
+      "C",
+      "W",
+      "I",
+      "A",
+      "T",
+      "G"
+    ]
+  },
+  "errors": []
+}

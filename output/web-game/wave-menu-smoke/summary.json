@@ -1,0 +1,13 @@
+{
+  "summary": {
+    "gameMode": "waveGame",
+    "menuItems": [
+      "Songs",
+      "Affinity Help",
+      "Restart Mission",
+      "Leave Mission"
+    ],
+    "menuOpen": true
+  },
+  "errors": []
+}
