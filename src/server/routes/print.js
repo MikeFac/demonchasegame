@@ -2,7 +2,7 @@ const express = require('express');
 const fs = require('fs');
 const path = require('path');
 const os = require('os');
-const { execFile } = require('child_process');
+const puppeteer = require('puppeteer');
 const { buildBookletBySlug, getPrintableCategories } = require('../print/bookletBuilder');
 const { buildImposedSpreads } = require('../print/bookletImposition');
 const { renderIndexPage, renderReadingHtml, renderImposedHtml } = require('../print/bookletTemplates');
@@ -13,20 +13,33 @@ const { renderOnePageIndex, renderOnePageReadingHtml, renderOnePageImposedHtml }
 const router = express.Router();
 const PDF_TIMEOUT_MS = 30000;
 const PRINT_CSS_PATH = path.join(__dirname, '..', '..', '..', 'public', 'print.css');
-const CHROME_BIN = process.env.CHROME_BIN || '/usr/bin/google-chrome';
 
-function execFileAsync(command, args, timeout) {
-  return new Promise((resolve, reject) => {
-    execFile(command, args, { timeout }, (error, stdout, stderr) => {
-      if (error) {
-        error.stdout = stdout;
-        error.stderr = stderr;
-        reject(error);
-        return;
-      }
-      resolve({ stdout, stderr });
+async function renderPdfFromHtml(htmlPath, pdfPath) {
+  const launchOptions = {
+    headless: 'new',
+    args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage']
+  };
+
+  if (process.env.CHROME_BIN) {
+    launchOptions.executablePath = process.env.CHROME_BIN;
+  }
+
+  const browser = await puppeteer.launch(launchOptions);
+  try {
+    const page = await browser.newPage();
+    page.setDefaultTimeout(PDF_TIMEOUT_MS);
+    await page.goto(`file://${htmlPath}`, { waitUntil: 'networkidle0', timeout: PDF_TIMEOUT_MS });
+    await page.pdf({
+      path: pdfPath,
+      format: 'A4',
+      landscape: true,
+      printBackground: true,
+      preferCSSPageSize: true,
+      timeout: PDF_TIMEOUT_MS
     });
-  });
+  } finally {
+    await browser.close();
+  }
 }
 
 router.get('/print', (req, res) => {
@@ -92,17 +105,7 @@ router.get('/api/print/:categorySlug/pdf', async (req, res) => {
 
   try {
     fs.writeFileSync(htmlPath, html, 'utf8');
-    await execFileAsync(
-      CHROME_BIN,
-      [
-        '--headless',
-        '--disable-gpu',
-        '--no-sandbox',
-        `--print-to-pdf=${pdfPath}`,
-        `file://${htmlPath}`
-      ],
-      PDF_TIMEOUT_MS
-    );
+    await renderPdfFromHtml(htmlPath, pdfPath);
     const pdf = fs.readFileSync(pdfPath);
 
     res.setHeader('Content-Type', 'application/pdf');
@@ -131,17 +134,7 @@ router.get('/api/print/1page/:categorySlug/pdf', async (req, res) => {
 
   try {
     fs.writeFileSync(htmlPath, html, 'utf8');
-    await execFileAsync(
-      CHROME_BIN,
-      [
-        '--headless',
-        '--disable-gpu',
-        '--no-sandbox',
-        `--print-to-pdf=${pdfPath}`,
-        `file://${htmlPath}`
-      ],
-      PDF_TIMEOUT_MS
-    );
+    await renderPdfFromHtml(htmlPath, pdfPath);
     const pdf = fs.readFileSync(pdfPath);
 
     res.setHeader('Content-Type', 'application/pdf');
