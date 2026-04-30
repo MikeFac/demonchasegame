@@ -6,6 +6,10 @@ function renderOnePageInner(sheet, page) {
   const menuScreenMarkup = `<img class="onepage-menu-print" src="${menuScreenSource}" alt="VerseBattles menu in grayscale">`;
 
   if (page.kind === 'cover-front') {
+    const featureHighlights = (page.featureHighlights || [])
+      .map((item) => `<li>${escapeHtml(item)}</li>`)
+      .join('');
+
     return `
       <div class="onepage-cover-front">
         <div class="page-kicker">${escapeHtml(sheet.category)}</div>
@@ -19,6 +23,9 @@ function renderOnePageInner(sheet, page) {
             <div class="page-footer-cta">${escapeHtml(page.footerCta || sheet.footerCta)}</div>
           </div>
         </div>
+        <ul class="onepage-front-features">
+          ${featureHighlights}
+        </ul>
         <blockquote class="onepage-sales-verse">
           <p>${escapeHtml(page.salesVerseText)}</p>
           <footer>${escapeHtml(page.salesVerseReference)}</footer>
@@ -31,8 +38,13 @@ function renderOnePageInner(sheet, page) {
     const verseMarkup = page.verses.length > 0
       ? page.verses.map((verse) => `
         <article class="onepage-verse-card">
-          <h3 class="verse-reference">${escapeHtml(verse.reference)}</h3>
-          <p class="verse-text">${escapeHtml(verse.text)}</p>
+          <div class="onepage-learned-cell">
+            <span class="onepage-checkbox" aria-hidden="true"></span>
+          </div>
+          <div class="onepage-verse-main">
+            <h3 class="verse-reference">${escapeHtml(verse.reference)}</h3>
+            <p class="verse-text">${escapeHtml(verse.text)}</p>
+          </div>
         </article>
       `).join('')
       : '<p class="info-blurb">More verses available online.</p>';
@@ -41,6 +53,10 @@ function renderOnePageInner(sheet, page) {
       <div class="onepage-inside">
         <div class="page-kicker">${escapeHtml(sheet.category)}</div>
         <h2 class="page-title">${escapeHtml(page.title)}</h2>
+        <div class="onepage-verse-head">
+          <span class="onepage-learned-head">Learned</span>
+          <span></span>
+        </div>
         <div class="onepage-verse-list">${verseMarkup}</div>
         <div class="page-footer-cta">${escapeHtml(page.footerCta || sheet.footerCta)}</div>
       </div>
