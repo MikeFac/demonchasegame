@@ -497,3 +497,130 @@ a {
     line-height: 1.35;
   }
 }
+
+.print-onepage-screen .a5-page.onepage-preview-page {
+  width: min(100%, 170mm);
+}
+
+.print-onepage-screen .onepage-cover-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 46mm;
+  gap: 5mm;
+  align-items: start;
+}
+
+.print-onepage-screen .onepage-cover-side {
+  display: flex;
+  flex-direction: column;
+  gap: 3mm;
+  align-items: flex-start;
+}
+
+.print-onepage-screen .onepage-menu-print {
+  width: 100%;
+  max-height: 62mm;
+  object-fit: contain;
+  border: 1px solid var(--line);
+}
+
+.print-onepage-screen .onepage-sales-verse {
+  margin: 4mm 0 0;
+  padding: 3mm 3.5mm;
+  border-left: 2px solid var(--ink);
+  background: #fafafa;
+}
+
+.print-onepage-screen .onepage-sales-verse p {
+  margin: 0 0 2mm;
+  font-size: 12.2px;
+  line-height: 1.32;
+}
+
+.print-onepage-screen .onepage-sales-verse footer {
+  font: 700 12px/1.2 Arial, sans-serif;
+}
+
+.print-onepage-screen .onepage-inside,
+.print-onepage-screen .onepage-cover-front,
+.print-onepage-screen .onepage-cover-back {
+  min-height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.print-onepage-screen .onepage-verse-list {
+  margin-top: 2mm;
+  display: grid;
+  gap: 3mm;
+  flex: 1;
+}
+
+.print-onepage-screen .onepage-verse-card {
+  border-top: 1px solid var(--line);
+  padding-top: 2.5mm;
+}
+
+.print-onepage-screen .onepage-subtitle {
+  margin: 2.5mm 0 1.5mm;
+  font: 700 12.4px/1.2 Arial, sans-serif;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.print-onepage-screen .onepage-list {
+  margin: 0;
+  padding-left: 18px;
+  font-size: 12px;
+  line-height: 1.34;
+}
+
+.print-onepage-screen .onepage-promo {
+  margin: 3mm 0;
+  font-size: 12px;
+  line-height: 1.28;
+  font-weight: 700;
+}
+
+.print-onepage-screen .onepage-back-bottom {
+  margin-top: auto;
+  display: flex;
+  gap: 4mm;
+  align-items: center;
+}
+
+@media print {
+  .print-onepage-screen .page-title {
+    font-size: 17.5px;
+  }
+
+  .print-onepage-screen .page-headline {
+    font-size: 14px;
+    margin-bottom: 3mm;
+  }
+
+  .print-onepage-screen .onepage-cover-grid {
+    grid-template-columns: minmax(0, 1fr) 40mm;
+    gap: 4mm;
+  }
+
+  .print-onepage-screen .onepage-menu-print {
+    max-height: 52mm;
+  }
+
+  .print-onepage-screen .onepage-sales-verse p,
+  .print-onepage-screen .onepage-list,
+  .print-onepage-screen .onepage-promo {
+    font-size: 11px;
+    line-height: 1.25;
+  }
+
+  .print-onepage-screen .onepage-sales-verse {
+    margin-top: 2.5mm;
+    padding: 2.4mm 2.8mm;
+  }
+
+  .print-onepage-screen .onepage-subtitle {
+    font-size: 11.3px;
+    margin-top: 2mm;
+  }
+}
