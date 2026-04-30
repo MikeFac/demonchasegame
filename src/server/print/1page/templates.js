@@ -38,12 +38,12 @@ function renderOnePageInner(sheet, page) {
     const verseMarkup = page.verses.length > 0
       ? page.verses.map((verse) => `
         <article class="onepage-verse-card">
-          <div class="onepage-learned-cell">
-            <span class="onepage-checkbox" aria-hidden="true"></span>
-          </div>
           <div class="onepage-verse-main">
             <h3 class="verse-reference">${escapeHtml(verse.reference)}</h3>
             <p class="verse-text">${escapeHtml(verse.text)}</p>
+          </div>
+          <div class="onepage-learned-cell">
+            <span class="onepage-checkbox" aria-hidden="true"></span>
           </div>
         </article>
       `).join('')
@@ -54,8 +54,8 @@ function renderOnePageInner(sheet, page) {
         <div class="page-kicker">${escapeHtml(sheet.category)}</div>
         <h2 class="page-title">${escapeHtml(page.title)}</h2>
         <div class="onepage-verse-head">
-          <span class="onepage-learned-head">Learned</span>
           <span></span>
+          <span class="onepage-learned-head">Learned</span>
         </div>
         <div class="onepage-verse-list">${verseMarkup}</div>
         <div class="page-footer-cta">${escapeHtml(page.footerCta || sheet.footerCta)}</div>
@@ -74,7 +74,6 @@ function renderOnePageInner(sheet, page) {
       <ol class="onepage-list">${instructionItems}</ol>
       <h3 class="onepage-subtitle">Features</h3>
       <ul class="onepage-list">${featureItems}</ul>
-      <p class="onepage-promo">${escapeHtml(page.promoLine || '')}</p>
       <div class="onepage-back-bottom">
         ${qrMarkup}
         <div>
@@ -82,6 +81,7 @@ function renderOnePageInner(sheet, page) {
           <div class="page-footer-cta">${escapeHtml(page.footerCta || sheet.footerCta)}</div>
         </div>
       </div>
+      <p class="onepage-promo"><span class="onepage-music-icon" aria-hidden="true">&#9835;</span>${escapeHtml(page.promoLine || '')}</p>
     </div>
   `;
 }

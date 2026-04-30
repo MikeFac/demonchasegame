@@ -557,9 +557,20 @@ a {
   flex-direction: column;
 }
 
+.print-onepage-screen .onepage-cover-front {
+  text-align: center;
+  align-items: center;
+}
+
+.print-onepage-screen .onepage-cover-front .page-kicker,
+.print-onepage-screen .onepage-cover-front .page-title,
+.print-onepage-screen .onepage-cover-front .page-headline {
+  width: 100%;
+}
+
 .print-onepage-screen .onepage-verse-head {
   display: grid;
-  grid-template-columns: 12mm minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1fr) 12mm;
   margin-top: 1.2mm;
   align-items: center;
 }
@@ -573,15 +584,15 @@ a {
 .print-onepage-screen .onepage-verse-list {
   margin-top: 1.2mm;
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  column-gap: 4.5mm;
+  grid-template-columns: minmax(0, 1fr);
+  column-gap: 0;
   row-gap: 2.2mm;
   flex: 1;
 }
 
 .print-onepage-screen .onepage-verse-card {
   display: grid;
-  grid-template-columns: 12mm minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1fr) 12mm;
   column-gap: 2mm;
   border-top: 1px solid var(--line);
   padding-top: 2mm;
@@ -624,10 +635,18 @@ a {
 }
 
 .print-onepage-screen .onepage-promo {
-  margin: 3mm 0;
+  margin: 3.2mm 0 0;
   font-size: 12px;
   line-height: 1.28;
   font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 1.8mm;
+}
+
+.print-onepage-screen .onepage-music-icon {
+  font-size: 14px;
+  line-height: 1;
 }
 
 .print-onepage-screen .onepage-cover-back .onepage-list {
@@ -660,6 +679,8 @@ a {
   .print-onepage-screen .onepage-cover-grid {
     grid-template-columns: minmax(0, 1fr) 36mm;
     gap: 4mm;
+    width: 100%;
+    align-items: center;
   }
 
   .print-onepage-screen .onepage-menu-print {
@@ -680,7 +701,7 @@ a {
   }
 
   .print-onepage-screen .onepage-verse-head {
-    grid-template-columns: 10mm minmax(0, 1fr);
+    grid-template-columns: minmax(0, 1fr) 10mm;
     margin-top: 0.8mm;
   }
 
@@ -689,7 +710,7 @@ a {
   }
 
   .print-onepage-screen .onepage-verse-card {
-    grid-template-columns: 10mm minmax(0, 1fr);
+    grid-template-columns: minmax(0, 1fr) 10mm;
     column-gap: 1.6mm;
     padding-top: 1.6mm;
   }
