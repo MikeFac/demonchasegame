@@ -6,8 +6,8 @@ const { slugifyCategory } = require('../bookletBuilder');
 
 const MAX_VERSE_LENGTH = 160;
 const MIN_VERSES_PER_SHEET = 1;
-const VERSES_PER_SHEET = 12;
-const VERSES_PER_INSIDE_PAGE = 6;
+const VERSES_PER_SHEET = 16;
+const VERSES_PER_INSIDE_PAGE = 8;
 const SITE_URL = 'https://versebattles.com';
 const CTA_TEXT = 'Scan to memorise and play at VerseBattles.com';
 const MENU_SCREEN_PATH = '/public/print-assets/menu-panel-bw.png';
@@ -110,14 +110,14 @@ async function buildOnePageBySlug(categorySlug) {
     {
       pageNumber: 2,
       kind: 'inside-verses',
-      title: `${category} Verses (1-6)`,
+      title: `${category} Verses (1-8)`,
       verses: insideLeftVerses,
       footerCta: CTA_TEXT
     },
     {
       pageNumber: 3,
       kind: 'inside-verses',
-      title: `${category} Verses (7-12)`,
+      title: `${category} Verses (9-16)`,
       verses: insideRightVerses,
       footerCta: CTA_TEXT
     },

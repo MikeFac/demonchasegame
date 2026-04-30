@@ -583,10 +583,7 @@ a {
 
 .print-onepage-screen .onepage-verse-list {
   margin-top: 1.2mm;
-  display: grid;
-  grid-template-columns: minmax(0, 1fr);
-  column-gap: 0;
-  row-gap: 2.2mm;
+  display: block;
   flex: 1;
 }
 
@@ -595,7 +592,8 @@ a {
   grid-template-columns: minmax(0, 1fr) 12mm;
   column-gap: 2mm;
   border-top: 1px solid var(--line);
-  padding-top: 2mm;
+  padding-top: 1.5mm;
+  margin-top: 1.5mm;
 }
 
 .print-onepage-screen .onepage-verse-card:nth-child(-n+2) {
@@ -712,7 +710,8 @@ a {
   .print-onepage-screen .onepage-verse-card {
     grid-template-columns: minmax(0, 1fr) 10mm;
     column-gap: 1.6mm;
-    padding-top: 1.6mm;
+    padding-top: 1.2mm;
+    margin-top: 1.2mm;
   }
 
   .print-onepage-screen .onepage-checkbox {
