@@ -17,7 +17,7 @@ function renderOnePageInner(sheet, page) {
         <div class="onepage-action-hero">
           ${frontActionMarkup}
         </div>
-        <div class="page-footer-cta onepage-front-cta">Scan to Play Today</div>
+        <div class="page-footer-cta onepage-front-cta">Scan To Play Today - VerseBattles.com</div>
         <ul class="onepage-front-features">
           ${featureHighlights}
         </ul>
