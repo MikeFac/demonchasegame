@@ -2,8 +2,8 @@ const { escapeHtml } = require('../bookletBuilder');
 
 function renderOnePageInner(sheet, page) {
   const qrMarkup = `<img class="print-qr onepage-qr" src="${sheet.qrCodeDataUrl}" alt="QR code for ${escapeHtml(sheet.siteUrl)}">`;
-  const menuScreenSource = sheet.menuScreenDataUrl || sheet.menuScreenPath;
-  const menuScreenMarkup = `<img class="onepage-menu-print" src="${menuScreenSource}" alt="VerseBattles menu in grayscale">`;
+  const frontActionSource = sheet.frontActionDataUrl || sheet.frontActionPath;
+  const frontActionMarkup = `<img class="onepage-action-print" src="${frontActionSource}" alt="Two young players using Scripture and a shield of light against a shadowy monster">`;
 
   if (page.kind === 'cover-front') {
     const featureHighlights = (page.featureHighlights || [])
@@ -14,14 +14,10 @@ function renderOnePageInner(sheet, page) {
       <div class="onepage-cover-front">
         <h2 class="page-title onepage-front-main-head">Become a Powerful<br>Spiritual Warrior for God!</h2>
         <p class="page-headline onepage-front-subhead">${escapeHtml(page.title)}</p>
-        <div class="onepage-cover-grid">
-          <div>${menuScreenMarkup}</div>
-          <div class="onepage-cover-side">
-            ${qrMarkup}
-            <div class="cover-url">${escapeHtml(sheet.siteUrl.replace(/^https?:\/\//, ''))}</div>
-            <div class="page-footer-cta onepage-front-cta">Scan to Play Today</div>
-          </div>
+        <div class="onepage-action-hero">
+          ${frontActionMarkup}
         </div>
+        <div class="page-footer-cta onepage-front-cta">Scan to Play Today</div>
         <ul class="onepage-front-features">
           ${featureHighlights}
         </ul>

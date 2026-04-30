@@ -10,11 +10,11 @@ const VERSES_PER_SHEET = 16;
 const VERSES_PER_INSIDE_PAGE = 8;
 const SITE_URL = 'https://versebattles.com';
 const CTA_TEXT = 'Scan to memorise and play at VerseBattles.com';
-const MENU_SCREEN_PATH = '/public/print-assets/menu-panel-bw.png';
-const MENU_SCREEN_FILE_PATH = path.join(__dirname, '..', '..', '..', '..', 'public', 'print-assets', 'menu-panel-bw.png');
+const FRONT_ACTION_PATH = '/public/print-assets/front-cover-action-qr.png';
+const FRONT_ACTION_FILE_PATH = path.join(__dirname, '..', '..', '..', '..', 'public', 'print-assets', 'front-cover-action-qr.png');
 
 let qrCodeDataUrlPromise = null;
-let menuScreenDataUrl = null;
+let frontActionDataUrl = null;
 
 function groupVersesByCategory() {
   const grouped = new Map();
@@ -47,12 +47,12 @@ async function getQrCodeDataUrl() {
   return qrCodeDataUrlPromise;
 }
 
-function getMenuScreenDataUrl() {
-  if (!menuScreenDataUrl) {
-    const buffer = fs.readFileSync(MENU_SCREEN_FILE_PATH);
-    menuScreenDataUrl = `data:image/png;base64,${buffer.toString('base64')}`;
+function getFrontActionDataUrl() {
+  if (!frontActionDataUrl) {
+    const buffer = fs.readFileSync(FRONT_ACTION_FILE_PATH);
+    frontActionDataUrl = `data:image/png;base64,${buffer.toString('base64')}`;
   }
-  return menuScreenDataUrl;
+  return frontActionDataUrl;
 }
 
 function getPrintableOnePageCategories() {
@@ -150,8 +150,8 @@ async function buildOnePageBySlug(categorySlug) {
     slug: categorySlug,
     category,
     title: `${category} One-Page Print`,
-    menuScreenPath: MENU_SCREEN_PATH,
-    menuScreenDataUrl: getMenuScreenDataUrl(),
+    frontActionPath: FRONT_ACTION_PATH,
+    frontActionDataUrl: getFrontActionDataUrl(),
     qrCodeDataUrl,
     siteUrl: SITE_URL,
     footerCta: CTA_TEXT,
