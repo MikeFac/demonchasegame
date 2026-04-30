@@ -504,7 +504,7 @@ a {
 
 .print-onepage-screen .onepage-cover-grid {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 46mm;
+  grid-template-columns: minmax(0, 1fr) 40mm;
   gap: 5mm;
   align-items: start;
 }
@@ -518,9 +518,8 @@ a {
 
 .print-onepage-screen .onepage-menu-print {
   width: 100%;
-  max-height: 62mm;
+  max-height: 74mm;
   object-fit: contain;
-  border: 1px solid var(--line);
 }
 
 .print-onepage-screen .onepage-sales-verse {
@@ -551,13 +550,19 @@ a {
 .print-onepage-screen .onepage-verse-list {
   margin-top: 2mm;
   display: grid;
-  gap: 3mm;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  column-gap: 4.5mm;
+  row-gap: 2.2mm;
   flex: 1;
 }
 
 .print-onepage-screen .onepage-verse-card {
   border-top: 1px solid var(--line);
-  padding-top: 2.5mm;
+  padding-top: 2mm;
+}
+
+.print-onepage-screen .onepage-verse-card:nth-child(-n+2) {
+  border-top: 1.5px solid var(--ink);
 }
 
 .print-onepage-screen .onepage-subtitle {
@@ -599,12 +604,12 @@ a {
   }
 
   .print-onepage-screen .onepage-cover-grid {
-    grid-template-columns: minmax(0, 1fr) 40mm;
+    grid-template-columns: minmax(0, 1fr) 36mm;
     gap: 4mm;
   }
 
   .print-onepage-screen .onepage-menu-print {
-    max-height: 52mm;
+    max-height: 62mm;
   }
 
   .print-onepage-screen .onepage-sales-verse p,
