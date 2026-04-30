@@ -505,7 +505,7 @@ a {
 .print-onepage-screen .onepage-cover-grid {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 40mm;
-  gap: 8mm;
+  gap: 12mm;
   align-items: start;
 }
 
@@ -525,6 +525,7 @@ a {
 .print-onepage-screen .onepage-sales-verse {
   margin: 4mm 0 0;
   padding: 3mm 3.5mm;
+  border-left: none;
   background: #fafafa;
 }
 
@@ -689,7 +690,7 @@ a {
 
   .print-onepage-screen .onepage-cover-grid {
     grid-template-columns: minmax(0, 1fr) 36mm;
-    gap: 6mm;
+    gap: 10mm;
     width: 100%;
     align-items: center;
   }

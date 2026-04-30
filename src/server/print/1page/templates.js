@@ -124,7 +124,7 @@ function renderOnePageImposedSpread(spread, sheet) {
 function renderOnePageShell({ title, bodyClass, content, controls = '', inlineCssText = '' }) {
   const stylesMarkup = inlineCssText
     ? `<style>${inlineCssText}</style>`
-    : '<link rel="stylesheet" href="/public/print.css?v=20260430-onepage-1">';
+    : '<link rel="stylesheet" href="/public/print.css?v=20260430-onepage-2">';
 
   return `<!doctype html>
 <html lang="en">

@@ -99,9 +99,10 @@ async function buildOnePageBySlug(categorySlug) {
       title: `${category} Memory Sheet`,
       headline: 'Memorise Scripture. Practice daily. Build what lasts.',
       featureHighlights: [
-        'Solo and Multiplayer Play with Groups',
-        'Custom Missions',
-        'Become a Powerful Spiritual Warrior for God'
+        'Train solo or play with friends in multiplayer groups',
+        'Battle through custom missions built around Scripture',
+        'Grow stronger in courage, wisdom, and spiritual focus',
+        'Remember verses faster through action, review, and play'
       ],
       salesVerseReference: '2 Timothy 2:15',
       salesVerseText: 'Do your best to present yourself to God as one approved, a worker who does not need to be ashamed and who correctly handles the word of truth.',
