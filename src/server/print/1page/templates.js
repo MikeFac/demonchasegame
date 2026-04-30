@@ -12,7 +12,7 @@ function renderOnePageInner(sheet, page) {
 
     return `
       <div class="onepage-cover-front">
-        <h2 class="page-title onepage-front-main-head">Become a Powerful Spiritual Warrior for God!</h2>
+        <h2 class="page-title onepage-front-main-head">Become a Powerful<br>Spiritual Warrior for God!</h2>
         <p class="page-headline onepage-front-subhead">${escapeHtml(page.title)}</p>
         <div class="onepage-cover-grid">
           <div>${menuScreenMarkup}</div>

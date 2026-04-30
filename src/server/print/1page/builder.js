@@ -102,7 +102,10 @@ async function buildOnePageBySlug(categorySlug) {
         'Train solo or play with friends in multiplayer groups',
         'Battle through custom missions built around Scripture',
         'Grow stronger in courage, wisdom, and spiritual focus',
-        'Remember verses faster through action, review, and play'
+        'Remember verses faster through action, review, and play',
+        'Learn verses through pop music',
+        'Free devotionals to explain the verses',
+        'Get equipped for success in your spiritual life'
       ],
       salesVerseReference: '2 Timothy 2:15',
       salesVerseText: 'Do your best to present yourself to God as one approved, a worker who does not need to be ashamed and who correctly handles the word of truth.',
