@@ -19,7 +19,7 @@ function renderOnePageInner(sheet, page) {
           <div class="onepage-cover-side">
             ${qrMarkup}
             <div class="cover-url">${escapeHtml(sheet.siteUrl.replace(/^https?:\/\//, ''))}</div>
-            <div class="page-footer-cta">${escapeHtml(page.footerCta || sheet.footerCta)}</div>
+            <div class="page-footer-cta onepage-front-cta">Scan to memorize and play at<br>VerseBattles.com</div>
           </div>
         </div>
         <ul class="onepage-front-features">
@@ -124,7 +124,7 @@ function renderOnePageImposedSpread(spread, sheet) {
 function renderOnePageShell({ title, bodyClass, content, controls = '', inlineCssText = '' }) {
   const stylesMarkup = inlineCssText
     ? `<style>${inlineCssText}</style>`
-    : '<link rel="stylesheet" href="/public/print.css?v=20260430-onepage-2">';
+    : '<link rel="stylesheet" href="/public/print.css?v=20260430-onepage-3">';
 
   return `<!doctype html>
 <html lang="en">
