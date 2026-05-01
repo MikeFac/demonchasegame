@@ -7,7 +7,7 @@ function buildOnePageImposedSpreads(pages) {
 
   return [
     { sheet: 1, side: 'front', left: byNumber.get(4), right: byNumber.get(1) },
-    { sheet: 1, side: 'back', left: byNumber.get(2), right: byNumber.get(3) }
+    { sheet: 1, side: 'back', left: byNumber.get(3), right: byNumber.get(2) }
   ];
 }
 

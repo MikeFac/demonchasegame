@@ -89,7 +89,6 @@ function renderOnePageReading(page, sheet) {
     <section class="reading-page">
       <div class="a5-page onepage-preview-page">
         <div class="page-panel">
-          <div class="page-number-badge">${page.pageNumber}</div>
           ${renderOnePageInner(sheet, page)}
         </div>
       </div>
@@ -104,14 +103,12 @@ function renderOnePageImposedSpread(spread, sheet) {
       <div class="a4-sheet">
         <div class="sheet-page left">
           <div class="page-panel">
-            <div class="page-number-badge">${spread.left.pageNumber}</div>
             ${renderOnePageInner(sheet, spread.left)}
           </div>
         </div>
         <div class="fold-guide"></div>
         <div class="sheet-page right">
           <div class="page-panel">
-            <div class="page-number-badge">${spread.right.pageNumber}</div>
             ${renderOnePageInner(sheet, spread.right)}
           </div>
         </div>

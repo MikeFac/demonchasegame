@@ -117,14 +117,14 @@ async function buildOnePageBySlug(categorySlug) {
     {
       pageNumber: 2,
       kind: 'inside-verses',
-      title: `${category} Verses (1-8)`,
+      title: `${category} Verses`,
       verses: insideLeftVerses,
       footerCta: CTA_TEXT
     },
     {
       pageNumber: 3,
       kind: 'inside-verses',
-      title: `${category} Verses (9-16)`,
+      title: `${category} Verses`,
       verses: insideRightVerses,
       footerCta: CTA_TEXT
     },
