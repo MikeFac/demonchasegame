@@ -22,9 +22,9 @@ function renderOnePageInner(sheet, page) {
           ${featureHighlights}
         </ul>
         <blockquote class="onepage-sales-verse">
-          <p>${escapeHtml(page.salesVerseText)}</p>
-          <footer>${escapeHtml(page.salesVerseReference)}</footer>
+          <p>${escapeHtml(page.salesVerseText)} <span class="onepage-sales-verse-reference">${escapeHtml(page.salesVerseReference)}</span></p>
         </blockquote>
+        ${page.frontPromoLine ? `<p class="onepage-front-promo">${escapeHtml(page.frontPromoLine)}</p>` : ''}
       </div>
     `;
   }
@@ -60,6 +60,9 @@ function renderOnePageInner(sheet, page) {
 
   const instructionItems = (page.instructions || []).map((item) => `<li>${escapeHtml(item)}</li>`).join('');
   const featureItems = (page.features || []).map((item) => `<li>${escapeHtml(item)}</li>`).join('');
+  const promoItems = (page.promoLines || (page.promoLine ? [page.promoLine] : []))
+    .map((item, index) => `<p class="onepage-promo ${index === 0 ? 'onepage-promo-primary' : 'onepage-promo-secondary'}">${escapeHtml(item)}</p>`)
+    .join('');
 
   return `
     <div class="onepage-cover-back">
@@ -76,7 +79,7 @@ function renderOnePageInner(sheet, page) {
           <div class="page-footer-cta">${escapeHtml(page.footerCta || sheet.footerCta)}</div>
         </div>
       </div>
-      <p class="onepage-promo"><span class="onepage-music-icon" aria-hidden="true">&#9835;</span>${escapeHtml(page.promoLine || '')}</p>
+      <div class="onepage-promo-block">${promoItems}</div>
     </div>
   `;
 }

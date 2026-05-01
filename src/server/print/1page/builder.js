@@ -10,6 +10,8 @@ const VERSES_PER_SHEET = 16;
 const VERSES_PER_INSIDE_PAGE = 8;
 const SITE_URL = 'https://versebattles.com';
 const CTA_TEXT = 'Scan to memorise and play at VerseBattles.com';
+const RADIO_FRONT_PROMO = 'RADIO BIBLE CLASS. Family Radio 105.3 FM each Wed 9:15-10pm';
+const RADIO_BACK_PROMO = 'RADIO BIBLE CLASS. Family Radio 105.3 FM each Wed 9:15-10pm';
 const FRONT_ACTION_PATH = '/public/print-assets/front-cover-action-qr.png';
 const FRONT_ACTION_FILE_PATH = path.join(__dirname, '..', '..', '..', '..', 'public', 'print-assets', 'front-cover-action-qr.png');
 
@@ -107,6 +109,7 @@ async function buildOnePageBySlug(categorySlug) {
         'Free devotionals to explain the verses',
         'Get equipped for success in your spiritual life'
       ],
+      frontPromoLine: RADIO_FRONT_PROMO,
       salesVerseReference: '2 Timothy 2:15',
       salesVerseText: 'Do your best to present yourself to God as one approved, a worker who does not need to be ashamed and who correctly handles the word of truth.',
       footerCta: CTA_TEXT
@@ -141,7 +144,10 @@ async function buildOnePageBySlug(categorySlug) {
         'Built-in review and quiz loops',
         'Works for personal study or groups'
       ],
-      promoLine: 'Also visit raymasongs.com for Scripture songs and worship resources.',
+      promoLines: [
+        RADIO_BACK_PROMO,
+        'Also visit raymasongs.com for Scripture songs and worship resources.'
+      ],
       footerCta: CTA_TEXT
     }
   ];

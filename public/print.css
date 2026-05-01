@@ -504,42 +504,47 @@ a {
 
 .print-onepage-screen .onepage-action-hero {
   width: 100%;
-  margin-top: 1.5mm;
+  margin-top: 2.2mm;
 }
 
 .print-onepage-screen .onepage-action-print {
   width: 100%;
-  max-height: 104mm;
+  max-height: 91mm;
   object-fit: contain;
 }
 
 .print-onepage-screen .onepage-sales-verse {
-  margin: 5mm 0 0;
-  padding: 3mm 3.5mm;
-  border-left: none;
-  background: #fafafa;
+  width: 100%;
+  margin: 4.5mm 0 0;
+  padding: 3.3mm 4.5mm;
+  border-top: 1.2px solid var(--ink);
+  border-bottom: 1.2px solid var(--ink);
+  background: #f6f6f3;
 }
 
 .print-onepage-screen .onepage-sales-verse p {
-  margin: 0 0 2mm;
-  font-size: 13px;
-  line-height: 1.32;
+  margin: 0;
+  font-size: 14.2px;
+  line-height: 1.34;
 }
 
-.print-onepage-screen .onepage-sales-verse footer {
-  font: 700 12.8px/1.2 Arial, sans-serif;
+.print-onepage-screen .onepage-sales-verse-reference {
+  font: 800 13.6px/1.2 Arial, sans-serif;
+  white-space: nowrap;
 }
 
 .print-onepage-screen .onepage-front-features {
-  margin: 2.2mm 0 0;
-  padding-left: 18px;
-  font: 700 10.7px/1.16 Arial, sans-serif;
+  width: 100%;
+  margin: 3.8mm 0 0;
+  padding: 3.2mm 5mm 3.2mm 8mm;
+  border: 1px solid #d3d3d3;
+  font: 700 12.6px/1.28 Arial, sans-serif;
   text-align: left;
   align-self: stretch;
 }
 
 .print-onepage-screen .onepage-front-features li + li {
-  margin-top: 0.5mm;
+  margin-top: 1mm;
 }
 
 .print-onepage-screen .onepage-inside,
@@ -562,25 +567,38 @@ a {
 }
 
 .print-onepage-screen .onepage-front-main-head {
-  margin: 0 0 2mm;
-  font-size: 23px;
+  margin: 0 0 2.4mm;
+  font-size: 29px;
+  line-height: 1.02;
 }
 
 .print-onepage-screen .onepage-front-subhead {
   margin: 0;
-  font-size: 17.5px;
+  font-size: 20px;
+  line-height: 1.15;
   font-weight: 700;
 }
 
 .print-onepage-screen .onepage-front-cta {
   align-self: center;
-  width: auto;
-  font-size: 13px;
-  line-height: 1.15;
+  width: 100%;
+  font-size: 18px;
+  line-height: 1.1;
   text-align: center;
-  border-top: 0;
-  padding-top: 0;
-  margin-top: 1.4mm;
+  border: 2px solid var(--ink);
+  padding: 2.4mm 4mm;
+  margin-top: 2.8mm;
+  background: var(--ink);
+  color: var(--paper);
+}
+
+.print-onepage-screen .onepage-front-promo {
+  width: 100%;
+  margin: auto 0 0;
+  padding: 3mm 3.5mm;
+  border: 2px solid var(--ink);
+  font: 800 18px/1.16 Arial, sans-serif;
+  text-align: center;
 }
 
 .print-onepage-screen .onepage-verse-head {
@@ -630,49 +648,82 @@ a {
 }
 
 .print-onepage-screen .onepage-subtitle {
-  margin: 2.5mm 0 1.5mm;
-  font: 700 12.4px/1.2 Arial, sans-serif;
+  margin: 4mm 0 2mm;
+  font: 800 15px/1.2 Arial, sans-serif;
   text-transform: uppercase;
   letter-spacing: 0.03em;
 }
 
 .print-onepage-screen .onepage-list {
   margin: 0;
-  padding-left: 18px;
-  font-size: 12px;
-  line-height: 1.34;
+  padding-left: 22px;
+  font-size: 15px;
+  line-height: 1.48;
 }
 
 .print-onepage-screen .onepage-promo {
-  margin: 3.2mm 0 0;
+  margin: 0;
   font-size: 12px;
   line-height: 1.28;
   font-weight: 700;
-  display: flex;
-  align-items: center;
-  gap: 1.8mm;
-}
-
-.print-onepage-screen .onepage-music-icon {
-  font-size: 14px;
-  line-height: 1;
 }
 
 .print-onepage-screen .onepage-cover-back .onepage-list {
-  font-size: 13.4px;
-  line-height: 1.42;
+  font-size: 16px;
+  line-height: 1.48;
 }
 
 .print-onepage-screen .onepage-cover-back .onepage-promo {
-  font-size: 13.6px;
-  line-height: 1.34;
+  font-size: 24px;
+  line-height: 1.12;
+}
+
+.print-onepage-screen .onepage-cover-back .page-title {
+  font-size: 27px;
+  margin-bottom: 5mm;
 }
 
 .print-onepage-screen .onepage-back-bottom {
-  margin-top: auto;
+  margin-top: 7mm;
+  padding: 4mm;
+  border: 2px solid var(--ink);
   display: flex;
-  gap: 4mm;
+  gap: 5mm;
   align-items: center;
+}
+
+.print-onepage-screen .onepage-back-bottom .onepage-qr {
+  width: 35mm;
+  height: 35mm;
+}
+
+.print-onepage-screen .onepage-back-bottom .cover-url {
+  font-size: 17px;
+}
+
+.print-onepage-screen .onepage-back-bottom .page-footer-cta {
+  margin-top: 2.4mm;
+  padding-top: 2.4mm;
+  font-size: 19px;
+  line-height: 1.18;
+}
+
+.print-onepage-screen .onepage-promo-block {
+  margin-top: auto;
+  padding-top: 6mm;
+  display: grid;
+  gap: 3.5mm;
+}
+
+.print-onepage-screen .onepage-promo-primary {
+  padding: 3.4mm 4mm;
+  border: 2px solid var(--ink);
+  background: var(--ink);
+  color: var(--paper);
+}
+
+.print-onepage-screen .onepage-promo-secondary {
+  padding: 0 1mm;
 }
 
 @media print {
@@ -686,7 +737,7 @@ a {
   }
 
   .print-onepage-screen .onepage-action-print {
-    max-height: 92mm;
+    max-height: 76mm;
   }
 
   .print-onepage-screen .onepage-sales-verse p,
@@ -697,24 +748,32 @@ a {
   }
 
   .print-onepage-screen .onepage-front-features {
-    font-size: 9.5px;
-    line-height: 1.13;
-    margin-top: 1.8mm;
+    font-size: 11px;
+    line-height: 1.17;
+    margin-top: 2.4mm;
+    padding: 2.2mm 4mm 2.2mm 7mm;
   }
 
   .print-onepage-screen .onepage-front-main-head {
-    font-size: 19.2px;
-    margin-bottom: 1.2mm;
+    font-size: 22.6px;
+    margin-bottom: 1.5mm;
   }
 
   .print-onepage-screen .onepage-front-subhead {
-    font-size: 14.8px;
+    font-size: 16.5px;
   }
 
   .print-onepage-screen .onepage-front-cta {
-    font-size: 10.8px;
-    line-height: 1.15;
-    margin-top: 1mm;
+    font-size: 14.8px;
+    line-height: 1.12;
+    margin-top: 2mm;
+    padding: 1.9mm 3mm;
+  }
+
+  .print-onepage-screen .onepage-front-promo {
+    font-size: 14.8px;
+    line-height: 1.14;
+    padding: 2.3mm 3mm;
   }
 
   .print-onepage-screen .onepage-verse-head {
@@ -740,13 +799,49 @@ a {
   }
 
   .print-onepage-screen .onepage-cover-back .onepage-list {
-    font-size: 12.8px;
-    line-height: 1.33;
+    font-size: 14.8px;
+    line-height: 1.38;
   }
 
   .print-onepage-screen .onepage-cover-back .onepage-promo {
-    font-size: 13px;
-    line-height: 1.28;
+    font-size: 20px;
+    line-height: 1.1;
+  }
+
+  .print-onepage-screen .onepage-cover-back .page-title {
+    font-size: 23px;
+    margin-bottom: 3mm;
+  }
+
+  .print-onepage-screen .onepage-back-bottom {
+    margin-top: 5mm;
+    padding: 3mm;
+    gap: 4mm;
+  }
+
+  .print-onepage-screen .onepage-back-bottom .onepage-qr {
+    width: 31mm;
+    height: 31mm;
+  }
+
+  .print-onepage-screen .onepage-back-bottom .cover-url {
+    font-size: 15px;
+  }
+
+  .print-onepage-screen .onepage-back-bottom .page-footer-cta {
+    font-size: 16px;
+    line-height: 1.12;
+    margin-top: 1.8mm;
+    padding-top: 1.8mm;
+  }
+
+  .print-onepage-screen .onepage-promo-block {
+    padding-top: 4.5mm;
+    gap: 2.8mm;
+  }
+
+  .print-onepage-screen .onepage-promo-primary {
+    padding: 2.6mm 3mm;
   }
 
   .print-onepage-screen .onepage-inside .verse-reference {
@@ -759,12 +854,22 @@ a {
   }
 
   .print-onepage-screen .onepage-sales-verse {
-    margin-top: 2.4mm;
-    padding: 2mm 2.6mm;
+    margin-top: 2.6mm;
+    padding: 2.2mm 3mm;
+  }
+
+  .print-onepage-screen .onepage-sales-verse p {
+    font-size: 11.8px;
+    line-height: 1.22;
+  }
+
+  .print-onepage-screen .onepage-sales-verse-reference {
+    font-size: 11.5px;
   }
 
   .print-onepage-screen .onepage-subtitle {
-    font-size: 11.3px;
-    margin-top: 2mm;
+    font-size: 13.2px;
+    margin-top: 3mm;
+    margin-bottom: 1.4mm;
   }
 }
