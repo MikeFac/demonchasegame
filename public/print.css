@@ -599,6 +599,7 @@ a {
   border: 2px solid var(--ink);
   font: 800 18px/1.16 Arial, sans-serif;
   text-align: center;
+  white-space: pre-line;
 }
 
 .print-onepage-screen .onepage-verse-head {
@@ -720,6 +721,8 @@ a {
   border: 2px solid var(--ink);
   background: var(--ink);
   color: var(--paper);
+  text-align: center;
+  white-space: pre-line;
 }
 
 .print-onepage-screen .onepage-promo-secondary {

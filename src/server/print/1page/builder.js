@@ -10,8 +10,8 @@ const VERSES_PER_SHEET = 16;
 const VERSES_PER_INSIDE_PAGE = 8;
 const SITE_URL = 'https://versebattles.com';
 const CTA_TEXT = 'Scan to memorise and play at VerseBattles.com';
-const RADIO_FRONT_PROMO = 'RADIO BIBLE CLASS. Family Radio 105.3 FM each Wed 9:15-10pm';
-const RADIO_BACK_PROMO = 'RADIO BIBLE CLASS. Family Radio 105.3 FM each Wed 9:15-10pm';
+const RADIO_FRONT_PROMO = 'RADIO BIBLE CLASS. Family Radio 105.3 FM\nEvery Wednesday 9:15-10 p.m.\nJESUS FORGIVES AND HEALS';
+const RADIO_BACK_PROMO = 'RADIO BIBLE CLASS. Family Radio 105.3 FM\nEvery Wednesday 9:15-10 p.m.\nJESUS FORGIVES AND HEALS';
 const FRONT_ACTION_PATH = '/public/print-assets/front-cover-action-qr.png';
 const FRONT_ACTION_FILE_PATH = path.join(__dirname, '..', '..', '..', '..', 'public', 'print-assets', 'front-cover-action-qr.png');
 
