@@ -140,6 +140,11 @@ class Renderer {
 
         // Draw category picker on top of everything
         this.drawCategoryPicker(uiState);
+
+        // Draw speed first-launch prompt (topmost overlay)
+        if (uiState.speedPromptVisible) {
+            this.drawSpeedPrompt();
+        }
     }
 
     drawTopBar(uiState) {
@@ -154,11 +159,14 @@ class Renderer {
         this.ctx.fillStyle = '#ffffff';
         this.ctx.font = 'bold 16px Arial';
         const displayQuality = (typeof tCategory === 'function') ? tCategory(vQuality) : vQuality;
-        const labelText = `${displayQuality} ▼`;
+        const labelText = `${displayQuality} \u25bc`;
         this.ctx.fillText(labelText, ci.x, ci.y + 16);
 
         // Learn Verses button (center of top bar)
         this.drawLearnVersesButton();
+
+        // Speed control (left of hamburger)
+        this.drawSpeedControl(uiState.currentGameSpeed || 'normal', uiState);
 
         // Hamburger Menu Button
         this.drawHamburgerButton(menuState);
@@ -230,6 +238,75 @@ class Renderer {
         for (let i = 0; i < 3; i++) {
             this.ctx.fillRect(lineX, startY + i * lineSpacing, lineWidth, lineHeight);
         }
+    }
+
+    drawSpeedControl(currentSpeed, uiState) {
+        const sc = UILayout.speedControl;
+        const baseX = UILayout.getSpeedControlX(this.canvas.width);
+        const baseY = sc.y;
+        const chevW = sc.chevronWidth;
+        const labelW = sc.labelWidth;
+        const h = sc.height;
+
+        const speedColors = { verySlow: '#b39ddb', slow: '#4fc3f7', normal: '#ffffff', fast: '#ff8a65' };
+        const color = speedColors[currentSpeed] || '#ffffff';
+        const displayMap = { verySlow: '0.25\u00d7', slow: 'Slow', normal: '1\u00d7', fast: 'Fast' };
+        const display = displayMap[currentSpeed] || '1\u00d7';
+
+        this.ctx.fillStyle = 'rgba(40, 40, 50, 0.85)';
+        this.ctx.fillRect(baseX, baseY, chevW + labelW + chevW, h);
+
+        this.ctx.fillStyle = 'rgba(255,255,255,0.25)';
+        this.ctx.font = 'bold 16px Arial';
+        this.ctx.textAlign = 'center';
+        this.ctx.fillText('\u25c0', baseX + chevW / 2, baseY + h / 2 + 5);
+
+        this.ctx.fillStyle = color;
+        this.ctx.font = 'bold 13px Arial';
+        this.ctx.fillText(display, baseX + chevW + labelW / 2, baseY + h / 2 + 4);
+
+        this.ctx.fillStyle = 'rgba(255,255,255,0.25)';
+        this.ctx.font = 'bold 16px Arial';
+        this.ctx.fillText('\u25b6', baseX + chevW + labelW + chevW / 2, baseY + h / 2 + 5);
+
+        this.ctx.textAlign = 'left';
+
+        if (uiState.speedOnboardingVisible) {
+            this._drawSpeedOnboardingTooltip(baseX, baseY, chevW + labelW + chevW, h);
+        }
+    }
+
+    _drawSpeedOnboardingTooltip(ctrlX, ctrlY, ctrlW, ctrlH) {
+        const pulse = 0.55 + 0.45 * Math.sin(Date.now() / 220);
+        const boxW = 160;
+        const boxH = 50;
+        const boxX = ctrlX - (boxW - ctrlW) / 2;
+        const boxY = ctrlY + ctrlH + 6;
+
+        this.ctx.save();
+        this.ctx.strokeStyle = `rgba(255, 214, 102, ${0.75 + pulse * 0.2})`;
+        this.ctx.lineWidth = 2;
+        this.ctx.strokeRect(ctrlX - 2, ctrlY - 2, ctrlW + 4, ctrlH + 4);
+        this.ctx.fillStyle = `rgba(255, 214, 102, ${0.08 + pulse * 0.06})`;
+        this.ctx.fillRect(ctrlX - 2, ctrlY - 2, ctrlW + 4, ctrlH + 4);
+
+        this.drawGuideArrow(ctrlX + ctrlW / 2, boxY, ctrlX + ctrlW / 2, ctrlY + 2, 3);
+
+        this.ctx.fillStyle = 'rgba(9, 12, 20, 0.92)';
+        this.ctx.strokeStyle = '#ffd666';
+        this.ctx.lineWidth = 2;
+        this.ctx.fillRect(boxX, boxY, boxW, boxH);
+        this.ctx.strokeRect(boxX, boxY, boxW, boxH);
+
+        this.ctx.fillStyle = '#ffd666';
+        this.ctx.font = 'bold 13px Arial';
+        this.ctx.textAlign = 'center';
+        this.ctx.fillText('Adjust Speed', boxX + boxW / 2, boxY + 18);
+        this.ctx.fillStyle = '#d6deff';
+        this.ctx.font = '12px Arial';
+        this.ctx.fillText('\u25c0 slower    faster \u25b6', boxX + boxW / 2, boxY + 36);
+        this.ctx.textAlign = 'left';
+        this.ctx.restore();
     }
 
     drawMenuPanel(menuState) {
@@ -1258,6 +1335,53 @@ class Renderer {
                 this.ctx.restore();
             }
         });
+    }
+
+    drawSpeedPrompt() {
+        const ctx = this.ctx;
+        const cw = this.canvas.width;
+        const ch = this.canvas.height;
+
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+        ctx.fillRect(0, 0, cw, ch);
+
+        const modalW = Math.min(310, cw - 30);
+        const modalH = 150;
+        const modalX = (cw - modalW) / 2;
+        const modalY = (ch - modalH) / 2;
+
+        ctx.fillStyle = 'rgba(12, 16, 26, 0.97)';
+        ctx.fillRect(modalX, modalY, modalW, modalH);
+        ctx.strokeStyle = '#ffd666';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(modalX, modalY, modalW, modalH);
+
+        ctx.textAlign = 'center';
+        ctx.fillStyle = '#ffd666';
+        ctx.font = 'bold 20px Arial';
+        ctx.fillText('Game Speed', modalX + modalW / 2, modalY + 34);
+
+        ctx.fillStyle = '#d6deff';
+        ctx.font = '14px Arial';
+        ctx.fillText('Too fast or too slow?', modalX + modalW / 2, modalY + 60);
+        ctx.fillText('Use \u25c0 \u25b6 in the top bar to adjust.', modalX + modalW / 2, modalY + 82);
+        ctx.fillStyle = '#888';
+        ctx.font = '12px Arial';
+        ctx.fillText('Keys: 1 (0.25x)  2 (slow)  3 (normal)  4 (fast)', modalX + modalW / 2, modalY + 104);
+
+        const btnW = 100;
+        const btnH = 28;
+        const btnX = (cw - btnW) / 2;
+        const btnY = modalY + modalH - 38;
+        ctx.fillStyle = '#2f7d45';
+        ctx.fillRect(btnX, btnY, btnW, btnH);
+        ctx.strokeStyle = '#b7efc5';
+        ctx.lineWidth = 1;
+        ctx.strokeRect(btnX, btnY, btnW, btnH);
+        ctx.fillStyle = '#ffffff';
+        ctx.font = 'bold 14px Arial';
+        ctx.fillText('Got it!', modalX + modalW / 2, btnY + 19);
+        ctx.textAlign = 'left';
     }
 
     // Helper: Draw a single tile from a sprite sheet

@@ -134,6 +134,16 @@ function handleResize() {
 window.addEventListener('resize', handleResize);
 window.addEventListener('orientationchange', handleResize);
 
+window.addEventListener('keydown', function (e) {
+    if (typeof gameMode === 'undefined' || gameMode !== 'game') return;
+    if (e.key === '1') { applyGameSpeed('verySlow'); e.preventDefault(); }
+    else if (e.key === '2') { applyGameSpeed('slow'); e.preventDefault(); }
+    else if (e.key === '3') { applyGameSpeed('normal'); e.preventDefault(); }
+    else if (e.key === '4') { applyGameSpeed('fast'); e.preventDefault(); }
+    else if (e.key === '-' || e.key === '_') { cycleGameSpeed(-1); e.preventDefault(); }
+    else if (e.key === '=' || e.key === '+') { cycleGameSpeed(1); e.preventDefault(); }
+});
+
 // Solo game difficulty selection
 let soloDifficulty = 'normal';
 
@@ -461,6 +471,32 @@ function createTintedSprite(baseImage, tintColor) {
 let PLAYER_SPEED = 5;
 let MONSTER_SPEED = 1; // Slower monster speed
 let gameSpeedMultiplier = 1.0; // Controlled by server (0.5 = slow, 1.0 = normal, 1.3 = fast)
+let currentGameSpeed = 'normal';
+const GAME_SPEED_ORDER = ['verySlow', 'slow', 'normal', 'fast'];
+const GAME_SPEED_CLIENT_MULTIPLIERS = { verySlow: 0.15, slow: 0.3, normal: 0.5, fast: 1.0 };
+const GAME_SPEED_ENGINE_MULTIPLIERS = { verySlow: 0.25, slow: 0.45, normal: 0.75, fast: 1.5 };
+const GAME_SPEED_DISPLAY = { verySlow: '0.25\u00d7', slow: 'Slow', normal: '1\u00d7', fast: 'Fast' };
+let speedOnboardingDismissed = localStorage.getItem('dcgame_speedTooltipShown') === 'true';
+let speedPromptVisible = false;
+
+function cycleGameSpeed(direction) {
+    const idx = GAME_SPEED_ORDER.indexOf(currentGameSpeed);
+    const newIdx = (idx + direction + GAME_SPEED_ORDER.length) % GAME_SPEED_ORDER.length;
+    const newSpeed = GAME_SPEED_ORDER[newIdx];
+    applyGameSpeed(newSpeed);
+}
+
+function applyGameSpeed(speed) {
+    currentGameSpeed = speed;
+    gameSpeedMultiplier = GAME_SPEED_CLIENT_MULTIPLIERS[speed] || 0.5;
+    if (network && network.engine && network.engine.gameState) {
+        network.engine.gameState.speedMultiplier = GAME_SPEED_ENGINE_MULTIPLIERS[speed] || 0.75;
+    }
+    if (speedOnboardingDismissed) return;
+    speedOnboardingDismissed = true;
+    localStorage.setItem('dcgame_speedTooltipShown', 'true');
+    console.log(`Game speed set to ${speed} (${gameSpeedMultiplier}x client, ${GAME_SPEED_ENGINE_MULTIPLIERS[speed]}x engine)`);
+}
 
 
 const ATTACK_RATE = 700; // milliseconds (0.5 seconds)
@@ -2922,8 +2958,8 @@ async function init() {
                 }
             },
             onGameSpeedUpdate: (speed) => {
-                const multipliers = { slow: 0.3, normal: 0.5, fast: 1.0 };
-                gameSpeedMultiplier = multipliers[speed] || 0.5;
+                currentGameSpeed = speed;
+                gameSpeedMultiplier = GAME_SPEED_CLIENT_MULTIPLIERS[speed] || 0.5;
                 console.log(`Game speed set to ${speed} (${gameSpeedMultiplier}x)`);
             }
         };
@@ -3242,6 +3278,11 @@ async function init() {
                 }
             },
             onGameClick: (x, y) => {
+                if (speedPromptVisible) {
+                    speedPromptVisible = false;
+                    localStorage.setItem('dcgame_speedPromptShown', 'true');
+                    return true;
+                }
                 // Check inventory button click (floating "i" icon in top-left area)
                 const ib = UILayout.inventoryButton;
                 const invBtnX = UILayout.getInventoryButtonX();
@@ -3369,6 +3410,9 @@ async function init() {
                 }
 
                 return false; // Not handled (allow movement)
+            },
+            onSpeedChange: (direction) => {
+                cycleGameSpeed(direction);
             }
         });
 
@@ -4370,7 +4414,10 @@ function gameLoop(generation) {
             restartButtonRect,
             goalsOverlayVisible,
             movementFrozen,
-            flashMessages
+            flashMessages,
+            currentGameSpeed,
+            speedPromptVisible,
+            speedOnboardingVisible: !speedOnboardingDismissed
         };
 
         const assets = {
@@ -5153,6 +5200,9 @@ function updateGameState(newGameState) {
     if (!isGameLoaded) {
         isGameLoaded = true;
         console.log("Game loaded");
+        if (!localStorage.getItem('dcgame_speedPromptShown')) {
+            speedPromptVisible = true;
+        }
     }
 
     // Check for VOTD auto-launch

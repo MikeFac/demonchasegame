@@ -126,6 +126,11 @@ class LocalNetwork {
 
         // Start the game loop
         this.engine.start();
+
+        // Emit game speed update so client-side player speed multiplier is set
+        if (this.callbacks.onGameSpeedUpdate) {
+            this.callbacks.onGameSpeedUpdate(gameSpeed || 'normal');
+        }
     }
 
     /**

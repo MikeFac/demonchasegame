@@ -68,6 +68,7 @@ const Constants = {
     SANDALS_SLOW_FACTOR: 0.7,           // 30% slow
 
     // Game Speed Presets
+    SPEED_VERY_SLOW: 0.25,
     SPEED_SLOW: 0.45,
     SPEED_NORMAL: 0.75,
     SPEED_FAST: 1.5,

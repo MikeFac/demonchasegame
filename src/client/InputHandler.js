@@ -28,7 +28,8 @@ class InputHandler {
             onGameClick: null, // (x, y) => boolean (handled?)
             onHamburgerClick: null,
             onMenuItemClick: null, // (itemId) => void
-            onMouseMove: null // (x, y) => void
+            onMouseMove: null, // (x, y) => void
+            onSpeedChange: null // (direction: -1 or 1) => void
         };
 
         // Bind event handlers
@@ -286,6 +287,36 @@ class InputHandler {
             }
             // Click anywhere else on modal is consumed (no action behind modal)
             return;
+        }
+
+        // Check if speed prompt dialog is visible (dismiss on any click)
+        if (typeof speedPromptVisible !== 'undefined' && speedPromptVisible) {
+            speedPromptVisible = false;
+            if (typeof localStorage !== 'undefined') {
+                localStorage.setItem('dcgame_speedPromptShown', 'true');
+            }
+            return;
+        }
+
+        // Check speed control chevron buttons (in top bar)
+        if (typeof UILayout !== 'undefined') {
+            const sc = UILayout.speedControl;
+            const scX = UILayout.getSpeedControlX(this.canvas.width);
+            const scY = sc.y;
+            const chevW = sc.chevronWidth;
+            const labelW = sc.labelWidth;
+            const scH = sc.height;
+
+            if (clickedY >= scY && clickedY <= scY + scH) {
+                if (clickedX >= scX && clickedX < scX + chevW) {
+                    if (this.callbacks.onSpeedChange) this.callbacks.onSpeedChange(-1);
+                    return;
+                }
+                if (clickedX >= scX + chevW + labelW && clickedX < scX + chevW + labelW + chevW) {
+                    if (this.callbacks.onSpeedChange) this.callbacks.onSpeedChange(1);
+                    return;
+                }
+            }
         }
 
         // Check hamburger menu button (top-right)

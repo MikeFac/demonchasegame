@@ -179,6 +179,7 @@ io.on('connection', (socket) => {
     // Map speed to multiplier
     const Constants = require('./src/shared/Constants');
     const speedMultipliers = {
+      verySlow: Constants.SPEED_VERY_SLOW,
       slow: Constants.SPEED_SLOW,
       normal: Constants.SPEED_NORMAL,
       fast: Constants.SPEED_FAST

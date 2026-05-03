@@ -115,6 +115,24 @@ const UILayout = (function () {
             height: 22
         },
 
+        // Game speed control (in top bar, left of hamburger)
+        speedControl: {
+            chevronWidth: 18,
+            labelWidth: 28,
+            height: 24,
+            y: 5,
+            gapBeforeHamburger: 7
+        },
+
+        getSpeedControlX(canvasWidth) {
+            const totalWidth = this.speedControl.chevronWidth * 2 + this.speedControl.labelWidth;
+            return canvasWidth - this.hamburgerButton.rightOffset - this.speedControl.gapBeforeHamburger - totalWidth;
+        },
+
+        getSpeedControlTotalWidth() {
+            return this.speedControl.chevronWidth * 2 + this.speedControl.labelWidth;
+        },
+
         // Helper methods for computed positions
         getHamburgerButtonX(canvasWidth) {
             return canvasWidth - this.hamburgerButton.rightOffset;
