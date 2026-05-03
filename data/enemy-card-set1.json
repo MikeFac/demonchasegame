@@ -7,7 +7,7 @@
   {
     "demonType": "Ignorance",
     "role": "Darkness and lack of understanding",
-    "note": "Keeps a person from seeing truth clearly. It hides what should be known and makes wise action harder."
+    "note": "Dulls desire for true knowledge. Promotes indifference and blind foolishness."
   },
   {
     "demonType": "Blindness",
@@ -27,7 +27,7 @@
   {
     "demonType": "Depression",
     "role": "Heaviness and despairing sadness",
-    "note": "Presses down on joy, energy, and hope. It makes recovery and forward motion feel difficult."
+    "note": "Presses down on joy, energy, and hope. Torments with darkness and heaviness. Suggests self-harm."
   },
   {
     "demonType": "Strife",
@@ -37,7 +37,7 @@
   {
     "demonType": "Infirmity",
     "role": "Weakness and sickness",
-    "note": "Brings frailty, limitation, and weariness. It makes a person feel less able to stand or recover."
+    "note": "Brings weakness, sickness, and disease. It makes a person feel less able to stand or recover."
   },
   {
     "demonType": "Deception",
