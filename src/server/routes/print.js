@@ -13,6 +13,7 @@ const { getCardSets, buildCardSet } = require('../print/card/builder');
 const { renderCardIndex, renderCardSetHtml, renderCardSetImposedHtml } = require('../print/card/templates');
 const { getEnemyCardSets, buildEnemyCardSet } = require('../print/enemy/builder');
 const { renderEnemyCardIndex, renderEnemyCardSetHtml, renderEnemyCardSetImposedHtml } = require('../print/enemy/templates');
+const { renderRulesDraft1Html } = require('../print/rules-draft1/templates');
 
 const router = express.Router();
 const PDF_TIMEOUT_MS = 30000;
@@ -96,6 +97,10 @@ router.get('/print/enemy/:setId', (req, res) => {
     return res.status(404).send('Enemy card set not found.');
   }
   res.send(renderEnemyCardSetHtml(enemySet));
+});
+
+router.get('/print/rules-draft1', (req, res) => {
+  res.send(renderRulesDraft1Html());
 });
 
 router.get('/print/:categorySlug', async (req, res) => {

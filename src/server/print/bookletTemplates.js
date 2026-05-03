@@ -181,7 +181,7 @@ function renderIndexPage(categories) {
       <section class="print-index">
         <h1>VerseBattles Print Booklets</h1>
         <p>Phase 1 booklet previews and PDF exports by category.</p>
-        <p><a href="/print/card">Verse cards</a> · <a href="/print/enemy">Enemy cards</a></p>
+        <p><a href="/print/card">Verse cards</a> · <a href="/print/enemy">Enemy cards</a> · <a href="/print/rules-draft1">Rules draft 1</a></p>
         <ul class="print-index-list">${rows}</ul>
       </section>
     `
