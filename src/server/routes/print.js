@@ -9,6 +9,8 @@ const { renderIndexPage, renderReadingHtml, renderImposedHtml } = require('../pr
 const { buildOnePageBySlug, getPrintableOnePageCategories } = require('../print/1page/builder');
 const { buildOnePageImposedSpreads } = require('../print/1page/imposition');
 const { renderOnePageIndex, renderOnePageReadingHtml, renderOnePageImposedHtml } = require('../print/1page/templates');
+const { getCardSets, buildCardSet } = require('../print/card/builder');
+const { renderCardIndex, renderCardSetHtml, renderCardSetImposedHtml } = require('../print/card/templates');
 
 const router = express.Router();
 const PDF_TIMEOUT_MS = 30000;
@@ -68,6 +70,18 @@ router.get('/print/1page/:categorySlug/imposed', async (req, res) => {
   const spreads = buildOnePageImposedSpreads(sheet.pages);
   const forPdf = req.query.format === 'pdf';
   res.send(renderOnePageImposedHtml(sheet, spreads, { forPdf }));
+});
+
+router.get('/print/card', (req, res) => {
+  res.send(renderCardIndex(getCardSets()));
+});
+
+router.get('/print/card/:setId', (req, res) => {
+  const cardSet = buildCardSet(req.params.setId);
+  if (!cardSet) {
+    return res.status(404).send('Card set not found.');
+  }
+  res.send(renderCardSetHtml(cardSet));
 });
 
 router.get('/print/:categorySlug', async (req, res) => {
@@ -142,6 +156,52 @@ router.get('/api/print/1page/:categorySlug/pdf', async (req, res) => {
     res.send(pdf);
   } catch (error) {
     console.error('Failed to generate one-page print PDF:', error);
+    res.status(500).json({ error: 'Failed to generate PDF' });
+  } finally {
+    fs.rmSync(tempDir, { recursive: true, force: true });
+  }
+});
+
+router.get('/api/print/card/:setId/pdf', async (req, res) => {
+  const cardSet = buildCardSet(req.params.setId);
+  if (!cardSet) {
+    return res.status(404).json({ error: 'Card set not found.' });
+  }
+
+  const cssText = fs.readFileSync(PRINT_CSS_PATH, 'utf8');
+  const html = renderCardSetImposedHtml(cardSet, { forPdf: true, inlineCssText: cssText });
+  const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'versebattles-card-'));
+  const htmlPath = path.join(tempDir, `${req.params.setId}.html`);
+  const pdfPath = path.join(tempDir, `${req.params.setId}.pdf`);
+
+  try {
+    fs.writeFileSync(htmlPath, html, 'utf8');
+    const browser = await puppeteer.launch({
+      headless: 'new',
+      args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage']
+    });
+    try {
+      const page = await browser.newPage();
+      page.setDefaultTimeout(PDF_TIMEOUT_MS);
+      await page.goto(`file://${htmlPath}`, { waitUntil: 'networkidle0', timeout: PDF_TIMEOUT_MS });
+      await page.pdf({
+        path: pdfPath,
+        format: 'A4',
+        portrait: true,
+        printBackground: true,
+        margin: { top: '8mm', bottom: '8mm', left: '8mm', right: '8mm' },
+        timeout: PDF_TIMEOUT_MS
+      });
+    } finally {
+      await browser.close();
+    }
+    const pdf = fs.readFileSync(pdfPath);
+
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename="versebattles-${req.params.setId}-cards.pdf"`);
+    res.send(pdf);
+  } catch (error) {
+    console.error('Failed to generate card PDF:', error);
     res.status(500).json({ error: 'Failed to generate PDF' });
   } finally {
     fs.rmSync(tempDir, { recursive: true, force: true });
