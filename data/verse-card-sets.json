@@ -1,0 +1,12 @@
+{
+  "sets": [
+    {
+      "id": "set1",
+      "name": "Set 1 — Core Verses",
+      "description": "42 foundational verses across 21 categories. Includes 10 Good News verses for sharing the gospel.",
+      "cardsPerRow": 3,
+      "rowsPerPage": 7,
+      "dataFile": "verse-card-set1.json"
+    }
+  ]
+}

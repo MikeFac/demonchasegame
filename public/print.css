@@ -876,3 +876,115 @@ a {
     margin-bottom: 1.4mm;
   }
 }
+
+.print-card-screen .card-page {
+  padding: 24px;
+}
+
+.print-card-screen .card-grid {
+  display: grid;
+  gap: 3mm;
+  max-width: 210mm;
+  margin: 0 auto;
+}
+
+.print-card-screen .verse-card-item {
+  background: var(--paper);
+  border: 1.5px solid var(--ink);
+  border-radius: 5px;
+  overflow: hidden;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.print-card-screen .card-inner {
+  display: flex;
+  flex-direction: column;
+  padding: 3.1mm 3.5mm;
+  position: relative;
+}
+
+.print-card-screen .card-category {
+  font: 800 13px/1.08 Arial, sans-serif;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.print-card-screen .card-number {
+  position: absolute;
+  top: 2.1mm;
+  right: 3.5mm;
+  font: 800 13.5px/1 Arial, sans-serif;
+  color: var(--line);
+}
+
+.print-card-screen .card-reference {
+  margin: 0.7mm 0 1.15mm;
+  font: 700 19px/1.16 Arial, sans-serif;
+}
+
+.print-card-screen .card-text {
+  flex: 1;
+  font-size: 16.8px;
+  line-height: 1.34;
+  overflow: hidden;
+}
+
+.print-card-screen .card-footer {
+  font: 600 8.5px/1 Arial, sans-serif;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--line);
+  text-align: right;
+}
+
+@media print {
+  @page {
+    size: A4 portrait;
+    margin: 6mm;
+  }
+
+  .print-card-screen .card-page {
+    padding: 0;
+    break-after: page;
+    page-break-after: always;
+  }
+
+  .print-card-screen .card-page:last-child {
+    break-after: auto;
+    page-break-after: auto;
+  }
+
+  .print-card-screen .card-grid {
+    gap: 2mm;
+  }
+
+  .print-card-screen .verse-card-item {
+    box-shadow: none;
+  }
+
+  .print-card-screen .card-category {
+    font-size: 11.5px;
+  }
+
+  .print-card-screen .card-reference {
+    font-size: 16.5px;
+  }
+
+  .print-card-screen .card-text {
+    font-size: 14.5px;
+    line-height: 1.24;
+  }
+
+  .print-card-screen .card-footer {
+    font-size: 7px;
+  }
+
+  .print-card-screen .card-number {
+    font-size: 10.5px;
+  }
+
+  .print-card-screen .card-inner {
+    padding: 2.5mm 2.9mm;
+  }
+}
