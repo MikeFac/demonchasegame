@@ -1,0 +1,12 @@
+{
+  "sets": [
+    {
+      "id": "set1",
+      "name": "Initial Enemy Deck",
+      "description": "17 enemy cards for the initial demon roster. Each card shows the demon image, first appearance, best counter category, and a short battle note.",
+      "cardsPerRow": 3,
+      "rowsPerPage": 4,
+      "dataFile": "enemy-card-set1.json"
+    }
+  ]
+}

@@ -988,3 +988,200 @@ a {
     padding: 2.5mm 2.9mm;
   }
 }
+
+.print-enemy-screen .print-index {
+  max-width: 210mm;
+  margin: 0 auto;
+  padding: 24px;
+}
+
+.print-enemy-screen .enemy-card-page {
+  padding: 24px;
+}
+
+.print-enemy-screen .enemy-card-grid {
+  display: grid;
+  gap: 3mm;
+  max-width: 210mm;
+  margin: 0 auto;
+}
+
+.print-enemy-screen .enemy-card-item {
+  background: var(--paper);
+  border: 1.5px solid var(--ink);
+  border-radius: 6px;
+  overflow: hidden;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.print-enemy-screen .enemy-card-inner {
+  display: flex;
+  flex-direction: column;
+  gap: 2.2mm;
+  height: 100%;
+  padding: 3mm 3mm 2.6mm;
+}
+
+.print-enemy-screen .enemy-card-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 2.5mm;
+}
+
+.print-enemy-screen .enemy-card-heading {
+  min-width: 0;
+  flex: 1;
+}
+
+.print-enemy-screen .enemy-card-kicker {
+  font: 800 10px/1 Arial, sans-serif;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 1mm;
+}
+
+.print-enemy-screen .enemy-card-name {
+  font: 800 18px/1.02 Arial, sans-serif;
+  color: var(--ink);
+}
+
+.print-enemy-screen .enemy-card-art {
+  flex: 0 0 18mm;
+  width: 18mm;
+  height: 18mm;
+  border-radius: 4px;
+  background: linear-gradient(135deg, rgba(0, 0, 0, 0.03), rgba(0, 0, 0, 0.08));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.print-enemy-screen .enemy-card-art img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
+}
+
+.print-enemy-screen .enemy-card-meta {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1.2mm 2mm;
+  font: 700 10.5px/1.12 Arial, sans-serif;
+}
+
+.print-enemy-screen .enemy-card-meta > div {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6mm;
+}
+
+.print-enemy-screen .enemy-card-meta-label {
+  font-size: 8px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.print-enemy-screen .enemy-card-meta-value {
+  font-size: 12px;
+}
+
+.print-enemy-screen .enemy-card-role {
+  font: 800 12.5px/1.12 Arial, sans-serif;
+  color: var(--ink);
+}
+
+.print-enemy-screen .enemy-card-note {
+  flex: 1;
+  font-size: 14px;
+  line-height: 1.28;
+  overflow: hidden;
+}
+
+.print-enemy-screen .enemy-card-footer {
+  margin-top: auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 2mm;
+  font: 600 7.5px/1 Arial, sans-serif;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--line);
+}
+
+.print-enemy-screen .enemy-card-number {
+  font-size: 10px;
+}
+
+@media print {
+  .print-enemy-screen .enemy-card-page {
+    padding: 0;
+    break-after: page;
+    page-break-after: always;
+  }
+
+  .print-enemy-screen .enemy-card-page:last-child {
+    break-after: auto;
+    page-break-after: auto;
+  }
+
+  .print-enemy-screen .enemy-card-grid {
+    gap: 2mm;
+  }
+
+  .print-enemy-screen .enemy-card-item {
+    box-shadow: none;
+  }
+
+  .print-enemy-screen .enemy-card-inner {
+    padding: 2.5mm 2.6mm 2.2mm;
+    gap: 1.8mm;
+  }
+
+  .print-enemy-screen .enemy-card-kicker {
+    font-size: 8.5px;
+  }
+
+  .print-enemy-screen .enemy-card-name {
+    font-size: 15.5px;
+  }
+
+  .print-enemy-screen .enemy-card-art {
+    width: 16mm;
+    height: 16mm;
+  }
+
+  .print-enemy-screen .enemy-card-meta {
+    font-size: 9.5px;
+  }
+
+  .print-enemy-screen .enemy-card-meta-label {
+    font-size: 7px;
+  }
+
+  .print-enemy-screen .enemy-card-meta-value {
+    font-size: 10.5px;
+  }
+
+  .print-enemy-screen .enemy-card-role {
+    font-size: 11px;
+  }
+
+  .print-enemy-screen .enemy-card-note {
+    font-size: 12.5px;
+    line-height: 1.2;
+  }
+
+  .print-enemy-screen .enemy-card-footer {
+    font-size: 6.5px;
+  }
+
+  .print-enemy-screen .enemy-card-number {
+    font-size: 9px;
+  }
+}

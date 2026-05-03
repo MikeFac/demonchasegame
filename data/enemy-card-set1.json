@@ -1,0 +1,87 @@
+[
+  {
+    "demonType": "Fear",
+    "role": "Starter pressure",
+    "note": "Makes hesitation costly and pushes the fight into panic."
+  },
+  {
+    "demonType": "Ignorance",
+    "role": "Truth blocker",
+    "note": "Hides the answer you need and slows down decision-making."
+  },
+  {
+    "demonType": "Blindness",
+    "role": "Hidden threat",
+    "note": "Cuts clarity so the right move is harder to see."
+  },
+  {
+    "demonType": "Doubt",
+    "role": "Confidence breaker",
+    "note": "Interrupts commitment right before you act."
+  },
+  {
+    "demonType": "Confusion",
+    "role": "Target scramble",
+    "note": "Scrambles priorities and punishes sloppy choices."
+  },
+  {
+    "demonType": "Depression",
+    "role": "Momentum drain",
+    "note": "Makes recovery feel heavy and keeps the battle slow."
+  },
+  {
+    "demonType": "Strife",
+    "role": "Team splitter",
+    "note": "Pushes pressure sideways and turns attention into conflict."
+  },
+  {
+    "demonType": "Infirmity",
+    "role": "Health drain",
+    "note": "Turns small mistakes into bigger setbacks."
+  },
+  {
+    "demonType": "Deception",
+    "role": "Misdirection",
+    "note": "Makes the wrong option look safe."
+  },
+  {
+    "demonType": "Poverty",
+    "role": "Resource drain",
+    "note": "Shrinks your options and makes the fight feel tighter."
+  },
+  {
+    "demonType": "Shame",
+    "role": "Identity attack",
+    "note": "Tries to make you fight from a position of defeat."
+  },
+  {
+    "demonType": "Condemnation",
+    "role": "Guilt trap",
+    "note": "Keeps you focused on failure instead of the next move."
+  },
+  {
+    "demonType": "Unbelief",
+    "role": "Faith blocker",
+    "note": "Makes spiritual power feel far away."
+  },
+  {
+    "demonType": "Temptation",
+    "role": "Focus snatcher",
+    "note": "Pulls attention away from the best target."
+  },
+  {
+    "demonType": "Despair",
+    "role": "Hope crusher",
+    "note": "Makes the fight look unwinnable even when it is close."
+  },
+  {
+    "demonType": "Swarm",
+    "role": "Crowd pressure",
+    "note": "Wins by crowding space and forcing panic."
+  },
+  {
+    "demonType": "Pride",
+    "role": "Gatekeeper",
+    "note": "Resists correction and hardens into the strongest wall."
+  }
+]

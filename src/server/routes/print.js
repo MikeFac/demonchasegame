@@ -11,6 +11,8 @@ const { buildOnePageImposedSpreads } = require('../print/1page/imposition');
 const { renderOnePageIndex, renderOnePageReadingHtml, renderOnePageImposedHtml } = require('../print/1page/templates');
 const { getCardSets, buildCardSet } = require('../print/card/builder');
 const { renderCardIndex, renderCardSetHtml, renderCardSetImposedHtml } = require('../print/card/templates');
+const { getEnemyCardSets, buildEnemyCardSet } = require('../print/enemy/builder');
+const { renderEnemyCardIndex, renderEnemyCardSetHtml, renderEnemyCardSetImposedHtml } = require('../print/enemy/templates');
 
 const router = express.Router();
 const PDF_TIMEOUT_MS = 30000;
@@ -82,6 +84,18 @@ router.get('/print/card/:setId', (req, res) => {
     return res.status(404).send('Card set not found.');
   }
   res.send(renderCardSetHtml(cardSet));
+});
+
+router.get('/print/enemy', (req, res) => {
+  res.send(renderEnemyCardIndex(getEnemyCardSets()));
+});
+
+router.get('/print/enemy/:setId', (req, res) => {
+  const enemySet = buildEnemyCardSet(req.params.setId);
+  if (!enemySet) {
+    return res.status(404).send('Enemy card set not found.');
+  }
+  res.send(renderEnemyCardSetHtml(enemySet));
 });
 
 router.get('/print/:categorySlug', async (req, res) => {
@@ -202,6 +216,52 @@ router.get('/api/print/card/:setId/pdf', async (req, res) => {
     res.send(pdf);
   } catch (error) {
     console.error('Failed to generate card PDF:', error);
+    res.status(500).json({ error: 'Failed to generate PDF' });
+  } finally {
+    fs.rmSync(tempDir, { recursive: true, force: true });
+  }
+});
+
+router.get('/api/print/enemy/:setId/pdf', async (req, res) => {
+  const enemySet = buildEnemyCardSet(req.params.setId);
+  if (!enemySet) {
+    return res.status(404).json({ error: 'Enemy card set not found.' });
+  }
+
+  const cssText = fs.readFileSync(PRINT_CSS_PATH, 'utf8');
+  const html = renderEnemyCardSetImposedHtml(enemySet, { forPdf: true, inlineCssText: cssText });
+  const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'versebattles-enemy-'));
+  const htmlPath = path.join(tempDir, `${req.params.setId}.html`);
+  const pdfPath = path.join(tempDir, `${req.params.setId}.pdf`);
+
+  try {
+    fs.writeFileSync(htmlPath, html, 'utf8');
+    const browser = await puppeteer.launch({
+      headless: 'new',
+      args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage']
+    });
+    try {
+      const page = await browser.newPage();
+      page.setDefaultTimeout(PDF_TIMEOUT_MS);
+      await page.goto(`file://${htmlPath}`, { waitUntil: 'networkidle0', timeout: PDF_TIMEOUT_MS });
+      await page.pdf({
+        path: pdfPath,
+        format: 'A4',
+        portrait: true,
+        printBackground: true,
+        margin: { top: '8mm', bottom: '8mm', left: '8mm', right: '8mm' },
+        timeout: PDF_TIMEOUT_MS
+      });
+    } finally {
+      await browser.close();
+    }
+    const pdf = fs.readFileSync(pdfPath);
+
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename="versebattles-${req.params.setId}-enemy-cards.pdf"`);
+    res.send(pdf);
+  } catch (error) {
+    console.error('Failed to generate enemy card PDF:', error);
     res.status(500).json({ error: 'Failed to generate PDF' });
   } finally {
     fs.rmSync(tempDir, { recursive: true, force: true });
