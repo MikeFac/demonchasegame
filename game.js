@@ -1028,6 +1028,9 @@ function loadVersesFromBundle() {
     if (lang === 'es' && typeof loadSelectedVersesES === 'function') {
         console.log('Loading Spanish verses from bundle');
         verses = loadSelectedVersesES();
+    } else if (lang === 'lg' && typeof loadSelectedVersesLG === 'function') {
+        console.log('Loading Luganda verses from bundle');
+        verses = loadSelectedVersesLG();
     } else if (typeof loadSelectedVerses === 'function') {
         console.log('Loading English verses from bundle');
         verses = loadSelectedVerses();
@@ -3039,7 +3042,14 @@ async function init() {
             }
             // otherwise load it locally
         } else {
-            verses = loadSelectedVerses();
+            var _vlang = typeof I18n !== 'undefined' ? I18n.getLang() : 'en';
+            if (_vlang === 'es' && typeof loadSelectedVersesES === 'function') {
+                verses = loadSelectedVersesES();
+            } else if (_vlang === 'lg' && typeof loadSelectedVersesLG === 'function') {
+                verses = loadSelectedVersesLG();
+            } else if (typeof loadSelectedVerses === 'function') {
+                verses = loadSelectedVerses();
+            }
             organizedVerses = organizeByCategory(verses);
             // Filter ALL_QUALITIES to only categories present in the loaded verses
             const availableCats = Object.keys(organizedVerses);

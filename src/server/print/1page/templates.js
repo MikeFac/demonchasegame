@@ -12,12 +12,12 @@ function renderOnePageInner(sheet, page) {
 
     return `
       <div class="onepage-cover-front">
-        <h2 class="page-title onepage-front-main-head">Become a Powerful<br>Spiritual Warrior for God!</h2>
+        <h2 class="page-title onepage-front-main-head">${escapeHtml(sheet.frontHeadline1 || 'Become a Powerful')}<br>${escapeHtml(sheet.frontHeadline2 || 'Spiritual Warrior for God!')}</h2>
         <p class="page-headline onepage-front-subhead">${escapeHtml(page.title)}</p>
         <div class="onepage-action-hero">
           ${frontActionMarkup}
         </div>
-        <div class="page-footer-cta onepage-front-cta">Scan To Play Today - VerseBattles.com</div>
+        <div class="page-footer-cta onepage-front-cta">${escapeHtml(sheet.frontCta || 'Scan To Play Today - VerseBattles.com')}</div>
         <ul class="onepage-front-features">
           ${featureHighlights}
         </ul>
@@ -139,7 +139,7 @@ function renderOnePageShell({ title, bodyClass, content, controls = '', inlineCs
 </html>`;
 }
 
-function renderOnePageIndex(categories) {
+function renderOnePageIndex(categories, { basePath = '/print/1page', apiBasePath = '/api/print/1page', title = 'VerseBattles 1-Page Print Sheets', description = 'Single-sheet folded version: front cover, inside two pages, and back cover.' } = {}) {
   const rows = categories.map((category) => `
     <li class="print-index-item">
       <div>
@@ -147,27 +147,27 @@ function renderOnePageIndex(categories) {
         <p>${category.selectedVerses} verses selected from ${category.suitableVerses} suitable verses${category.isPartial ? ' (partial sheet)' : ''}.</p>
       </div>
       <div class="print-index-links">
-        <a href="/print/1page/${escapeHtml(category.slug)}">Preview</a>
-        <a href="/print/1page/${escapeHtml(category.slug)}/imposed">Imposed</a>
-        <a href="/api/print/1page/${escapeHtml(category.slug)}/pdf">PDF</a>
+        <a href="${basePath}/${escapeHtml(category.slug)}">Preview</a>
+        <a href="${basePath}/${escapeHtml(category.slug)}/imposed">Imposed</a>
+        <a href="${apiBasePath}/${escapeHtml(category.slug)}/pdf">PDF</a>
       </div>
     </li>
   `).join('');
 
   return renderOnePageShell({
-    title: 'VerseBattles 1-Page Print Sheets',
+    title,
     bodyClass: 'print-index-screen print-onepage-screen',
     content: `
       <section class="print-index">
-        <h1>VerseBattles 1-Page Print Sheets</h1>
-        <p>Single-sheet folded version: front cover, inside two pages, and back cover.</p>
+        <h1>${escapeHtml(title)}</h1>
+        <p>${escapeHtml(description)}</p>
         <ul class="print-index-list">${rows}</ul>
       </section>
     `
   });
 }
 
-function renderOnePageReadingHtml(sheet) {
+function renderOnePageReadingHtml(sheet, { basePath = '/print/1page', apiBasePath = '/api/print/1page' } = {}) {
   const controls = `
     <header class="print-toolbar no-print">
       <div>
@@ -175,8 +175,8 @@ function renderOnePageReadingHtml(sheet) {
         <span>${sheet.totalSelectedVerses} selected verses</span>
       </div>
       <div class="print-toolbar-actions">
-        <a href="/print/1page/${escapeHtml(sheet.slug)}/imposed">View imposed spreads</a>
-        <a href="/api/print/1page/${escapeHtml(sheet.slug)}/pdf">Download PDF</a>
+        <a href="${basePath}/${escapeHtml(sheet.slug)}/imposed">View imposed spreads</a>
+        <a href="${apiBasePath}/${escapeHtml(sheet.slug)}/pdf">Download PDF</a>
       </div>
     </header>
   `;
@@ -189,7 +189,7 @@ function renderOnePageReadingHtml(sheet) {
   });
 }
 
-function renderOnePageImposedHtml(sheet, spreads, { forPdf = false, inlineCssText = '' } = {}) {
+function renderOnePageImposedHtml(sheet, spreads, { forPdf = false, inlineCssText = '', basePath = '/print/1page', apiBasePath = '/api/print/1page' } = {}) {
   const controls = forPdf ? '' : `
     <header class="print-toolbar no-print">
       <div>
@@ -197,8 +197,8 @@ function renderOnePageImposedHtml(sheet, spreads, { forPdf = false, inlineCssTex
         <span>Imposed single-sheet A4 duplex spread</span>
       </div>
       <div class="print-toolbar-actions">
-        <a href="/print/1page/${escapeHtml(sheet.slug)}">Back to preview</a>
-        <a href="/api/print/1page/${escapeHtml(sheet.slug)}/pdf">Download PDF</a>
+        <a href="${basePath}/${escapeHtml(sheet.slug)}">Back to preview</a>
+        <a href="${apiBasePath}/${escapeHtml(sheet.slug)}/pdf">Download PDF</a>
       </div>
     </header>
   `;

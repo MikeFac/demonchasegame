@@ -1,0 +1,379 @@
+{
+  "meta": {
+    "language": "Luganda",
+    "code": "lg",
+    "direction": "ltr"
+  },
+  "ui": {
+    "loading": "Ttekeka...",
+    "correct": "Kyakyo!",
+    "incorrect": "Si kyakyo!",
+    "gameOver": "M P U Z A   A G I Z I B W E",
+    "victory": "OKUWANGULA!",
+    "allDefeated": "ONNA BASANGIDDWA",
+    "gameOverTitle": "MPUZA AGIZIBWE",
+    "levelComplete": "Omutendera Gwamaliridwa!",
+    "nextLevelIn": "Omutendera oguddako mu {0}s...",
+    "health": "Obulamu",
+    "xp": "XP",
+    "level": "Omutendera",
+    "ammo": "Amasasi",
+    "statsLine": "Obulamu: {0}  XP: {1}  Omutendera: {2}  Amasasi: {3}",
+    "tryAgain": "Gezako Nabbi",
+    "returnToLobby": "Komya ku Lobby",
+    "learnVersesHere": "📖 YIGIRA EBYO MU BAIBULI WANNO!",
+    "selectCategory": "Londa Ekika",
+    "movementPaused": "⚡ OTANDIKIRA ENUMBA EMPYA - OKUTAMBULA KUVUUDIDWA ⚡",
+    "ghost": "KIGEENI",
+    "offline": "AWATALI MTANDA",
+    "you": "Ggwe",
+    "player": "Omuzannyi",
+    "players": "— Abazannyi —",
+    "empty": "Kirimu",
+    "armorOfGod": "Kavumenti ya Katonda",
+    "use": "Kozesa",
+    "active": "Kikola",
+    "auto": "(kyokkono)",
+    "tapToContinue": "Nyiga osobole okugenda mu maaso",
+    "dailyChallengeComplete": "✓ Omulimu gw’olunaku Ogwamaliridwa!",
+    "dailyChallengeProgress": "Olu: {0}/{1} (Ekirowoozo Ekisooka)",
+    "versesLearnedProgress": "Ebigambo By’oyigidde: {0} / {1}",
+    "hpDisplay": "HP: {0}/{1}",
+    "levelShort": "Mt {0}",
+    "on": "KIKOLA",
+    "off": "KIRINYIDDE"
+  },
+  "stats": {
+    "levelReached": "Omutendera Ogutuuseeko: {0}",
+    "monstersKilled": "Obyabe Obusingiddwa: {0}",
+    "versesLearned": "Ebigambo By’oyigidde: {0}",
+    "timePlayed": "Ebiseera By’ozannyidde: {0}s {1}s"
+  },
+  "menu": {
+    "review": "📖 Jjukuŋŋaanya",
+    "start": "▶ Tandika",
+    "stop": "⏸ Yimirira",
+    "nextSong": "⏭ Oluyimba Oluddako",
+    "goals": "🎯 Bigendererwa",
+    "verseCotD": "📿 Ekigambo Ky’olunaku",
+    "verseTest": "✏️ Pima Ekigambo",
+    "testShieldOn": "🛡️ Pima Ngiro: KIKOLA",
+    "testShieldOff": "🛡️ Pima Ngiro: KIRINYIDDE",
+    "songs": "🎵 Nyimba",
+    "affinityHelp": "📘 Obuyambi ku Bwegasse",
+    "leaveGame": "🚪 Va mu muzannyo",
+    "options": "Enteekateeka",
+    "back": "Komya emabega",
+    "howToPlay": "Otya Okuzannya",
+    "startSoloGame": "Tandika Omuzannyo Ogwokkomo",
+    "language": "🌐 Olulimi",
+    "languageCompact": "Olulimi",
+    "viewMode": "Endabika",
+    "view2d": "2D Eya njawulo",
+    "view3d": "3D Egezeseddwa",
+    "switchTo2d": "🧭 Kyuusa oze ku 2D",
+    "switchTo3d": "🧭 Kyuusa oze ku 3D",
+    "customGame": "⚙️ Omuzannyo Ogw’oteekateka",
+    "multiplayerGame": "Omuzannyo Ogw’abantu Abangi",
+    "missions": "⚔️ Ebirimu"
+  },
+  "review": {
+    "previous": "Emabega",
+    "repeat": "Yongera",
+    "repeatOn": "Okuyongera Kukola",
+    "meditationOn": "Okufeeza",
+    "next": "Genda mu maaso",
+    "game": "Omuzannyo",
+    "reference": "Enfuno: {0}",
+    "learn": "Yigira: {0}"
+  },
+  "overland": {
+    "title": "Londa Omulimu",
+    "locked": "[KIKINGIDWA]",
+    "completed": "Kiwandikidwa",
+    "available": "Kiriwo",
+    "startMission": "Tandika Omulimu",
+    "learnVerses": "Yigira Ebigambo",
+    "missionComplete": "Omulimu Gwamaliridwa!",
+    "missionFailed": "Omulimu Gwalemwa",
+    "returnToMap": "Komya ku Maapu",
+    "chapterComplete": "Omulamwa Gwamaliridwa!",
+    "unlockChapter": "Kitikkiddwa: {0}"
+  },
+  "votd": {
+    "verseOfTheDay": "Ekigambo Ky’olunaku",
+    "startYourStreak": "Tandika okubala ennaku zo!",
+    "dayStreak": "🔥 {0} ennaku zino!",
+    "learnNow": "Yigira Kati",
+    "later": "Oluwembe",
+    "damageBonus": "Yigira ekigambo ky’olunaku ofune obugagga bwa +20% ku kukuba!",
+    "playAudio": "Mulamu Oluyimba",
+    "playing": "Kikola...",
+    "startLearning": "Tandika Okuyigirira",
+    "learning": "Okuyigirira ({0}/{1} kikwekebwa)",
+    "readAloud": "Soma ekigambo olw’endongo, ojuze ebanga mu birowoozo.",
+    "replayAudio": "Yongera Ogambe",
+    "hideWord": "Kisa Ekigambo",
+    "testNow": "Pima Kati",
+    "testYourMemory": "Pima Ebirowoozo Byo",
+    "wordOf": "Ekigambo {0} ku {1}",
+    "whatLetter": "Akazuuni ki ekigambo ekikwekebwe kikolebwa?",
+    "hintLetters": "(Okulabisa: {0} ennukuta)",
+    "verseComplete": "Ekigambo Kimaliridwa!",
+    "wellDone": "Mukwano!",
+    "returningToGame": "Okuggyako mu muzannyo...",
+    "returningIn": "Okuggyako mu {0}s...",
+    "votdIncorrect": "SI KYAKYO",
+    "votdModalTitle": "📿 Ekigambo Ky’olunaku"
+  },
+  "verseTest": {
+    "correct": "Kyakyo!",
+    "wrong": "Si kyakyo!"
+  },
+  "quiz": {
+    "firstLetters": "Ennukuta esooka e'bigambo ebikwekebwe:",
+    "missingWord": "Jjuza ekigambo ekisaliddwa:",
+    "categoryMatch": "Ekirungi ki ekigambo kyi kigigenderera?",
+    "trueFalse": "KITUUFU",
+    "falseOption": "SI KITUUFU",
+    "cloze": "Jjuza ebanga:"
+  },
+  "buffs": {
+    "sword": "EBYOMBA",
+    "shield": "Ngiro",
+    "breastplate": "KAVUMENTI",
+    "sandals": "MPAGI"
+  },
+  "items": {
+    "sword": "Akamba",
+    "belt": "Mukono",
+    "helmet": "Engule",
+    "breastplate": "Kavumenti",
+    "sandals": "Mpagi",
+    "shield": "Ngiro"
+  },
+  "demons": {
+    "Fear": "Okutya",
+    "Doubt": "Okubuusabuusa",
+    "Ignorance": "Obutamanya",
+    "Blindness": "Obudhuzi",
+    "Confusion": "Okubabba",
+    "Strife": "Okutabatabana",
+    "Infirmity": "Obulwadde",
+    "Poverty": "Obwavvu",
+    "Shame": "Esonyi",
+    "Deception": "Obulimba",
+    "Condemnation": "Okuvumira",
+    "Unbelief": "Obutakkiriza",
+    "Depression": "Okunakuwala",
+    "Despair": "Okufaayo",
+    "Pride": "Ekyekango",
+    "Temptation": "Okugeragebwa",
+    "Swarm": "Kibinja"
+  },
+  "categories": {
+    "Faith": "Okukkiriza",
+    "Courage": "Obuvumu",
+    "Love": "Okwagala",
+    "Knowledge": "Okumanya",
+    "Wisdom": "Amagezi",
+    "Healing": "Okuwona",
+    "Forgiveness": "Okusonyiyibwa",
+    "Good News": "Amawulire Amalungi",
+    "Focus": "Okwekketooka",
+    "Endurance": "Obugumikiriza",
+    "Hope": "Lisu",
+    "Prophecy": "Obunabbi",
+    "Power": "Amaanyi",
+    "Identity": "Obumanyiso",
+    "Prayer": "Okusaba",
+    "Purity": "Obutukuvu",
+    "Prosperity": "Obulungi",
+    "Humility": "Obwombeefu",
+    "Joy": "Essanyu",
+    "Deliverance": "Okununulibwa",
+    "Praise": "Okutendereza"
+  },
+  "lobby": {
+    "title": "Demon Chase - Ebiwandiiko",
+    "login": {
+      "header": "Demon Chase",
+      "usernamePlaceholder": "Yingiza erinnya lyo",
+      "playOnline": "Zannya ku Mtanda",
+      "practiceSolo": "Yeezesa (Okyeni)",
+      "errorUsername": "Muleme erinnya lyo",
+      "errorConnection": "Okuyungidwa kuvaamu ensobi"
+    },
+    "rooms": {
+      "header": "🎮 Ebiwandiiko by’Omuzannyo",
+      "noRooms": "Tewali biwandiiko. Kola ekipya!",
+      "quickPlay": "⚡ Zannya Mubi",
+      "createRoom": "+ Kola Ekibiwandiiko",
+      "logout": "Ogenda",
+      "inProgress": "[KIKOLA KATI]"
+    },
+    "create": {
+      "header": "Kola Ekibiwandiiko",
+      "roomNamePlaceholder": "Erinnya ly’ekibiwandiiko (sibyetaagisa)",
+      "mapStyle": "Enkola ya Maapu:",
+      "monsterDifficulty": "Obuzito bwa Balabe:",
+      "quizBalance": "Enkola ya Kwiizi:",
+      "quizPresetEasy": "Kwiizi Enywevu",
+      "quizPresetBalanced": "Ebalansi",
+      "quizPresetHard": "Kwiizi Zisukkawo",
+      "createAndJoin": "Kola Oyingire",
+      "back": "← Komya Emabega"
+    },
+    "room": {
+      "header": "Ekibiwandiiko",
+      "leave": "Genda",
+      "readyUp": "Atudde",
+      "notReady": "Tannatuukira",
+      "startGame": "Tandika Omuzannyo"
+    }
+  },
+  "config": {
+    "gameSettings": "Enteekateeka z’Omuzannyo",
+    "difficulty": "Obuzito",
+    "speed": "Obwangu",
+    "mapStyle": "Enkola ya Maapu",
+    "quizConfiguration": "Enteekateeka ya Kwiizi",
+    "offlineMode": "Enkola etaliyo mtanda",
+    "privacyPolicy": "Enkola ya Byekyama",
+    "licensing": "Lukusa n’Okuyamba",
+    "difficultyEasy": "Enywevu",
+    "difficultyMedium": "Ekyenkana",
+    "difficultyHard": "Obuzito",
+    "speedSlow": "Bunya",
+    "speedNormal": "Ekyenkana",
+    "speedFast": "Obwangu",
+    "languageHeader": "🌐 Olulimi",
+    "comingSoon": "Ennimi endala zirya ku biro ebyo!",
+    "difficultyEasyDesc": "Balabe abalamu",
+    "difficultyNormalDesc": "Okulwana okw’obugenderevu",
+    "difficultyHardDesc": "Okulwana okusukkawo",
+    "quizPresetEasy": "Kwiizi Enywevu",
+    "quizPresetBalanced": "Ebalansi",
+    "quizPresetHard": "Kwiizi Zisukkawo",
+    "pageTitle": "Teekateeka Enteekateeka z’Omuzannyo",
+    "tabBalance": "Ebalansi",
+    "tabLevels": "Omutendera",
+    "tabContent": "Ebirimu",
+    "monsterHealth": "Obulamu",
+    "monsterDamage": "Obuvune",
+    "monsterSpeed": "Obwangu",
+    "spawning": "Okuzaala",
+    "spawnRate": "Omuwendo gw’Okuzaala",
+    "maxMonsters": "Balabe Abasinga",
+    "healingFreq": "Obungi bwa Kitiibwa",
+    "quizTotal": "Ebitundu: {0}%",
+    "qualities": "Ebirungi",
+    "monsters": "Balabe",
+    "spawnSettings": "Enteekateeka z’Okuzaala",
+    "killToAdvance": "Sanga Osobe Okugenda",
+    "spawnRateSec": "Omuwendo gw’Okuzaala (masekondi)",
+    "uploadVerses": "Teka Ebigambo",
+    "uploadPrompt": "Nyiga oteke CSV oba JSON",
+    "uploadHint": "Obusengeka: Enfuno, Ekigambo, Ekika",
+    "orPasteJson": "Oba Teeka JSON Wano",
+    "pastePlaceholder": "[{\"Reference\":\"Yokaana 3:16\",\"Text\":\"Kubanga Katonda yagga nsi n'oluganda...\",\"Category\":\"Love\"}]",
+    "loadPaste": "Teka Ebyo By’oteekedde",
+    "preview": "Laba",
+    "noCustomVerses": "Tewali bigambo by’oteekedde.<br>Nkozesa ebigambo ebya Baibuli.",
+    "useDefaultVerses": "Kozesa Ebigambo Ebitongole",
+    "clearCustom": "Sangulula Ebyo By’oteekedde",
+    "downloadJson": "Wana JSON",
+    "playWithSettings": "Zannya n’Enteekateeka Zino",
+    "copyShareLink": "Koppa Enkolagano",
+    "backToMenu": "Komya ku Menyu",
+    "copied": "Ekoppidwa!",
+    "firstLetter": "Ekirowoozo Ekisooka",
+    "missingWord": "Ekigambo Ekisaliddwa",
+    "categoryMatch": "Ekika Ekikwatagana",
+    "trueFalse": "Kituufu / Si Kituufu",
+    "cloze": "Jjuza Ebanga",
+    "clozeDesc": "Jjuza ebanga"
+  },
+  "mapStyles": {
+    "classic": "Ekiddugavu Eky’Olulagala",
+    "narrow": "Ekkubo Ery’Obutono",
+    "labyrinth": "Ekiddugavu Eky’Enkola",
+    "open": "Ettaka Ery’Olugimu",
+    "city": "Ekibuga Ekya Kkubo"
+  },
+  "tutorial": {
+    "next": "Genda mu maaso",
+    "back": "Komya emabega",
+    "close": "Ggalawo",
+    "startPlaying": "Tandika Okuzannya",
+    "pages": [
+      {
+        "title": "Kaakali",
+        "content": "<h3>VerseBattles: Demon Chase Lye ki?</h3><p>VerseBattles: Demon Chase lye muzannyo ogw’okukola gwe alwana n’abalabe ab’omwoyo nga oyigira ebigambo mu Baibuli. Balabe bakuttwala mu bizinduuko by’ekiddugavu.</p><p>Ekikozesa kino? <span class=\"highlight\">Ekigambo kya Katonda.</span> Dda ku kwiizi ya Baibuli otuufu okwongera amaanyi ku kukuba osobe oswaze abalabe.</p><h3>Amagezi: Yigira Ebigambo Ebyasooka!</h3><p>Ekinya mu kuwanguza kwe <span class=\"highlight\">okumanya ebigambo byo</span>. Kozesa akabonero akakyenye <span class=\"highlight\">\"Yigira Ebigambo Wanno!\"</span> osome n’ofeeze ku bigambo nga tannaba kulwana. Ebyo eby’oyigidde byonna, amaanyi go geeyongera!</p>"
+      },
+      {
+        "title": "Ekigendererwa n’Okutambula",
+        "content": "<h3>Ekigendererwa</h3><p>Sanga balabe abalamu buli mutendera osobe ogende mu maaso. Waliwo <span class=\"highlight\">emitendera 5</span>, buli emu esukkawo eddala. Londa mu nkolayo 5: Ekiddugavu Eky’Olulagala, Ekkubo Ery’Obutono, Ekiddugavu Eky’Enkola, Ettaka Ery’Olugimu, n’Ekibuga Ekya Kkubo.</p><h3>Okutambula</h3><p><span class=\"highlight\">Nyiga oba onyige</span> wonna mu kifo ky’omuzannyo omuntu wo atambule eyo. Omuntu wo atambula we akyaali.</p><p>Otambula mu bizinduiko ebiyungiddwa n’ebigendo. Ebigogo bikwata ku kkubo — zuula ebiyitiro!</p>"
+      },
+      {
+        "title": "Okulwana",
+        "content": "<h3>Okulwana Okuli Wamu</h3><p>Bwe waba oyitidde ewa balabe, okulwana kutandika kyokka. Gwe n’obalabe musalagana buli 0.7 ssekonda.</p><ul><li>Okuba n’obuvune bwe <span class=\"highlight\">ekyirowoozo kyo ekyasembayo kyali kituufu</span></li><li>Balabe abasalagana buli kiseera (okugyako olina ngiro)</li><li>Buli balabe alina obuvune obw’enjawulo</li></ul><h3>Okusenda</h3><p><span class=\"highlight\">Nyiga ku balabe</span> osende akasasi. Buli kasasi kwa 1 Amasasi. Funaho amasasi nga odda ku kwiizi tuufu (+5 ku ddala ly’okudda tuufu).</p>"
+      },
+      {
+        "title": "Kwiizi ya Baibuli",
+        "content": "<h3>Kwiizi Elikola Otya</h3><p>Ekigambo kya Baibuli kilabikira ku seeba ya wansi ng’ebigambo bisaliddwa. Nyiga akabonero akalaga <span class=\"highlight\">ennukuta esooka etuufu</span> e’bigambo ebisaliddwa.</p><h3>Lwaki Kikulu</h3><ul><li><span class=\"highlight\">Ekyirowoozo ekituufu:</span> Obuvune bwa kulwana bukola, ofuna +5 Amasasi</li><li><span class=\"highlight\">Ekyirowoozo ekitafu:</span> Obuvune bwa kulwana tebukola mpaka oddemu tuufu</li></ul><h3>Ebya Kwiizi</h3><p>Ebigambo biwezebwa mu bika nga Okukkiriza, Obuvumu, n’Okwagala. <span class=\"highlight\">Nyiga ekika</span> ku seeba ya waggulu oggulawo okulonda ekika oyo oyagadde.</p>"
+      },
+      {
+        "title": "Obuyambi ku Bwegasse",
+        "content": "<h3>Gassa Ebirungi ku Balabe</h3><p>Ekirungi kyo ekiriwo kati tekintu obuvune buno bwa buli balabe. Ebimu bikuba nnyo, ebimu bitono.</p><ul><li><span class=\"highlight\">Okukkiriza</span> bwa maanyi ku Okutya, Okubuusabuusa, n’Obutakkiriza</li><li><span class=\"highlight\">Okuwona</span> bulungi ku Obulwadde nawalina ekintu ku Okunakuwala</li><li><span class=\"highlight\">Amagezi</span> kukola ku Okubabba, Obulimba, n’Obutamanya</li></ul><p>Mu muzannyo, ggulawo <span class=\"highlight\">menyu</span> onyige <span class=\"highlight\">Obuyambi ku Bwegasse</span> olabe enkolayo yonna.</p>"
+      },
+      {
+        "title": "Ebyuma - Ebitundu 1",
+        "content": "<h3>Obutonde Obw’Okuwona</h3><p>Obusalire obweguluddwa birabikira mu kiddugavu. Yitawo ku byo osobe <span class=\"highlight\">oszze obulamu 25</span>. Waliwo 2 ku bbanga.</p><h3>Ngiro y’Okukkiriza</h3><p>Katale akakyenye kamu kulabikira mu mutendera. Yitawo ku ko osobole okukozesa.</p><ul><li>Nyiga akabonero ka <span class=\"key\">i</span> (ku kkono) oggulawo ebyo olinamu</li><li>Nyiga <span class=\"highlight\">Kozesa</span> otandike ngiro</li><li>Bwe ekola (ssekonda 10), tofunna <span class=\"highlight\">obuvune bwa balabe</span></li><li>Akatale akakyenye keekwata wo era akalaga ebiseera ebyasigazzewo</li></ul>"
+      },
+      {
+        "title": "Ebyuma - Ebitundu 2",
+        "content": "<h3>Kavumenti ya Katonda</h3><p>Kungaanya ebitundu bya Kavumenti ya Katonda bwe birabikira mu kiddugavu:</p><ul><li><span class=\"highlight\">Akamba k’Omwyo</span> — obuvune bwa kulwana bweyongera</li><li><span class=\"highlight\">Omukono gw’amazima</span> — ekyokulabisa ekigazi</li><li><span class=\"highlight\">Engule y’Okulokoka</span> — obulamu obwongedwa</li><li><span class=\"highlight\">Kavumenti y’Obutuukirivu</span> — obuvune butono</li><li><span class=\"highlight\">Mpagi z’Emirembe</span> — obwangu obw’okutambula</li></ul>"
+      },
+      {
+        "title": "Okugenda mu Maaso",
+        "content": "<h3>Okuyingiza Omutendera</h3><p>Okusa balabe kuwa <span class=\"highlight\">XP 10</span> buli omu. Bwe ofuna XP, omutendera gwo weyongera:</p><ul><li>Omutendera ogw’waggulu = obulamu obusinga</li><li>Obulamu obujjudde bwe oyingiza omutendera</li></ul>"
+      },
+      {
+        "title": "Emitendera gy’Omuzannyo",
+        "content": "<p>Waliwo <span class=\"highlight\">emitendera 5</span>. Sa 60% ya balabe osobe ogende:</p><ul><li><span class=\"highlight\">Omutendera 1 (Ekiddugavu ky’amabuye):</span> Okutya n’Obutamanya — obunya, obulamu</li><li><span class=\"highlight\">Omutendera 2 (Ekiddugavu ky’Ensi):</span> Okutabatabana, Okubabba n’Obulwadde — abangu, bakuba nnyo</li><li><span class=\"highlight\">Omutendera 3 (Ekiddugavu ky’Amakaza):</span> Okuvumira, Obutakkiriza, Okunakuwala n’Okubuusabuusa — abangu, obulabe</li><li><span class=\"highlight\">Omutendera 4 (Ekiddugavu ky’Ekisambi):</span> Ekyekango, Omwoyo ogw’okudda n’Kayezaala — ab’amaanyi n’obuyinza</li><li><span class=\"highlight\">Omutendera 5 (Ekiddugavu ky’Omuliro):</span> Balabe boona — okuzinya okusukkawo n’amaanyi agayingira</li></ul><p>Buli mutendera atandikira ekiddugavu ekipya n’langi ya njawulo.</p>"
+      },
+      {
+        "title": "Ebikozeso",
+        "content": "<h3>Obukulu</h3><ul><li><span class=\"highlight\">Yigira ebigambo ebyasooka!</span> Nyiga akabonero akakyenye \"Yigira Ebigambo Wanno!\" osome n’ofeeze — okubimanya bulungi kwe kinya mu kuwanguza</li><li><span class=\"highlight\">Dda ku kwiizi</span> nga tonnaba kulwana n’obalabe — okugyako obuvune bwa kulwana tebukola</li><li>Kozesa ebigendo ku mukono gwo — balabe basobola okuzibibwa ku bigogo</li><li>Tegeka Ngiro yo y’Okukkiriza ku kulwana okunzirugana n’abangi</li><li>Senda ewala omutonnyeze abalabe nga tannaba okuyingira mu kulwana</li><li>Kebera omuwendo gwo gw’Amasasi — dda ku kwiizi ofune emirundi</li></ul>"
+      },
+      {
+        "title": "Obuyinza bwa Balabe",
+        "content": "<h3>Bika bya Balabe</h3><ul><li><span class=\"highlight\">Abagoberezi</span> — bakugoberera buli kiseera</li><li><span class=\"highlight\">Abatambula</span> — batambula mu bwangu, naye bakuba bwe wabaggyaako</li></ul><h3>Obuyinza Obw’enjawulo (Emitendera Eggyiddwako)</h3><ul><li><span class=\"highlight\">Ekyenyiniro</span> — kikendeeza obwangu bwo bwe kiri ewala</li><li><span class=\"highlight\">Kavumenti y’Ekyekango</span> — ekendeeza obuvune bwongeza okubiswaza</li><li><span class=\"highlight\">Okukwata Amasasi</span> — ekwata Amasasi go bwe kikuba</li><li><span class=\"highlight\">Okutabatabana Okw’Amangu</span> — ekujjaako n’obwangu obw’ekyenyini</li></ul><p>Amazima, era ekigambo kibeere akamba ko!</p>"
+      }
+    ]
+  },
+  "quickStart": {
+    "title": "🎮 Otya Okuzannya",
+    "items": [
+      "📖 <strong>Yigira ebigambo ebyasooka</strong> — kozesa \"Yigira Ebigambo Wanno!\" osome",
+      "📍 <strong>Nyiga</strong> otambule omuntu wo",
+      "✝️ <strong>Dda ku kwiizi</strong> ofune amasasi n’okukuba",
+      "👹 <strong>Swaza abalabe</strong> nga odda tuufu!"
+    ],
+    "startingIn": "Tandika mu {0}...",
+    "startNow": "Tandika Kati"
+  },
+  "toasts": {
+    "offlineMode": "📡 Enkola etaliyo — Tewali yungiro ku seeba",
+    "multiplayerRequiresInternet": "Omuzannyo ogw’abantu abangi weetaaga yungiro ku mtanda",
+    "earnAmmo": "💡 Funaho amasasi nga odda ku kwiizi tuufu",
+    "xpLevelUp": "💡 Okusa balabe kuwa XP era weyongeza omutendera",
+    "thanksForSharing": "✅ Webale okusaasaanya!",
+    "shareCopied": "📋 Ekirowoozo kikoppidwa!",
+    "quizTipDamage": "💡 EKYENYINIRO: Dda ku kwiizi tuufu osobole okukuba!",
+    "goToMenuLearn": "📖 Genda ku Menyu oyigire ebigambo!",
+    "settingsDifficultyHint": "⚙️ Obwangu n’obuzito bwa balabe busobola okuteekebwa mu Enteekateeka.",
+    "healingCrosses": "💡 Yitawo ku bisalire ebyeguluddwa oszze obulamu"
+  }
+}

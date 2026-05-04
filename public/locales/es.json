@@ -130,6 +130,14 @@
     "correct": "¡Correcto!",
     "wrong": "¡Incorrecto!"
   },
+  "quiz": {
+    "firstLetters": "Primeras letras de las palabras que faltan:",
+    "missingWord": "Completa la palabra que falta:",
+    "categoryMatch": "¿Qué cualidad enseña este versículo?",
+    "trueFalse": "VERDADERO",
+    "falseOption": "FALSO",
+    "cloze": "Completa los espacios:"
+  },
   "buffs": {
     "sword": "ESPADA",
     "shield": "ESCUDO",

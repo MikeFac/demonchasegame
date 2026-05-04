@@ -68,8 +68,10 @@ var CORE_ASSETS = [
     '/game.js',
     '/bible-verses.js',
     '/bible-verses-es.js',
+    '/bible-verses-lg.js',
     '/locales/en.json',
     '/locales/es.json',
+    '/locales/lg.json',
     '/src/client/i18n.js',
     '/manifest.json',
     // Shared modules

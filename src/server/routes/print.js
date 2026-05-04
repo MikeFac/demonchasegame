@@ -7,6 +7,7 @@ const { buildBookletBySlug, getPrintableCategories } = require('../print/booklet
 const { buildImposedSpreads } = require('../print/bookletImposition');
 const { renderIndexPage, renderReadingHtml, renderImposedHtml } = require('../print/bookletTemplates');
 const { buildOnePageBySlug, getPrintableOnePageCategories } = require('../print/1page/builder');
+const { buildLgOnePageBySlug, getPrintableLgOnePageCategories } = require('../print/1page/builder-lg');
 const { buildOnePageImposedSpreads } = require('../print/1page/imposition');
 const { renderOnePageIndex, renderOnePageReadingHtml, renderOnePageImposedHtml } = require('../print/1page/templates');
 const { getCardSets, buildCardSet } = require('../print/card/builder');
@@ -73,6 +74,64 @@ router.get('/print/1page/:categorySlug/imposed', async (req, res) => {
   const spreads = buildOnePageImposedSpreads(sheet.pages);
   const forPdf = req.query.format === 'pdf';
   res.send(renderOnePageImposedHtml(sheet, spreads, { forPdf }));
+});
+
+router.get('/print/lg1page', (req, res) => {
+  res.send(renderOnePageIndex(getPrintableLgOnePageCategories(), {
+    basePath: '/print/lg1page',
+    apiBasePath: '/api/print/lg1page',
+    title: 'VerseBattles Luganda 1-Page Print Sheets',
+    description: 'Olupapula olw\'okupapula mu Luganda: akabikiro k\'omu maaso, emikutu girala ebiri, n\'akabikiro k\'emu mabali.'
+  }));
+});
+
+router.get('/print/lg1page/:categorySlug', async (req, res) => {
+  const sheet = await buildLgOnePageBySlug(req.params.categorySlug);
+  if (!sheet) {
+    return res.status(404).send('Printable category not found or does not yet have enough Luganda verses.');
+  }
+
+  res.send(renderOnePageReadingHtml(sheet, { basePath: '/print/lg1page', apiBasePath: '/api/print/lg1page' }));
+});
+
+router.get('/print/lg1page/:categorySlug/imposed', async (req, res) => {
+  const sheet = await buildLgOnePageBySlug(req.params.categorySlug);
+  if (!sheet) {
+    return res.status(404).send('Printable category not found or does not yet have enough Luganda verses.');
+  }
+
+  const spreads = buildOnePageImposedSpreads(sheet.pages);
+  const forPdf = req.query.format === 'pdf';
+  res.send(renderOnePageImposedHtml(sheet, spreads, { forPdf, basePath: '/print/lg1page', apiBasePath: '/api/print/lg1page' }));
+});
+
+router.get('/api/print/lg1page/:categorySlug/pdf', async (req, res) => {
+  const sheet = await buildLgOnePageBySlug(req.params.categorySlug);
+  if (!sheet) {
+    return res.status(404).json({ error: 'Printable category not found or does not yet have enough Luganda verses.' });
+  }
+
+  const spreads = buildOnePageImposedSpreads(sheet.pages);
+  const cssText = fs.readFileSync(PRINT_CSS_PATH, 'utf8');
+  const html = renderOnePageImposedHtml(sheet, spreads, { forPdf: true, inlineCssText: cssText, basePath: '/print/lg1page', apiBasePath: '/api/print/lg1page' });
+  const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'versebattles-print-'));
+  const htmlPath = path.join(tempDir, `${req.params.categorySlug}-lg.html`);
+  const pdfPath = path.join(tempDir, `${req.params.categorySlug}-lg.pdf`);
+
+  try {
+    fs.writeFileSync(htmlPath, html, 'utf8');
+    await renderPdfFromHtml(htmlPath, pdfPath);
+    const pdf = fs.readFileSync(pdfPath);
+
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename="${req.params.categorySlug}-versebattles-lg-onepage.pdf"`);
+    res.send(pdf);
+  } catch (error) {
+    console.error('Failed to generate Luganda one-page print PDF:', error);
+    res.status(500).json({ error: 'Failed to generate PDF' });
+  } finally {
+    fs.rmSync(tempDir, { recursive: true, force: true });
+  }
 });
 
 router.get('/print/card', (req, res) => {

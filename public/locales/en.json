@@ -130,6 +130,14 @@
     "correct": "Correct!",
     "wrong": "Wrong!"
   },
+  "quiz": {
+    "firstLetters": "First letters of missing words:",
+    "missingWord": "Fill in the missing word:",
+    "categoryMatch": "Which quality does this verse teach?",
+    "trueFalse": "TRUE",
+    "falseOption": "FALSE",
+    "cloze": "Fill in the blanks:"
+  },
   "buffs": {
     "sword": "SWORD",
     "shield": "SHIELD",

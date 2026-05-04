@@ -185,7 +185,7 @@
         return {
             mode: 'first_letter',
             promptText: testVerse,
-            questionLabel: 'First letters of missing words:',
+            questionLabel: typeof t === 'function' ? t('quiz.firstLetters') : 'First letters of missing words:',
             options: options.map(function (opt) {
                 return { text: opt, isCorrect: opt === firstLettersStr };
             }),
@@ -267,7 +267,7 @@
         return {
             mode: 'missing_word',
             promptText: qd.question,
-            questionLabel: 'Fill in the missing word:',
+            questionLabel: typeof t === 'function' ? t('quiz.missingWord') : 'Fill in the missing word:',
             options: qd.options.map(function (opt) {
                 return { text: opt, isCorrect: opt === qd.answer };
             }),
@@ -291,7 +291,7 @@
         return {
             mode: 'category_match',
             promptText: verse.Text,
-            questionLabel: 'Which quality does this verse teach?',
+            questionLabel: typeof t === 'function' ? t('quiz.categoryMatch') : 'Which quality does this verse teach?',
             options: allOptions.map(function (opt) {
                 return { text: displayCategory(opt), isCorrect: opt === qd.correctCategory };
             }),
@@ -331,10 +331,10 @@
             promptText: verse.Text,
             questionLabel: claim,
             options: [
-                { text: 'TRUE', isCorrect: isTrue },
-                { text: 'FALSE', isCorrect: !isTrue }
+                { text: typeof t === 'function' ? t('quiz.trueFalse') : 'TRUE', isCorrect: isTrue },
+                { text: typeof t === 'function' ? t('quiz.falseOption') : 'FALSE', isCorrect: !isTrue }
             ],
-            correctAnswer: isTrue ? 'TRUE' : 'FALSE'
+            correctAnswer: isTrue ? (typeof t === 'function' ? t('quiz.trueFalse') : 'TRUE') : (typeof t === 'function' ? t('quiz.falseOption') : 'FALSE')
         };
     }
 
@@ -450,7 +450,7 @@
         return {
             mode: 'cloze',
             promptText: qd.question,
-            questionLabel: 'Fill in the blanks:',
+            questionLabel: typeof t === 'function' ? t('quiz.cloze') : 'Fill in the blanks:',
             answers: qd.answers,
             verseId: verse.Id,
             currentWordIndex: 0,

@@ -29,6 +29,11 @@ const VerseSongSchema = new Schema({
   endVerse: Number,       // Optional, for ranges
   category: String,       // From bible-verses.js (e.g., "Love", "Courage")
   verseText: String,      // Full verse text (for generation prompt)
+  language: {
+    type: String,
+    default: 'en',
+    index: true            // 'en' (English), 'lg' (Luganda), etc.
+  },
 
   // Song Generation & Storage
   sunoId: {
@@ -118,7 +123,7 @@ const VerseSongSchema = new Schema({
 });
 
 // Indexes
-VerseSongSchema.index({ verseReference: 1, version: 1 }, { unique: true }); // One song per version
+VerseSongSchema.index({ verseReference: 1, version: 1, language: 1 }, { unique: true });
 VerseSongSchema.index({ verseReference: 1, isActiveVersion: 1 }); // Active versions lookup
 VerseSongSchema.index({ verseReference: 1, qualityScore: -1 }); // Best quality first
 VerseSongSchema.index({ generationStatus: 1, generationRequestId: 1 });

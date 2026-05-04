@@ -94,6 +94,7 @@ async function getAuthorizedEmail(req, user) {
 router.get('/library', optionalAuth, async (req, res) => {
   try {
     let isSongAdmin = false;
+    const lang = req.query.lang || 'en';
 
     if (req.auth?.userId) {
       const user = await User.findOne({ clerkId: req.auth.userId }).select('email').lean();
@@ -102,6 +103,7 @@ router.get('/library', optionalAuth, async (req, res) => {
     }
 
     const songs = await VerseSong.find({
+      language: lang,
       status: 'active',
       isActiveVersion: true,
       generationStatus: 'completed',
@@ -239,16 +241,18 @@ router.post('/:id/archive-delete', requireAuth, async (req, res) => {
 router.get('/', async (req, res) => {
   try {
     const { ref } = req.query;
+    const lang = req.query.lang || 'en';
 
     if (!ref) {
       return res.status(400).json({ error: 'Missing ref parameter' });
     }
 
-    // Normalize reference for database lookup (e.g., "Psalms 118:6" → "psalms118-6")
     const normalizedRef = normalizeReference(ref);
 
-    // Find ALL active versions for this verse
+    const langFilter = { language: lang };
+
     const verseSongs = await VerseSong.find({
+      ...langFilter,
       $or: [
         { verseReference: normalizedRef },
         { verseReference: ref }
@@ -256,7 +260,7 @@ router.get('/', async (req, res) => {
       status: 'active',
       isActiveVersion: true,
       audioUrl: { $exists: true }
-    }).sort({ qualityScore: -1, playCount: 1 }); // Best quality, rotate through less-played
+    }).sort({ qualityScore: -1, playCount: 1 });
 
     if (verseSongs.length > 0) {
       // Random selection for variety (can change to weighted by qualityScore later)
@@ -277,6 +281,7 @@ router.get('/', async (req, res) => {
 
     // No completed songs found—check if any are processing
     const processingSong = await VerseSong.findOne({
+      ...langFilter,
       $or: [
         { verseReference: normalizedRef },
         { verseReference: ref }
@@ -295,6 +300,7 @@ router.get('/', async (req, res) => {
 
     // Check for failed generations
     const failedSong = await VerseSong.findOne({
+      ...langFilter,
       $or: [
         { verseReference: normalizedRef },
         { verseReference: ref }
@@ -317,7 +323,7 @@ router.get('/', async (req, res) => {
     }
 
     // No record exists—create one and queue generation
-    const verseSong = await createAndQueueVerseSong(ref);
+    const verseSong = await createAndQueueVerseSong(ref, lang);
 
     res.json({
       verseReference: ref,
@@ -340,8 +346,7 @@ router.get('/', async (req, res) => {
 /**
  * Helper: Create VerseSong record and queue generation
  */
-async function createAndQueueVerseSong(verseReference) {
-  // Parse reference (e.g., "John 3:16" → book: "John", chapter: 3, startVerse: 16)
+async function createAndQueueVerseSong(verseReference, lang = 'en') {
   const parts = verseReference.match(/^([1-3]?\s*[A-Za-z][A-Za-z\s]*)\s+(\d+):(\d+)(?:-(\d+))?$/);
   if (!parts) {
     throw new Error(`Invalid verse reference format: ${verseReference}`);
@@ -352,22 +357,35 @@ async function createAndQueueVerseSong(verseReference) {
   const startVerse = parseInt(parts[3], 10);
   const endVerse = parts[4] ? parseInt(parts[4], 10) : undefined;
 
-  // Get verse text from bible-verses.js (loaded in server)
-  const bibleVersesModule = require('../../bible-verses');
-  const globalVerses = bibleVersesModule.loadSelectedVerses();
-  const verseObj = globalVerses.find(v => v.Reference === verseReference);
-  const verseText = verseObj?.Text || `[Verse: ${verseReference}]`;
-  const category = verseObj?.Category || 'General';
+  const normalizedRef = normalizeReference(verseReference);
 
-  // Get generation style for this category
+  const existing = await VerseSong.findOne({
+    language: lang,
+    $or: [{ verseReference: normalizedRef }, { verseReference: verseReference }]
+  });
+  if (existing) return existing;
+
+  let verseText = `[Verse: ${verseReference}]`;
+  let category = 'General';
+
+  try {
+    const bibleVersesModule = require('../../../bible-verses');
+    const globalVerses = bibleVersesModule.loadSelectedVerses();
+    const verseObj = globalVerses.find(v => v.Reference === verseReference || v.EnglishRef === verseReference);
+    if (verseObj) {
+      verseText = verseObj.Text;
+      category = verseObj.Category;
+    }
+  } catch (e) {
+    console.warn('Could not load bible-verses for song creation:', e.message);
+  }
+
   const categoryStyle = await CategoryStyle.findOne({ category });
   const style = categoryStyle?.generationStyle || 'pop';
 
-  // Create verse song record with normalized reference
-  const normalizedVerseRef = normalizeReference(verseReference);
   const verseSong = new VerseSong({
-    verseReference: normalizedVerseRef,
-    verseReferenceFull: verseReference, // Keep full format for reference
+    verseReference: normalizedRef,
+    verseReferenceFull: verseReference,
     book,
     chapter,
     startVerse,
@@ -376,7 +394,8 @@ async function createAndQueueVerseSong(verseReference) {
     verseText,
     generationStyle: style,
     generationStatus: 'pending',
-    generationAttempts: 0
+    generationAttempts: 0,
+    language: lang
   });
 
   await verseSong.save();
@@ -399,15 +418,17 @@ async function createAndQueueVerseSong(verseReference) {
  */
 router.post('/record-play', async (req, res) => {
   try {
-    const { verseReference, playDurationMs, wasLearned, version } = req.body;
+    const { verseReference, playDurationMs, wasLearned, version, lang } = req.body;
+    const songLang = lang || 'en';
 
     if (!verseReference) {
       return res.status(400).json({ error: 'Missing verseReference' });
     }
 
-    // Find specific version if provided, otherwise find any active version
     const normalizedRef = normalizeReference(verseReference);
+    const langFilter = { language: songLang };
     let query = {
+      ...langFilter,
       $or: [
         { verseReference: normalizedRef },
         { verseReference: verseReference }
@@ -427,6 +448,7 @@ router.post('/record-play', async (req, res) => {
     if (!verseSong) {
       // Try to find any version if specific one not found
       verseSong = await VerseSong.findOne({
+        ...langFilter,
         $or: [
           { verseReference: normalizedRef },
           { verseReference: verseReference }

@@ -5,23 +5,22 @@
 (function() {
   class VerseSongService {
     constructor() {
-      this.cache = {}; // Session cache
+      this.cache = {};
       this.currentVerse = null;
     }
 
-    /**
-     * Get song for a verse reference
-     * Returns object with status immediately if not ready; queues generation in background
-     */
+    _getLang() {
+      return typeof I18n !== 'undefined' ? I18n.getLang() : 'en';
+    }
+
     async getSongForVerse(verseReference) {
-      // Check session cache first
       if (this.cache[verseReference]) {
         return this.cache[verseReference];
       }
 
       try {
         const response = await fetch(
-          `/api/verse-song?ref=${encodeURIComponent(verseReference)}`
+          `/api/verse-song?ref=${encodeURIComponent(verseReference)}&lang=${this._getLang()}`
         );
 
         if (!response.ok) {
@@ -52,7 +51,8 @@
           body: JSON.stringify({
             verseReference,
             playDurationMs,
-            wasLearned
+            wasLearned,
+            lang: this._getLang()
           })
         });
       } catch (err) {
