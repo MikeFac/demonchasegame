@@ -206,7 +206,9 @@
                 }
             }
 
-            const lang = typeof I18n !== 'undefined' ? I18n.getLang() : 'en';
+            const lang = typeof I18n !== 'undefined'
+                ? (typeof I18n.getContentLang === 'function' ? I18n.getContentLang() : I18n.getLang())
+                : 'en';
             const response = await fetch(`/api/verse-song/library?lang=${lang}`, { headers });
             if (!response.ok) {
                 throw new Error(`Library request failed: ${response.status}`);

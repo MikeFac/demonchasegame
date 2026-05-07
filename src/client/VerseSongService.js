@@ -10,7 +10,13 @@
     }
 
     _getLang() {
-      return typeof I18n !== 'undefined' ? I18n.getLang() : 'en';
+      if (typeof I18n !== 'undefined') {
+        if (typeof I18n.getContentLang === 'function') {
+          return I18n.getContentLang();
+        }
+        return I18n.getLang();
+      }
+      return 'en';
     }
 
     async getSongForVerse(verseReference) {

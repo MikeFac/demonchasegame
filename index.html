@@ -1274,6 +1274,8 @@
             <option value="en">English</option>
             <option value="es">Español</option>
             <option value="lg">Luganda</option>
+            <option value="hi">हिन्दी</option>
+            <option value="hi-rom">Romanized Hindi</option>
           </select>
         </div>
         <div class="utility-select">
@@ -1366,6 +1368,8 @@
           <option value="en" selected>English</option>
           <option value="es">Español</option>
           <option value="lg">Luganda</option>
+          <option value="hi">हिन्दी</option>
+          <option value="hi-rom">Romanized Hindi</option>
           <!-- <option value="tl">Tagalog</option> -->
         </select>
         <p style="color: #888; font-size: 11px; margin-top: 5px;" data-i18n="config.comingSoon">More languages coming soon!</p>
@@ -1586,6 +1590,8 @@
   <script src="bible-verses.js"></script>
   <script src="bible-verses-es.js"></script>
   <script src="bible-verses-lg.js?v=1.1"></script>
+  <script src="bible-verses-hi.js"></script>
+  <script src="bible-verses-hi-rom.js"></script>
   <script>
     // Load verses globally for VOTD on main menu (use language-appropriate bundle)
     var _lang = localStorage.getItem('lang') || 'en';
@@ -1593,6 +1599,10 @@
         window.allVerses = loadSelectedVersesES();
     } else if (_lang === 'lg' && typeof loadSelectedVersesLG === 'function') {
         window.allVerses = loadSelectedVersesLG();
+    } else if (_lang === 'hi' && typeof loadSelectedVersesHI === 'function') {
+        window.allVerses = loadSelectedVersesHI();
+    } else if (_lang === 'hi-rom' && typeof loadSelectedVersesHIRom === 'function') {
+        window.allVerses = loadSelectedVersesHIRom();
     } else {
         window.allVerses = loadSelectedVerses();
     }

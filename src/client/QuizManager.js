@@ -21,31 +21,110 @@
         return categorizedVerses;
     }
 
+    const QUIZ_MODE_DEFINITIONS = [
+        { mode: 'first_letter', settingKey: 'firstLetter' },
+        { mode: 'missing_word', settingKey: 'missingWord' },
+        { mode: 'category_match', settingKey: 'categoryMatch' },
+        { mode: 'true_false', settingKey: 'trueFalse' },
+        { mode: 'cloze', settingKey: 'cloze' }
+    ];
+
+    function getCurrentLanguageCapabilities() {
+        if (typeof I18n !== 'undefined' && typeof I18n.getLanguageCapabilities === 'function') {
+            return I18n.getLanguageCapabilities();
+        }
+
+        return {
+            supportsFirstLetterQuiz: true,
+            supportsAutoMissingWord: true,
+            supportsAutoCloze: true,
+            supportedQuizModes: {
+                first_letter: true,
+                missing_word: true,
+                category_match: true,
+                true_false: true,
+                cloze: true
+            }
+        };
+    }
+
+    function hasMissingWordQuizData(verse) {
+        const qd = verse && verse.quizData && verse.quizData.missingWord;
+        return !!(qd && qd.answer && qd.question && Array.isArray(qd.options) && qd.options.length > 0);
+    }
+
+    function hasCategoryMatchQuizData(verse) {
+        const qd = verse && verse.quizData && verse.quizData.categoryMatch;
+        return !!(qd && qd.correctCategory && Array.isArray(qd.distractors));
+    }
+
+    function hasTrueFalseQuizData(verse) {
+        return !!(verse && verse.quizData && verse.quizData.trueFalse);
+    }
+
+    function hasClozeQuizData(verse) {
+        const qd = verse && verse.quizData && verse.quizData.cloze;
+        return !!(qd && qd.question && Array.isArray(qd.answers) && qd.answers.length > 0);
+    }
+
+    function isModeSupportedForVerse(mode, verse, capabilities) {
+        const caps = capabilities || getCurrentLanguageCapabilities();
+        if (!caps.supportedQuizModes || caps.supportedQuizModes[mode] !== true) {
+            return false;
+        }
+
+        switch (mode) {
+            case 'first_letter':
+                return caps.supportsFirstLetterQuiz === true;
+            case 'missing_word':
+                return hasMissingWordQuizData(verse) || caps.supportsAutoMissingWord === true;
+            case 'category_match':
+                return hasCategoryMatchQuizData(verse) || autoGenerateCategoryMatch(verse) !== null;
+            case 'true_false':
+                return hasTrueFalseQuizData(verse) || autoGenerateTrueFalse(verse) !== null;
+            case 'cloze':
+                return hasClozeQuizData(verse) || caps.supportsAutoCloze === true;
+            default:
+                return false;
+        }
+    }
+
     // --- Mode Selection ---
     // Uses quizSettings (global from index.html) to pick a mode via cumulative probability
-    function selectMode() {
+    function selectMode(verse) {
         const settings = (typeof quizSettings !== 'undefined') ? quizSettings
             : { firstLetter: 25, missingWord: 25, categoryMatch: 20, trueFalse: 15, cloze: 15 };
+        const capabilities = getCurrentLanguageCapabilities();
+        const weightedModes = QUIZ_MODE_DEFINITIONS
+            .map(function(def) {
+                return {
+                    mode: def.mode,
+                    weight: settings[def.settingKey] || 0
+                };
+            })
+            .filter(function(def) {
+                return def.weight > 0 && isModeSupportedForVerse(def.mode, verse, capabilities);
+            });
+        const availableModes = weightedModes.length > 0
+            ? weightedModes
+            : QUIZ_MODE_DEFINITIONS
+                .filter(function(def) { return isModeSupportedForVerse(def.mode, verse, capabilities); })
+                .map(function(def) { return { mode: def.mode, weight: 1 }; });
 
-        const roll = Math.floor(Math.random() * 100);
-        let cumulative = 0;
+        if (availableModes.length === 0) {
+            return 'category_match';
+        }
 
-        cumulative += settings.firstLetter;
-        if (roll < cumulative) return 'first_letter';
+        const totalWeight = availableModes.reduce(function(sum, def) { return sum + def.weight; }, 0);
+        let roll = Math.random() * totalWeight;
+        for (let i = 0; i < availableModes.length; i++) {
+            roll -= availableModes[i].weight;
+            if (roll < 0) {
+                return availableModes[i].mode;
+            }
+        }
 
-        cumulative += settings.missingWord;
-        if (roll < cumulative) return 'missing_word';
-
-        cumulative += settings.categoryMatch;
-        if (roll < cumulative) return 'category_match';
-
-        cumulative += settings.trueFalse;
-        if (roll < cumulative) return 'true_false';
-
-        cumulative += settings.cloze;
-        if (roll < cumulative) return 'cloze';
-
-        return 'first_letter';
+        return availableModes[0].mode;
     }
 
     // --- Auto-generation helpers for custom verses without quizData ---
@@ -259,9 +338,11 @@
     function generateMissingWordQuiz(verse) {
         let qd = verse.quizData && verse.quizData.missingWord;
         if (!qd || !qd.answer || !qd.options || !qd.question) {
-            // Auto-generate for custom verses without quizData
+            if (!getCurrentLanguageCapabilities().supportsAutoMissingWord) {
+                return null;
+            }
             qd = autoGenerateMissingWord(verse);
-            if (!qd) return generateFirstLetterQuiz(verse);
+            if (!qd) return null;
         }
 
         return {
@@ -280,7 +361,7 @@
         let qd = verse.quizData && verse.quizData.categoryMatch;
         if (!qd || !qd.correctCategory || !qd.distractors) {
             qd = autoGenerateCategoryMatch(verse);
-            if (!qd) return generateFirstLetterQuiz(verse);
+            if (!qd) return null;
         }
 
         const allOptions = [...qd.distractors.slice(0, 2), qd.correctCategory]
@@ -304,7 +385,7 @@
         let qd = verse.quizData && verse.quizData.trueFalse;
         if (!qd) {
             qd = autoGenerateTrueFalse(verse);
-            if (!qd) return generateFirstLetterQuiz(verse);
+            if (!qd) return null;
         }
 
         // 50% chance: show correct info, 50% chance: show false info
@@ -437,9 +518,12 @@
         
         // Auto-generate if not present
         if (!qd || !qd.question || !qd.answers || qd.answers.length === 0) {
+            if (!getCurrentLanguageCapabilities().supportsAutoCloze) {
+                return null;
+            }
             const generated = autoGenerateCloze(verse.Text);
             if (!generated) {
-                return generateMissingWordQuiz(verse);
+                return null;
             }
             qd = generated;
         }
@@ -468,6 +552,17 @@
             return null;
         }
         return window.discipleshipMissionManager.buildQuizFromQuestion(verse);
+    }
+
+    function buildQuizForMode(mode, verse) {
+        switch (mode) {
+            case 'missing_word': return generateMissingWordQuiz(verse);
+            case 'category_match': return generateCategoryMatchQuiz(verse);
+            case 'true_false': return generateTrueFalseQuiz(verse);
+            case 'cloze': return generateClozeQuiz(verse);
+            case 'first_letter':
+            default: return generateFirstLetterQuiz(verse);
+        }
     }
 
     function getClozeDisplayText(quiz) {
@@ -598,16 +693,22 @@
             return generateDiscipleshipQuiz(verse);
         }
 
-        const mode = selectMode();
-        let quiz;
+        const mode = selectMode(verse);
+        const capabilities = getCurrentLanguageCapabilities();
+        const modePriority = [mode].concat(QUIZ_MODE_DEFINITIONS
+            .map(function(def) { return def.mode; })
+            .filter(function(candidate) { return candidate !== mode; }));
+        let quiz = null;
 
-        switch (mode) {
-            case 'missing_word': quiz = generateMissingWordQuiz(verse); break;
-            case 'category_match': quiz = generateCategoryMatchQuiz(verse); break;
-            case 'true_false': quiz = generateTrueFalseQuiz(verse); break;
-            case 'cloze': quiz = generateClozeQuiz(verse); break;
-            case 'first_letter':
-            default: quiz = generateFirstLetterQuiz(verse); break;
+        for (let i = 0; i < modePriority.length; i++) {
+            const candidateMode = modePriority[i];
+            if (!isModeSupportedForVerse(candidateMode, verse, capabilities)) {
+                continue;
+            }
+            quiz = buildQuizForMode(candidateMode, verse);
+            if (quiz) {
+                break;
+            }
         }
 
         // Belt of Truth: auto-remove one wrong answer if belt available (not for cloze)

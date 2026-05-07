@@ -1,0 +1,378 @@
+{
+  "meta": {
+    "language": "Romanized Hindi",
+    "code": "hi-rom",
+    "direction": "ltr",
+    "quizCapabilities": {
+      "scriptType": "romanized-abugida",
+      "supportsRomanizedDisplay": true,
+      "supportsFirstLetterQuiz": false,
+      "supportsAutoMissingWord": false,
+      "supportsAutoCloze": false,
+      "supportedQuizModes": {
+        "first_letter": false,
+        "missing_word": true,
+        "category_match": true,
+        "true_false": true,
+        "cloze": false
+      }
+    }
+  },
+  "ui": {
+    "loading": "lod ho rahaa hai...",
+    "correct": "sahii!",
+    "incorrect": "galat!",
+    "gameOver": "khe l s maa pt",
+    "victory": "vi j y!",
+    "allDefeated": "sabhii paraajit",
+    "gameOverTitle": "khel samaapt",
+    "levelComplete": "star puuraa huaa!",
+    "nextLevelIn": "{0} sekand men agalaa star...",
+    "health": "svaasthy",
+    "xp": "XP",
+    "level": "star",
+    "ammo": "golaa-baaruud",
+    "statsLine": "svaasthy: {0} XP: {1} star: {2} golaa-baaruud: {3}",
+    "tryAgain": "punh prayaas karen",
+    "returnToLobby": "lobii men lauten",
+    "learnVersesHere": "📖 yahaan vachan siikhen!",
+    "selectCategory": "shrenii chunen",
+    "movementPaused": "⚡ nayaa bhuulabhulaiyaa lod ho rahaa hai - gati rukii huii hai ⚡",
+    "ghost": "bhuut",
+    "offline": "ofalaain",
+    "you": "aap",
+    "player": "khilaarii",
+    "players": "- khilaarii -",
+    "empty": "khaalii",
+    "armorOfGod": "parameshvar kaa kavach",
+    "use": "upayog karen",
+    "active": "sakriy",
+    "auto": "(svachaalit)",
+    "tapToContinue": "jaarii rakhane ke lie taip karen",
+    "dailyChallengeComplete": "✓ dainik chunautii puurii huii!",
+    "dailyChallengeProgress": "dainik: {0}/{1} (pahalaa akshar)",
+    "versesLearnedProgress": "siikhe gae vachan: {0} / {1}",
+    "hpDisplay": "HP: {0}/{1}",
+    "levelShort": "star {0}",
+    "on": "chaaluu",
+    "off": "band"
+  },
+  "stats": {
+    "levelReached": "praapt star: {0}",
+    "monstersKilled": "maare gae raakshas: {0}",
+    "versesLearned": "siikhe gae vachan: {0}",
+    "timePlayed": "khelaa gayaa samay: {0}mi {1}se"
+  },
+  "menu": {
+    "review": "📖 samiikshaa karen",
+    "start": "▶ shuruu karen",
+    "stop": "⏸ roken",
+    "nextSong": "⏭ agalaa giit",
+    "goals": "🎯 lakshy",
+    "verseCotD": "📿 din kaa vachan",
+    "verseTest": "✏️ vachan pariikshaa",
+    "testShieldOn": "🛡️ pariikshaa kavach: chaaluu",
+    "testShieldOff": "🛡️ pariikshaa kavach: band",
+    "songs": "🎵 giit",
+    "affinityHelp": "📘 aatmiiyataa sahaayataa",
+    "leaveGame": "🚪 khel chhoren",
+    "options": "vikalp",
+    "back": "vaapas",
+    "howToPlay": "kaise khelen",
+    "startSoloGame": "ekal khel shuruu karen",
+    "language": "🌐 bhaashaa",
+    "languageCompact": "bhaashaa",
+    "viewMode": "drishy",
+    "view2d": "2D klaasik",
+    "view3d": "3D praayogik",
+    "switchTo2d": "🧭 2D par svich karen",
+    "switchTo3d": "🧭 3D par svich karen",
+    "customGame": "⚙️ kastam gem",
+    "multiplayerGame": "maltiipleyar gem",
+    "missions": "⚔️ mishan"
+  },
+  "review": {
+    "previous": "pichhalaa",
+    "repeat": "doharaaen",
+    "repeatOn": "doharaanaa chaaluu",
+    "meditationOn": "dhyaan",
+    "next": "agalaa",
+    "game": "khel",
+    "reference": "sandarbh: {0}",
+    "learn": "siikhen: {0}"
+  },
+  "overland": {
+    "title": "mishan chunen",
+    "locked": "[band]",
+    "completed": "puuraa huaa",
+    "available": "upalabdh",
+    "startMission": "mishan shuruu karen",
+    "learnVerses": "vachan siikhen",
+    "missionComplete": "mishan puuraa huaa!",
+    "missionFailed": "mishan viphal rahaa",
+    "returnToMap": "nakshe par lauten",
+    "chapterComplete": "adhyaay puuraa huaa!",
+    "unlockChapter": "analok kiyaa gayaa: {0}"
+  },
+  "votd": {
+    "verseOfTheDay": "din kaa vachan",
+    "startYourStreak": "apanii lakiir shuruu karen!",
+    "dayStreak": "🔥 {0} din kii lakiir!",
+    "learnNow": "abhii siikhen",
+    "later": "baad men",
+    "damageBonus": "aaj kaa vachan siikhakar +20% kshati bonas arjit karen!",
+    "playAudio": "odiyo chalaaen",
+    "playing": "chal rahaa hai...",
+    "startLearning": "siikhanaa shuruu karen",
+    "learning": "siikhanaa ({0}/{1} chhipaa huaa)",
+    "readAloud": "vachan ko zor se parhen, yaad karake rikt sthaan bharen.",
+    "replayAudio": "odiyo phir se chalaaen",
+    "hideWord": "shabd chhipaaen",
+    "testNow": "abhii pariikshan karen",
+    "testYourMemory": "apanii yaadadaasht kaa pariikshan karen",
+    "wordOf": "shabd {0} men se {1}",
+    "whatLetter": "lupt shabd kis akshar se shuruu hotaa hai?",
+    "hintLetters": "(sanket: {0} akshar)",
+    "verseComplete": "vachan puuraa huaa!",
+    "wellDone": "shaabaash!",
+    "returningToGame": "khel men vaapas laut rahe hain...",
+    "returningIn": "{0} sekand men vaapas laut rahe hain...",
+    "votdIncorrect": "galat",
+    "votdModalTitle": "📿 din kaa vachan"
+  },
+  "verseTest": {
+    "correct": "sahii!",
+    "wrong": "galat!"
+  },
+  "buffs": {
+    "sword": "talavaar",
+    "shield": "dhaal",
+    "breastplate": "kavach",
+    "sandals": "gati"
+  },
+  "items": {
+    "sword": "talavaar",
+    "belt": "kamaraband",
+    "helmet": "helamet",
+    "breastplate": "chhaatii kaa kavach",
+    "sandals": "chappal",
+    "shield": "dhaal"
+  },
+  "demons": {
+    "Fear": "bhay",
+    "Doubt": "sandeh",
+    "Ignorance": "ajnyaanataa",
+    "Blindness": "andhaapan",
+    "Confusion": "bhram",
+    "Strife": "jhagaraa",
+    "Infirmity": "durbalataa",
+    "Poverty": "gariibii",
+    "Shame": "sharm",
+    "Deception": "dhokhaa",
+    "Condemnation": "doshaaropan",
+    "Unbelief": "avishvaas",
+    "Depression": "avasaad",
+    "Despair": "niraashaa",
+    "Pride": "ahankaar",
+    "Temptation": "pralobhan",
+    "Swarm": "jhund"
+  },
+  "categories": {
+    "Faith": "vishvaas",
+    "Courage": "saahas",
+    "Love": "prem",
+    "Knowledge": "jnyaan",
+    "Wisdom": "buddhi",
+    "Healing": "changaaii",
+    "Forgiveness": "kshamaa",
+    "Good News": "susamaachaar",
+    "Focus": "ekaagrataa",
+    "Endurance": "dhiiraj",
+    "Hope": "aashaa",
+    "Prophecy": "bhavishyavaanii",
+    "Power": "saamarthy",
+    "Identity": "pahachaan"
+  },
+  "lobby": {
+    "title": "deman chez - lobii",
+    "login": {
+      "header": "deman chez",
+      "usernamePlaceholder": "apanaa upayogakartaa naam darj karen",
+      "playOnline": "onalaain khelen",
+      "practiceSolo": "abhyaas (ekal)",
+      "errorUsername": "kripayaa ek upayogakartaa naam darj karen",
+      "errorConnection": "kanekshan truti"
+    },
+    "rooms": {
+      "header": "🎮 gem ruum",
+      "noRooms": "koii ruum upalabdh nahin hai. ek banaaen!",
+      "quickPlay": "⚡ tvarit khel",
+      "createRoom": "+ ruum banaaen",
+      "logout": "logaaaut",
+      "inProgress": "[pragati men]"
+    },
+    "create": {
+      "header": "ruum banaaen",
+      "roomNamePlaceholder": "ruum kaa naam (vaikalpik)",
+      "mapStyle": "nakshe kii shailii:",
+      "monsterDifficulty": "raakshas kii kathinaaii:",
+      "quizBalance": "kviz santulan:",
+      "quizPresetEasy": "aasaan kviz",
+      "quizPresetBalanced": "santulit",
+      "quizPresetHard": "kathin kviz",
+      "createAndJoin": "banaaen aur juren",
+      "back": "← vaapas"
+    },
+    "room": {
+      "header": "ruum",
+      "leave": "chhoren",
+      "readyUp": "taiyaar ho jaaen",
+      "notReady": "taiyaar nahin",
+      "startGame": "khel shuruu karen"
+    }
+  },
+  "config": {
+    "gameSettings": "khel setings",
+    "difficulty": "kathinaaii",
+    "speed": "gati",
+    "mapStyle": "nakshe kii shailii",
+    "quizConfiguration": "kviz konfigareshan",
+    "offlineMode": "ofalaain mod",
+    "privacyPolicy": "gopaniiyataa niiti",
+    "licensing": "laaisensing aur yogadaan",
+    "difficultyEasy": "aasaan",
+    "difficultyMedium": "madhyam",
+    "difficultyHard": "kathin",
+    "speedSlow": "dhiimaa",
+    "speedNormal": "saamaany",
+    "speedFast": "tej",
+    "languageHeader": "🌐 bhaashaa",
+    "comingSoon": "aur bhaashaaen jald aa rahii hain!",
+    "difficultyEasyDesc": "kamajor raakshas",
+    "difficultyNormalDesc": "santulit yuddh",
+    "difficultyHardDesc": "tiivr yuddh",
+    "quizPresetEasy": "aasaan kviz",
+    "quizPresetBalanced": "santulit",
+    "quizPresetHard": "kathin kviz",
+    "pageTitle": "kastam gem setings konfigar karen",
+    "tabBalance": "santulan",
+    "tabLevels": "star",
+    "tabContent": "saamagrii",
+    "monsterHealth": "svaasthy",
+    "monsterDamage": "kshati",
+    "monsterSpeed": "gati",
+    "spawning": "utpatti",
+    "spawnRate": "utpatti dar",
+    "maxMonsters": "adhikatam raakshas",
+    "healingFreq": "changaaii aavritti",
+    "quizTotal": "kul: {0}%",
+    "qualities": "gun",
+    "monsters": "raakshas",
+    "spawnSettings": "utpatti setings",
+    "killToAdvance": "aage barhane ke lie maaren",
+    "spawnRateSec": "utpatti dar (sekand)",
+    "uploadVerses": "vachan apalod karen",
+    "uploadPrompt": "CSV yaa JSON apalod karane ke lie klik karen",
+    "uploadHint": "kolam: sandarbh, paath, shrenii",
+    "orPasteJson": "yaa JSON pest karen",
+    "pastePlaceholder": "[{\"Reference\":\"yuuhannaa 3:16\",\"Text\":\"kyunki parameshvar ne jagat se aisaa prem kiyaa...\",\"Category\":\"prem\"}]",
+    "loadPaste": "pest kiyaa gayaa detaa lod karen",
+    "preview": "puurvaavalokan",
+    "noCustomVerses": "koii kastam vachan lod nahin kiyaa gayaa hai.<br>difolt baaibil vachanon kaa upayog kiyaa jaa rahaa hai.",
+    "useDefaultVerses": "difolt vachanon kaa upayog karen",
+    "clearCustom": "kastam saaf karen",
+    "downloadJson": "JSON daaunalod karen",
+    "playWithSettings": "in setings ke saath khelen",
+    "copyShareLink": "sheyar link kopii karen",
+    "backToMenu": "menuu par vaapas",
+    "copied": "kopii kiyaa gayaa!",
+    "firstLetter": "pahalaa akshar",
+    "missingWord": "lupt shabd",
+    "categoryMatch": "shrenii milaan",
+    "trueFalse": "sahii / galat",
+    "cloze": "kloz (rikt sthaan bharen)",
+    "clozeDesc": "rikt sthaan bharen"
+  },
+  "mapStyles": {
+    "classic": "klaasik kaalakotharii",
+    "narrow": "sankiirn raaste",
+    "labyrinth": "jatil bhuulabhulaiyaa",
+    "open": "khule maidaan",
+    "city": "grid shahar"
+  },
+  "toasts": {
+    "offlineMode": "📡 ofalaain mod - koii sarvar kanekshan nahin",
+    "multiplayerRequiresInternet": "maltiipleyar gem ke lie intaranet kanekshan aavashyak hai",
+    "earnAmmo": "💡 kviz kaa sahii uttar dekar golaa-baaruud kamaaen",
+    "xpLevelUp": "💡 raakshason ko maarane se XP milataa hai aur aapakaa star barhataa hai",
+    "thanksForSharing": "✅ saajhaa karane ke lie dhanyavaad!",
+    "shareCopied": "📋 saajhaa karane kaa paath klipabord par kopii kiyaa gayaa!",
+    "quizTipDamage": "💡 tip: kshati pahunchaane ke lie kviz kaa sahii uttar den!",
+    "goToMenuLearn": "📖 vachan siikhane ke lie menuu par jaaen!",
+    "settingsDifficultyHint": "⚙️ raakshas kii gati aur kathinaaii ko vikalpon men samaayojit kiyaa jaa sakataa hai.",
+    "healingCrosses": "💡 svaasthy bahaal karane ke lie hare kros par chalen"
+  },
+  "quickStart": {
+    "title": "🎮 kaise khelen",
+    "items": [
+      "📖 <strong>pahale vachan siikhen</strong> - adhyayan karane ke lie \"yahaan vachan siikhen!\" kaa upayog karen",
+      "📍 apane charitr ko sthaanaantarit karane ke lie <strong>klik karen</strong>",
+      "✝️ golaa-baaruud kamaane aur hamalaa karane ke lie <strong>kviz kaa uttar den</strong>",
+      "👹 sahii uttar dekar <strong>raakshason ko haraaen</strong>!"
+    ],
+    "startingIn": "{0} men shuruu ho rahaa hai...",
+    "startNow": "abhii shuruu karen"
+  },
+  "tutorial": {
+    "next": "Next",
+    "back": "Back",
+    "close": "Close",
+    "startPlaying": "Start Playing",
+    "pages": [
+      {
+        "title": "svaagat hai",
+        "content": "<h3>varsabaitals: diiman chez kyaa hai?</h3><p>varsabaitals: diiman chez ek ekshan gem hai jahaan aap baaibal ke vachan siikhakar aatmik shatruon se larate hain. daanav aapako kaalakotharii ke kamaron men piichhaa karate hain.</p><p>aapakaa hathiyaar? <span class=\"highlight\">parameshvar kaa vachan.</span> apane hamalon ko shakti dene aur daanavon ko haraane ke lie vachan-prashnottarii kaa sahii uttar den.</p><h3>pro tip: pahale vachan siikhen!</h3><p>jiit kaa rahasy <span class=\"highlight\">apane vachanon ko jaananaa</span> hai. yuddh se pahale vachanon kaa adhyayan aur manan karane ke lie sunahare <span class=\"highlight\">\"yahaan vachan siikhen!\"</span> batan kaa upayog karen. aap parameshvar ke vachan ko jitanaa adhik jaanenge, utane hii adhik shaktishaalii banenge!</p>"
+      },
+      {
+        "title": "lakshy aur chaal",
+        "content": "<h3>lakshy</h3><p>aage barhane ke lie pratyek star men paryaapt raakshason ko haraaen. isamen <span class=\"highlight\">5 star</span> hain, pratyek pichhale se kathin hai. 5 maanachitr shailiyon men se chunen: klaasik kaalakotharii, sankare raaste, jatil bhuulabhulaiyaa, khule maidaan, aur grid sitii.</p><h3>chalanaa</h3><p>apane charitr ko vahaan le jaane ke lie gem kshetr men kahiin bhii <span class=\"highlight\">taip yaa klik</span> karen. aapakaa charitr svachaalit ruup se lakshy kii or chalataa hai.</p><p>aap galiyaaron se jure kaalakotharii ke kamaron se hokar gujarate hain. diivaaren aapakaa raastaa rokatii hain - khule raaste khojen!</p>"
+      },
+      {
+        "title": "laraaii",
+        "content": "<h3>haathaapaaii kii laraaii</h3><p>jab aap kisii daanav ke kariib pahunchate hain, to laraaii svachaalit ruup se shuruu ho jaatii hai. aap aur daanav har 0.7 sekand men vaar karate hain.</p><ul><li>aap keval tabhii nukasaan pahunchaate hain jab aapakaa <span class=\"highlight\">pichhalaa prashnottarii uttar sahii</span> thaa.</li><li>daanav hameshaa palatavaar karataa hai (jab tak aapake paas dhaal n ho).</li><li>pratyek daanav prakaar kaa adhikatam nukasaan alag hotaa hai.</li></ul><h3>golii chalaanaa</h3><p>kisii daanav par prakshepy daagane ke lie us par <span class=\"highlight\">taip karen</span>. pratyek shot men 1 emo kharch hotaa hai. prashnottarii kaa sahii uttar dekar adhik emo kamaaen (pratyek sahii uttar par +5).</p>"
+      },
+      {
+        "title": "baaibal vachan prashnottarii",
+        "content": "<h3>prashnottarii kaise kaam karatii hai</h3><p>skriin ke nichale bhaag men hameshaa ek baaibal vachan dikhaayaa jaataa hai jisamen kuchh shabd khaalii hote hain. gaayab shabdon ke <span class=\"highlight\">sahii pahale akshar</span> dikhaane vaale batan par taip karen.</p><h3>yah kyon maayane rakhataa hai</h3><ul><li><span class=\"highlight\">sahii uttar:</span> aapake haathaapaaii ke hamale nukasaan pahunchaate hain, aur aap +5 emo kamaate hain.</li><li><span class=\"highlight\">galat uttar:</span> aapake hamale tab tak kuchh nahin karate jab tak aap agalaa sahii nahin karate.</li></ul><h3>vachan shreniyaan</h3><p>vachan vishvaas, saahas aur prem jaisii shreniyon dvaaraa samuuhit kie gae hain. shrenii chayanakartaa kholane aur yah chunane ke lie ki aap kin vachanon kaa adhyayan karanaa chaahate hain, skriin ke shiirsh par <span class=\"highlight\">shrenii ke naam par taip karen</span>.</p>"
+      },
+      {
+        "title": "sanbaddhataa sahaayataa",
+        "content": "<h3>gunon kaa daanavon se milaan karen</h3><p>aapakii vartamaan yuddh gunavattaa prabhaavit karatii hai ki aap pratyek daanav prakaar ko kitanaa nukasaan pahunchaate hain. kuchh joriyaan bahut adhik maar karatii hain, aur kuchh thorii kamajor hotii hain.</p><ul><li><span class=\"highlight\">vishvaas</span> bhay, sandeh aur avishvaas ke khilaaph majabuut hai.</li><li><span class=\"highlight\">changaaii</span> durbalataa ke khilaaph sabase achchhii hai aur avasaad ke khilaaph madad karatii hai.</li><li><span class=\"highlight\">buddhi</span> bhram, dhokhe aur ajnyaanataa ke khilaaph achchhaa kaam karatii hai.</li></ul><p>ek ran ke dauraan, <span class=\"highlight\">haimabargar menuu</span> kholen aur puurn milaan gaaid dekhane ke lie <span class=\"highlight\">sanbaddhataa sahaayataa</span> par taip karen.</p>"
+      },
+      {
+        "title": "saamaan - bhaag 1",
+        "content": "<h3>svaasthy bindu</h3><p>kaalakotharii men hare kros dikhaaii dete hain. <span class=\"highlight\">25 svaasthy</span> bahaal karane ke lie un par chalen. ek samay men adhikatam 2 maujuud hote hain.</p><h3>vishvaas kii dhaal</h3><p>pratyek star par ek sunaharaa hiiraa ek baar dikhaaii detaa hai. ise apanii inventrii men ikatthaa karane ke lie us par chalen.</p><ul><li>apanii inventrii kholane ke lie <span class=\"key\">i</span> batan (uupar-baaen) par taip karen.</li><li>dhaal ko sakriy karane ke lie <span class=\"highlight\">upayog karen</span> par taip karen.</li><li>sakriy hone par (10 sekand), aapako daanavon se <span class=\"highlight\">shuuny nukasaan</span> hotaa hai.</li><li>ek sunaharii chamak aapake charitr ko gher letii hai aur ek taaimar shesh samay dikhaataa hai.</li></ul>"
+      },
+      {
+        "title": "saamaan - bhaag 2",
+        "content": "<h3>parameshvar kaa kavach</h3><p>parameshvar ke kavach ke tukare ikatthaa karen jaise ve kaalakotharii men dikhaaii dete hain:</p><ul><li><span class=\"highlight\">aatmaa kii talavaar</span> - haathaapaaii ke nukasaan men vriddhi.</li><li><span class=\"highlight\">saty kaa kamaraband</span> - atirikt surakshaa.</li><li><span class=\"highlight\">uddhaar kaa helamet</span> - atirikt svaasthy.</li><li><span class=\"highlight\">dhaarmikataa kaa kavach</span> - nukasaan men kamii.</li><li><span class=\"highlight\">shaanti ke saindal</span> - chaal gati men vriddhi.</li></ul>"
+      },
+      {
+        "title": "khilaarii kii pragati",
+        "content": "<h3>star barhaanaa</h3><p>daanavon ko maarane se pratyek par <span class=\"highlight\">10 XP</span> milataa hai. jaise-jaise aap XP praapt karate hain, aapakaa khilaarii star barhataa hai:</p><ul><li>uchch star = adhik adhikatam svaasthy.</li><li>star barhane par puurn svaasthy bahaalii.</li></ul>"
+      },
+      {
+        "title": "gem ke star",
+        "content": "<p>isamen <span class=\"highlight\">5 gem star</span> hain. aage barhane ke lie 60% raakshason ko haraaen:</p><ul><li><span class=\"highlight\">star 1 (patthar kii kaalakotharii):</span> bhay aur ajnyaanataa - dhiime, kamajor.</li><li><span class=\"highlight\">star 2 (prithvii kii kaalakotharii):</span> kalah, bhram aur durbalataa - tej, adhik maarak.</li><li><span class=\"highlight\">star 3 (kristal kaalakotharii):</span> nindaa, avishvaas, avasaad aur sandeh - tej, khataranaak.</li><li><span class=\"highlight\">star 4 (chhaayaa kaalakotharii):</span> abhimaan, sustii kii aatmaa aur iizebel - vishesh kshamataaon ke saath majabuut.</li><li><span class=\"highlight\">star 5 (inpharno kaalakotharii):</span> sabhii daanav prakaar - barhate HP ke saath antim chunautii.</li></ul><p>pratyek star ek alag rang thiim ke saath ek nayaa kaalakotharii leaaut utpann karataa hai.</p>"
+      },
+      {
+        "title": "sujhaav",
+        "content": "<h3>shiirsh sujhaav</h3><ul><li><span class=\"highlight\">pahale apane vachan siikhen!</span> vachanon kaa adhyayan aur manan karane ke lie sunahare \"yahaan vachan siikhen!\" batan par taip karen - unhen achchhii tarah jaananaa lagaataar jiitane kii kunjii hai.</li><li>kisii daanav se jurane se pahale <span class=\"highlight\">pahale prashnottarii kaa uttar den</span> - anyathaa aapake hamale kuchh nahin karate.</li><li>galiyaaron kaa apane phaayade ke lie upayog karen - daanav diivaaron par phans sakate hain.</li><li>apane vishvaas kii dhaal ko kaii piichhaa karane vaalon ke saath kathin laraaiyon ke lie bachaa kar rakhen.</li><li>haathaapaaii men jaane se pahale dushmanon ko kamajor karane ke lie duur se golii maaren.</li><li>apane emo kaauntar par nazar rakhen - stok men bane rahane ke lie prashnottarii kaa uttar dete rahen.</li></ul>"
+      },
+      {
+        "title": "daanav kshamataaen",
+        "content": "<h3>daanav prakaar</h3><ul><li><span class=\"highlight\">piichhaa karane vaale</span> - aapakaa lagaataar piichhaa karate hain.</li><li><span class=\"highlight\">bhatakane vaale</span> - betaratiib dhang se chalate hain, lekin yadi aap kariib aate hain to bhii chot pahunchaate hain.</li></ul><h3>vishesh kshamataaen (baad ke star)</h3><ul><li><span class=\"highlight\">phriijing oraa</span> - paas hone par aapakii chaal ko dhiimaa kar detaa hai.</li><li><span class=\"highlight\">abhimaan kavach</span> - tuutane tak lie gae nukasaan ko kam karataa hai.</li><li><span class=\"highlight\">spirit dren</span> - hit hone par aapakaa emo churaa letaa hai.</li><li><span class=\"highlight\">kalah daish</span> - gati ke ek jhatake ke saath aap par hamalaa karataa hai.</li></ul><p>shubhakaamanaaen, aur vachan aapakii talavaar bane!</p>"
+      }
+    ]
+  }
+}

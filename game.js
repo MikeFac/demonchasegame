@@ -1031,6 +1031,12 @@ function loadVersesFromBundle() {
     } else if (lang === 'lg' && typeof loadSelectedVersesLG === 'function') {
         console.log('Loading Luganda verses from bundle');
         verses = loadSelectedVersesLG();
+    } else if (lang === 'hi' && typeof loadSelectedVersesHI === 'function') {
+        console.log('Loading Hindi verses from bundle');
+        verses = loadSelectedVersesHI();
+    } else if (lang === 'hi-rom' && typeof loadSelectedVersesHIRom === 'function') {
+        console.log('Loading Romanized Hindi verses from bundle');
+        verses = loadSelectedVersesHIRom();
     } else if (typeof loadSelectedVerses === 'function') {
         console.log('Loading English verses from bundle');
         verses = loadSelectedVerses();
@@ -3047,6 +3053,10 @@ async function init() {
                 verses = loadSelectedVersesES();
             } else if (_vlang === 'lg' && typeof loadSelectedVersesLG === 'function') {
                 verses = loadSelectedVersesLG();
+            } else if (_vlang === 'hi' && typeof loadSelectedVersesHI === 'function') {
+                verses = loadSelectedVersesHI();
+            } else if (_vlang === 'hi-rom' && typeof loadSelectedVersesHIRom === 'function') {
+                verses = loadSelectedVersesHIRom();
             } else if (typeof loadSelectedVerses === 'function') {
                 verses = loadSelectedVerses();
             }

@@ -14,6 +14,50 @@ const I18n = (function () {
     let _strings = {};
     let _loaded = false;
     let _lang = 'en';
+    const _defaultLanguageCapabilities = {
+        scriptType: 'alphabetic',
+        supportsRomanizedDisplay: false,
+        supportsFirstLetterQuiz: true,
+        supportsAutoMissingWord: true,
+        supportsAutoCloze: true,
+        supportedQuizModes: {
+            first_letter: true,
+            missing_word: true,
+            category_match: true,
+            true_false: true,
+            cloze: true
+        }
+    };
+    const _languageCapabilityOverrides = {
+        hi: {
+            scriptType: 'abugida',
+            supportsRomanizedDisplay: true,
+            supportsFirstLetterQuiz: false,
+            supportsAutoMissingWord: false,
+            supportsAutoCloze: false,
+            supportedQuizModes: {
+                first_letter: false,
+                missing_word: true,
+                category_match: true,
+                true_false: true,
+                cloze: false
+            }
+        },
+        'hi-rom': {
+            scriptType: 'romanized-abugida',
+            supportsRomanizedDisplay: true,
+            supportsFirstLetterQuiz: false,
+            supportsAutoMissingWord: false,
+            supportsAutoCloze: false,
+            supportedQuizModes: {
+                first_letter: false,
+                missing_word: true,
+                category_match: true,
+                true_false: true,
+                cloze: false
+            }
+        }
+    };
     
     // Minimal English fallback for offline use
     const _fallbackStrings = {
@@ -265,6 +309,65 @@ const I18n = (function () {
         return _lang;
     }
 
+    function getContentLang(langCode) {
+        const code = (langCode || _lang || 'en').toLowerCase();
+        if (code === 'hi-rom') {
+            return 'hi';
+        }
+        return code;
+    }
+
+    function getLanguageCapabilities(langCode) {
+        const code = (langCode || _lang || 'en').toLowerCase();
+        const capabilities = {
+            scriptType: _defaultLanguageCapabilities.scriptType,
+            supportsRomanizedDisplay: _defaultLanguageCapabilities.supportsRomanizedDisplay,
+            supportsFirstLetterQuiz: _defaultLanguageCapabilities.supportsFirstLetterQuiz,
+            supportsAutoMissingWord: _defaultLanguageCapabilities.supportsAutoMissingWord,
+            supportsAutoCloze: _defaultLanguageCapabilities.supportsAutoCloze,
+            supportedQuizModes: {
+                first_letter: _defaultLanguageCapabilities.supportedQuizModes.first_letter,
+                missing_word: _defaultLanguageCapabilities.supportedQuizModes.missing_word,
+                category_match: _defaultLanguageCapabilities.supportedQuizModes.category_match,
+                true_false: _defaultLanguageCapabilities.supportedQuizModes.true_false,
+                cloze: _defaultLanguageCapabilities.supportedQuizModes.cloze
+            }
+        };
+        const override = _languageCapabilityOverrides[code];
+        const localeOverride = (_strings && _strings.meta && _strings.meta.quizCapabilities && code === _lang.toLowerCase())
+            ? _strings.meta.quizCapabilities
+            : null;
+
+        function applyOverride(source) {
+            if (!source || typeof source !== 'object') return;
+            if (typeof source.scriptType === 'string') capabilities.scriptType = source.scriptType;
+            if (typeof source.supportsRomanizedDisplay === 'boolean') capabilities.supportsRomanizedDisplay = source.supportsRomanizedDisplay;
+            if (typeof source.supportsFirstLetterQuiz === 'boolean') capabilities.supportsFirstLetterQuiz = source.supportsFirstLetterQuiz;
+            if (typeof source.supportsAutoMissingWord === 'boolean') capabilities.supportsAutoMissingWord = source.supportsAutoMissingWord;
+            if (typeof source.supportsAutoCloze === 'boolean') capabilities.supportsAutoCloze = source.supportsAutoCloze;
+            if (source.supportedQuizModes && typeof source.supportedQuizModes === 'object') {
+                const modes = source.supportedQuizModes;
+                Object.keys(capabilities.supportedQuizModes).forEach(function(mode) {
+                    if (typeof modes[mode] === 'boolean') {
+                        capabilities.supportedQuizModes[mode] = modes[mode];
+                    }
+                });
+            }
+        }
+
+        applyOverride(override);
+        applyOverride(localeOverride);
+
+        if (!capabilities.supportedQuizModes.first_letter) {
+            capabilities.supportsFirstLetterQuiz = false;
+        }
+        if (!capabilities.supportedQuizModes.cloze) {
+            capabilities.supportsAutoCloze = false;
+        }
+
+        return capabilities;
+    }
+
     /** Check if strings are loaded */
     function isLoaded() {
         return _loaded;
@@ -280,6 +383,8 @@ const I18n = (function () {
         getQuickStart,
         updateDOM,
         getLang,
+        getContentLang,
+        getLanguageCapabilities,
         isLoaded
     };
 })();
