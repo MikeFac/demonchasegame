@@ -13,6 +13,45 @@ const INPUT_FILE = path.join(__dirname, '..', 'public', 'locales', 'en.json');
 const OUTPUT_FILE = path.join(__dirname, '..', 'public', 'locales', 'hi.json');
 const ROMANIZED_OUTPUT_FILE = path.join(__dirname, '..', 'public', 'locales', 'hi-rom.json');
 const ROMANIZED_ONLY = process.argv.includes('--romanized-only');
+const CATEGORY_TRANSLATIONS_HI = {
+  Anger: 'क्रोध',
+  Bitterness: 'कड़वाहट',
+  Courage: 'साहस',
+  Cowardice: 'कायरता',
+  Deception: 'धोखा',
+  Deliverance: 'मुक्ति',
+  Despair: 'निराशा',
+  Doubt: 'संदेह',
+  Endurance: 'धीरज',
+  Faith: 'विश्वास',
+  Fear: 'भय',
+  Focus: 'एकाग्रता',
+  Forgiveness: 'क्षमा',
+  'Good News': 'सुसमाचार',
+  Greed: 'लालच',
+  Hatred: 'घृणा',
+  Healing: 'चंगाई',
+  Hope: 'आशा',
+  Humility: 'नम्रता',
+  Identity: 'पहचान',
+  Intercession: 'मध्यस्थता',
+  Jealousy: 'ईर्ष्या',
+  Joy: 'आनन्द',
+  Knowledge: 'ज्ञान',
+  Laziness: 'आलस्य',
+  Love: 'प्रेम',
+  Lust: 'वासना',
+  Power: 'सामर्थ्य',
+  Praise: 'स्तुति',
+  Prayer: 'प्रार्थना',
+  Pride: 'अहंकार',
+  Prophecy: 'भविष्यवाणी',
+  Prosperity: 'समृद्धि',
+  Purity: 'पवित्रता',
+  Selfishness: 'स्वार्थ',
+  Vanity: 'दंभ',
+  Wisdom: 'बुद्धि'
+};
 
 function callGemini(prompt, apiKey) {
   return new Promise((resolve, reject) => {
@@ -90,6 +129,17 @@ function parseJsonResponseOrSave(text, rawFile) {
 async function buildRomanizedLocale(hiLocale) {
   console.log('Generating Romanized Hindi locale locally...');
   return deepRomanizeValue(hiLocale);
+}
+
+function applyCategoryOverrides(locale, categoryMap) {
+  return {
+    ...locale,
+    categories: {
+      ...categoryMap,
+      ...((locale && locale.categories) || {}),
+      ...categoryMap
+    }
+  };
 }
 
 async function main() {
@@ -186,7 +236,7 @@ ${JSON.stringify(tutorial.pages, null, 2)}`;
       }
     }
 
-    hi = { ...translated };
+    hi = applyCategoryOverrides({ ...translated }, CATEGORY_TRANSLATIONS_HI);
     hi.meta = {
       ...(hi.meta || {}),
       language: 'हिन्दी',
@@ -214,10 +264,15 @@ ${JSON.stringify(tutorial.pages, null, 2)}`;
       console.error(`Cannot use --romanized-only because ${OUTPUT_FILE} does not exist`);
       process.exit(1);
     }
-    hi = JSON.parse(fs.readFileSync(OUTPUT_FILE, 'utf8'));
+    hi = applyCategoryOverrides(JSON.parse(fs.readFileSync(OUTPUT_FILE, 'utf8')), CATEGORY_TRANSLATIONS_HI);
   }
 
   const hiRom = await buildRomanizedLocale(hi);
+  hiRom.categories = {
+    ...deepRomanizeValue(CATEGORY_TRANSLATIONS_HI),
+    ...((hiRom && hiRom.categories) || {}),
+    ...deepRomanizeValue(CATEGORY_TRANSLATIONS_HI)
+  };
   hiRom.meta = {
     ...(hiRom.meta || {}),
     language: 'Romanized Hindi',
