@@ -1037,6 +1037,9 @@ function loadVersesFromBundle() {
     } else if (lang === 'hi-rom' && typeof loadSelectedVersesHIRom === 'function') {
         console.log('Loading Romanized Hindi verses from bundle');
         verses = loadSelectedVersesHIRom();
+    } else if (lang === 'zw' && typeof loadSelectedVersesZW === 'function') {
+        console.log('Loading Swahili verses from bundle');
+        verses = loadSelectedVersesZW();
     } else if (typeof loadSelectedVerses === 'function') {
         console.log('Loading English verses from bundle');
         verses = loadSelectedVerses();

@@ -1,0 +1,379 @@
+{
+  "meta": {
+    "language": "Kiswahili",
+    "code": "zw",
+    "direction": "ltr"
+  },
+  "ui": {
+    "loading": "Inapakia...",
+    "correct": "Sahihi!",
+    "incorrect": "Si sahihi!",
+    "gameOver": "M C H E Z O   U M E I S H A",
+    "victory": "USHINDI!",
+    "allDefeated": "WOTE WALIOSHINDWA",
+    "gameOverTitle": "MCHEZO UMEISHA",
+    "levelComplete": "Kiwango Kimekamilika!",
+    "nextLevelIn": "Kiwango kinachofuata katika {0}s...",
+    "health": "Afya",
+    "xp": "XP",
+    "level": "Kiwango",
+    "ammo": "Risasi",
+    "statsLine": "Afya: {0}  XP: {1}  Kiwango: {2}  Risasi: {3}",
+    "tryAgain": "Jaribu Teni",
+    "returnToLobby": "Rudi kwenye Lobby",
+    "learnVersesHere": "📖 JIFUNZE MASHUARI HAPA!",
+    "selectCategory": "Chagua Kundi",
+    "movementPaused": "⚡ INAPAKIA LABIRINTHI MPYA - HARAKATI IMEZIMI ⚡",
+    "ghost": "ROHO",
+    "offline": "NJE YA MTANDAO",
+    "you": "Wewe",
+    "player": "Mchezaji",
+    "players": "— Wachezaji —",
+    "empty": "Tupu",
+    "armorOfGod": "Silaha za Mungu",
+    "use": "Tumia",
+    "active": "Inafanya kazi",
+    "auto": "(otomatiki)",
+    "tapToContinue": "Bonyeza kuendelea",
+    "dailyChallengeComplete": "✓ Changamoto ya Kila Siku Imekamilika!",
+    "dailyChallengeProgress": "Kila siku: {0}/{1} (Herufi ya Kwanza)",
+    "versesLearnedProgress": "Mashuarui Umejifunza: {0} / {1}",
+    "hpDisplay": "HP: {0}/{1}",
+    "levelShort": "Kiw {0}",
+    "on": "WAZIMU",
+    "off": "IMEZIMI"
+  },
+  "stats": {
+    "levelReached": "Kiwango Ulichofikia: {0}",
+    "monstersKilled": "Vibaya Uliyowaua: {0}",
+    "versesLearned": "Mashuarui Umejifunza: {0}",
+    "timePlayed": "Muda Uliochezwa: {0}d {1}s"
+  },
+  "menu": {
+    "review": "📖 Kagua",
+    "start": "▶ Anza",
+    "stop": "⏸ Simamisha",
+    "nextSong": "⏭ Wimbo Ujao",
+    "goals": "🎯 Lengo",
+    "verseCotD": "📿 Sura ya Siku",
+    "verseTest": "✏️ Jaribu Sura",
+    "testShieldOn": "🛡️ Ngao ya Jaribu: WAZIMU",
+    "testShieldOff": "🛡️ Ngao ya Jaribu: IMEZIMI",
+    "songs": "🎵 Nyimbo",
+    "affinityHelp": "📘 Usaidizi wa Ulinganifu",
+    "leaveGame": "🚪 Ondoka kwenye Mchezo",
+    "options": "Chaguo",
+    "back": "Rudi",
+    "howToPlay": "Jinsi ya Kucheza",
+    "startSoloGame": "Anza Mchezo wa Peke",
+    "language": "🌐 Lugha",
+    "languageCompact": "Lugha",
+    "viewMode": "Mtazamo",
+    "view2d": "2D ya Kawaida",
+    "view3d": "3D ya Jaribio",
+    "switchTo2d": "🧭 Badilisha kwenda 2D",
+    "switchTo3d": "🧭 Badilisha kwenda 3D",
+    "customGame": "⚙️ Mchezo wa Desturi",
+    "multiplayerGame": "Mchezo wa Wengi",
+    "missions": "⚔️ Misheni"
+  },
+  "review": {
+    "previous": "Iliyopita",
+    "repeat": "Rudia",
+    "repeatOn": "Rudia Imewezeshwa",
+    "meditationOn": "Kufikiri",
+    "next": "Mbele",
+    "game": "Mchezo",
+    "reference": "Marejeo: {0}",
+    "learn": "Jifunze: {0}"
+  },
+  "overland": {
+    "title": "Chagua Misheni",
+    "locked": "[IMEFUNGWA]",
+    "completed": "Imekamilika",
+    "available": "Inapatikana",
+    "startMission": "Anza Misheni",
+    "learnVerses": "Jifunze Mashuarui",
+    "missionComplete": "Misheni Imekamilika!",
+    "missionFailed": "Misheni Imeshindwa",
+    "returnToMap": "Rudi kwenye Ramani",
+    "chapterComplete": "Sura Imekamilika!",
+    "unlockChapter": "Imefunguliwa: {0}"
+  },
+  "votd": {
+    "verseOfTheDay": "Sura ya Siku",
+    "startYourStreak": "Anza mstari wako!",
+    "dayStreak": "🔥 {0} siku mfululizo!",
+    "learnNow": "Jifunze Sasa",
+    "later": "Baadaye",
+    "damageBonus": "Jifunze sura ya leo upate bonasi ya +20% uharibifu!",
+    "playAudio": "Cheza Sauti",
+    "playing": "Inacheza...",
+    "startLearning": "Anza Kujifunza",
+    "learning": "Kujifunza ({0}/{1} zimefichwa)",
+    "readAloud": "Soma sura kwa sauti, ujaze nafasi kutoka kumbukumbu.",
+    "replayAudio": "Rudia Sauti",
+    "hideWord": "Ficha Neno",
+    "testNow": "Jaribu Sasa",
+    "testYourMemory": "Jaribu Kumbukumbu Yako",
+    "wordOf": "Neno {0} ya {1}",
+    "whatLetter": "Neno linalokosea linaanza na herufi gani?",
+    "hintLetters": "(Kidokezo: {0} herufi)",
+    "verseComplete": "Sura Imekamilika!",
+    "wellDone": "Vizuri sana!",
+    "returningToGame": "Inarudi kwenye mchezo...",
+    "returningIn": "Inarudi katika {0}s...",
+    "votdIncorrect": "SI SAHIHI",
+    "votdModalTitle": "📿 Sura ya Siku"
+  },
+  "verseTest": {
+    "correct": "Sahihi!",
+    "wrong": "Si sahihi!"
+  },
+  "quiz": {
+    "firstLetters": "Herufi za kwanza za maneno yaliyokosea:",
+    "missingWord": "Jaza neno linalokosea:",
+    "categoryMatch": "Sifa gani hii sura inafundisha?",
+    "trueFalse": "KWELI",
+    "falseOption": "SIO KWELI",
+    "cloze": "Jaza nafasi:"
+  },
+  "buffs": {
+    "sword": "UPANGA",
+    "shield": "NGAO",
+    "breastplate": "VAA",
+    "sandals": "SPEED"
+  },
+  "items": {
+    "sword": "Upanga",
+    "belt": "Mkanda",
+    "helmet": "Kofia",
+    "breastplate": "Mavazi",
+    "sandals": "Viatu",
+    "shield": "Ngao"
+  },
+  "demons": {
+    "Fear": "Woga",
+    "Doubt": "Shaka",
+    "Ignorance": "Ujinga",
+    "Blindness": "Upofu",
+    "Confusion": "Machafuko",
+    "Strife": "Fitina",
+    "Infirmity": "Ugonjwa",
+    "Poverty": "Umaskini",
+    "Shame": "Aibu",
+    "Deception": "Udanganyifu",
+    "Condemnation": "Hukumu",
+    "Unbelief": "Kukataa Imani",
+    "Depression": "Mawazo",
+    "Despair": "Kushindwa Hope",
+    "Pride": "Kiburi",
+    "Temptation": "Jaribio",
+    "Swarm": "Kundi"
+  },
+  "categories": {
+    "Faith": "Imani",
+    "Courage": "Ujasiri",
+    "Love": "Upendo",
+    "Knowledge": "Ujuzi",
+    "Wisdom": "Hekima",
+    "Healing": "Uponyaji",
+    "Forgiveness": "Msamaha",
+    "Good News": "Habari Njema",
+    "Focus": "Makini",
+    "Endurance": "Subira",
+    "Hope": "Tumaini",
+    "Prophecy": "Uabudu",
+    "Power": "Nguvu",
+    "Identity": "Utambulisho",
+    "Prayer": "Sala",
+    "Purity": "Usafi",
+    "Prosperity": "Mafanikio",
+    "Humility": "Unyenyekevu",
+    "Joy": "Faraja",
+    "Deliverance": "Uokolevu",
+    "Praise": "Sifa"
+  },
+  "lobby": {
+    "title": "Demon Chase - Lobby",
+    "login": {
+      "header": "Demon Chase",
+      "usernamePlaceholder": "Ingiza jina lako",
+      "playOnline": "Cheza Mtandaoni",
+      "practiceSolo": "Mazoezi (Peke)",
+      "errorUsername": "Tafadhali ingiza jina",
+      "errorConnection": "Hitilafu ya muunganisho"
+    },
+    "rooms": {
+      "header": "🎮 Vyumba vya Mchezo",
+      "noRooms": "Hakuna vyumba. Unda kimoja!",
+      "quickPlay": "⚡ Cheza Haraka",
+      "createRoom": "+ Unda Chumba",
+      "logout": "Toka",
+      "inProgress": "[INAENDALEA]"
+    },
+    "create": {
+      "header": "Unda Chumba",
+      "roomNamePlaceholder": "Jina la chumba (si lazima)",
+      "mapStyle": "Aina ya Ramani:",
+      "monsterDifficulty": "Ugumu wa Vibaya:",
+      "quizBalance": "Mizani ya Jaribio:",
+      "quizPresetEasy": "Jaribio Rahisi",
+      "quizPresetBalanced": "Mizani",
+      "quizPresetHard": "Jaribio Ngumu",
+      "createAndJoin": "Unda na Jiunge",
+      "back": "← Rudi"
+    },
+    "room": {
+      "header": "Chumba",
+      "leave": "Ondoka",
+      "readyUp": "Uko Tayari",
+      "notReady": "Hauko Tayari",
+      "startGame": "Anza Mchezo"
+    }
+  },
+  "config": {
+    "gameSettings": "Mipangilio ya Mchezo",
+    "difficulty": "Ugumu",
+    "speed": "Kasi",
+    "mapStyle": "Aina ya Ramani",
+    "quizConfiguration": "Mipangilio ya Jaribio",
+    "offlineMode": "Hali nje ya mtandao",
+    "privacyPolicy": "Sera ya Faragha",
+    "licensing": "Leseni na Michango",
+    "difficultyEasy": "Rahisi",
+    "difficultyMedium": "Kawaida",
+    "difficultyHard": "Ngumu",
+    "speedSlow": "Polepole",
+    "speedNormal": "Kawaida",
+    "speedFast": "Haraka",
+    "languageHeader": "🌐 Lugha",
+    "comingSoon": "Lugha zaidi zinajia!",
+    "difficultyEasyDesc": "Vibaya vidogo",
+    "difficultyNormalDesc": "Mapigano ya sawa",
+    "difficultyHardDesc": "Mapigano makali",
+    "quizPresetEasy": "Jaribio Rahisi",
+    "quizPresetBalanced": "Mizani",
+    "quizPresetHard": "Jaribio Ngumu",
+    "pageTitle": "Pangilia Mipangilio ya Mchezo",
+    "tabBalance": "Mizani",
+    "tabLevels": "Viwango",
+    "tabContent": "Maudhui",
+    "monsterHealth": "Afya",
+    "monsterDamage": "Uharibifu",
+    "monsterSpeed": "Kasi",
+    "spawning": "Kuzaliwa",
+    "spawnRate": "Kiwango pa Kuzaliwa",
+    "maxMonsters": "Vibaya Maksimumu",
+    "healingFreq": "Marudio ya Uponyaji",
+    "quizTotal": "Jumla: {0}%",
+    "qualities": "Sifa",
+    "monsters": "Vibaya",
+    "spawnSettings": "Mipangilio pa Kuzaliwa",
+    "killToAdvance": "Waua kuendelea",
+    "spawnRateSec": "Kiwango pa Kuzaliwa (sekunde)",
+    "uploadVerses": "Pakia Mashuarui",
+    "uploadPrompt": "Bonyeza kupakia CSV au JSON",
+    "uploadHint": "Nguzo: Marejeo, Sura, Kundi",
+    "orPasteJson": "Au Bandika JSON",
+    "pastePlaceholder": "[{\"Reference\":\"Yohana 3:16\",\"Text\":\"Kwa maana Mungu alimpenda...\",\"Category\":\"Love\"}]",
+    "loadPaste": "Pakia Data Iliyobandikwa",
+    "preview": "Tazama",
+    "noCustomVerses": "Hakuna mashuarui ya desturi.<br>Inatumia mashuarui ya Biblia.",
+    "useDefaultVerses": "Tumia Mashuarui ya Kawaida",
+    "clearCustom": "Futa Desturi",
+    "downloadJson": "Pakua JSON",
+    "playWithSettings": "Cheza na Mipangilio Hii",
+    "copyShareLink": "Nakili Kiungo",
+    "backToMenu": "Rudi kwenye Menyu",
+    "copied": "Imenakiliwa!",
+    "firstLetter": "Herufi ya Kwanza",
+    "missingWord": "Neno Lililokosea",
+    "categoryMatch": "Linganisha Kundi",
+    "trueFalse": "Kweli / Si Kweli",
+    "cloze": "Jaza Nafasi",
+    "clozeDesc": "Jaza nafasi"
+  },
+  "mapStyles": {
+    "classic": "Laba ya Kawaida",
+    "narrow": "Njia Nyembamba",
+    "labyrinth": "Laba changamano",
+    "open": "Nchi Wazi",
+    "city": "Jiji la Miraba"
+  },
+  "tutorial": {
+    "next": "Mbele",
+    "back": "Rudi",
+    "close": "Funga",
+    "startPlaying": "Anza Kucheza",
+    "pages": [
+      {
+        "title": "Karibu",
+        "content": "<h3>VerseBattles: Demon Chase ni nini?</h3><p>VerseBattles: Demon Chase ni mchezo wa vitendo ambapo unapigana na maadui wa kiroho kwa kujifunza mashuarui ya Biblia. Mashetani wanakukimbiza kupitia vyumba vya laba.</p><p>Silaha yako? <span class=\"highlight\">Neno la Mungu.</span> Jibu maswali ya mashuarui vizuri ili kuongeza nguvu za mashambulizi yako na kuwashinda mashetani.</p><h3>Bahasha: Jifunze Mashuarui Kwanza!</h3><p>Siri ya kushinda ni <span class=\"highlight\">kujua mashuarui yako</span>. Tumia kitufe cha dhahabu <span class=\"highlight\">\"JIFUNZE MASHUARI HAPA!\"</span> kusoma na kufikiri kuhusu mashuarui kabla ya mapigano. Kadri unavyozaidi kujua Neno la Mungu, ndivyo unavyokuwa na nguvu zaidi!</p>"
+      },
+      {
+        "title": "Lengo na Kusonga",
+        "content": "<h3>Lengo</h3><p>Shinda vibaya vya kutosha katika kila kiwango ili kuendelea. Kuna <span class=\"highlight\">viwango 5</span>, kila kimoja kikiwa ngumu zaidi kuliko kingine. Chagua kutoka kwa aina 5 za ramani: Laba ya Kawaida, Njia Nyembamba, Laba changamano, Nchi Wazi, na Jiji la Miraba.</p><h3>Kusonga</h3><p><span class=\"highlight\">Bonyeza au gusa</span> popote katika eneo la mchezo ili kusogeza kiumbe chako. Kiumbe chako kinatembea kuelekea lengo kiotomatiki.</p><p>Unatembea kupitia vyumba vya laba vinavyounganishwa na njia. Kuta zinazuia njia yako — tafuta maeneo ya wazi!</p>"
+      },
+      {
+        "title": "Mapigano",
+        "content": "<h3>Mapigano ya Karibu</h3><p>Unapokaribia shetani, mapigano yanaanza kiotomatiki. Wewe na shetani mnabadilishana mapigo kila sekunde 0.7.</p><ul><li>Unaweza kusababisha uharibifu tu ikiwa <span class=\"highlight\">jibu lako la mwisho la jaribio lilikuwa sahihi</span></li><li>Shetani hupiga nyuma kila wakati (isipokuwa una ngao)</li><li>Kila aina ya shetani ina uharibifu wake wa juu</li></ul><h3>Kupiga Risasi</h3><p><span class=\"highlight\">Bonyeza kwenye shetani</span> kulipiga risasi. Kila pigo inatumia risasi 1. Pata risasi zaidi kwa kujibu maswali vizuri (+5 kwa kila jibu sahihi).</p>"
+      },
+      {
+        "title": "Maswali ya Mashuarui ya Biblia",
+        "content": "<h3>Jinsi Maswali Yanavyofanya Kazi</h3><p>Sura ya Biblia inaonyeshwa daima chini ya skrini na maneno machache yamefichwa. Bonyeza kitufe kinachoonyesha <span class=\"highlight\">herufi za kwanza sahihi</span> za maneno yaliyofichwa.</p><h3>Kwa Nini Ni Muhimu</h3><ul><li><span class=\"highlight\">Jibu sahihi:</span> Mashambulizi yako yanawahi, na upata risasi +5</li><li><span class=\"highlight\">Jibu lililo makosa:</span> Mashambulizi yako hayafanyi kitu hadi ujibu moja vizuri</li></ul><h3>Makundi ya Mashuarui</h3><p>Mashuarui yamegawanywa katika makundi kama Imani, Ujasiri, na Upendo. <span class=\"highlight\">Bonyeza jina la kundi</span> juu ya skrini kufungua kichagua kundi na kuchagua mashuarui unayotaka kusoma.</p>"
+      },
+      {
+        "title": "Usaidizi wa Ulinganifu",
+        "content": "<h3>Linganisha Sifa na Mashetani</h3><p>Sifa yako ya sasa ya mapigano huathiri kiasi gani cha uharibifu unaowapa kila aina ya shetani. Baadhi ya maelekeo yanapiga kwa nguvu zaidi, na baadhi ni dhaifu kidogo.</p><ul><li><span class=\"highlight\">Imani</span> imetajwa na Woga, Shaka, na Kukataa Imani</li><li><span class=\"highlight\">Uponyaji</span> ni bora dhidi ya Ugonjwa na husaidia dhidi ya Mawazo</li><li><span class=\"highlight\">Hekima</span> inafanya kazi vizuri dhidi ya Machafuko, Udanganyifu, na Ujinga</li></ul><p>Dakika za mchezo, fungua <span class=\"highlight\">menyu</span> na bonyeza <span class=\"highlight\">Usaidizi wa Ulinganifu</span> kuona mwongozo kamili wa mechi.</p>"
+      },
+      {
+        "title": "Vitu - Sehemu ya 1",
+        "content": "<h3>Vitu vya Uponyaji</h3><p>Misalaba ya kijani inaonekana katika laba. Tembea juu yake ili <span class=\"highlight\">kurudisha afya 25</span>. Hadi 2 ziko kwa wakati mmoja.</p><h3>Ngao ya Imani</h3><p>Almasi ya dhahabu inaonekana mara moja kwa kila kiwango. Tembea juu yake kuikusanya kwenye hazina yako.</p><ul><li>Bonyeza kitufe cha <span class=\"key\">i</span> (juu-kushoto) kufungua hazina yako</li><li>Bonyeza <span class=\"highlight\">Tumia</span> kuwasha ngao</li><li>Wakati inafanya kazi (sekunde 10), haupati <span class=\"highlight\">uharibifu wowote</span> kutoka kwa mashetani</li><li>Mwangaza wa dhahabu unazunguka kiumbe chako na saa inaonyesha muda uliobaki</li></ul>"
+      },
+      {
+        "title": "Vitu - Sehemu ya 2",
+        "content": "<h3>Silaha za Mungu</h3><p>Kusanya vipande vya Silaha za Mungu vinavyoonekana katika laba:</p><ul><li><span class=\"highlight\">Upanga wa Roho</span> — uharibifu zaidi wa mapigano ya karibu</li><li><span class=\"highlight\">Mkanda wa Kweli</span> — ulinzi wa ziada</li><li><span class=\"highlight\">Kofia ya Wokovu</span> — afya ya ziada</li><li><span class=\"highlight\">Mavazi ya Haki</span> — kupunguza uharibifu</li><li><span class=\"highlight\">Viatu ya Amani</span> — kuongeza kasi ya kusonga</li></ul>"
+      },
+      {
+        "title": "Maendeleo ya Mchezaji",
+        "content": "<h3>Kupanda Viwango</h3><p>Kuuwa mashetani hukupa <span class=\"highlight\">XP 10</span> kila moja. Kadri unavyopata XP, kiwango chako cha mchezaji hupanda:</p><ul><li>Kiwango cha juu = afya ya juu zaidi</li><li>Afya kamili inarudishwa unapopanda kiwango</li></ul>"
+      },
+      {
+        "title": "Viwango vya Mchezo",
+        "content": "<p>Kuna <span class=\"highlight\">viwango 5 vya mchezo</span>. Shinda 60% ya mashetani ili kuendelea:</p><ul><li><span class=\"highlight\">Kiwango 1 (Laba ya Mawe):</span> Woga na Ujinga — polepole, dhaifu</li><li><span class=\"highlight\">Kiwango 2 (Laba ya Udongo):</span> Fitina, Machafuko na Ugonjwa — haraka, yanapiga vibaya</li><li><span class=\"highlight\">Kiwango 3 (Laba ya Kristali):</span> Hukumu, Kukataa Imani, Mawazo na Shaka — haraka, hatari</li><li><span class=\"highlight\">Kiwango 4 (Laba ya Kivuli):</span> Kiburi, Roho ya Usingizi na Yezebeli — imara na uwezo maalum</li><li><span class=\"highlight\">Kiwango 5 (Laba ya Moto):</span> Aina zote za mashetani — changamoto ya mwisho na afya inayopanda</li></ul><p>Kila kiwango hujenga mpango mpya wa laba na rangi tofauti.</p>"
+      },
+      {
+        "title": "Vidokezo",
+        "content": "<h3>Vidokezo Bora</h3><ul><li><span class=\"highlight\">Jifunze mashuarui yako kwanza!</span> Bonyeza kitufe cha dhahabu \"JIFUNZE MASHUARI HAPA!\" kusoma na kufikiri — kuyajua vizuri ndiyo ufunguo wa kushinda kila wakati</li><li><span class=\"highlight\">Jibu jaribio kwanza</span> kabla ya kushindana na shetani — vinginevyo mashambulizi yako hayafanyi kitu</li><li>Tumia njia kwa manufaa yako — mashetani wanaweza kukwama kwenye kuta</li><li>Hifadhi Ngao yako ya Imani kwa mapigano magumu na wakimbiaji wengi</li><li>Piga risasi kutoka mbali ili kupunguza nguvu za adui kabla ya kuingia katika mapigano ya karibu</li><li>Tazama kihesabu cha Risasi — endelea kujibu maswali ili kubaki na risasi</li></ul>"
+      },
+      {
+        "title": "Uwezo wa Mashetani",
+        "content": "<h3>Aina za Mashetani</h3><ul><li><span class=\"highlight\">Wakimbiaji</span> — wanakufuata bila kusita</li><li><span class=\"highlight\">Tembea-bure</span> — wanatembea ovyo, bado wanakuuma ukipata karibu</li></ul><h3>Uwezo Maalum (Viwango vya Juu)</h3><ul><li><span class=\"highlight\">Nguvu ya Baridi</span> — inapunguza kasi yako ukiwa karibu</li><li><span class=\"highlight\">Vaa la Kiburi</span> — inapunguza uharibifu uliopokea hadi ivunjike</li><li><span class=\"highlight\">Kunyonya Roho</span> — inachukua Risasi zako inapokupa</li><li><span class=\"highlight\">Fitina ya Dash</span> — inakukimbia kwa kasi ya ghafla</li></ul><p>Heri njema, na Neno liwe upanga wako!</p>"
+      }
+    ]
+  },
+  "quickStart": {
+    "title": "🎮 Jinsi ya Kucheza",
+    "items": [
+      "📖 <strong>Jifunze mashuarui kwanza</strong> — tumia \"JIFUNZE MASHUARI HAPA!\" kusoma",
+      "📍 <strong>Bonyeza</strong> kusogeza kiumbe chako",
+      "✝️ <strong>Jibu maswali</strong> kupata risasi na kushambulia",
+      "👹 <strong>Shinda mashetani</strong> kwa kujibu sahihi!"
+    ],
+    "startingIn": "Inanza katika {0}...",
+    "startNow": "Anza Sasa"
+  },
+  "toasts": {
+    "offlineMode": "📡 Hali Nje ya Mtandao — Hakuna muunganisho wa seva",
+    "multiplayerRequiresInternet": "Mchezo wa Wengi unahitaji muunganisho wa mtandao",
+    "earnAmmo": "💡 Pata risasi kwa kujibu maswali vizuri",
+    "xpLevelUp": "💡 Kuuwa mashetani hukupa XP na kuinua kiwango chako",
+    "thanksForSharing": "✅ Asante kwa kushiriki!",
+    "shareCopied": "📋 Maandishi ya kushiriki yamenakiliwa!",
+    "quizTipDamage": "💡 VIDOKEZO: Jibu maswali vizuri kusababisha uharibifu!",
+    "goToMenuLearn": "📖 Nenda kwenye Menyu kujifunza mashuarui!",
+    "settingsDifficultyHint": "⚙️ Kasi na ugumu wa mashetani unaweza kubadilishwa katika Chaguo.",
+    "healingCrosses": "💡 Tembea juu ya misalara ya kijani kurudisha afya"
+  }
+}

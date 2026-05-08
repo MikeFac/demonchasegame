@@ -1276,6 +1276,7 @@
             <option value="lg">Luganda</option>
             <option value="hi">हिन्दी</option>
             <option value="hi-rom">Romanized Hindi</option>
+            <option value="zw">Kiswahili</option>
           </select>
         </div>
         <div class="utility-select">
@@ -1370,6 +1371,7 @@
           <option value="lg">Luganda</option>
           <option value="hi">हिन्दी</option>
           <option value="hi-rom">Romanized Hindi</option>
+          <option value="zw">Kiswahili</option>
           <!-- <option value="tl">Tagalog</option> -->
         </select>
         <p style="color: #888; font-size: 11px; margin-top: 5px;" data-i18n="config.comingSoon">More languages coming soon!</p>
@@ -1592,6 +1594,7 @@
   <script src="bible-verses-lg.js?v=1.1"></script>
   <script src="bible-verses-hi.js"></script>
   <script src="bible-verses-hi-rom.js"></script>
+  <script src="bible-verses-zw.js?v=1.0"></script>
   <script>
     // Load verses globally for VOTD on main menu (use language-appropriate bundle)
     var _lang = localStorage.getItem('lang') || 'en';
@@ -1603,6 +1606,8 @@
         window.allVerses = loadSelectedVersesHI();
     } else if (_lang === 'hi-rom' && typeof loadSelectedVersesHIRom === 'function') {
         window.allVerses = loadSelectedVersesHIRom();
+    } else if (_lang === 'zw' && typeof loadSelectedVersesZW === 'function') {
+        window.allVerses = loadSelectedVersesZW();
     } else {
         window.allVerses = loadSelectedVerses();
     }
