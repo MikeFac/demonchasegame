@@ -1,4 +1,4 @@
-var CACHE_NAME = 'versebattles-v12';
+var CACHE_NAME = 'versebattles-v13';
 
 // HTML routes that should behave like part of the installable app.
 var APP_NAVIGATION_PATHS = {
