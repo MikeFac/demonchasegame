@@ -4,23 +4,42 @@ const Sermon = require('../models/Sermon');
 const DEFAULT_MODEL = 'openrouter/auto';
 const OPENROUTER_URL = 'https://openrouter.ai/api/v1/chat/completions';
 
+function getLanguageInstruction(lang) {
+  switch ((lang || 'en').toLowerCase()) {
+    case 'hi':
+      return 'The Bible verse is in Hindi written in Devanagari. Write the devotional and prayer in natural, modern Hindi using Devanagari script.';
+    case 'hi-rom':
+      return 'The Bible verse is in Romanized Hindi written in Latin script. Write the devotional and prayer in clear, natural Romanized Hindi using only Latin letters, not Devanagari.';
+    case 'lg':
+      return 'The Bible verse is in Luganda. Write the devotional and prayer in natural, pastoral Luganda.';
+    case 'es':
+      return 'The Bible verse is in Spanish. Write the devotional and prayer in natural, clear Spanish.';
+    default:
+      return 'The Bible verse is in English. Write the devotional and prayer in natural, clear English.';
+  }
+}
+
 /**
  * Generate a short devotional sermon for a Bible verse via OpenRouter.
  * Returns { pages: string[], prayer: string }.
  */
-async function generateSermonText(verseReference, verseText, category) {
+async function generateSermonText(verseReference, verseText, category, lang) {
   const apiKey = process.env.OPENROUTER_API_KEY;
   if (!apiKey) {
     throw new Error('OPENROUTER_API_KEY not set in environment');
   }
 
   const model = process.env.SERMON_MODEL || DEFAULT_MODEL;
+  const languageInstruction = getLanguageInstruction(lang);
 
   const systemPrompt = `You are a warm, practical Bible teacher. You write short devotional messages that help everyday people apply Scripture to their lives. Your tone is encouraging, direct, and conversational — not academic or preachy. Keep language simple.`;
 
   const userPrompt = `Write a short practical devotional message based on this Bible verse:
 
 "${verseText}" — ${verseReference} (Category: ${category})
+
+Language instruction:
+- ${languageInstruction}
 
 Requirements:
 - 3 to 5 short paragraphs (each paragraph should be 2-4 sentences)
@@ -97,10 +116,13 @@ Return ONLY valid JSON. No markdown fences, no extra text.`;
  * Get or generate a sermon for a verse reference.
  * Returns a Sermon document (from DB cache or freshly generated).
  */
-async function getOrGenerateSermon(verseReference, verseText, category) {
+async function getOrGenerateSermon(verseReference, verseText, category, lang) {
+  const sermonLang = (lang || 'en').toLowerCase();
+
   // Check for existing completed sermon
   const existing = await Sermon.findOne({
     verseReference,
+    lang: sermonLang,
     generationStatus: 'completed'
   }).sort({ createdAt: -1 });
 
@@ -111,13 +133,14 @@ async function getOrGenerateSermon(verseReference, verseText, category) {
   // Generate new sermon
   const sermon = new Sermon({
     verseReference,
+    lang: sermonLang,
     verseText,
     category,
     generationStatus: 'pending'
   });
 
   try {
-    const result = await generateSermonText(verseReference, verseText, category);
+    const result = await generateSermonText(verseReference, verseText, category, sermonLang);
     sermon.pages = result.pages;
     sermon.prayer = result.prayer;
     sermon.model = result.model;

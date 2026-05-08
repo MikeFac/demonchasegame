@@ -6,6 +6,11 @@ const SermonSchema = new mongoose.Schema({
     required: true,
     index: true
   },
+  lang: {
+    type: String,
+    default: 'en',
+    index: true
+  },
   verseText: {
     type: String,
     required: true
@@ -42,7 +47,7 @@ const SermonSchema = new mongoose.Schema({
   }
 });
 
-// Compound index: find most recent sermon for a verse
-SermonSchema.index({ verseReference: 1, createdAt: -1 });
+// Compound index: find most recent sermon for a verse in a specific language
+SermonSchema.index({ verseReference: 1, lang: 1, createdAt: -1 });
 
 module.exports = mongoose.model('Sermon', SermonSchema);

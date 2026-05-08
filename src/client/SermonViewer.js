@@ -24,6 +24,13 @@
         CANVAS_HEIGHT = c.height || 600;
     }
 
+    function getCurrentLanguage() {
+        if (typeof I18n !== 'undefined' && typeof I18n.getLang === 'function') {
+            return I18n.getLang();
+        }
+        return 'en';
+    }
+
     /**
      * Fetch sermon from the API and display it.
      * @param {string} verseReference - e.g. "John 3:16"
@@ -46,7 +53,8 @@
         const params = new URLSearchParams({
             ref: verseReference,
             text: verseText,
-            category: category || 'General'
+            category: category || 'General',
+            lang: getCurrentLanguage()
         });
 
         fetch('/api/sermon?' + params.toString())

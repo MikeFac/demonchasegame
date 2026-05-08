@@ -71,6 +71,7 @@ async function main() {
         // Check if already exists
         const existing = await Sermon.findOne({
           verseReference: verse.Reference,
+          lang: 'en',
           generationStatus: 'completed'
         });
 
@@ -83,10 +84,11 @@ async function main() {
         // Generate new devotional
         try {
           console.log(`   🔄 ${verse.Reference} — generating...`);
-          const result = await generateSermonText(verse.Reference, verse.Text, category);
+          const result = await generateSermonText(verse.Reference, verse.Text, category, 'en');
 
           const sermon = new Sermon({
             verseReference: verse.Reference,
+            lang: 'en',
             verseText: verse.Text,
             category: category,
             pages: result.pages,
@@ -110,6 +112,7 @@ async function main() {
           // Save failed record for retry later
           const failed = new Sermon({
             verseReference: verse.Reference,
+            lang: 'en',
             verseText: verse.Text,
             category: category,
             pages: [],

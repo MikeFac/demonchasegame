@@ -10,17 +10,18 @@ const { getOrGenerateSermon } = require('../services/SermonService');
  */
 router.get('/', async (req, res) => {
   try {
-    const { ref, text, category } = req.query;
+    const { ref, text, category, lang } = req.query;
 
     if (!ref || !text) {
       return res.status(400).json({ error: 'Missing ref or text parameter' });
     }
 
-    const sermon = await getOrGenerateSermon(ref, text, category || 'General');
+    const sermon = await getOrGenerateSermon(ref, text, category || 'General', lang || 'en');
 
     if (sermon.generationStatus === 'completed') {
       return res.json({
         verseReference: ref,
+        lang: sermon.lang,
         status: 'ready',
         pages: sermon.pages,
         prayer: sermon.prayer,
@@ -49,7 +50,7 @@ router.get('/', async (req, res) => {
  */
 router.post('/regenerate', async (req, res) => {
   try {
-    const { ref, text, category } = req.body;
+    const { ref, text, category, lang } = req.body;
 
     if (!ref || !text) {
       return res.status(400).json({ error: 'Missing ref or text' });
@@ -57,13 +58,14 @@ router.post('/regenerate', async (req, res) => {
 
     // Delete existing sermons for this verse so a fresh one is generated
     const Sermon = require('../models/Sermon');
-    await Sermon.deleteMany({ verseReference: ref });
+    await Sermon.deleteMany({ verseReference: ref, lang: (lang || 'en').toLowerCase() });
 
-    const sermon = await getOrGenerateSermon(ref, text, category || 'General');
+    const sermon = await getOrGenerateSermon(ref, text, category || 'General', lang || 'en');
 
     if (sermon.generationStatus === 'completed') {
       return res.json({
         verseReference: ref,
+        lang: sermon.lang,
         status: 'ready',
         pages: sermon.pages,
         prayer: sermon.prayer,
