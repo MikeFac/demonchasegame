@@ -3,6 +3,7 @@ const Sermon = require('../models/Sermon');
 // Configurable — set SERMON_MODEL in .env to override
 const DEFAULT_MODEL = 'openrouter/auto';
 const OPENROUTER_URL = 'https://openrouter.ai/api/v1/chat/completions';
+const generationJobs = new Map();
 
 function getLanguageInstruction(lang) {
   switch ((lang || 'en').toLowerCase()) {
@@ -112,9 +113,47 @@ Return ONLY valid JSON. No markdown fences, no extra text.`;
   };
 }
 
+function getSermonJobKey(verseReference, lang) {
+  return `${(lang || 'en').toLowerCase()}::${verseReference}`;
+}
+
+function triggerSermonGeneration(sermon, verseText, category, lang) {
+  const sermonLang = (lang || 'en').toLowerCase();
+  const jobKey = getSermonJobKey(sermon.verseReference, sermonLang);
+
+  if (generationJobs.has(jobKey)) {
+    return generationJobs.get(jobKey);
+  }
+
+  const job = (async function() {
+    try {
+      const result = await generateSermonText(sermon.verseReference, verseText, category, sermonLang);
+      sermon.pages = result.pages;
+      sermon.prayer = result.prayer;
+      sermon.model = result.model;
+      sermon.generationStatus = 'completed';
+      sermon.generationError = undefined;
+    } catch (err) {
+      sermon.generationStatus = 'failed';
+      sermon.generationError = err.message;
+      console.error(`Sermon generation failed for ${sermon.verseReference} (${sermonLang}):`, err.message);
+    }
+
+    await sermon.save();
+    return sermon;
+  })();
+
+  generationJobs.set(jobKey, job);
+  job.finally(function() {
+    generationJobs.delete(jobKey);
+  });
+
+  return job;
+}
+
 /**
- * Get or generate a sermon for a verse reference.
- * Returns a Sermon document (from DB cache or freshly generated).
+ * Get or queue a sermon for a verse reference.
+ * Returns a Sermon document in completed/pending/failed state.
  */
 async function getOrGenerateSermon(verseReference, verseText, category, lang) {
   const sermonLang = (lang || 'en').toLowerCase();
@@ -130,7 +169,28 @@ async function getOrGenerateSermon(verseReference, verseText, category, lang) {
     return existing;
   }
 
-  // Generate new sermon
+  const pending = await Sermon.findOne({
+    verseReference,
+    lang: sermonLang,
+    generationStatus: 'pending'
+  }).sort({ createdAt: -1 });
+
+  if (pending) {
+    triggerSermonGeneration(pending, verseText, category, sermonLang);
+    return pending;
+  }
+
+  const failed = await Sermon.findOne({
+    verseReference,
+    lang: sermonLang,
+    generationStatus: 'failed'
+  }).sort({ createdAt: -1 });
+
+  if (failed) {
+    return failed;
+  }
+
+  // Create a pending sermon row and generate in the background.
   const sermon = new Sermon({
     verseReference,
     lang: sermonLang,
@@ -139,19 +199,8 @@ async function getOrGenerateSermon(verseReference, verseText, category, lang) {
     generationStatus: 'pending'
   });
 
-  try {
-    const result = await generateSermonText(verseReference, verseText, category, sermonLang);
-    sermon.pages = result.pages;
-    sermon.prayer = result.prayer;
-    sermon.model = result.model;
-    sermon.generationStatus = 'completed';
-  } catch (err) {
-    sermon.generationStatus = 'failed';
-    sermon.generationError = err.message;
-    console.error(`Sermon generation failed for ${verseReference}:`, err.message);
-  }
-
   await sermon.save();
+  triggerSermonGeneration(sermon, verseText, category, sermonLang);
   return sermon;
 }
 

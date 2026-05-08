@@ -8,6 +8,11 @@
     let isLoading = false;
     let loadError = null;
     let returnCallback = null;   // Called when user exits the viewer
+    let pollTimer = null;
+    let pendingRequest = null;
+    let pollAttemptCount = 0;
+    const MAX_POLL_ATTEMPTS = 45;
+    const POLL_DELAY_MS = 2000;
 
     let CANVAS_WIDTH = 400;
     let CANVAS_HEIGHT = 600;
@@ -31,6 +36,85 @@
         return 'en';
     }
 
+    function clearPollTimer() {
+        if (pollTimer) {
+            clearTimeout(pollTimer);
+            pollTimer = null;
+        }
+    }
+
+    function schedulePoll() {
+        clearPollTimer();
+        pollTimer = setTimeout(function() {
+            if (pendingRequest) {
+                requestSermon();
+            }
+        }, POLL_DELAY_MS);
+    }
+
+    function handleSermonResponse(data) {
+        if (data.status === 'ready' && data.pages && data.prayer) {
+            const requestInfo = pendingRequest;
+            clearPollTimer();
+            pendingRequest = null;
+            isLoading = false;
+            sermonData = {
+                pages: data.pages,
+                prayer: data.prayer,
+                verseReference: requestInfo ? requestInfo.verseReference : data.verseReference
+            };
+            totalPages = data.pages.length + 1;
+            currentPage = 0;
+            render();
+            return;
+        }
+
+        if (data.status === 'pending') {
+            isLoading = true;
+            loadError = null;
+            pollAttemptCount++;
+            if (pollAttemptCount >= MAX_POLL_ATTEMPTS) {
+                clearPollTimer();
+                pendingRequest = null;
+                isLoading = false;
+                loadError = 'Devotional generation is taking longer than expected. Please retry in a moment.';
+            } else {
+                schedulePoll();
+            }
+            render();
+            return;
+        }
+
+        clearPollTimer();
+        pendingRequest = null;
+        isLoading = false;
+        loadError = data.error || 'Could not generate devotional. Try again later.';
+        render();
+    }
+
+    function requestSermon() {
+        if (!pendingRequest) return;
+
+        const params = new URLSearchParams({
+            ref: pendingRequest.verseReference,
+            text: pendingRequest.verseText,
+            category: pendingRequest.category || 'General',
+            lang: pendingRequest.lang
+        });
+
+        fetch('/api/sermon?' + params.toString())
+            .then(function (res) { return res.json(); })
+            .then(handleSermonResponse)
+            .catch(function (err) {
+                clearPollTimer();
+                pendingRequest = null;
+                isLoading = false;
+                loadError = 'Network error. Check your connection.';
+                console.error('Sermon fetch error:', err);
+                render();
+            });
+    }
+
     /**
      * Fetch sermon from the API and display it.
      * @param {string} verseReference - e.g. "John 3:16"
@@ -45,44 +129,23 @@
         isLoading = true;
         loadError = null;
         returnCallback = onExit || null;
+        clearPollTimer();
+        pollAttemptCount = 0;
+        pendingRequest = {
+            verseReference: verseReference,
+            verseText: verseText,
+            category: category || 'General',
+            lang: getCurrentLanguage()
+        };
 
         // Render loading state immediately
         render();
-
-        // Fetch from API
-        const params = new URLSearchParams({
-            ref: verseReference,
-            text: verseText,
-            category: category || 'General',
-            lang: getCurrentLanguage()
-        });
-
-        fetch('/api/sermon?' + params.toString())
-            .then(function (res) { return res.json(); })
-            .then(function (data) {
-                isLoading = false;
-                if (data.status === 'ready' && data.pages && data.prayer) {
-                    sermonData = {
-                        pages: data.pages,
-                        prayer: data.prayer,
-                        verseReference: verseReference
-                    };
-                    totalPages = data.pages.length + 1; // +1 for prayer page
-                    currentPage = 0;
-                } else {
-                    loadError = data.error || 'Could not generate devotional. Try again later.';
-                }
-                render();
-            })
-            .catch(function (err) {
-                isLoading = false;
-                loadError = 'Network error. Check your connection.';
-                console.error('Sermon fetch error:', err);
-                render();
-            });
+        requestSermon();
     }
 
     function close() {
+        clearPollTimer();
+        pendingRequest = null;
         sermonData = null;
         isLoading = false;
         loadError = null;
@@ -128,7 +191,7 @@
 
         c.fillStyle = '#888';
         c.font = '14px Arial';
-        c.fillText('This may take a few seconds', CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2 + 15);
+        c.fillText('This may take up to a minute', CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2 + 15);
 
         // Animated dots
         var dots = '.'.repeat((Math.floor(Date.now() / 500) % 3) + 1);
@@ -286,8 +349,16 @@
                 } else if (r.name === 'done' || r.name === 'close') {
                     close();
                 } else if (r.name === 'retry') {
-                    // Re-attempt — caller must call open() again
-                    close();
+                    if (pendingRequest) {
+                        sermonData = null;
+                        isLoading = true;
+                        loadError = null;
+                        pollAttemptCount = 0;
+                        render();
+                        requestSermon();
+                    } else {
+                        close();
+                    }
                 }
                 return true;
             }

@@ -30,6 +30,14 @@ router.get('/', async (req, res) => {
       });
     }
 
+    if (sermon.generationStatus === 'pending') {
+      return res.status(202).json({
+        verseReference: ref,
+        lang: sermon.lang,
+        status: 'pending'
+      });
+    }
+
     // Generation failed
     res.status(502).json({
       verseReference: ref,
@@ -71,6 +79,14 @@ router.post('/regenerate', async (req, res) => {
         prayer: sermon.prayer,
         model: sermon.model,
         createdAt: sermon.createdAt
+      });
+    }
+
+    if (sermon.generationStatus === 'pending') {
+      return res.status(202).json({
+        verseReference: ref,
+        lang: sermon.lang,
+        status: 'pending'
       });
     }
 
