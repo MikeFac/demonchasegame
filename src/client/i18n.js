@@ -88,6 +88,14 @@ const I18n = (function () {
             switchTo2d: "🧭 Switch to 2D",
             switchTo3d: "🧭 Switch to 3D"
         },
+        quiz: {
+            firstLetters: "First letters of missing words:",
+            missingWord: "Fill in the missing word:",
+            categoryMatch: "Which quality does this verse teach?",
+            trueFalse: "TRUE",
+            falseOption: "FALSE",
+            cloze: "Fill in the blanks:"
+        },
         toasts: {
             offlineMode: "Offline mode enabled",
             earnAmmo: "Answer correctly to earn ammo!",
@@ -106,6 +114,19 @@ const I18n = (function () {
             timePlayed: "Time Played: {0}"
         }
     };
+
+    function _getNestedValue(source, key) {
+        const parts = key.split('.');
+        let val = source;
+        for (const part of parts) {
+            if (val && typeof val === 'object' && part in val) {
+                val = val[part];
+            } else {
+                return undefined;
+            }
+        }
+        return val;
+    }
 
     /**
      * Determine which locale to load.
@@ -199,15 +220,9 @@ const I18n = (function () {
      * @returns {string}
      */
     function t(key, ...args) {
-        const parts = key.split('.');
-        let val = _strings;
-        for (const part of parts) {
-            if (val && typeof val === 'object' && part in val) {
-                val = val[part];
-            } else {
-                // Key not found — return the key itself as fallback
-                return key;
-            }
+        let val = _getNestedValue(_strings, key);
+        if (typeof val !== 'string') {
+            val = _getNestedValue(_fallbackStrings, key);
         }
         if (typeof val !== 'string') return key;
 
@@ -243,6 +258,29 @@ const I18n = (function () {
             return _strings.categories[catKey];
         }
         return catKey;
+    }
+
+    /**
+     * Resolve a localized category label back to its canonical English key.
+     * Returns the original value if no localized match is found.
+     * @param {string} categoryValue
+     * @returns {string}
+     */
+    function getCategoryKey(categoryValue) {
+        if (typeof categoryValue !== 'string' || !categoryValue) {
+            return categoryValue;
+        }
+        if (_strings.categories && _strings.categories[categoryValue]) {
+            return categoryValue;
+        }
+        if (_strings.categories) {
+            for (const [key, label] of Object.entries(_strings.categories)) {
+                if (label === categoryValue) {
+                    return key;
+                }
+            }
+        }
+        return categoryValue;
     }
 
     /**
@@ -379,6 +417,7 @@ const I18n = (function () {
         t,
         tDemon,
         tCategory,
+        getCategoryKey,
         getTutorialPages,
         getQuickStart,
         updateDOM,
@@ -394,3 +433,4 @@ window.I18n = I18n;
 window.t = I18n.t;
 window.tDemon = I18n.tDemon;
 window.tCategory = I18n.tCategory;
+window.getCategoryKey = I18n.getCategoryKey;

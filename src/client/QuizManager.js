@@ -48,6 +48,24 @@
         };
     }
 
+    function getCategoryKey(categoryValue) {
+        if (typeof I18n !== 'undefined' && typeof I18n.getCategoryKey === 'function') {
+            return I18n.getCategoryKey(categoryValue);
+        }
+        if (typeof categoryValue === 'string') {
+            return categoryValue;
+        }
+        return '';
+    }
+
+    function displayCategory(categoryValue) {
+        const categoryKey = getCategoryKey(categoryValue);
+        if (typeof window !== 'undefined' && typeof window.tCategory === 'function') {
+            return window.tCategory(categoryKey);
+        }
+        return categoryKey || categoryValue;
+    }
+
     function hasMissingWordQuizData(verse) {
         const qd = verse && verse.quizData && verse.quizData.missingWord;
         return !!(qd && qd.answer && qd.question && Array.isArray(qd.options) && qd.options.length > 0);
@@ -223,6 +241,7 @@
         }
 
         return {
+            // Keep canonical category keys in quiz data and localize only at render time.
             correctCategory: verse.Category,
             distractors: others.slice(0, 2)
         };
@@ -364,17 +383,22 @@
             if (!qd) return null;
         }
 
-        const allOptions = [...qd.distractors.slice(0, 2), qd.correctCategory]
-            .sort(() => Math.random() - 0.5);
-
-        const displayCategory = (typeof tCategory === 'function') ? tCategory : function(c) { return c; };
+        const correctCategoryKey = getCategoryKey(qd.correctCategory);
+        const optionEntries = [...qd.distractors.slice(0, 2), qd.correctCategory]
+            .map(function(categoryValue) {
+                return {
+                    key: getCategoryKey(categoryValue),
+                    text: displayCategory(categoryValue)
+                };
+            })
+            .sort(function() { return Math.random() - 0.5; });
 
         return {
             mode: 'category_match',
             promptText: verse.Text,
             questionLabel: typeof t === 'function' ? t('quiz.categoryMatch') : 'Which quality does this verse teach?',
-            options: allOptions.map(function (opt) {
-                return { text: displayCategory(opt), isCorrect: opt === qd.correctCategory };
+            options: optionEntries.map(function (opt) {
+                return { text: opt.text, isCorrect: opt.key === correctCategoryKey };
             }),
             correctAnswer: displayCategory(qd.correctCategory)
         };
@@ -390,8 +414,6 @@
 
         // 50% chance: show correct info, 50% chance: show false info
         const showCorrect = Math.random() < 0.5;
-
-        const displayCategory = (typeof tCategory === 'function') ? tCategory : function(c) { return c; };
 
         let claim, isTrue;
         // Randomly pick whether to test reference or category

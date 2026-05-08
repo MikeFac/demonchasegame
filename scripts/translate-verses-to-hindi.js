@@ -24,6 +24,7 @@ const targetPromptCharsArg = process.argv.find(arg => arg.startsWith('--target-p
 const hardPromptCharsArg = process.argv.find(arg => arg.startsWith('--hard-prompt-chars='));
 const maxBatchVersesArg = process.argv.find(arg => arg.startsWith('--max-batch-verses='));
 const romanizedOnly = process.argv.includes('--romanized-only');
+const rewriteExisting = process.argv.includes('--rewrite-existing');
 const repairCorrupted = process.argv.includes('--repair-corrupted');
 const VERSES_PER_CATEGORY = perCategoryArg ? Number.parseInt(perCategoryArg.split('=')[1], 10) : Infinity;
 const TARGET_PROMPT_CHARS = targetPromptCharsArg ? Number.parseInt(targetPromptCharsArg.split('=')[1], 10) : 14000;
@@ -444,9 +445,19 @@ function normalizeRomanizedArray(primaryValues, fallbackValues) {
     return fallbackValues;
 }
 
+function toHindiVerse(verse) {
+    return {
+        ...verse,
+        // Keep category keys canonical in quiz payloads; localize them at render time.
+        quizData: verse.quizData || {},
+        romanizedQuizData: verse.romanizedQuizData || {}
+    };
+}
+
 function writeOutputFile(allVerses) {
+    const localizedVerses = allVerses.map(toHindiVerse);
     const content = `function loadSelectedVersesHI() {
-  return ${JSON.stringify(allVerses, null, 2)};
+  return ${JSON.stringify(localizedVerses, null, 2)};
 }
 
 function organizeByCategory(verses) {
@@ -466,7 +477,7 @@ if (typeof module !== 'undefined') {
 }
 `;
     fs.writeFileSync(OUTPUT_FILE, content, 'utf8');
-    writeRomanizedOutputFile(allVerses);
+    writeRomanizedOutputFile(localizedVerses);
 }
 
 function toRomanizedVerse(verse) {
@@ -505,33 +516,35 @@ function toRomanizedVerse(verse) {
         }
         : trueFalse;
 
+    const romanizedQuizPayload = {
+        missingWord: normalizedMissingWord
+            ? {
+                question: normalizedMissingWord.question,
+                answer: normalizedMissingWord.answer,
+                options: normalizedMissingWord.options
+            }
+            : undefined,
+        categoryMatch: normalizedCategoryMatch
+            ? {
+                correctCategory: normalizedCategoryMatch.correctCategory,
+                distractors: normalizedCategoryMatch.distractors
+            }
+            : undefined,
+        trueFalse: normalizedTrueFalse
+            ? {
+                falseCategory: normalizedTrueFalse.falseCategory,
+                falseReference: normalizedTrueFalse.falseReference
+            }
+            : undefined
+    };
+
     return {
         ...verse,
         Reference: normalizedReference,
         Text: normalizedText,
         RomanizedReference: normalizedReference,
         RomanizedText: normalizedText,
-        romanizedQuizData: {
-            missingWord: normalizedMissingWord
-                ? {
-                    question: normalizedMissingWord.question,
-                    answer: normalizedMissingWord.answer,
-                    options: normalizedMissingWord.options
-                }
-                : undefined,
-            categoryMatch: normalizedCategoryMatch
-                ? {
-                    correctCategory: normalizedCategoryMatch.correctCategory,
-                    distractors: normalizedCategoryMatch.distractors
-                }
-                : undefined,
-            trueFalse: normalizedTrueFalse
-                ? {
-                    falseCategory: normalizedTrueFalse.falseCategory,
-                    falseReference: normalizedTrueFalse.falseReference
-                }
-                : undefined
-        },
+        romanizedQuizData: romanizedQuizPayload,
         quizData: {
             ...quizData,
             missingWord: normalizedMissingWord,
@@ -681,6 +694,15 @@ async function translateBatch(batch, apiKey, batchLabel) {
 }
 
 async function main() {
+    if (rewriteExisting) {
+        const existingHindiVerses = loadExistingHindiBundle();
+        writeOutputFile(existingHindiVerses);
+        console.log(`Rewrote Hindi and Romanized Hindi bundles from ${OUTPUT_FILE}`);
+        console.log(`Wrote ${existingHindiVerses.length} verses to ${OUTPUT_FILE}`);
+        console.log(`Wrote ${existingHindiVerses.length} verses to ${ROMANIZED_OUTPUT_FILE}`);
+        return;
+    }
+
     if (romanizedOnly) {
         const existingHindiVerses = loadExistingHindiBundle();
         writeRomanizedOutputFile(existingHindiVerses);
