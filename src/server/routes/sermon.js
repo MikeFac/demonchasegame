@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { getOrGenerateSermon } = require('../services/SermonService');
+const { getOrGenerateSermon, regenerateSermon } = require('../services/SermonService');
 
 /**
  * GET /api/sermon?ref=John+3:16&text=For+God+so+loved...&category=Love
@@ -64,11 +64,7 @@ router.post('/regenerate', async (req, res) => {
       return res.status(400).json({ error: 'Missing ref or text' });
     }
 
-    // Delete existing sermons for this verse so a fresh one is generated
-    const Sermon = require('../models/Sermon');
-    await Sermon.deleteMany({ verseReference: ref, lang: (lang || 'en').toLowerCase() });
-
-    const sermon = await getOrGenerateSermon(ref, text, category || 'General', lang || 'en');
+    const sermon = await regenerateSermon(ref, text, category || 'General', lang || 'en');
 
     if (sermon.generationStatus === 'completed') {
       return res.json({

@@ -1,207 +1,434 @@
 const Sermon = require('../models/Sermon');
+const {
+  DEFAULT_MODEL,
+  ENGLISH_PROMPT_VERSION,
+  TRANSLATION_PROMPT_VERSION,
+  ROMANIZATION_PROMPT_VERSION,
+  generateEnglishDevotional,
+  translateDevotionalToLanguage,
+  transliterateHindiDevotionalToRomanized
+} = require('./DevotionalGenerationService');
 
-// Configurable — set SERMON_MODEL in .env to override
-const DEFAULT_MODEL = 'openrouter/auto';
-const OPENROUTER_URL = 'https://openrouter.ai/api/v1/chat/completions';
 const generationJobs = new Map();
+const creationLocks = new Map();
 
-function getLanguageInstruction(lang) {
-  switch ((lang || 'en').toLowerCase()) {
-    case 'hi':
-      return 'The Bible verse is in Hindi written in Devanagari. Write the devotional and prayer in natural, modern Hindi using Devanagari script.';
-    case 'hi-rom':
-      return 'The Bible verse is in Romanized Hindi written in Latin script. Write the devotional and prayer in clear, natural Romanized Hindi using only Latin letters, not Devanagari.';
-    case 'lg':
-      return 'The Bible verse is in Luganda. Write the devotional and prayer in natural, pastoral Luganda.';
-    case 'es':
-      return 'The Bible verse is in Spanish. Write the devotional and prayer in natural, clear Spanish.';
-    default:
-      return 'The Bible verse is in English. Write the devotional and prayer in natural, clear English.';
-  }
-}
-
-/**
- * Generate a short devotional sermon for a Bible verse via OpenRouter.
- * Returns { pages: string[], prayer: string }.
- */
-async function generateSermonText(verseReference, verseText, category, lang) {
-  const apiKey = process.env.OPENROUTER_API_KEY;
-  if (!apiKey) {
-    throw new Error('OPENROUTER_API_KEY not set in environment');
-  }
-
-  const model = process.env.SERMON_MODEL || DEFAULT_MODEL;
-  const languageInstruction = getLanguageInstruction(lang);
-
-  const systemPrompt = `You are a warm, practical Bible teacher. You write short devotional messages that help everyday people apply Scripture to their lives. Your tone is encouraging, direct, and conversational — not academic or preachy. Keep language simple.`;
-
-  const userPrompt = `Write a short practical devotional message based on this Bible verse:
-
-"${verseText}" — ${verseReference} (Category: ${category})
-
-Language instruction:
-- ${languageInstruction}
-
-Requirements:
-- 3 to 5 short paragraphs (each paragraph should be 2-4 sentences)
-- Focus on practical, real-life application — how someone can live this verse out today
-- End with a short concluding prayer (2-3 sentences, addressed to God)
-- Do NOT include the verse text itself in the message (the reader already sees it)
-- Do NOT include a title or heading
-
-Return your response as JSON with this exact format:
-{
-  "paragraphs": ["paragraph 1 text", "paragraph 2 text", ...],
-  "prayer": "Dear Lord, ... Amen."
-}
-
-Return ONLY valid JSON. No markdown fences, no extra text.`;
-
-  // Ensure the timeout doesn't happen too quickly (5 minutes)
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 300000);
-
-  let response;
-  try {
-    response = await fetch(OPENROUTER_URL, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${apiKey}`,
-        'Content-Type': 'application/json',
-        'HTTP-Referer': 'https://dcgame.4you.tel',
-        'X-Title': 'VerseBattles Devotional'
-      },
-      body: JSON.stringify({
-        model,
-        messages: [
-          { role: 'system', content: systemPrompt },
-          { role: 'user', content: userPrompt }
-        ],
-        temperature: 0.8,
-        max_tokens: 2048
-      }),
-      signal: controller.signal
-    });
-  } finally {
-    clearTimeout(timeoutId);
-  }
-
-  if (!response.ok) {
-    const body = await response.text();
-    throw new Error(`OpenRouter API error ${response.status}: ${body}`);
-  }
-
-  const data = await response.json();
-  if (data.error) {
-    throw new Error(`API error: ${JSON.stringify(data.error)}`);
-  }
-
-  const content = data.choices[0].message.content.trim();
-
-  // Parse JSON — strip markdown fences if present
-  const jsonStr = content.replace(/^```json?\s*/i, '').replace(/```\s*$/i, '').trim();
-  const parsed = JSON.parse(jsonStr);
-
-  if (!Array.isArray(parsed.paragraphs) || !parsed.prayer) {
-    throw new Error('Invalid sermon format from AI: missing paragraphs or prayer');
-  }
-
-  return {
-    pages: parsed.paragraphs,
-    prayer: parsed.prayer,
-    model
-  };
+function normalizeLang(lang) {
+  return (lang || 'en').toLowerCase();
 }
 
 function getSermonJobKey(verseReference, lang) {
-  return `${(lang || 'en').toLowerCase()}::${verseReference}`;
+  return `${normalizeLang(lang)}::${verseReference}`;
 }
 
-function triggerSermonGeneration(sermon, verseText, category, lang) {
-  const sermonLang = (lang || 'en').toLowerCase();
-  const jobKey = getSermonJobKey(sermon.verseReference, sermonLang);
+function getCreationKey(verseReference, lang) {
+  return `create::${getSermonJobKey(verseReference, lang)}`;
+}
 
+async function findLatestSermon(verseReference, lang, generationStatus) {
+  return Sermon.findOne({
+    verseReference,
+    lang: normalizeLang(lang),
+    generationStatus
+  }).sort({ createdAt: -1 });
+}
+
+async function findExistingSermon(verseReference, lang) {
+  const completed = await findLatestSermon(verseReference, lang, 'completed');
+  if (completed) {
+    return completed;
+  }
+
+  const pending = await findLatestSermon(verseReference, lang, 'pending');
+  if (pending) {
+    return pending;
+  }
+
+  return findLatestSermon(verseReference, lang, 'failed');
+}
+
+async function createPendingSermon(verseReference, verseText, category, lang, overrides) {
+  const sermon = new Sermon({
+    verseReference,
+    lang: normalizeLang(lang),
+    verseText,
+    category,
+    generationStatus: 'pending',
+    model: DEFAULT_MODEL,
+    ...overrides
+  });
+
+  await sermon.save();
+  return sermon;
+}
+
+async function createFailedSermon(verseReference, verseText, category, lang, errorMessage, overrides) {
+  const sermon = new Sermon({
+    verseReference,
+    lang: normalizeLang(lang),
+    verseText,
+    category,
+    generationStatus: 'failed',
+    generationError: errorMessage,
+    model: DEFAULT_MODEL,
+    ...overrides
+  });
+
+  await sermon.save();
+  return sermon;
+}
+
+async function updateSermonCompleted(sermon, result, overrides) {
+  sermon.pages = result.pages;
+  sermon.prayer = result.prayer;
+  sermon.model = result.model || DEFAULT_MODEL;
+  sermon.generationStatus = 'completed';
+  sermon.generationError = undefined;
+  Object.assign(sermon, overrides || {});
+  await sermon.save();
+  return sermon;
+}
+
+async function updateSermonFailed(sermon, errorMessage, overrides) {
+  sermon.generationStatus = 'failed';
+  sermon.generationError = errorMessage;
+  Object.assign(sermon, overrides || {});
+  await sermon.save();
+  return sermon;
+}
+
+function triggerJob(jobKey, runner) {
   if (generationJobs.has(jobKey)) {
     return generationJobs.get(jobKey);
   }
 
-  const job = (async function() {
-    try {
-      const result = await generateSermonText(sermon.verseReference, verseText, category, sermonLang);
-      sermon.pages = result.pages;
-      sermon.prayer = result.prayer;
-      sermon.model = result.model;
-      sermon.generationStatus = 'completed';
-      sermon.generationError = undefined;
-    } catch (err) {
-      sermon.generationStatus = 'failed';
-      sermon.generationError = err.message;
-      console.error(`Sermon generation failed for ${sermon.verseReference} (${sermonLang}):`, err.message);
-    }
-
-    await sermon.save();
-    return sermon;
-  })();
-
-  generationJobs.set(jobKey, job);
-  job.finally(function() {
+  const job = runner().finally(function() {
     generationJobs.delete(jobKey);
   });
 
+  generationJobs.set(jobKey, job);
   return job;
 }
 
-/**
- * Get or queue a sermon for a verse reference.
- * Returns a Sermon document in completed/pending/failed state.
- */
-async function getOrGenerateSermon(verseReference, verseText, category, lang) {
-  const sermonLang = (lang || 'en').toLowerCase();
+function withCreationLock(creationKey, runner) {
+  if (creationLocks.has(creationKey)) {
+    return creationLocks.get(creationKey);
+  }
 
-  // Check for existing completed sermon
-  const existing = await Sermon.findOne({
-    verseReference,
-    lang: sermonLang,
-    generationStatus: 'completed'
-  }).sort({ createdAt: -1 });
+  const job = runner().finally(function() {
+    creationLocks.delete(creationKey);
+  });
+
+  creationLocks.set(creationKey, job);
+  return job;
+}
+
+async function getOrCreatePendingSermon(verseReference, verseText, category, lang, overrides) {
+  const creationKey = getCreationKey(verseReference, lang);
+  return withCreationLock(creationKey, async function() {
+    const existing = await findExistingSermon(verseReference, lang);
+    if (existing) {
+      return existing;
+    }
+    return createPendingSermon(verseReference, verseText, category, lang, overrides);
+  });
+}
+
+async function getOrCreateFailedSermon(verseReference, verseText, category, lang, errorMessage, overrides) {
+  const creationKey = getCreationKey(verseReference, lang);
+  return withCreationLock(creationKey, async function() {
+    const existing = await findExistingSermon(verseReference, lang);
+    if (existing) {
+      if (existing.generationStatus === 'pending') {
+        return updateSermonFailed(existing, errorMessage, overrides);
+      }
+      return existing;
+    }
+    return createFailedSermon(verseReference, verseText, category, lang, errorMessage, overrides);
+  });
+}
+
+async function generateEnglishSermon(sermon) {
+  try {
+    const result = await generateEnglishDevotional(
+      sermon.verseReference,
+      sermon.verseText,
+      sermon.category || 'General'
+    );
+    return updateSermonCompleted(sermon, result, {
+      sourceLang: 'en',
+      generationMethod: 'author',
+      promptVersion: result.promptVersion || ENGLISH_PROMPT_VERSION
+    });
+  } catch (err) {
+    console.error(`English sermon generation failed for ${sermon.verseReference}:`, err.message);
+    return updateSermonFailed(sermon, err.message, {
+      sourceLang: 'en',
+      generationMethod: 'author',
+      promptVersion: ENGLISH_PROMPT_VERSION
+    });
+  }
+}
+
+function triggerEnglishGeneration(sermon) {
+  const jobKey = getSermonJobKey(sermon.verseReference, 'en');
+  return triggerJob(jobKey, function() {
+    return generateEnglishSermon(sermon);
+  });
+}
+
+async function ensureEnglishSource(verseReference, verseText, category) {
+  const existing = await findExistingSermon(verseReference, 'en');
+  if (existing) {
+    if (existing.generationStatus === 'pending') {
+      triggerEnglishGeneration(existing);
+    }
+    return existing;
+  }
+
+  const sermon = await getOrCreatePendingSermon(verseReference, verseText, category, 'en', {
+    sourceLang: 'en',
+    generationMethod: 'author',
+    promptVersion: ENGLISH_PROMPT_VERSION
+  });
+  if (sermon.generationStatus === 'pending') {
+    triggerEnglishGeneration(sermon);
+  }
+  return sermon;
+}
+
+async function generateTranslatedSermon(sermon, sourceSermon) {
+  try {
+    const result = await translateDevotionalToLanguage(sourceSermon, sermon.verseText, sermon.lang);
+    return updateSermonCompleted(sermon, result, {
+      sourceLang: 'en',
+      derivedFromSermonId: sourceSermon._id,
+      generationMethod: 'translate',
+      promptVersion: result.promptVersion || TRANSLATION_PROMPT_VERSION
+    });
+  } catch (err) {
+    console.error(`Sermon translation failed for ${sermon.verseReference} (${sermon.lang}):`, err.message);
+    return updateSermonFailed(sermon, err.message, {
+      sourceLang: 'en',
+      derivedFromSermonId: sourceSermon._id,
+      generationMethod: 'translate',
+      promptVersion: TRANSLATION_PROMPT_VERSION
+    });
+  }
+}
+
+function triggerTranslatedGeneration(sermon, sourceSermon) {
+  const jobKey = getSermonJobKey(sermon.verseReference, sermon.lang);
+  return triggerJob(jobKey, function() {
+    return generateTranslatedSermon(sermon, sourceSermon);
+  });
+}
+
+async function ensureTranslatedVariant(verseReference, verseText, category, lang, sourceSermon) {
+  const existing = await findExistingSermon(verseReference, lang);
+  if (existing) {
+    if (existing.generationStatus === 'pending') {
+      triggerTranslatedGeneration(existing, sourceSermon);
+    }
+    return existing;
+  }
+
+  const sermon = await getOrCreatePendingSermon(verseReference, verseText, category, lang, {
+    sourceLang: 'en',
+    derivedFromSermonId: sourceSermon._id,
+    generationMethod: 'translate',
+    promptVersion: TRANSLATION_PROMPT_VERSION
+  });
+  if (sermon.generationStatus === 'pending') {
+    triggerTranslatedGeneration(sermon, sourceSermon);
+  }
+  return sermon;
+}
+
+async function generateRomanizedHindiSermon(sermon, hindiSermon) {
+  try {
+    const result = await transliterateHindiDevotionalToRomanized(hindiSermon, sermon.verseText);
+    return updateSermonCompleted(sermon, result, {
+      sourceLang: 'hi',
+      derivedFromSermonId: hindiSermon._id,
+      generationMethod: 'transliterate',
+      promptVersion: result.promptVersion || ROMANIZATION_PROMPT_VERSION
+    });
+  } catch (err) {
+    console.error(`Romanized Hindi sermon transliteration failed for ${sermon.verseReference}:`, err.message);
+    return updateSermonFailed(sermon, err.message, {
+      sourceLang: 'hi',
+      derivedFromSermonId: hindiSermon._id,
+      generationMethod: 'transliterate',
+      promptVersion: ROMANIZATION_PROMPT_VERSION
+    });
+  }
+}
+
+function triggerRomanizedHindiGeneration(sermon, hindiSermon) {
+  const jobKey = getSermonJobKey(sermon.verseReference, sermon.lang);
+  return triggerJob(jobKey, function() {
+    return generateRomanizedHindiSermon(sermon, hindiSermon);
+  });
+}
+
+async function ensureRomanizedHindiVariant(verseReference, verseText, category) {
+  const existing = await findExistingSermon(verseReference, 'hi-rom');
+  if (existing) {
+    if (existing.generationStatus === 'pending') {
+      const hindiSermon = await findLatestSermon(verseReference, 'hi', 'completed');
+      if (hindiSermon) {
+        triggerRomanizedHindiGeneration(existing, hindiSermon);
+      }
+    }
+    return existing;
+  }
+
+  const hindiSermon = await getOrGenerateSermon(verseReference, verseText, category, 'hi');
+  if (hindiSermon.generationStatus === 'failed') {
+    return getOrCreateFailedSermon(
+      verseReference,
+      verseText,
+      category,
+      'hi-rom',
+      hindiSermon.generationError || 'Hindi devotional generation failed',
+      {
+        sourceLang: 'hi',
+        derivedFromSermonId: hindiSermon._id,
+        generationMethod: 'transliterate',
+        promptVersion: ROMANIZATION_PROMPT_VERSION
+      }
+    );
+  }
+
+  if (hindiSermon.generationStatus !== 'completed') {
+    return getOrCreatePendingSermon(verseReference, verseText, category, 'hi-rom', {
+      sourceLang: 'hi',
+      generationMethod: 'transliterate',
+      promptVersion: ROMANIZATION_PROMPT_VERSION
+    });
+  }
+
+  const sermon = await getOrCreatePendingSermon(verseReference, verseText, category, 'hi-rom', {
+    sourceLang: 'hi',
+    derivedFromSermonId: hindiSermon._id,
+    generationMethod: 'transliterate',
+    promptVersion: ROMANIZATION_PROMPT_VERSION
+  });
+  if (sermon.generationStatus === 'pending') {
+    triggerRomanizedHindiGeneration(sermon, hindiSermon);
+  }
+  return sermon;
+}
+
+async function getOrGenerateSermon(verseReference, verseText, category, lang) {
+  const sermonLang = normalizeLang(lang);
+  const existing = await findExistingSermon(verseReference, sermonLang);
+
+  if (existing && existing.generationStatus === 'completed') {
+    return existing;
+  }
+
+  if (sermonLang === 'en') {
+    if (existing && existing.generationStatus === 'pending') {
+      triggerEnglishGeneration(existing);
+      return existing;
+    }
+    if (existing && existing.generationStatus === 'failed') {
+      return existing;
+    }
+    return ensureEnglishSource(verseReference, verseText, category);
+  }
+
+  if (sermonLang === 'hi-rom') {
+    if (existing && existing.generationStatus === 'pending') {
+      const hindiCompleted = await findLatestSermon(verseReference, 'hi', 'completed');
+      if (hindiCompleted) {
+        triggerRomanizedHindiGeneration(existing, hindiCompleted);
+      } else {
+        const hindiSermon = await getOrGenerateSermon(verseReference, verseText, category, 'hi');
+        if (hindiSermon.generationStatus === 'failed') {
+          return updateSermonFailed(
+            existing,
+            hindiSermon.generationError || 'Hindi devotional generation failed',
+            {
+              sourceLang: 'hi',
+              derivedFromSermonId: hindiSermon._id,
+              generationMethod: 'transliterate',
+              promptVersion: ROMANIZATION_PROMPT_VERSION
+            }
+          );
+        }
+      }
+      return existing;
+    }
+    if (existing && existing.generationStatus === 'failed') {
+      return existing;
+    }
+    return ensureRomanizedHindiVariant(verseReference, verseText, category);
+  }
+
+  const englishSource = await ensureEnglishSource(verseReference, verseText, category);
+  if (englishSource.generationStatus === 'completed') {
+    if (existing && existing.generationStatus === 'pending') {
+      triggerTranslatedGeneration(existing, englishSource);
+      return existing;
+    }
+    if (existing && existing.generationStatus === 'failed') {
+      return existing;
+    }
+    return ensureTranslatedVariant(verseReference, verseText, category, sermonLang, englishSource);
+  }
+
+  if (englishSource.generationStatus === 'failed') {
+    if (existing) {
+      if (existing.generationStatus === 'pending') {
+        return updateSermonFailed(
+          existing,
+          englishSource.generationError || 'English devotional generation failed',
+          {
+            sourceLang: 'en',
+            derivedFromSermonId: englishSource._id,
+            generationMethod: 'translate',
+            promptVersion: TRANSLATION_PROMPT_VERSION
+          }
+        );
+      }
+      return existing;
+    }
+    return getOrCreateFailedSermon(
+      verseReference,
+      verseText,
+      category,
+      sermonLang,
+      englishSource.generationError || 'English devotional generation failed',
+      {
+        sourceLang: 'en',
+        derivedFromSermonId: englishSource._id,
+        generationMethod: 'translate',
+        promptVersion: TRANSLATION_PROMPT_VERSION
+      }
+    );
+  }
 
   if (existing) {
     return existing;
   }
 
-  const pending = await Sermon.findOne({
-    verseReference,
-    lang: sermonLang,
-    generationStatus: 'pending'
-  }).sort({ createdAt: -1 });
-
-  if (pending) {
-    triggerSermonGeneration(pending, verseText, category, sermonLang);
-    return pending;
-  }
-
-  const failed = await Sermon.findOne({
-    verseReference,
-    lang: sermonLang,
-    generationStatus: 'failed'
-  }).sort({ createdAt: -1 });
-
-  if (failed) {
-    return failed;
-  }
-
-  // Create a pending sermon row and generate in the background.
-  const sermon = new Sermon({
-    verseReference,
-    lang: sermonLang,
-    verseText,
-    category,
-    generationStatus: 'pending'
+  return getOrCreatePendingSermon(verseReference, verseText, category, sermonLang, {
+    sourceLang: 'en',
+    generationMethod: 'translate',
+    promptVersion: TRANSLATION_PROMPT_VERSION
   });
-
-  await sermon.save();
-  triggerSermonGeneration(sermon, verseText, category, sermonLang);
-  return sermon;
 }
 
-module.exports = { getOrGenerateSermon, generateSermonText };
+async function regenerateSermon(verseReference, verseText, category, lang) {
+  const sermonLang = normalizeLang(lang);
+  await Sermon.deleteMany({ verseReference, lang: sermonLang });
+  return getOrGenerateSermon(verseReference, verseText, category, sermonLang);
+}
+
+module.exports = {
+  getOrGenerateSermon,
+  regenerateSermon,
+  generateSermonText: generateEnglishDevotional
+};

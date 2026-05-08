@@ -16,6 +16,23 @@ const SermonSchema = new mongoose.Schema({
     required: true
   },
   category: String,
+  sourceLang: {
+    type: String,
+    default: 'en'
+  },
+  derivedFromSermonId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Sermon'
+  },
+  generationMethod: {
+    type: String,
+    enum: ['author', 'translate', 'transliterate'],
+    default: 'author'
+  },
+  promptVersion: {
+    type: String,
+    default: 'english-v1'
+  },
 
   // Paginated sermon content — each element is one screen of text
   pages: {
