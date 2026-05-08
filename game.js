@@ -5037,7 +5037,7 @@ function gameLoop(generation) {
                     SoundEffects.playLevelComplete();
                 }
                 flashMessages.push({
-                    text: `🏆 LEVEL ${gameState.gameLevel} COMPLETE! 🏆`,
+                    text: t('game.levelComplete', '🏆 LEVEL {0} COMPLETE! 🏆').replace('{0}', gameState.gameLevel),
                     color: '#FFD700',
                     x: canvas.width / 2,
                     y: canvas.height / 2 - 80,
@@ -5047,7 +5047,7 @@ function gameLoop(generation) {
                     centered: true
                 });
                 flashMessages.push({
-                    text: `${killed} Demons Defeated!`,
+                    text: t('game.demonsDefeated', '{0} Demons Defeated!').replace('{0}', killed),
                     color: '#FFFFFF',
                     x: canvas.width / 2,
                     y: canvas.height / 2 - 40,

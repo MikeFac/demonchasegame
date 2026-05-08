@@ -420,12 +420,12 @@
         if (Math.random() < 0.5) {
             // Test reference
             const ref = showCorrect ? verse.Reference : (qd.falseReference || verse.Reference);
-            claim = 'This verse is ' + ref;
+            claim = t('game.verseIs', 'This verse is ' + ref);
             isTrue = showCorrect;
         } else {
             // Test category
             const cat = showCorrect ? verse.Category : (qd.falseCategory || verse.Category);
-            claim = 'This verse is about ' + displayCategory(cat);
+            claim = t('game.verseIsAbout', 'This verse is about ') + displayCategory(cat);
             isTrue = showCorrect;
         }
 

@@ -301,7 +301,7 @@ class Renderer {
         this.ctx.fillStyle = '#ffd666';
         this.ctx.font = 'bold 13px Arial';
         this.ctx.textAlign = 'center';
-        this.ctx.fillText('Adjust Speed', boxX + boxW / 2, boxY + 18);
+        this.        ctx.fillText(t('hud.adjustSpeed', 'Adjust Speed'), boxX + boxW / 2, boxY + 18);
         this.ctx.fillStyle = '#d6deff';
         this.ctx.font = '12px Arial';
         this.ctx.fillText('\u25c0 slower    faster \u25b6', boxX + boxW / 2, boxY + 36);
@@ -341,9 +341,9 @@ class Renderer {
             { id: 'toggleTestShield', label: testShieldOn ? t('menu.testShieldOn') : t('menu.testShieldOff') },
             { id: 'songs', label: t('menu.songs') },
             { id: 'affinityHelp', label: t('menu.affinityHelp') },
-            { id: 'futureFeatures', label: 'Future Features', color: '#F5C542' },
+            { id: 'futureFeatures', label: t('game.futureFeatures', 'Future Features'), color: '#F5C542' },
             { id: 'switchViewMode', label: menuState.viewMode === '3d' ? t('menu.switchTo2d') : t('menu.switchTo3d') },
-            { id: 'shareGame', label: '📤 Share Game', color: '#4CAF50' },
+            { id: 'shareGame', label: t('game.shareGame', '📤 Share Game'), color: '#4CAF50' },
             { id: 'leave', label: t('menu.leaveGame'), color: '#ff4444' }
         ];
 
@@ -447,7 +447,7 @@ class Renderer {
         const totalToKill = gameState.monstersToKill || 0;
         const killed = gameState.monstersKilled || 0;
         const remaining = Math.max(0, totalToKill - killed);
-        const progressText = `Demons left: ${remaining}/${totalToKill}`;
+        const progressText = t('hud.demonsLeft', 'Demons left: ${remaining}/${totalToKill}').replace('${remaining}', remaining).replace('${totalToKill}', totalToKill);
         const progressRightEdge = this.canvas.width - gameLevelWidth - 18;
         this.ctx.fillStyle = '#ffdd66';
         this.ctx.font = '14px Arial';
@@ -619,7 +619,7 @@ class Renderer {
         this.ctx.fillStyle = '#fff7d1';
         this.ctx.font = 'bold 18px Georgia';
         this.ctx.textAlign = 'center';
-        this.ctx.fillText('MOVE', screenX, screenY + 6);
+        this.        ctx.fillText(t('hud.move', 'MOVE'), screenX, screenY + 6);
         this.ctx.textAlign = 'left';
         this.ctx.restore();
     }
@@ -781,7 +781,7 @@ class Renderer {
         ctx.textAlign = 'center';
         let buttonLabel;
         if (finalStats.isMission) {
-            buttonLabel = 'Back to Missions';
+            buttonLabel = t('game.backToMissions', 'Back to Missions');
         } else if (isMultiplayer && !finalStats.isSoloGame) {
             buttonLabel = t('ui.returnToLobby');
         } else {
@@ -814,7 +814,7 @@ class Renderer {
         ctx.textAlign = 'center';
         ctx.fillStyle = '#ffd666';
         ctx.font = 'bold 28px Arial';
-        ctx.fillText(summary.title || 'Mission Complete', canvas.width / 2, modalY + 42);
+        ctx.fillText(summary.title || t('game.missionComplete', 'Mission Complete'), canvas.width / 2, modalY + 42);
 
         ctx.fillStyle = '#d6deff';
         ctx.font = '16px Arial';
@@ -825,7 +825,7 @@ class Renderer {
 
         ctx.fillStyle = '#ffffff';
         ctx.font = 'bold 17px Arial';
-        ctx.fillText(summary.ctaLabel || 'Choose what to do next', canvas.width / 2, modalY + 206);
+        ctx.fillText(summary.ctaLabel || t('game.chooseWhatNext', 'Choose what to do next'), canvas.width / 2, modalY + 206);
 
         const buttonWidth = modalWidth - layout.buttonInsetX;
         const buttonHeight = 42;
@@ -872,35 +872,35 @@ class Renderer {
         ctx.textAlign = 'center';
         ctx.fillStyle = '#ffd666';
         ctx.font = 'bold 28px Arial';
-        ctx.fillText('VERSE BATTLES', canvas.width / 2, modalY + 38);
+        ctx.fillText(t('game.verseBattles', 'VERSE BATTLES'), canvas.width / 2, modalY + 38);
 
         ctx.fillStyle = '#ffffff';
         ctx.font = 'bold 15px Arial';
-        ctx.fillText('Build Scripture engagement that lasts.', canvas.width / 2, modalY + 62);
+        ctx.fillText(t('game.verseBattlesSubtitle', 'Build Scripture engagement that lasts.'), canvas.width / 2, modalY + 62);
 
         const bulletGroups = [
             [
-                'Lets you create a group and see',
-                'verses your team learned.'
+                t('game.vbBullet1a', 'Lets you create a group and see'),
+                t('game.vbBullet1b', 'verses your team learned.')
             ],
             [
-                'Features a powerful meditation app',
-                'for hearing and learning verses.'
+                t('game.vbBullet2a', 'Features a powerful meditation app'),
+                t('game.vbBullet2b', 'for hearing and learning verses.')
             ],
             [
-                'Features quality devotions',
-                'on each verse.'
+                t('game.vbBullet3a', 'Features quality devotions'),
+                t('game.vbBullet3b', 'on each verse.')
             ],
             [
-                'Has a multiplayer mode.'
+                t('game.vbBullet4', 'Has a multiplayer mode.')
             ],
             [
-                'Allows you to configure',
-                'difficulty and gameplay.'
+                t('game.vbBullet5a', 'Allows you to configure'),
+                t('game.vbBullet5b', 'difficulty and gameplay.')
             ],
             [
-                'Registered users may',
-                'design worlds.'
+                t('game.vbBullet6a', 'Registered users may'),
+                t('game.vbBullet6b', 'design worlds.')
             ]
         ];
 
@@ -937,7 +937,7 @@ class Renderer {
         ctx.fillStyle = '#ffffff';
         ctx.font = 'bold 16px Arial';
         ctx.textAlign = 'center';
-        ctx.fillText('Press to Return', canvas.width / 2, buttonY + 27);
+        ctx.fillText(t('game.pressToReturn', 'Press to Return'), canvas.width / 2, buttonY + 27);
         ctx.textAlign = 'left';
     }
 
@@ -1126,7 +1126,7 @@ class Renderer {
                 this.ctx.textAlign = 'center';
                 this.ctx.fillText(t('ui.ghost'), screenX, screenY - playerData.height / 2 - 18);
                 // Name below ghost label
-                const displayName = isCurrentPlayer ? 'You' : (playerData.username || 'Player');
+                const displayName = isCurrentPlayer ? t('ui.you', 'You') : (playerData.username || t('ui.player', 'Player'));
                 this.ctx.fillStyle = 'rgba(200, 200, 255, 0.6)';
                 this.ctx.fillText(displayName, screenX, screenY - playerData.height / 2 - 30);
                 this.ctx.textAlign = 'left';
@@ -1138,7 +1138,7 @@ class Renderer {
                 this.ctx.font = 'bold 9px Arial';
                 this.ctx.textAlign = 'center';
                 this.ctx.fillText(t('ui.offline'), screenX, screenY - playerData.height / 2 - 18);
-                const displayName = playerData.username || 'Player';
+                const displayName = playerData.username || t('ui.player', 'Player');
                 this.ctx.fillStyle = 'rgba(255, 170, 0, 0.6)';
                 this.ctx.fillText(displayName, screenX, screenY - playerData.height / 2 - 30);
                 this.ctx.textAlign = 'left';
@@ -1183,7 +1183,7 @@ class Renderer {
             // Name
             this.ctx.fillStyle = 'white';
             this.ctx.font = '12px Arial';
-            const displayName = isCurrentPlayer ? 'You' : (playerData.username || 'Player');
+            const displayName = isCurrentPlayer ? t('ui.you', 'You') : (playerData.username || t('ui.player', 'Player'));
             this.ctx.fillText(displayName, screenX - 20, screenY - playerData.height / 2 - 15);
         }
     }
@@ -1359,15 +1359,15 @@ class Renderer {
         ctx.textAlign = 'center';
         ctx.fillStyle = '#ffd666';
         ctx.font = 'bold 20px Arial';
-        ctx.fillText('Game Speed', modalX + modalW / 2, modalY + 34);
+        ctx.fillText(t('hud.gameSpeed', 'Game Speed'), modalX + modalW / 2, modalY + 34);
 
         ctx.fillStyle = '#d6deff';
         ctx.font = '14px Arial';
-        ctx.fillText('Too fast or too slow?', modalX + modalW / 2, modalY + 60);
-        ctx.fillText('Use \u25c0 \u25b6 in the top bar to adjust.', modalX + modalW / 2, modalY + 82);
+        ctx.fillText(t('hud.tooFastOrSlow', 'Too fast or too slow?'), modalX + modalW / 2, modalY + 60);
+        ctx.fillText(t('hud.useArrowsToAdjust', 'Use \u25c0 \u25b6 in the top bar to adjust.'), modalX + modalW / 2, modalY + 82);
         ctx.fillStyle = '#888';
         ctx.font = '12px Arial';
-        ctx.fillText('Keys: 1 (0.25x)  2 (slow)  3 (normal)  4 (fast)', modalX + modalW / 2, modalY + 104);
+        ctx.fillText(t('hud.speedKeys', 'Keys: 1 (0.25x)  2 (slow)  3 (normal)  4 (fast)'), modalX + modalW / 2, modalY + 104);
 
         const btnW = 100;
         const btnH = 28;
@@ -1380,7 +1380,7 @@ class Renderer {
         ctx.strokeRect(btnX, btnY, btnW, btnH);
         ctx.fillStyle = '#ffffff';
         ctx.font = 'bold 14px Arial';
-        ctx.fillText('Got it!', modalX + modalW / 2, btnY + 19);
+        ctx.fillText(t('hud.gotIt', 'Got it!'), modalX + modalW / 2, btnY + 19);
         ctx.textAlign = 'left';
     }
 
@@ -1978,7 +1978,7 @@ class Renderer {
             this.ctx.font = 'bold 16px Arial';
 
             if (quiz.isComplete) {
-                this.ctx.fillText('✓ Correct!', leftPadding, textY + 4);
+                this.        ctx.fillText(t('game.clozeCorrect', '✓ Correct!'), leftPadding, textY + 4);
 
                 // Display verse reference after "Correct!" for cloze quiz
                 if (typeof lastAnsweredReference !== 'undefined' && lastAnsweredReference) {
@@ -1987,7 +1987,7 @@ class Renderer {
                     this.ctx.fillText(lastAnsweredReference, leftPadding, textY + 22);
                 }
             } else {
-                this.ctx.fillText('✗ Answer: ' + quiz.answers.join(', '), leftPadding, textY + 4);
+                this.ctx.fillText(t('game.clozeAnswer', '✗ Answer: {0}').replace('{0}', quiz.answers.join(', ')), leftPadding, textY + 4);
             }
             this.ctx.restore();
             return;
@@ -2365,7 +2365,7 @@ class Renderer {
         ctx.fillStyle = '#ffcc00';
         ctx.font = 'bold 18px Arial';
         ctx.textAlign = 'center';
-        ctx.fillText('Goals', canvas.width / 2, modalY + 28);
+        ctx.fillText(t('game.goals', 'Goals'), canvas.width / 2, modalY + 28);
 
         // --- Daily Challenge ---
         const dcY = modalY + 50;
@@ -2379,9 +2379,9 @@ class Renderer {
 
         if (dcCompleted) {
             ctx.fillStyle = '#00ff00';
-            ctx.fillText('✓ Daily Challenge Complete!', modalX + 15, dcY);
+            ctx.fillText(t('ui.dailyChallengeComplete', '✓ Daily Challenge Complete!'), modalX + 15, dcY);
         } else {
-            ctx.fillText(`Daily: ${dcProgress}/${dcGoal} First Letter quizzes`, modalX + 15, dcY);
+            ctx.fillText(t('ui.dailyChallengeProgress', 'Daily: {0}/{1} First Letter quizzes').replace('{0}', dcProgress).replace('{1}', dcGoal), modalX + 15, dcY);
         }
 
         // Daily progress bar
@@ -2406,7 +2406,7 @@ class Renderer {
 
         ctx.fillStyle = '#fff';
         ctx.font = '14px Arial';
-        ctx.fillText(`Verses Learned: ${vl} / ${vt}`, modalX + 15, vlY);
+        ctx.fillText(t('ui.versesLearnedProgress', 'Verses Learned: {0} / {1}').replace('{0}', vl).replace('{1}', vt), modalX + 15, vlY);
 
         // Verses progress bar
         const vlBarY = vlY + 8;
@@ -2424,7 +2424,7 @@ class Renderer {
         ctx.fillStyle = '#888';
         ctx.font = '11px Arial';
         ctx.textAlign = 'center';
-        ctx.fillText('Tap anywhere to close', canvas.width / 2, modalY + modalHeight - 12);
+        ctx.fillText(t('game.tapToClose', 'Tap anywhere to close'), canvas.width / 2, modalY + modalHeight - 12);
 
         // Reset text align
         ctx.textAlign = 'left';
