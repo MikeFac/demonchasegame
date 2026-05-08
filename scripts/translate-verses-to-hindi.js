@@ -39,6 +39,8 @@ const OUTPUT_FILE = path.join(__dirname, '..', 'bible-verses-hi.js');
 const ROMANIZED_OUTPUT_FILE = path.join(__dirname, '..', 'bible-verses-hi-rom.js');
 const PROGRESS_FILE = path.join(__dirname, '..', '.translation-progress-hi.json');
 const REPAIR_PROGRESS_FILE = path.join(__dirname, '..', '.translation-progress-hi-repair.json');
+const HI_LOCALE_FILE = path.join(__dirname, '..', 'public', 'locales', 'hi.json');
+const HI_ROM_LOCALE_FILE = path.join(__dirname, '..', 'public', 'locales', 'hi-rom.json');
 
 function groupByCategory(verses) {
     const groups = {};
@@ -445,12 +447,71 @@ function normalizeRomanizedArray(primaryValues, fallbackValues) {
     return fallbackValues;
 }
 
+function loadReverseCategoryLabelMap(localeFile) {
+    try {
+        const parsed = JSON.parse(fs.readFileSync(localeFile, 'utf8'));
+        const categories = parsed && parsed.categories && typeof parsed.categories === 'object'
+            ? parsed.categories
+            : {};
+        const reverseMap = {};
+        Object.entries(categories).forEach(function([key, value]) {
+            if (typeof value === 'string' && value) {
+                reverseMap[value] = key;
+            }
+        });
+        return reverseMap;
+    } catch (err) {
+        return {};
+    }
+}
+
+const HI_CATEGORY_REVERSE_MAP = loadReverseCategoryLabelMap(HI_LOCALE_FILE);
+const HI_ROM_CATEGORY_REVERSE_MAP = loadReverseCategoryLabelMap(HI_ROM_LOCALE_FILE);
+
+function canonicalizeCategoryLabel(categoryValue, reverseMap) {
+    if (typeof categoryValue !== 'string' || !categoryValue) {
+        return categoryValue;
+    }
+    return reverseMap[categoryValue] || categoryValue;
+}
+
+function canonicalizeCategoryQuizData(quizData, reverseMap) {
+    if (!quizData || typeof quizData !== 'object') {
+        return quizData;
+    }
+
+    const categoryMatch = quizData.categoryMatch
+        ? {
+            ...quizData.categoryMatch,
+            correctCategory: canonicalizeCategoryLabel(quizData.categoryMatch.correctCategory, reverseMap),
+            distractors: Array.isArray(quizData.categoryMatch.distractors)
+                ? quizData.categoryMatch.distractors.map(function(categoryValue) {
+                    return canonicalizeCategoryLabel(categoryValue, reverseMap);
+                })
+                : quizData.categoryMatch.distractors
+        }
+        : quizData.categoryMatch;
+
+    const trueFalse = quizData.trueFalse
+        ? {
+            ...quizData.trueFalse,
+            falseCategory: canonicalizeCategoryLabel(quizData.trueFalse.falseCategory, reverseMap)
+        }
+        : quizData.trueFalse;
+
+    return {
+        ...quizData,
+        categoryMatch: categoryMatch,
+        trueFalse: trueFalse
+    };
+}
+
 function toHindiVerse(verse) {
     return {
         ...verse,
         // Keep category keys canonical in quiz payloads; localize them at render time.
-        quizData: verse.quizData || {},
-        romanizedQuizData: verse.romanizedQuizData || {}
+        quizData: canonicalizeCategoryQuizData(verse.quizData || {}, HI_CATEGORY_REVERSE_MAP),
+        romanizedQuizData: canonicalizeCategoryQuizData(verse.romanizedQuizData || {}, HI_ROM_CATEGORY_REVERSE_MAP)
     };
 }
 
