@@ -20,12 +20,12 @@ const SermonSchema = new mongoose.Schema({
   // Paginated sermon content — each element is one screen of text
   pages: {
     type: [String],
-    required: true
+    default: []
   },
   // Concluding prayer (displayed as the final page)
   prayer: {
     type: String,
-    required: true
+    default: ''
   },
 
   // Generation metadata
