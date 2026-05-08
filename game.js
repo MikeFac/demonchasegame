@@ -3060,6 +3060,8 @@ async function init() {
                 verses = loadSelectedVersesHI();
             } else if (_vlang === 'hi-rom' && typeof loadSelectedVersesHIRom === 'function') {
                 verses = loadSelectedVersesHIRom();
+            } else if (_vlang === 'zw' && typeof loadSelectedVersesZW === 'function') {
+                verses = loadSelectedVersesZW();
             } else if (typeof loadSelectedVerses === 'function') {
                 verses = loadSelectedVerses();
             }
