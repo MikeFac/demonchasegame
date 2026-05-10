@@ -2193,7 +2193,9 @@ document.addEventListener('DOMContentLoaded', function () {
 
         // Settings Toggle
         const btnSettings = document.getElementById('btnSettings');
+        const settingsBackButton = document.getElementById('settingsBackButton');
         const settingsContainer = document.getElementById('settingsContainer');
+        const menuGrid = document.querySelector('#menuScreen .menu-grid');
         const btnSolo = document.getElementById('btnSolo');
         const btnMultiplayer = document.getElementById('btnMultiplayer');
         const btnInstructions = document.getElementById('btnInstructions');
@@ -2203,39 +2205,40 @@ document.addEventListener('DOMContentLoaded', function () {
         const logoImg = document.querySelector('#menuScreen .logo-container img');
         
         if (btnSettings && settingsContainer) {
-            btnSettings.addEventListener('click', () => {
-                if (settingsContainer.style.display === 'none') {
-                    // Open Options
-                    settingsContainer.style.display = 'block';
-                    btnSettings.textContent = t('menu.back');
-                    
-                    // Hide main menu items
-                    if (btnSolo) btnSolo.style.display = 'none';
-                    if (btnMultiplayer) btnMultiplayer.style.display = 'none';
-                    if (btnInstructions) btnInstructions.style.display = 'none';
-                    if (btnLearnVerses) btnLearnVerses.style.display = 'none';
-                    if (btnCustomGame) btnCustomGame.style.display = 'none';
-                    if (offlineModeLabel) offlineModeLabel.style.display = 'none';
-                    
-                    // Shrink logo
-                    if (logoImg) logoImg.classList.add('logo-small');
-                } else {
-                    // Close Options (Back to Main Menu)
-                    settingsContainer.style.display = 'none';
-                    btnSettings.textContent = t('menu.options') + ' ▾';
-                    
-                    // Show main menu items
-                    if (btnSolo) btnSolo.style.display = 'block';
-                    if (btnMultiplayer) btnMultiplayer.style.display = 'block';
-                    if (btnInstructions) btnInstructions.style.display = 'block';
-                    if (btnLearnVerses) btnLearnVerses.style.display = 'block';
-                    if (btnCustomGame) btnCustomGame.style.display = 'block';
-                    if (offlineModeLabel) offlineModeLabel.style.display = 'block';
-                    
-                    // Restore logo
-                    if (logoImg) logoImg.classList.remove('logo-small');
+            const toggledMenuItems = [
+                btnSolo,
+                btnMultiplayer,
+                btnInstructions,
+                btnLearnVerses,
+                btnCustomGame,
+                offlineModeLabel
+            ];
+            const setSettingsMenuOpen = (isOpen) => {
+                settingsContainer.style.display = isOpen ? 'block' : 'none';
+                if (menuGrid) {
+                    menuGrid.style.display = isOpen ? 'none' : '';
                 }
+
+                toggledMenuItems.forEach((element) => {
+                    if (!element) return;
+                    element.style.display = isOpen ? 'none' : 'block';
+                });
+
+                if (logoImg) {
+                    logoImg.classList.toggle('logo-small', isOpen);
+                }
+            };
+
+            btnSettings.addEventListener('click', () => {
+                const isOpen = window.getComputedStyle(settingsContainer).display !== 'none';
+                setSettingsMenuOpen(!isOpen);
             });
+
+            if (settingsBackButton) {
+                settingsBackButton.addEventListener('click', () => {
+                    setSettingsMenuOpen(false);
+                });
+            }
         }
 
         const languageSelect = document.getElementById('languageSelect');

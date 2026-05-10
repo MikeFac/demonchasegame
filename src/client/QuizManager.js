@@ -273,10 +273,192 @@
         };
     }
 
+    // --- Korean Syllable Helpers ---
+
+    var KOREAN_STOP_WORDS = new Set([
+        '은', '는', '이', '가', '을', '를', '에', '의', '도', '와', '과',
+        '로', '께', '에서', '에게', '으로', '서', '만', '도', '하', '것',
+        '그', '이', '저', '네', '우리', '너희'
+    ]);
+
+    function isKorean() {
+        return typeof I18n !== 'undefined' && I18n.getLang() === 'kr';
+    }
+
+    function isHangulSyllableChar(ch) {
+        var code = ch.charCodeAt(0);
+        return code >= 0xAC00 && code <= 0xD7A3;
+    }
+
+    function stripKoreanEdgePunctuation(token) {
+        return token.replace(/^[.,;:!?'"()\[\]{}「」『』""''·…]+/, '')
+                     .replace(/[.,;:!?'"()\[\]{}「」『』""''·…]+$/, '');
+    }
+
+    function extractLeadingSyllable(token) {
+        var cleaned = stripKoreanEdgePunctuation(token);
+        if (!cleaned) return '';
+        if (isHangulSyllableChar(cleaned.charAt(0))) {
+            return cleaned.charAt(0);
+        }
+        return cleaned.charAt(0);
+    }
+
+    function getKoreanQuizWords(text) {
+        var tokens = text.split(/\s+/);
+        var candidates = [];
+        for (var i = 0; i < tokens.length; i++) {
+            var cleaned = stripKoreanEdgePunctuation(tokens[i]);
+            if (!cleaned) continue;
+            if (cleaned.length < 2) continue;
+            if (/^\d+$/.test(cleaned)) continue;
+            if (KOREAN_STOP_WORDS.has(cleaned)) continue;
+            var hangulCount = 0;
+            for (var c = 0; c < cleaned.length; c++) {
+                if (isHangulSyllableChar(cleaned.charAt(c))) hangulCount++;
+            }
+            if (hangulCount >= 2) {
+                candidates.push({ word: cleaned, index: i, originalToken: tokens[i] });
+            }
+        }
+        return candidates;
+    }
+
+    function selectKoreanQuizCandidates(text, count) {
+        var candidates = getKoreanQuizWords(text);
+        if (candidates.length === 0) return [];
+        for (var i = candidates.length - 1; i > 0; i--) {
+            var j = Math.floor(Math.random() * (i + 1));
+            var tmp = candidates[i]; candidates[i] = candidates[j]; candidates[j] = tmp;
+        }
+        return candidates.slice(0, Math.min(count, candidates.length));
+    }
+
+    function buildKoreanSyllablePool(text) {
+        var pool = new Set();
+        var candidates = getKoreanQuizWords(text);
+        for (var i = 0; i < candidates.length; i++) {
+            pool.add(extractLeadingSyllable(candidates[i].word));
+        }
+        if (typeof organizedVerses !== 'undefined') {
+            var allCats = Object.keys(organizedVerses);
+            for (var c = 0; c < allCats.length; c++) {
+                var catVerses = organizedVerses[allCats[c]];
+                if (!catVerses) continue;
+                for (var v = 0; v < catVerses.length && pool.size < 60; v++) {
+                    var verseWords = getKoreanQuizWords(catVerses[v].Text);
+                    for (var w = 0; w < verseWords.length && pool.size < 60; w++) {
+                        pool.add(extractLeadingSyllable(verseWords[w].word));
+                    }
+                }
+            }
+        }
+        var result = [];
+        pool.forEach(function(s) { if (s) result.push(s); });
+        return result;
+    }
+
+    function generateKoreanFirstSyllableData(text) {
+        var selected = selectKoreanQuizCandidates(text, 2);
+        if (selected.length < 2) return [null, null, null];
+
+        var words = text.split(/\s+/);
+        var syllables = [];
+        for (var i = 0; i < selected.length; i++) {
+            syllables.push(extractLeadingSyllable(selected[i].word));
+        }
+        var correctAnswer = syllables.join('');
+
+        var blankTokens = new Set(selected.map(function(s) { return s.index; }));
+        var testVerse = '';
+        for (var i = 0; i < words.length; i++) {
+            if (blankTokens.has(i)) {
+                testVerse += '______ ';
+            } else {
+                testVerse += words[i] + ' ';
+            }
+        }
+        testVerse = testVerse.trim();
+
+        var pool = buildKoreanSyllablePool(text);
+        var options = [correctAnswer];
+        var attempts = 0;
+        while (options.length < 4 && attempts < 50) {
+            var s1 = pool[Math.floor(Math.random() * pool.length)];
+            var s2 = pool[Math.floor(Math.random() * pool.length)];
+            if (!s1 || !s2) { attempts++; continue; }
+            var combo = s1 + s2;
+            if (combo !== correctAnswer && options.indexOf(combo) === -1) {
+                options.push(combo);
+            }
+            attempts++;
+        }
+        options.sort(function() { return Math.random() - 0.5; });
+        return [testVerse, correctAnswer, options];
+    }
+
+    function generateKoreanClozeData(text) {
+        var selected = selectKoreanQuizCandidates(text, 2);
+        if (selected.length < 2) selected = selectKoreanQuizCandidates(text, 1);
+        if (selected.length === 0) return null;
+
+        selected.sort(function(a, b) { return a.index - b.index; });
+
+        var words = text.split(/\s+/);
+        var questionParts = [];
+        var lastIdx = 0;
+        for (var i = 0; i < selected.length; i++) {
+            questionParts.push(words.slice(lastIdx, selected[i].index).join(' '));
+            questionParts.push('_____');
+            lastIdx = selected[i].index + 1;
+        }
+        questionParts.push(words.slice(lastIdx).join(' '));
+
+        return {
+            question: questionParts.join(' ').trim(),
+            answers: selected.map(function(s) { return s.word; })
+        };
+    }
+
+    function generateKoreanSyllableOptions(correctSyllable, pool) {
+        if (!pool || pool.length === 0) return [correctSyllable];
+        var options = [correctSyllable];
+        var shuffled = pool.slice();
+        for (var i = shuffled.length - 1; i > 0; i--) {
+            var j = Math.floor(Math.random() * (i + 1));
+            var tmp = shuffled[i]; shuffled[i] = shuffled[j]; shuffled[j] = tmp;
+        }
+        for (var i = 0; i < shuffled.length && options.length < 6; i++) {
+            if (shuffled[i] !== correctSyllable && options.indexOf(shuffled[i]) === -1) {
+                options.push(shuffled[i]);
+            }
+        }
+        options.sort(function() { return Math.random() - 0.5; });
+        return options;
+    }
+
     // --- Quiz Generators ---
 
     // 1. First Letter mode (original logic from processVerse/generateQuiz)
     function generateFirstLetterQuiz(verse) {
+        if (isKorean()) {
+            const result = generateKoreanFirstSyllableData(verse.Text);
+            const koreanTestVerse = result[0];
+            const koreanFirstLettersStr = result[1];
+            const koreanOptions = result[2];
+            if (!koreanTestVerse) return null;
+
+            return {
+                mode: 'first_letter',
+                promptText: koreanTestVerse,
+                questionLabel: typeof t === 'function' ? t('quiz.firstLetters') : 'First letters of missing words:',
+                options: koreanOptions.map(function (opt) {
+                    return { text: opt, isCorrect: opt === koreanFirstLettersStr };
+                }),
+                correctAnswer: koreanFirstLettersStr
+            };
+        }
+
         const [testVerse, firstLettersStr, options] = generateFirstLetterData(verse.Text);
         if (!testVerse) return null;
 
@@ -468,7 +650,13 @@
         }
     }
 
-    function generateClozeLetterOptions(correctWord) {
+    function generateClozeLetterOptions(correctWord, syllablePool) {
+        if (isKorean()) {
+            var correctSyllable = extractLeadingSyllable(correctWord);
+            var pool = syllablePool || buildKoreanSyllablePool('');
+            return generateKoreanSyllableOptions(correctSyllable, pool);
+        }
+
         const correctLetter = correctWord.charAt(0).toUpperCase();
         const options = [correctLetter];
         
@@ -476,22 +664,23 @@
             return l !== correctLetter;
         });
         
-        // Shuffle distractors
         for (let i = availableDistractors.length - 1; i > 0; i--) {
             const j = Math.floor(Math.random() * (i + 1));
             [availableDistractors[i], availableDistractors[j]] = [availableDistractors[j], availableDistractors[i]];
         }
         
-        // Add 5 distractors
         for (let i = 0; i < 5 && i < availableDistractors.length; i++) {
             options.push(availableDistractors[i]);
         }
         
-        // Shuffle final options
         return options.sort(function() { return Math.random() - 0.5; });
     }
 
     function autoGenerateCloze(text) {
+        if (isKorean()) {
+            return generateKoreanClozeData(text);
+        }
+
         const words = text.split(/\s+/);
         const candidates = [];
         
@@ -540,7 +729,6 @@
     function generateClozeQuiz(verse) {
         let qd = verse.quizData && verse.quizData.cloze;
         
-        // Auto-generate if not present
         if (!qd || !qd.question || !qd.answers || qd.answers.length === 0) {
             if (!getCurrentLanguageCapabilities().supportsAutoCloze) {
                 return null;
@@ -552,8 +740,9 @@
             qd = generated;
         }
 
+        var syllablePool = isKorean() ? buildKoreanSyllablePool(verse.Text) : null;
         const firstWord = qd.answers[0];
-        const letterOptions = generateClozeLetterOptions(firstWord);
+        const letterOptions = generateClozeLetterOptions(firstWord, syllablePool);
 
         return {
             mode: 'cloze',
@@ -567,7 +756,8 @@
             showFullAnswer: false,
             isComplete: false,
             verseText: verse.Text,
-            verseReference: verse.Reference
+            verseReference: verse.Reference,
+            _koreanSyllablePool: syllablePool
         };
     }
 
@@ -617,8 +807,15 @@
 
         const currentWordIndex = currentQuiz.currentWordIndex;
         const correctWord = currentQuiz.answers[currentWordIndex];
-        const correctLetter = correctWord.charAt(0).toUpperCase();
-        const isCorrect = selectedLetter === correctLetter;
+        var isCorrect;
+
+        if (isKorean()) {
+            const correctSyllable = extractLeadingSyllable(correctWord);
+            isCorrect = selectedLetter === correctSyllable;
+        } else {
+            const correctLetter = correctWord.charAt(0).toUpperCase();
+            isCorrect = selectedLetter === correctLetter;
+        }
 
         if (isCorrect) {
             playClozeBeep(true);
@@ -631,7 +828,7 @@
                 onClozeComplete(true);
             } else {
                 const nextWord = currentQuiz.answers[currentQuiz.currentWordIndex];
-                currentQuiz.letterOptions = generateClozeLetterOptions(nextWord);
+                currentQuiz.letterOptions = generateClozeLetterOptions(nextWord, currentQuiz._koreanSyllablePool);
             }
         } else {
             playClozeBeep(false);
