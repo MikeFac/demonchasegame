@@ -12,6 +12,9 @@ const { buildGenerationPrompt, buildStylePrompt } = require('../src/server/servi
 
 const TEST_REFERENCE = 'Test Book 1:1';
 const NORMALIZED_REFERENCE = normalizeReference(TEST_REFERENCE);
+const LEGACY_REFERENCE = 'Legacy Book 2:3';
+const KOREAN_REFERENCE = '고린도전서 16:13';
+const KOREAN_DB_REFERENCE = '1-corinthians-16-13';
 
 async function startTestServer() {
   const app = express();
@@ -29,7 +32,12 @@ async function startTestServer() {
 }
 
 async function seedTestSongs() {
-  await VerseSong.deleteMany({ verseReference: NORMALIZED_REFERENCE });
+  await VerseSong.deleteMany({
+    $or: [
+      { verseReference: { $in: [NORMALIZED_REFERENCE, LEGACY_REFERENCE] } },
+      { verseReference: KOREAN_DB_REFERENCE, language: 'kr' }
+    ]
+  });
 
   await VerseSong.insertMany([
     {
@@ -75,6 +83,37 @@ async function seedTestSongs() {
       qualityScore: 75
     }
   ]);
+
+  await VerseSong.collection.insertOne({
+    verseReference: LEGACY_REFERENCE,
+    verseReferenceFull: LEGACY_REFERENCE,
+    version: 1,
+    category: 'Legacy',
+    status: 'active',
+    isActiveVersion: true,
+    generationStatus: 'completed',
+    audioUrl: '/audio/legacy-book-2-3-v1.mp3',
+    playCount: 1,
+    learnCount: 1,
+    averageRetention: 1,
+    qualityScore: 100
+  });
+
+  await VerseSong.insertOne({
+    verseReference: KOREAN_DB_REFERENCE,
+    verseReferenceFull: KOREAN_REFERENCE,
+    version: 1,
+    category: 'Courage',
+    status: 'active',
+    isActiveVersion: true,
+    generationStatus: 'completed',
+    audioUrl: '/audio/1-corinthians-16-13-kr-v1.mp3',
+    language: 'kr',
+    playCount: 5,
+    learnCount: 4,
+    averageRetention: 0.8,
+    qualityScore: 80
+  });
 }
 
 async function run() {
@@ -112,6 +151,33 @@ async function run() {
 
     assert.ok(selectedVersions.size > 1, 'expected random selection across multiple versions');
 
+    const legacyResponse = await axios.get(`${started.baseUrl}/api/verse-song`, {
+      params: { ref: LEGACY_REFERENCE }
+    });
+
+    assert.strictEqual(legacyResponse.data.status, 'ready');
+    assert.strictEqual(legacyResponse.data.version, 1);
+    assert.strictEqual(legacyResponse.data.totalVersions, 1);
+    assert.strictEqual(legacyResponse.data.audioUrl, '/audio/legacy-book-2-3-v1.mp3');
+
+    const koreanResponse = await axios.get(`${started.baseUrl}/api/verse-song`, {
+      params: { ref: KOREAN_REFERENCE, lang: 'kr' }
+    });
+
+    assert.strictEqual(koreanResponse.data.status, 'ready');
+    assert.strictEqual(koreanResponse.data.version, 1);
+    assert.strictEqual(koreanResponse.data.totalVersions, 1);
+    assert.strictEqual(koreanResponse.data.audioUrl, '/audio/1-corinthians-16-13-kr-v1.mp3');
+
+    const libraryResponse = await axios.get(`${started.baseUrl}/api/verse-song/library`, {
+      params: { lang: 'en' }
+    });
+
+    const legacyCategory = libraryResponse.data.categories.find((entry) => entry.category === 'Legacy');
+    assert.ok(legacyCategory, 'expected Legacy category in English song library');
+    const legacyVerse = legacyCategory.verses.find((entry) => entry.verseReference === LEGACY_REFERENCE);
+    assert.ok(legacyVerse, 'expected legacy verse in English song library');
+
     const recordPlayResponse = await axios.post(`${started.baseUrl}/api/verse-song/record-play`, {
       verseReference: TEST_REFERENCE,
       version: 2,
@@ -146,7 +212,12 @@ async function run() {
     if (server) {
       await new Promise(resolve => server.close(resolve));
     }
-    await VerseSong.deleteMany({ verseReference: NORMALIZED_REFERENCE });
+    await VerseSong.deleteMany({
+      $or: [
+        { verseReference: { $in: [NORMALIZED_REFERENCE, LEGACY_REFERENCE] } },
+        { verseReference: KOREAN_DB_REFERENCE, language: 'kr' }
+      ]
+    });
     await mongoose.disconnect();
   }
 }

@@ -57,8 +57,11 @@ function resolveReferenceCandidates(reference, lang) {
     return { rawRef: '', candidates: [], verseObj: null, canonicalRef: '' };
   }
 
+  const normalizedRawRef = normalizeReference(rawRef);
+  const hyphenatedRawRef = normalizeReferenceWithHyphens(rawRef);
   candidates.add(rawRef);
-  candidates.add(normalizeReference(rawRef));
+  candidates.add(normalizedRawRef);
+  candidates.add(hyphenatedRawRef);
 
   const verses = getLocalizedVerseBundle(lang);
   const verseObj = verses.find((verse) =>
@@ -75,6 +78,7 @@ function resolveReferenceCandidates(reference, lang) {
   if (canonicalRef) {
     candidates.add(canonicalRef);
     candidates.add(normalizeReference(canonicalRef));
+    candidates.add(normalizeReferenceWithHyphens(canonicalRef));
   }
 
   return {
@@ -85,13 +89,19 @@ function resolveReferenceCandidates(reference, lang) {
   };
 }
 
+function normalizeReferenceWithHyphens(reference) {
+  if (!reference) return '';
+
+  return String(reference)
+    .toLowerCase()
+    .replace(/\s+/g, '-')
+    .replace(/:/g, '-')
+    .replace(/[^\w-]/g, '');
+}
+
 function buildReferenceQuery(reference, lang) {
   const resolved = resolveReferenceCandidates(reference, lang);
-  const orClauses = resolved.candidates.map((candidate) => (
-    candidate.includes(':') || /\s/.test(candidate)
-      ? { verseReference: candidate }
-      : { verseReference: candidate }
-  ));
+  const orClauses = resolved.candidates.map((candidate) => ({ verseReference: candidate }));
 
   return {
     resolved,
@@ -99,6 +109,32 @@ function buildReferenceQuery(reference, lang) {
       $or: orClauses
     }
   };
+}
+
+function buildLanguageQuery(lang) {
+  const code = String(lang || 'en').toLowerCase();
+  if (code === 'en') {
+    return {
+      $or: [
+        { language: 'en' },
+        { language: null },
+        { language: { $exists: false } }
+      ]
+    };
+  }
+
+  return { language: code };
+}
+
+function combineFilters(...filters) {
+  const clauses = filters.filter(Boolean);
+  if (clauses.length === 0) {
+    return {};
+  }
+  if (clauses.length === 1) {
+    return clauses[0];
+  }
+  return { $and: clauses };
 }
 
 function sortVerseDisplay(a, b) {
@@ -186,13 +222,15 @@ router.get('/library', optionalAuth, async (req, res) => {
       isSongAdmin = authorizedEmail === SONG_ADMIN_EMAIL;
     }
 
-    const songs = await VerseSong.find({
-      language: lang,
-      status: 'active',
-      isActiveVersion: true,
-      generationStatus: 'completed',
-      audioUrl: { $exists: true, $ne: null }
-    })
+    const songs = await VerseSong.find(combineFilters(
+      buildLanguageQuery(lang),
+      {
+        status: 'active',
+        isActiveVersion: true,
+        generationStatus: 'completed',
+        audioUrl: { $exists: true, $ne: null }
+      }
+    ))
       .select('category verseReference verseReferenceFull version audioUrl duration generationStyle createdAt')
       .sort({ category: 1, verseReferenceFull: 1, verseReference: 1, version: 1 })
       .lean();
@@ -331,16 +369,17 @@ router.get('/', async (req, res) => {
       return res.status(400).json({ error: 'Missing ref parameter' });
     }
 
-    const langFilter = { language: lang };
     const referenceQuery = buildReferenceQuery(ref, lang);
 
-    const verseSongs = await VerseSong.find({
-      ...langFilter,
-      ...referenceQuery.query,
-      status: 'active',
-      isActiveVersion: true,
-      audioUrl: { $exists: true }
-    }).sort({ qualityScore: -1, playCount: 1 });
+    const verseSongs = await VerseSong.find(combineFilters(
+      buildLanguageQuery(lang),
+      referenceQuery.query,
+      {
+        status: 'active',
+        isActiveVersion: true,
+        audioUrl: { $exists: true }
+      }
+    )).sort({ qualityScore: -1, playCount: 1 });
 
     if (verseSongs.length > 0) {
       // Random selection for variety (can change to weighted by qualityScore later)
@@ -360,11 +399,11 @@ router.get('/', async (req, res) => {
     }
 
     // No completed songs found—check if any are processing
-    const processingSong = await VerseSong.findOne({
-      ...langFilter,
-      ...referenceQuery.query,
-      generationStatus: 'processing'
-    });
+    const processingSong = await VerseSong.findOne(combineFilters(
+      buildLanguageQuery(lang),
+      referenceQuery.query,
+      { generationStatus: 'processing' }
+    ));
 
     if (processingSong) {
       return res.json({
@@ -376,11 +415,11 @@ router.get('/', async (req, res) => {
     }
 
     // Check for failed generations
-    const failedSong = await VerseSong.findOne({
-      ...langFilter,
-      ...referenceQuery.query,
-      generationStatus: 'failed'
-    });
+    const failedSong = await VerseSong.findOne(combineFilters(
+      buildLanguageQuery(lang),
+      referenceQuery.query,
+      { generationStatus: 'failed' }
+    ));
 
     if (failedSong) {
       // Queue retry
@@ -435,10 +474,10 @@ async function createAndQueueVerseSong(verseReference, lang = 'en') {
 
   const normalizedRef = normalizeReference(canonicalReference);
 
-  const existing = await VerseSong.findOne({
-    language: lang,
-    ...buildReferenceQuery(verseReference, lang).query
-  });
+  const existing = await VerseSong.findOne(combineFilters(
+    buildLanguageQuery(lang),
+    buildReferenceQuery(verseReference, lang).query
+  ));
   if (existing) return existing;
 
   let verseText = `[Verse: ${canonicalReference}]`;
@@ -507,31 +546,34 @@ router.post('/record-play', async (req, res) => {
       return res.status(400).json({ error: 'Missing verseReference' });
     }
 
-    const langFilter = { language: songLang };
     const referenceQuery = buildReferenceQuery(verseReference, songLang);
-    let query = {
-      ...langFilter,
-      ...referenceQuery.query,
-      status: 'active',
-      isActiveVersion: true
-    };
+    let query = combineFilters(
+      buildLanguageQuery(songLang),
+      referenceQuery.query,
+      {
+        status: 'active',
+        isActiveVersion: true
+      }
+    );
 
     
     if (version) {
       // Find specific version
-      query.version = version;
+      query = combineFilters(query, { version });
     }
 
     let verseSong = await VerseSong.findOne(query);
 
     if (!verseSong) {
       // Try to find any version if specific one not found
-      verseSong = await VerseSong.findOne({
-        ...langFilter,
-        ...referenceQuery.query,
-        status: 'active',
-        isActiveVersion: true
-      });
+      verseSong = await VerseSong.findOne(combineFilters(
+        buildLanguageQuery(songLang),
+        referenceQuery.query,
+        {
+          status: 'active',
+          isActiveVersion: true
+        }
+      ));
     }
 
     if (!verseSong) {
