@@ -988,12 +988,14 @@
       text-align: center;
       color: #7f1d1d;
       font-family: 'Bebas Neue', sans-serif;
-      font-size: min(6.2em, 23vw);
-      letter-spacing: 10px;
+      font-size: clamp(2.8rem, 12vw, 6.2rem);
+      letter-spacing: clamp(3px, 1.2vw, 10px);
       text-transform: uppercase;
       text-shadow: 0 5px 20px rgba(255,255,255,0.72);
       opacity: 0;
       z-index: 10002;
+      padding: 0 16px;
+      line-height: 0.92;
       animation: text-reveal-branding 0.9s ease-out 0.12s forwards;
     }
 
@@ -1029,6 +1031,46 @@
       padding: 0 40px;
       z-index: 10002;
       animation: text-reveal 0.8s ease-out 1.45s forwards;
+    }
+
+    @media (max-width: 640px) {
+      .splash-branding {
+        top: 18%;
+        font-size: clamp(2.5rem, 11vw, 4.6rem);
+        letter-spacing: clamp(2px, 0.8vw, 6px);
+        padding: 0 12px;
+      }
+
+      .splash-text-top {
+        top: 36%;
+        font-size: min(1.3em, 5vw);
+        padding: 0 24px;
+      }
+
+      .splash-reference {
+        top: 44%;
+        padding: 0 24px;
+      }
+    }
+
+    @media (max-width: 420px) {
+      .splash-branding {
+        top: 16%;
+        font-size: clamp(2.15rem, 10vw, 3.6rem);
+        letter-spacing: 2px;
+      }
+
+      .splash-text-top {
+        top: 34%;
+        font-size: min(1.1em, 4.7vw);
+        padding: 0 18px;
+      }
+
+      .splash-reference {
+        top: 42%;
+        font-size: min(0.95em, 3.8vw);
+        padding: 0 18px;
+      }
     }
 
     @keyframes radiant-swell {
