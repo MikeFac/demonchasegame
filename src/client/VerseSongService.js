@@ -19,29 +19,69 @@
       return 'en';
     }
 
+    _resolveLookupReference(verseReference) {
+      if (!verseReference || typeof verseReference !== 'string') {
+        return verseReference;
+      }
+
+      const trimmed = verseReference.trim();
+      if (!trimmed) {
+        return trimmed;
+      }
+
+      const maybeResolveFromList = (list) => {
+        if (!Array.isArray(list)) return null;
+        const match = list.find((verse) => verse && verse.Reference === trimmed && verse.EnglishRef);
+        return match ? match.EnglishRef : null;
+      };
+
+      if (typeof window !== 'undefined') {
+        if (window.organizedVerses && typeof window.organizedVerses === 'object') {
+          for (const verses of Object.values(window.organizedVerses)) {
+            const resolved = maybeResolveFromList(verses);
+            if (resolved) {
+              return resolved;
+            }
+          }
+        }
+
+        if (Array.isArray(window.reviewItems)) {
+          const resolved = maybeResolveFromList(window.reviewItems);
+          if (resolved) {
+            return resolved;
+          }
+        }
+      }
+
+      return trimmed;
+    }
+
     async getSongForVerse(verseReference) {
-      if (this.cache[verseReference]) {
-        return this.cache[verseReference];
+      const lookupReference = this._resolveLookupReference(verseReference);
+      const cacheKey = `${this._getLang()}::${lookupReference}`;
+
+      if (this.cache[cacheKey]) {
+        return this.cache[cacheKey];
       }
 
       try {
         const response = await fetch(
-          `/api/verse-song?ref=${encodeURIComponent(verseReference)}&lang=${this._getLang()}`
+          `/api/verse-song?ref=${encodeURIComponent(lookupReference)}&lang=${this._getLang()}`
         );
 
         if (!response.ok) {
-          console.warn(`Error fetching song for ${verseReference}:`, response.status);
+          console.warn(`Error fetching song for ${lookupReference}:`, response.status);
           return null;
         }
 
         const data = await response.json();
 
         // Cache the response
-        this.cache[verseReference] = data;
+        this.cache[cacheKey] = data;
 
         return data;
       } catch (err) {
-        console.error(`Error fetching verse song for ${verseReference}:`, err);
+        console.error(`Error fetching verse song for ${lookupReference}:`, err);
         return null;
       }
     }
@@ -51,11 +91,12 @@
      */
     async recordPlay(verseReference, playDurationMs, wasLearned) {
       try {
+        const lookupReference = this._resolveLookupReference(verseReference);
         await fetch('/api/verse-song/record-play', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            verseReference,
+            verseReference: lookupReference,
             playDurationMs,
             wasLearned,
             lang: this._getLang()
@@ -71,7 +112,9 @@
      * Get cached data without fetching
      */
     getCached(verseReference) {
-      return this.cache[verseReference] || null;
+      const lookupReference = this._resolveLookupReference(verseReference);
+      const cacheKey = `${this._getLang()}::${lookupReference}`;
+      return this.cache[cacheKey] || null;
     }
 
     /**
