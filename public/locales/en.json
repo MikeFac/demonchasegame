@@ -395,7 +395,11 @@
     "futureFeatures": "Future Features",
     "shareGame": "📤 Share Game",
     "verseIs": "This verse is {0}",
-    "verseIsAbout": "This verse is about {0}"
+    "verseIsAbout": "This verse is about {0}",
+    "combatHintFleeAndLearn": "Flee and Learn",
+    "strongVsMonster": "{0} strong vs {1}!",
+    "strong": "STRONG!",
+    "blocked": "BLOCKED"
   },
   "toasts": {
     "offlineMode": "📡 Offline Mode — No server connection",

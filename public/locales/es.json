@@ -402,7 +402,11 @@
     "futureFeatures": "Funciones futuras",
     "shareGame": "\ud83d\udce4 Compartir juego",
     "verseIs": "Este vers\u00edculo es {0}",
-    "verseIsAbout": "Este vers\u00edculo trata sobre {0}"
+    "verseIsAbout": "Este vers\u00edculo trata sobre {0}",
+    "combatHintFleeAndLearn": "Huye y aprende",
+    "strongVsMonster": "\u00a1{0} es fuerte contra {1}!",
+    "strong": "\u00a1FUERTE!",
+    "blocked": "BLOQUEADO"
   },
   "toasts": {
     "offlineMode": "📡 Modo sin conexión — Sin conexión al servidor",

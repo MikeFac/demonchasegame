@@ -56,6 +56,20 @@ const I18n = (function () {
                 true_false: true,
                 cloze: false
             }
+        },
+        kr: {
+            scriptType: 'hangul',
+            supportsRomanizedDisplay: false,
+            supportsFirstLetterQuiz: false,
+            supportsAutoMissingWord: false,
+            supportsAutoCloze: false,
+            supportedQuizModes: {
+                first_letter: false,
+                missing_word: true,
+                category_match: true,
+                true_false: true,
+                cloze: false
+            }
         }
     };
     
@@ -112,6 +126,14 @@ const I18n = (function () {
             monstersKilled: "Monsters Killed: {0}",
             versesLearned: "Verses Learned: {0}",
             timePlayed: "Time Played: {0}"
+        },
+        game: {
+            verseIs: "This verse is {0}",
+            verseIsAbout: "This verse is about {0}",
+            combatHintFleeAndLearn: "Flee and Learn",
+            strongVsMonster: "{0} strong vs {1}!",
+            strong: "STRONG!",
+            blocked: "BLOCKED"
         }
     };
 

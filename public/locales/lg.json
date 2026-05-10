@@ -402,7 +402,11 @@
     "futureFeatures": "Ebirimu Ebya Bujuuju",
     "shareGame": "\ud83d\udce4 Gaba Omuzannyo",
     "verseIs": "Ekigambo kino kye {0}",
-    "verseIsAbout": "Ekigambo kino kigenderera {0}"
+    "verseIsAbout": "Ekigambo kino kigenderera {0}",
+    "combatHintFleeAndLearn": "Dduka oyige",
+    "strongVsMonster": "{0} ya maanyi ku {1}!",
+    "strong": "MAANYI!",
+    "blocked": "KIZIBIDDWA"
   },
   "toasts": {
     "offlineMode": "📡 Enkola etaliyo — Tewali yungiro ku seeba",

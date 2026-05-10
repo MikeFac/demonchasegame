@@ -369,7 +369,11 @@
     "futureFeatures": "भविष्य की सुविधाएँ",
     "shareGame": "\ud83d\udce4 गेम साझा करें",
     "verseIs": "यह आयत {0} है",
-    "verseIsAbout": "यह आयत {0} के बारे में है"
+    "verseIsAbout": "यह आयत {0} के बारे में है",
+    "combatHintFleeAndLearn": "भागो और सीखो",
+    "strongVsMonster": "{0} {1} के विरुद्ध मजबूत है!",
+    "strong": "मजबूत!",
+    "blocked": "रोक दिया गया"
   },
   "toasts": {
     "offlineMode": "📡 ऑफ़लाइन मोड — कोई सर्वर कनेक्शन नहीं",

@@ -418,7 +418,11 @@
     "futureFeatures": "Vipengele Vya Baadaye",
     "shareGame": "📤 Shiriki Mchezo",
     "verseIs": "Sura hii ni {0}",
-    "verseIsAbout": "Sura hii inahusu {0}"
+    "verseIsAbout": "Sura hii inahusu {0}",
+    "combatHintFleeAndLearn": "Kimbia ujifunze",
+    "strongVsMonster": "{0} ni imara dhidi ya {1}!",
+    "strong": "IMARA!",
+    "blocked": "IMEZUILIWA"
   },
   "toasts": {
     "offlineMode": "📡 Hali Nje ya Mtandao — Hakuna muunganisho wa seva",

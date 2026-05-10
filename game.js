@@ -268,8 +268,10 @@ function maybeShowCombatHint(monster) {
 
     combatStruggleState.lastHintAt = now;
     combatHint = {
-        line1: 'Flee and Learn',
-        line2: suggestedCategory,
+        line1: typeof t === 'function' ? t('game.combatHintFleeAndLearn') : 'Flee and Learn',
+        line2: typeof window !== 'undefined' && typeof window.tCategory === 'function'
+            ? window.tCategory(suggestedCategory)
+            : suggestedCategory,
         color: '#ffd166',
         startTime: now,
         duration: COMBAT_HINT_DURATION
@@ -1040,6 +1042,9 @@ function loadVersesFromBundle() {
     } else if (lang === 'zw' && typeof loadSelectedVersesZW === 'function') {
         console.log('Loading Swahili verses from bundle');
         verses = loadSelectedVersesZW();
+    } else if (lang === 'kr' && typeof loadSelectedVersesKR === 'function') {
+        console.log('Loading Korean verses from bundle');
+        verses = loadSelectedVersesKR();
     } else if (typeof loadSelectedVerses === 'function') {
         console.log('Loading English verses from bundle');
         verses = loadSelectedVerses();
@@ -2695,8 +2700,18 @@ async function init() {
 
                 if (multiplier > 1 && Date.now() - lastStrongHitAt > 250) {
                     lastStrongHitAt = Date.now();
+                    const localizedCategory = category && typeof window !== 'undefined' && typeof window.tCategory === 'function'
+                        ? window.tCategory(category)
+                        : category;
+                    const localizedMonsterType = monsterType && typeof window !== 'undefined' && typeof window.tDemon === 'function'
+                        ? window.tDemon(monsterType)
+                        : monsterType;
                     flashMessages.push({
-                        text: category && monsterType ? `${category} strong vs ${monsterType}!` : 'STRONG!',
+                        text: category && monsterType
+                            ? (typeof t === 'function'
+                                ? t('game.strongVsMonster', localizedCategory, localizedMonsterType)
+                                : `${localizedCategory} strong vs ${localizedMonsterType}!`)
+                            : (typeof t === 'function' ? t('game.strong') : 'STRONG!'),
                         color: '#ffd166',
                         startTime: Date.now(),
                         duration: 1200
@@ -2710,7 +2725,7 @@ async function init() {
                     damageNumbers.push({
                         x: monster.x,
                         y: monster.y - 20,
-                        damage: 'BLOCKED',
+                        damage: typeof t === 'function' ? t('game.blocked') : 'BLOCKED',
                         color: '#FFD700',
                         startTime: Date.now(),
                         duration: 800
@@ -3062,6 +3077,8 @@ async function init() {
                 verses = loadSelectedVersesHIRom();
             } else if (_vlang === 'zw' && typeof loadSelectedVersesZW === 'function') {
                 verses = loadSelectedVersesZW();
+            } else if (_vlang === 'kr' && typeof loadSelectedVersesKR === 'function') {
+                verses = loadSelectedVersesKR();
             } else if (typeof loadSelectedVerses === 'function') {
                 verses = loadSelectedVerses();
             }

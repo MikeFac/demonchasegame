@@ -369,7 +369,11 @@
     "futureFeatures": "bhavishy ke suvidhaen",
     "shareGame": "\ud83d\udce4 game saajha karen",
     "verseIs": "yah aayat {0} hai",
-    "verseIsAbout": "yah aayat {0} ke baare men hai"
+    "verseIsAbout": "yah aayat {0} ke baare men hai",
+    "combatHintFleeAndLearn": "bhaago aur seekho",
+    "strongVsMonster": "{0} {1} ke viruddh mazboot hai!",
+    "strong": "MAZBOOT!",
+    "blocked": "ROKA GAYA"
   },
   "toasts": {
     "offlineMode": "📡 ofalaain mod - koii sarvar kanekshan nahin",
