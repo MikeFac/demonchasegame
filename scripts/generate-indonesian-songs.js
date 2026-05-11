@@ -1,19 +1,20 @@
 /**
- * Generate Korean verse songs for 2 verses per category using Suno via kie.ai API.
+ * Generate Indonesian verse songs for 2 verses per category using Suno via kie.ai API.
  *
- * Creates VerseSong MongoDB entries ready for a Korean game version.
+ * Creates VerseSong MongoDB entries ready for an Indonesian game version.
  *
  * Style:
- * Contemporary Korean worship-pop / K-pop crossover with clear Hangul vocals
+ *   Primary   - Indonesian pop worship (Rohani), gentle acoustic guitar with soft piano
+ *   Secondary - Dangdut-pop fusion, upbeat Indonesian folk-pop with dangdut groove
  *
- * Usage: KIE_API_KEY=your_key node scripts/generate-korean-songs.js
+ * Usage: KIE_API_KEY=your_key node scripts/generate-indonesian-songs.js
  *
  * Options:
  *   --dry-run    Show what would be generated without calling the API
  *   --poll       Also poll for completion and download audio
- *   --refresh-progress-only   Rebuild the local progress file from Korean DB rows only
+ *   --refresh-progress-only   Rebuild the local progress file from Indonesian DB rows only
  *   --only-ref=<db-ref>   Restrict the run to a single normalized verse reference
- *   --force-new-version   Create a fresh version even if a completed Korean song already exists
+ *   --force-new-version   Create a fresh version even if a completed Indonesian song already exists
  *
  * Cost: ~USD 0.06 per song via kie.ai
  */
@@ -27,20 +28,20 @@ const fs = require('fs');
 const path = require('path');
 
 const VerseSong = require('../src/server/models/VerseSong');
-const { loadSelectedVersesKR } = require('../bible-verses-kr.js');
+const { loadSelectedVersesID } = require('../bible-verses-id.js');
 
 const KIE_API_BASE = 'https://api.kie.ai/api/v1';
-const PROGRESS_FILE = path.join(__dirname, '..', '.korean-songs-progress.json');
+const PROGRESS_FILE = path.join(__dirname, '..', '.indonesian-songs-progress.json');
 const AUDIO_DIR = path.join(__dirname, '..', 'public', 'audio');
 const BATCH_DELAY_MS = 5000;
 const POLL_INTERVAL_MS = 10000;
 const MAX_POLLS = 120;
 const SONGS_PER_CATEGORY = 2;
 
-const PRIMARY_STYLE = 'Modern K-pop worship pop, bright Korean melodic hooks, polished synth-pop production, tight electronic drums, warm bass, shimmering pads, emotional build, catchy chorus, Korean Christian youth-group energy, female or mixed lead vocals, vocals start immediately on the first beat, sing clear intelligible Korean Hangul words throughout, sing the exact supplied lyrics only, no humming, no vocalizing, no instrumental intro, no long instrumental break, no spoken words, no ad-libs, no nonsense syllables, no extra words, short scripture song';
-const SECONDARY_STYLE = 'Contemporary Korean pop ballad worship, cinematic K-pop arrangement, clean piano and synth layers, restrained electronic beat, uplifting chorus lift, expressive Korean lead vocals, church-friendly and memorable, vocals start immediately on the first beat, sing clear intelligible Korean Hangul words throughout, sing the exact supplied lyrics only, no humming, no vocalizing, no instrumental intro, no long instrumental break, no spoken words, no ad-libs, no nonsense syllables, no extra words, short scripture song';
+const PRIMARY_STYLE = 'Indonesian pop worship, contemporary Rohani style, gentle acoustic guitar with soft piano, warm Indonesian vocals, uplifting melodic hooks similar to Nikita or Sari Simorangkir, church-friendly arrangement, emotional build, vocals start immediately on the first beat, sing clear intelligible Bahasa Indonesia words throughout, sing the exact supplied lyrics only, no humming, no vocalizing, no instrumental intro, no long instrumental break, no spoken words, no ad-libs, no nonsense syllables, no extra words, short scripture song';
+const SECONDARY_STYLE = 'Dangdut-pop fusion, upbeat Indonesian folk-pop rhythm, acoustic guitar with subtle dangdut groove, joyful and accessible, warm male vocals, energetic but worshipful, catchy melodic chorus, Indonesian folk-pop energy, vocals start immediately on the first beat, sing clear intelligible Bahasa Indonesia words throughout, sing the exact supplied lyrics only, no humming, no vocalizing, no instrumental intro, no long instrumental break, no spoken words, no ad-libs, no nonsense syllables, no extra words, short scripture song';
 
-const LANG = 'kr';
+const LANG = 'id';
 
 function sleep(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
@@ -143,7 +144,7 @@ function pickVersesPerCategory(translatedVerses, categories, countPerCategory) {
   for (const category of categorySelectionOrder) {
     const categoryVerses = translatedVerses.filter(v => v.Category === category);
     if (categoryVerses.length === 0) {
-      console.log(`  ⚠️  No translated verses found for ${category}`);
+      console.log(`  No translated verses found for ${category}`);
       continue;
     }
 
@@ -205,7 +206,7 @@ function buildCategoryStyleMap(categories) {
   for (let i = 0; i < sortedCategories.length; i++) {
     styleMap.set(
       sortedCategories[i],
-      i % 2 === 0 ? PRIMARY_STYLE : SECONDARY_STYLE
+      i % 2 === 0 ? SECONDARY_STYLE : PRIMARY_STYLE
     );
   }
 
@@ -228,9 +229,9 @@ function saveProgress(progress) {
 }
 
 function upsertProgressSong(progress, songEntry) {
-  const songKey = normalizeReference(songEntry.dbRef || songEntry.koreanRef || songEntry.englishRef || '');
+  const songKey = normalizeReference(songEntry.dbRef || songEntry.indonesianRef || songEntry.englishRef || '');
   const existingIndex = progress.songs.findIndex(entry => {
-    const entryKey = normalizeReference(entry.dbRef || entry.koreanRef || entry.englishRef || '');
+    const entryKey = normalizeReference(entry.dbRef || entry.indonesianRef || entry.englishRef || '');
     return entryKey === songKey;
   });
 
@@ -288,7 +289,7 @@ async function rebuildProgressFromDb(targetVerseMap) {
           category: target.category,
           style: song.generationStyle || target.style,
           englishRef: target.englishRef,
-          koreanRef: target.koreanRef,
+          indonesianRef: target.indonesianRef,
           verseText: song.verseText || target.verseText,
           status: statusFromDbSong(song),
           dbId: String(song._id),
@@ -316,7 +317,7 @@ async function downloadAudio(audioUrl, filename) {
       const stream = fs.createWriteStream(filePath);
       res.pipe(stream);
       stream.on('finish', () => {
-        console.log(`  📥 Saved: ${filePath}`);
+        console.log(`  Saved: ${filePath}`);
         resolve(filePath);
       });
       stream.on('error', reject);
@@ -332,7 +333,7 @@ async function findOrCreateVerseSong(verse, category, style, options = {}) {
 
   let song = await VerseSong.findOne({ verseReference: dbRef, language: LANG }).sort({ version: -1 });
   if (song && !forceNewVersion) {
-    console.log(`  ⏭️  DB entry exists: ${dbRef} (status: ${song.generationStatus})`);
+    console.log(`  Skip: DB entry exists: ${dbRef} (status: ${song.generationStatus})`);
     return song;
   }
 
@@ -341,7 +342,7 @@ async function findOrCreateVerseSong(verse, category, style, options = {}) {
 
   song = new VerseSong({
     verseReference: dbRef,
-    verseReferenceFull: `${displayRef} (Korean)`,
+    verseReferenceFull: `${displayRef} (Indonesian)`,
     version: nextVersion,
     book: parsed ? parsed.book : String(displayRef || '').split(/\d/)[0].trim(),
     chapter: parsed ? parsed.chapter : 0,
@@ -356,13 +357,13 @@ async function findOrCreateVerseSong(verse, category, style, options = {}) {
   });
 
   await song.save();
-  console.log(`  ✨ Created DB entry: ${dbRef} v${nextVersion}`);
+  console.log(`  Created DB entry: ${dbRef} v${nextVersion}`);
   return song;
 }
 
 async function generateSong(song) {
   const lyrics = buildLyrics(song.verseText, 4);
-  const title = `${song.verseReferenceFull || song.verseReference} - ${song.category} (Korean)`;
+  const title = `${song.verseReferenceFull || song.verseReference} - ${song.category} (Indonesian)`;
   const style = song.generationStyle || PRIMARY_STYLE;
 
   const body = {
@@ -375,7 +376,7 @@ async function generateSong(song) {
     callBackUrl: 'https://httpbin.org/post'
   };
 
-  console.log(`\n🎵 Generating: ${title}`);
+  console.log(`\nGenerating: ${title}`);
   console.log(`   Style: ${style}`);
   console.log(`   Lyrics preview: ${lyrics.slice(0, 80)}...`);
 
@@ -395,7 +396,7 @@ async function generateSong(song) {
   song.generationStatus = 'processing';
   await song.save();
 
-  console.log(`  ✅ Queued: taskId=${taskId}`);
+  console.log(`  Queued: taskId=${taskId}`);
   return taskId;
 }
 
@@ -405,7 +406,7 @@ async function pollForCompletion(song) {
 
     const response = await callKieAI('GET', `/generate/record-info?taskId=${song.generationRequestId}`);
     if (response.code !== 200) {
-      console.log(`  ⚠️  Poll error: ${response.code}`);
+      console.log(`  Poll error: ${response.code}`);
       continue;
     }
 
@@ -413,7 +414,7 @@ async function pollForCompletion(song) {
     const sunoData = response.data?.response?.sunoData?.[0];
 
     if (status === 'SUCCESS' && sunoData?.audioUrl) {
-      console.log(`  ✅ Complete: ${song.verseReference}`);
+      console.log(`  Complete: ${song.verseReference}`);
 
       const filename = `${song.verseReference}-${sunoData.id}.mp3`;
       await downloadAudio(sunoData.audioUrl, filename);
@@ -439,7 +440,7 @@ async function pollForCompletion(song) {
       throw new Error(`Generation ${status.toLowerCase()} for ${song.verseReference}: ${errorDetail}`);
     }
 
-    process.stdout.write(`  ⏳ [${i + 1}/${MAX_POLLS}] ${status}...\r`);
+    process.stdout.write(`  Polling [${i + 1}/${MAX_POLLS}] ${status}...\r`);
   }
 
   song.generationStatus = 'failed';
@@ -459,7 +460,7 @@ async function main() {
 
   if (!dryRun && !process.env.KIE_API_KEY) {
     console.error('Error: KIE_API_KEY environment variable required');
-    console.error('Usage: KIE_API_KEY=your_key node scripts/generate-korean-songs.js [--dry-run] [--poll]');
+    console.error('Usage: KIE_API_KEY=your_key node scripts/generate-indonesian-songs.js [--dry-run] [--poll]');
     process.exit(1);
   }
   if (!process.env.MONGODB_URI) {
@@ -468,11 +469,11 @@ async function main() {
   }
 
   await mongoose.connect(process.env.MONGODB_URI);
-  console.log('✅ Connected to MongoDB\n');
+  console.log('Connected to MongoDB\n');
 
-  const translatedVerses = loadSelectedVersesKR();
+  const translatedVerses = loadSelectedVersesID();
   if (!Array.isArray(translatedVerses) || translatedVerses.length === 0) {
-    console.error('Error: No Korean translated verses loaded from bible-verses-kr.js');
+    console.error('Error: No Indonesian translated verses loaded from bible-verses-id.js');
     process.exit(1);
   }
 
@@ -501,7 +502,7 @@ async function main() {
     : picks;
 
   if (onlyRef && filteredPicks.length === 0) {
-    console.error(`No Korean target verse matched --only-ref=${onlyRef}`);
+    console.error(`No Indonesian target verse matched --only-ref=${onlyRef}`);
     process.exit(1);
   }
 
@@ -514,7 +515,7 @@ async function main() {
         category,
         style: categoryStyle,
         englishRef: verse.EnglishRef,
-        koreanRef: getDisplayReference(verse),
+        indonesianRef: getDisplayReference(verse),
         verseText: verse.Text
       });
     }
@@ -525,7 +526,7 @@ async function main() {
     console.log(`  ${category}:`);
     console.log(`    Style: ${categoryStyleMap.get(category)}`);
     for (const verse of verses) {
-      console.log(`    ${verse.EnglishRef} → ${verse.Reference}`);
+      console.log(`    ${verse.EnglishRef} -> ${verse.Reference}`);
       console.log(`      "${verse.Text.slice(0, 80)}..."`);
     }
   }
@@ -536,7 +537,7 @@ async function main() {
   const processedRefs = new Set(
     progress.songs
       .filter(s => s.status === 'completed' || s.status === 'processing')
-      .map(s => normalizeReference(s.dbRef || s.koreanRef || s.englishRef || ''))
+      .map(s => normalizeReference(s.dbRef || s.indonesianRef || s.englishRef || ''))
       .filter(Boolean)
   );
 
@@ -546,7 +547,7 @@ async function main() {
       acc[key] = (acc[key] || 0) + 1;
       return acc;
     }, {});
-    console.log('\n--refresh-progress-only: Rebuilt progress from Korean DB rows only.');
+    console.log('\n--refresh-progress-only: Rebuilt progress from Indonesian DB rows only.');
     console.log(`Tracked songs: ${progress.songs.length}`);
     console.log(`Status counts: ${JSON.stringify(counts)}`);
     console.log(`Progress: ${PROGRESS_FILE}`);
@@ -557,13 +558,13 @@ async function main() {
   if (dryRun) {
     console.log('\n--dry-run: Would create VerseSong entries and generate via kie.ai.');
     const estimatedSongs = filteredPicks.reduce((total, entry) => total + entry.verses.length, 0);
-    console.log(`Estimated cost: ${estimatedSongs} songs × $0.06 = $${(estimatedSongs * 0.06).toFixed(2)}`);
+    console.log(`Estimated cost: ${estimatedSongs} songs x $0.06 = $${(estimatedSongs * 0.06).toFixed(2)}`);
     await mongoose.disconnect();
     return;
   }
 
   for (const { category, verses } of filteredPicks) {
-    console.log(`\n🎼 ${category}`);
+    console.log(`\n${category}`);
     const categoryStyle = categoryStyleMap.get(category) || PRIMARY_STYLE;
 
     for (let i = 0; i < verses.length; i++) {
@@ -572,7 +573,7 @@ async function main() {
         category,
         style: categoryStyle,
         englishRef: verse.EnglishRef,
-        koreanRef: getDisplayReference(verse),
+        indonesianRef: getDisplayReference(verse),
         verseText: verse.Text,
         status: 'pending',
         createdAt: new Date().toISOString()
@@ -580,7 +581,7 @@ async function main() {
 
       const verseKey = normalizeReference(getDbReferenceSource(verse));
       if (processedRefs.has(verseKey) && !shouldPoll && !forceNewVersion) {
-        console.log(`  ⏭️  Skipping ${verse.Reference} - already processed`);
+        console.log(`  Skipping ${verse.Reference} - already processed`);
         continue;
       }
 
@@ -591,7 +592,7 @@ async function main() {
         songEntry.version = song.version;
 
         if (song.generationStatus === 'completed' && song.audioUrl && !forceNewVersion) {
-          console.log(`  ✅ Already completed: ${song.verseReference}`);
+          console.log(`  Already completed: ${song.verseReference}`);
           songEntry.status = 'completed';
           songEntry.audioUrl = song.audioUrl;
           songEntry.taskId = song.generationRequestId;
@@ -602,7 +603,7 @@ async function main() {
         }
 
         if (song.generationStatus === 'processing' && song.generationRequestId && !shouldPoll && !forceNewVersion) {
-          console.log(`  ⏳ Already processing: taskId=${song.generationRequestId}`);
+          console.log(`  Already processing: taskId=${song.generationRequestId}`);
           songEntry.status = 'processing';
           songEntry.taskId = song.generationRequestId;
           upsertProgressSong(progress, songEntry);
@@ -623,7 +624,7 @@ async function main() {
             songEntry.status = 'completed';
             songEntry.audioUrl = song.audioUrl;
           } catch (pollErr) {
-            console.error(`  ❌ Poll failed: ${pollErr.message}`);
+            console.error(`  Poll failed: ${pollErr.message}`);
             songEntry.status = 'failed';
             songEntry.error = pollErr.message;
           }
@@ -631,7 +632,7 @@ async function main() {
 
         processedRefs.add(verseKey);
       } catch (err) {
-        console.error(`  ❌ Failed for ${verse.Reference}: ${err.message}`);
+        console.error(`  Failed for ${verse.Reference}: ${err.message}`);
         songEntry.status = 'failed';
         songEntry.error = err.message;
       }
@@ -645,18 +646,16 @@ async function main() {
     }
   }
 
-  console.log('\n🎉 Done!');
+  console.log('\nDone!');
   console.log(`Progress saved to: ${PROGRESS_FILE}`);
 
   await mongoose.disconnect();
 }
 
 main().catch(async (err) => {
-  console.error('\n❌ Fatal error:', err);
+  console.error('\nFatal error:', err);
   try {
     await mongoose.disconnect();
-  } catch (_) {
-    // ignore disconnect errors on fatal exit
-  }
+  } catch (_) {}
   process.exit(1);
 });
