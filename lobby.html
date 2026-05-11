@@ -450,7 +450,7 @@
                         <span class="pct">20%</span>
                     </div>
                     <div class="slider-item">
-                        <label><span data-i18n="config.trueFalse">True / False</span> <span style="opacity:0.6">(Easiest)</span></label>
+                        <label><span data-i18n="config.trueFalse">True / False</span> <span style="opacity:0.6" data-i18n="config.easiest">(Easiest)</span></label>
                         <input type="range" min="0" max="100" value="15" step="5" data-mode="trueFalse"
                             class="quiz-slider">
                         <span class="pct">15%</span>
@@ -729,8 +729,9 @@
 
         function playSolo() {
             let soloUrl = '/?solo=true';
-            if (localStorage.getItem('lang') === 'es') {
-                soloUrl += '&lang=es';
+            var _soloLang = localStorage.getItem('lang');
+            if (_soloLang && _soloLang !== 'en') {
+                soloUrl += '&lang=' + _soloLang;
             }
             window.location.href = soloUrl;
         }

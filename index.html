@@ -1341,6 +1341,7 @@
             <option value="hi-rom">Romanized Hindi</option>
             <option value="zw">Kiswahili</option>
             <option value="kr">한국어</option>
+            <option value="id">Bahasa Indonesia</option>
           </select>
         </div>
         <div class="utility-select">
@@ -1440,6 +1441,7 @@
           <option value="hi-rom">Romanized Hindi</option>
           <option value="zw">Kiswahili</option>
           <option value="kr">한국어</option>
+          <option value="id">Bahasa Indonesia</option>
           <!-- <option value="tl">Tagalog</option> -->
         </select>
         <p style="color: #888; font-size: 11px; margin-top: 5px;" data-i18n="config.comingSoon">More languages coming soon!</p>
@@ -1664,6 +1666,7 @@
   <script src="bible-verses-hi-rom.js"></script>
     <script src="bible-verses-zw.js?v=1.0"></script>
     <script src="bible-verses-kr.js?v=1.0"></script>
+    <script src="bible-verses-id.js?v=1.0"></script>
   <script>
     // Load verses globally for VOTD on main menu (use language-appropriate bundle)
     var _lang = localStorage.getItem('lang') || 'en';
@@ -1679,6 +1682,8 @@
         window.allVerses = loadSelectedVersesZW();
     } else if (_lang === 'kr' && typeof loadSelectedVersesKR === 'function') {
         window.allVerses = loadSelectedVersesKR();
+    } else if (_lang === 'id' && typeof loadSelectedVersesID === 'function') {
+        window.allVerses = loadSelectedVersesID();
     } else {
         window.allVerses = loadSelectedVerses();
     }
@@ -1913,7 +1918,7 @@
       }
     }
   </script>
-  <script src="game.js?v=3.08"></script>
+  <script src="game.js?v=3.09"></script>
   <script>
     // Register service worker for PWA offline support
     if ('serviceWorker' in navigator) {

@@ -1045,6 +1045,9 @@ function loadVersesFromBundle() {
     } else if (lang === 'kr' && typeof loadSelectedVersesKR === 'function') {
         console.log('Loading Korean verses from bundle');
         verses = loadSelectedVersesKR();
+    } else if (lang === 'id' && typeof loadSelectedVersesID === 'function') {
+        console.log('Loading Indonesian verses from bundle');
+        verses = loadSelectedVersesID();
     } else if (typeof loadSelectedVerses === 'function') {
         console.log('Loading English verses from bundle');
         verses = loadSelectedVerses();
@@ -3082,6 +3085,8 @@ async function init() {
                 verses = loadSelectedVersesZW();
             } else if (_vlang === 'kr' && typeof loadSelectedVersesKR === 'function') {
                 verses = loadSelectedVersesKR();
+            } else if (_vlang === 'id' && typeof loadSelectedVersesID === 'function') {
+                verses = loadSelectedVersesID();
             } else if (typeof loadSelectedVerses === 'function') {
                 verses = loadSelectedVerses();
             }
