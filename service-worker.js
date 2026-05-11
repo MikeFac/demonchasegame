@@ -1,4 +1,4 @@
-var CACHE_NAME = 'versebattles-v13';
+var CACHE_NAME = 'versebattles-v14';
 
 // HTML routes that should behave like part of the installable app.
 var APP_NAVIGATION_PATHS = {
@@ -69,9 +69,13 @@ var CORE_ASSETS = [
     '/bible-verses.js',
     '/bible-verses-es.js',
     '/bible-verses-lg.js',
+    '/bible-verses-kr.js',
+    '/bible-verses-id.js',
     '/locales/en.json',
     '/locales/es.json',
     '/locales/lg.json',
+    '/locales/kr.json',
+    '/locales/id.json',
     '/src/client/i18n.js',
     '/manifest.json',
     // Shared modules

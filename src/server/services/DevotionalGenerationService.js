@@ -14,6 +14,10 @@ function getLanguageName(lang) {
       return 'Luganda';
     case 'es':
       return 'Spanish';
+    case 'kr':
+      return 'Korean';
+    case 'id':
+      return 'Bahasa Indonesia';
     default:
       return 'English';
   }
