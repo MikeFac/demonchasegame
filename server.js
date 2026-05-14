@@ -79,6 +79,14 @@ app.get('/future-review-system', (req, res) => {
   res.sendFile(path.join(__dirname, 'future-review-system.html'));
 });
 
+app.get('/pg', (req, res) => {
+  res.sendFile(path.join(__dirname, 'pg.html'));
+});
+
+app.get('/pg/', (req, res) => {
+  res.sendFile(path.join(__dirname, 'pg.html'));
+});
+
 app.get('/content-maker', (req, res) => {
   res.set('X-Robots-Tag', 'noindex, nofollow');
   res.sendFile(path.join(__dirname, 'content-maker.html'));
