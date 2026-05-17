@@ -189,6 +189,7 @@
   "categories": {
     "Faith": "信仰",
     "Courage": "勇気",
+    "Deliverance": "解放",
     "Love": "愛",
     "Knowledge": "知識",
     "Wisdom": "知恵",
@@ -198,9 +199,15 @@
     "Focus": "集中",
     "Endurance": "忍耐",
     "Hope": "希望",
+    "Humility": "謙遜",
     "Prophecy": "預言",
     "Power": "力",
-    "Identity": "アイデンティティ"
+    "Identity": "アイデンティティ",
+    "Joy": "喜び",
+    "Praise": "賛美",
+    "Prayer": "祈り",
+    "Prosperity": "繁栄",
+    "Purity": "清さ"
   },
   "lobby": {
     "title": "Demon Chase - Lobby",
