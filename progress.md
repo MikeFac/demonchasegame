@@ -780,3 +780,20 @@ Original prompt: Check the implementation of docs/multi-version-songs-implementa
   - headless Playwright smoke captured under `output/web-game/wave-cloze-smoke/`
     - `summary.json` shows `Blank 1 / 2` and a single verse with two blanks
     - `wave-quiz.png` confirms the one-verse/two-blank cloze UI rendered with 6 letter choices
+
+2026-05-18:
+- Fixed Japanese verse-song lookup for localized references.
+- Server change in `src/server/routes/verseSong.js`:
+  - added `ja` support to `getLocalizedVerseBundle()`
+  - server now loads `bible-verses-deepseek-v4-pro.ja-kana.js` and can resolve Japanese `Reference` values to `EnglishRef` before parsing
+- Client change in `src/client/VerseSongService.js`:
+  - `_resolveLookupReference()` now also checks `window.allVerses`, so localized refs can still map to `EnglishRef` before `organizedVerses` exists
+- Verification:
+  - `node --check src/server/routes/verseSong.js`
+  - `node --check src/client/VerseSongService.js`
+  - local API smoke for `ローマ人への手紙 10:17` in `lang=ja` returned normal queueing instead of `Invalid verse reference format`
+  - local DB showed a Japanese verse-song row with `verseReferenceFull: ローマ人への手紙 10:17` and `generationStatus: processing`
+- Follow-up TODO:
+  - implement a proper per-language song-style layer for live `/api/verse-song` generation
+  - current language-specific genre/style logic mostly exists only in batch scripts (`generate-korean-songs.js`, `generate-hindi-songs.js`, `generate-indonesian-songs.js`, `generate-zwahili-songs.js`)
+  - the live server path still relies on the shared `CategoryStyle` collection, so Japanese category-specific genre defaults need a non-destructive live override mechanism rather than reusing the English/global style table

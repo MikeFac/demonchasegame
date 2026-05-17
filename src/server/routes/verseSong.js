@@ -38,6 +38,8 @@ function getLocalizedVerseBundle(lang) {
       verses = require('../../../bible-verses-zw').loadSelectedVersesZW();
     } else if (code === 'kr') {
       verses = require('../../../bible-verses-kr').loadSelectedVersesKR();
+    } else if (code === 'ja') {
+      verses = require('../../../bible-verses-deepseek-v4-pro.ja-kana').loadSelectedVersesJA();
     } else if (code === 'id') {
       verses = require('../../../bible-verses-id').loadSelectedVersesID();
     } else {

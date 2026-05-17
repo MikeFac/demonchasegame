@@ -45,6 +45,13 @@
           }
         }
 
+        if (Array.isArray(window.allVerses)) {
+          const resolved = maybeResolveFromList(window.allVerses);
+          if (resolved) {
+            return resolved;
+          }
+        }
+
         if (Array.isArray(window.reviewItems)) {
           const resolved = maybeResolveFromList(window.reviewItems);
           if (resolved) {
