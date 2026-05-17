@@ -826,7 +826,7 @@ let dailyChallengeCompleted = false;
 
 // Verse Learning Tracker (only first_letter mode)
 let versesLearned = 0;  // Total verses learned via 2-letter challenge
-const TOTAL_VERSES = 1618;  // Total verses in bible-verses.js
+let TOTAL_VERSES = 1618;  // Total verses in the loaded bundle
 
 // Game-Over Modal State
 let gameOverModalVisible = false;
@@ -1056,6 +1056,8 @@ function loadVersesFromBundle() {
         organizedVerses = {};
         return;
     }
+
+    TOTAL_VERSES = verses.length;
     
     // Filter by category if specified
     let filteredVerses = verses;
@@ -3057,6 +3059,7 @@ async function init() {
         if (urlConfig && urlConfig.content && urlConfig.content.source === 'custom' && urlConfig.content.verses && urlConfig.content.verses.length > 0) {
             verses = urlConfig.content.verses;
             organizedVerses = organizeByCategory(verses);
+            TOTAL_VERSES = verses.length;
             ALL_QUALITIES = Object.keys(organizedVerses);
             QUALITIES = ALL_QUALITIES;
             console.log('Custom content loaded:', verses.length, 'verses in categories:', ALL_QUALITIES);
@@ -3091,6 +3094,7 @@ async function init() {
                 verses = loadSelectedVerses();
             }
             organizedVerses = organizeByCategory(verses);
+            TOTAL_VERSES = verses.length;
             // Filter ALL_QUALITIES to only categories present in the loaded verses
             const availableCats = Object.keys(organizedVerses);
             ALL_QUALITIES = ALL_QUALITIES.filter(q => availableCats.includes(q));

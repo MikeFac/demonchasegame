@@ -2402,7 +2402,7 @@ class Renderer {
         // --- Verses Learned ---
         const vlY = dcBarY + 35;
         const vl = uiState.versesLearned || 0;
-        const vt = uiState.totalVerses || 1618;
+        const vt = uiState.totalVerses || 0;
 
         ctx.fillStyle = '#fff';
         ctx.font = '14px Arial';

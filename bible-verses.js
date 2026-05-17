@@ -40612,6 +40612,696 @@ function loadSelectedVerses() {
     "deck": "pilot"
   },
   {
+    "Id": 1679,
+    "Category": "Prayer",
+    "Reference": "Matthew 7:7-8",
+    "Text": "Ask, and it will be given you. Seek, and you will find. Knock, and it will be opened for you. For everyone who asks receives. He who seeks finds. To him who knocks it will be opened.",
+    "quizData": {
+      "missingWord": {
+        "question": "Ask, and it will be given you. Seek, and you will find. Knock, and it will be _____ for you. For everyone who asks receives. He who seeks finds. To him who knocks it will be opened.",
+        "answer": "opened",
+        "options": [
+          "closed",
+          "given",
+          "opened",
+          "revealed"
+        ]
+      },
+      "categoryMatch": {
+        "correctCategory": "Prayer",
+        "distractors": [
+          "Fear",
+          "Doubt",
+          "Despair"
+        ]
+      },
+      "trueFalse": {
+        "falseCategory": "Hope",
+        "falseReference": "Matthew 8:7-8"
+      }
+    }
+  },
+  {
+    "Id": 1680,
+    "Category": "Prayer",
+    "Reference": "Matthew 7:9-10",
+    "Text": "Or who is there among you who, if his son asks him for bread, will give him a stone? Or if he asks for a fish, who will give him a serpent?",
+    "quizData": {
+      "missingWord": {
+        "question": "Or who is there among you who, if his son asks him for bread, will give him a _____? Or if he asks for a fish, who will give him a serpent?",
+        "answer": "stone",
+        "options": [
+          "stone",
+          "snake",
+          "gift",
+          "coin"
+        ]
+      },
+      "categoryMatch": {
+        "correctCategory": "Prayer",
+        "distractors": [
+          "Deception",
+          "Bitterness",
+          "Anxiety"
+        ]
+      },
+      "trueFalse": {
+        "falseCategory": "Forgiveness",
+        "falseReference": "Matthew 7:12-13"
+      }
+    }
+  },
+  {
+    "Id": 1681,
+    "Category": "Prayer",
+    "Reference": "Matthew 7:11",
+    "Text": "If you then, being evil, know how to give good gifts to your children, how much more will your Father who is in heaven give good things to those who ask him!",
+    "quizData": {
+      "missingWord": {
+        "question": "If you then, being evil, know how to give good gifts to your children, how much more will your Father who is in heaven give good things to those who _____ him!",
+        "answer": "ask",
+        "options": [
+          "seek",
+          "ask",
+          "trust",
+          "follow"
+        ]
+      },
+      "categoryMatch": {
+        "correctCategory": "Prayer",
+        "distractors": [
+          "Fear",
+          "Doubt",
+          "Despair"
+        ]
+      },
+      "trueFalse": {
+        "falseCategory": "Identity",
+        "falseReference": "Matthew 7:1"
+      }
+    }
+  },
+  {
+    "Id": 1682,
+    "Category": "Prayer",
+    "Reference": "Matthew 18:19-20",
+    "Text": "Again, assuredly I tell you, that if two of you will agree on earth concerning anything that they will ask, it will be done for them by my Father who is in heaven. For where two or three are gathered together in my name, there I am in the middle of them.",
+    "quizData": {
+      "missingWord": {
+        "question": "Again, assuredly I tell you, that if two of you will agree on earth concerning anything that they will ask, it will be done for them by my Father who is in _____.",
+        "answer": "heaven",
+        "options": [
+          "heaven",
+          "earth",
+          "peace",
+          "grace"
+        ]
+      },
+      "categoryMatch": {
+        "correctCategory": "Prayer",
+        "distractors": [
+          "Pride",
+          "Fear",
+          "Conflict"
+        ]
+      },
+      "trueFalse": {
+        "falseCategory": "Hope",
+        "falseReference": "Matthew 18:21-22"
+      }
+    }
+  },
+  {
+    "Id": 1683,
+    "Category": "Prayer",
+    "Reference": "Matthew 21:22",
+    "Text": "All things, whatever you ask in prayer, believing, you will receive.",
+    "quizData": {
+      "missingWord": {
+        "question": "All things, whatever you ask in prayer, _____, you will receive.",
+        "answer": "believing",
+        "options": [
+          "believing",
+          "repenting",
+          "waiting",
+          "seeking"
+        ]
+      },
+      "categoryMatch": {
+        "correctCategory": "Prayer",
+        "distractors": [
+          "Doubt",
+          "Fear",
+          "Despair"
+        ]
+      },
+      "trueFalse": {
+        "falseCategory": "Faith",
+        "falseReference": "Matthew 21:21"
+      }
+    }
+  },
+  {
+    "Id": 1684,
+    "Category": "Prayer",
+    "Reference": "Mark 11:24",
+    "Text": "Therefore I tell you, all things whatever you pray and ask for, believe that you have received them, and you shall have them.",
+    "quizData": {
+      "missingWord": {
+        "question": "Therefore I tell you, all things whatever you pray and ask for, _____ that you have received them, and you shall have them.",
+        "answer": "believe",
+        "options": [
+          "believe",
+          "hope",
+          "confess",
+          "consider"
+        ]
+      },
+      "categoryMatch": {
+        "correctCategory": "Prayer",
+        "distractors": [
+          "Fear",
+          "Doubt",
+          "Despair"
+        ]
+      },
+      "trueFalse": {
+        "falseCategory": "Hope",
+        "falseReference": "Mark 11:23"
+      }
+    }
+  },
+  {
+    "Id": 1685,
+    "Category": "Prayer",
+    "Reference": "Luke 11:9-10",
+    "Text": "I tell you, keep asking, and it will be given you. Keep seeking, and you will find. Keep knocking, and it will be opened to you. For everyone who asks receives. He who seeks finds. To him who knocks it will be opened.",
+    "quizData": {
+      "missingWord": {
+        "question": "I tell you, keep asking, and it will be given you. Keep seeking, and you will find. Keep knocking, and it will be _____ to you.",
+        "answer": "opened",
+        "options": [
+          "opened",
+          "shut",
+          "revealed",
+          "delayed"
+        ]
+      },
+      "categoryMatch": {
+        "correctCategory": "Prayer",
+        "distractors": [
+          "Fear",
+          "Doubt",
+          "Despair"
+        ]
+      },
+      "trueFalse": {
+        "falseCategory": "Joy",
+        "falseReference": "Luke 11:8"
+      }
+    }
+  },
+  {
+    "Id": 1686,
+    "Category": "Prayer",
+    "Reference": "Luke 11:11",
+    "Text": "Which of you fathers, if your son asks for bread, will give him a stone? Or if he asks for a fish, he won’t give him a snake instead of a fish, will he?",
+    "quizData": {
+      "missingWord": {
+        "question": "Which of you fathers, if your son asks for bread, will give him a _____? Or if he asks for a fish, he won’t give him a snake instead of a fish, will he?",
+        "answer": "stone",
+        "options": [
+          "stone",
+          "gift",
+          "sword",
+          "coin"
+        ]
+      },
+      "categoryMatch": {
+        "correctCategory": "Prayer",
+        "distractors": [
+          "Deception",
+          "Bitterness",
+          "Anxiety"
+        ]
+      },
+      "trueFalse": {
+        "falseCategory": "Love",
+        "falseReference": "Luke 11:10"
+      }
+    }
+  },
+  {
+    "Id": 1687,
+    "Category": "Prayer",
+    "Reference": "Luke 11:12",
+    "Text": "Or if he asks for an egg, he won’t give him a scorpion, will he?",
+    "quizData": {
+      "missingWord": {
+        "question": "Or if he asks for an egg, he won’t give him a _____, will he?",
+        "answer": "scorpion",
+        "options": [
+          "scorpion",
+          "snake",
+          "stone",
+          "rock"
+        ]
+      },
+      "categoryMatch": {
+        "correctCategory": "Prayer",
+        "distractors": [
+          "Fear",
+          "Doubt",
+          "Despair"
+        ]
+      },
+      "trueFalse": {
+        "falseCategory": "Hope",
+        "falseReference": "Luke 11:14"
+      }
+    }
+  },
+  {
+    "Id": 1688,
+    "Category": "Prayer",
+    "Reference": "Luke 11:13",
+    "Text": "If you then, being evil, know how to give good gifts to your children, how much more will your heavenly Father give the Holy Spirit to those who ask him?",
+    "quizData": {
+      "missingWord": {
+        "question": "If you then, being evil, know how to give good gifts to your children, how much more will your heavenly Father give the _____ to those who ask him?",
+        "answer": "Holy Spirit",
+        "options": [
+          "Holy Spirit",
+          "kingdom",
+          "wisdom",
+          "salvation"
+        ]
+      },
+      "categoryMatch": {
+        "correctCategory": "Prayer",
+        "distractors": [
+          "Fear",
+          "Doubt",
+          "Despair"
+        ]
+      },
+      "trueFalse": {
+        "falseCategory": "Power",
+        "falseReference": "Luke 11:14"
+      }
+    }
+  },
+  {
+    "Id": 1689,
+    "Category": "Prayer",
+    "Reference": "John 14:13-14",
+    "Text": "Whatever you will ask in my name, I will do it, that the Father may be glorified in the Son. If you will ask anything in my name, I will do it.",
+    "quizData": {
+      "missingWord": {
+        "question": "Whatever you will ask in my name, I will _____ it, that the Father may be glorified in the Son. If you will ask anything in my name, I will do it.",
+        "answer": "do",
+        "options": [
+          "do",
+          "say",
+          "give",
+          "show"
+        ]
+      },
+      "categoryMatch": {
+        "correctCategory": "Prayer",
+        "distractors": [
+          "Fear",
+          "Doubt",
+          "Despair"
+        ]
+      },
+      "trueFalse": {
+        "falseCategory": "Hope",
+        "falseReference": "John 14:15"
+      }
+    }
+  },
+  {
+    "Id": 1690,
+    "Category": "Prayer",
+    "Reference": "John 15:7",
+    "Text": "If you remain in me, and my words remain in you, you will ask whatever you desire, and it will be done for you.",
+    "quizData": {
+      "missingWord": {
+        "question": "If you remain in me, and my words remain in you, you will ask whatever you desire, and it will be _____ for you.",
+        "answer": "done",
+        "options": [
+          "done",
+          "kept",
+          "revealed",
+          "given"
+        ]
+      },
+      "categoryMatch": {
+        "correctCategory": "Prayer",
+        "distractors": [
+          "Fear",
+          "Doubt",
+          "Despair"
+        ]
+      },
+      "trueFalse": {
+        "falseCategory": "Love",
+        "falseReference": "John 15:8"
+      }
+    }
+  },
+  {
+    "Id": 1691,
+    "Category": "Prayer",
+    "Reference": "John 15:16",
+    "Text": "You didn’t choose me, but I chose you and appointed you, that you should go and bear fruit, and that your fruit should remain; that whatever you will ask of the Father in my name, he may give it to you.",
+    "quizData": {
+      "missingWord": {
+        "question": "You didn’t choose me, but I chose you and appointed you, that you should go and bear fruit, and that your fruit should remain; that whatever you will ask of the Father in my name, he may _____ it to you.",
+        "answer": "give",
+        "options": [
+          "give",
+          "keep",
+          "show",
+          "teach"
+        ]
+      },
+      "categoryMatch": {
+        "correctCategory": "Prayer",
+        "distractors": [
+          "Fear",
+          "Doubt",
+          "Despair"
+        ]
+      },
+      "trueFalse": {
+        "falseCategory": "Identity",
+        "falseReference": "John 15:15"
+      }
+    }
+  },
+  {
+    "Id": 1692,
+    "Category": "Prayer",
+    "Reference": "John 16:23-24",
+    "Text": "In that day you will ask me no questions. Most certainly I tell you, whatever you may ask of the Father in my name, he will give it to you. Until now, you have asked nothing in my name. Ask, and you will receive, that your joy may be made full.",
+    "quizData": {
+      "missingWord": {
+        "question": "In that day you will ask me no questions. Most certainly I tell you, whatever you may ask of the Father in my name, he will give it to you. Until now, you have asked nothing in my name. Ask, and you will _____, that your joy may be made full.",
+        "answer": "receive",
+        "options": [
+          "receive",
+          "believe",
+          "rejoice",
+          "continue"
+        ]
+      },
+      "categoryMatch": {
+        "correctCategory": "Prayer",
+        "distractors": [
+          "Fear",
+          "Doubt",
+          "Despair"
+        ]
+      },
+      "trueFalse": {
+        "falseCategory": "Joy",
+        "falseReference": "John 16:25"
+      }
+    }
+  },
+  {
+    "Id": 1693,
+    "Category": "Prayer",
+    "Reference": "Romans 8:26",
+    "Text": "In the same way, the Spirit also helps our weaknesses, for we don’t know how to pray as we ought. But the Spirit himself makes intercession for us with groanings which can’t be uttered.",
+    "quizData": {
+      "missingWord": {
+        "question": "In the same way, the Spirit also helps our weaknesses, for we don’t know how to pray as we ought. But the Spirit himself makes _____ for us with groanings which can’t be uttered.",
+        "answer": "intercession",
+        "options": [
+          "intercession",
+          "request",
+          "meditation",
+          "comfort"
+        ]
+      },
+      "categoryMatch": {
+        "correctCategory": "Prayer",
+        "distractors": [
+          "Fear",
+          "Doubt",
+          "Despair"
+        ]
+      },
+      "trueFalse": {
+        "falseCategory": "Hope",
+        "falseReference": "Romans 8:25"
+      }
+    }
+  },
+  {
+    "Id": 1694,
+    "Category": "Prayer",
+    "Reference": "Romans 8:27",
+    "Text": "He who searches the hearts knows what is on the Spirit’s mind, because he makes intercession for the saints according to God.",
+    "quizData": {
+      "missingWord": {
+        "question": "He who searches the hearts knows what is on the Spirit’s mind, because he makes _____ for the saints according to God.",
+        "answer": "intercession",
+        "options": [
+          "intercession",
+          "petition",
+          "comfort",
+          "prayer"
+        ]
+      },
+      "categoryMatch": {
+        "correctCategory": "Prayer",
+        "distractors": [
+          "Fear",
+          "Doubt",
+          "Despair"
+        ]
+      },
+      "trueFalse": {
+        "falseCategory": "Love",
+        "falseReference": "Romans 8:28"
+      }
+    }
+  },
+  {
+    "Id": 1695,
+    "Category": "Prayer",
+    "Reference": "Hebrews 4:16",
+    "Text": "Let’s therefore draw near with boldness to the throne of grace, that we may receive mercy and may find grace for help in time of need.",
+    "quizData": {
+      "missingWord": {
+        "question": "Let’s therefore draw near with boldness to the throne of grace, that we may receive mercy and may find grace for help in time of _____.",
+        "answer": "need",
+        "options": [
+          "need",
+          "trial",
+          "fear",
+          "battle"
+        ]
+      },
+      "categoryMatch": {
+        "correctCategory": "Prayer",
+        "distractors": [
+          "Fear",
+          "Doubt",
+          "Despair"
+        ]
+      },
+      "trueFalse": {
+        "falseCategory": "Hope",
+        "falseReference": "Hebrews 4:15"
+      }
+    }
+  },
+  {
+    "Id": 1696,
+    "Category": "Prayer",
+    "Reference": "James 1:5-8",
+    "Text": "But if any of you lacks wisdom, let him ask of God, who gives to all liberally and without reproach, and it will be given to him. But let him ask in faith, without any doubting, for he who doubts is like a wave of the sea, driven by the wind and tossed. For that man shouldn’t think that he will receive anything from the Lord. He is a double-minded man, unstable in all his ways.",
+    "quizData": {
+      "missingWord": {
+        "question": "But if any of you lacks _____, let him ask of God, who gives to all liberally and without reproach, and it will be given to him.",
+        "answer": "wisdom",
+        "options": [
+          "wisdom",
+          "faith",
+          "patience",
+          "strength"
+        ]
+      },
+      "categoryMatch": {
+        "correctCategory": "Prayer",
+        "distractors": [
+          "Fear",
+          "Doubt",
+          "Despair"
+        ]
+      },
+      "trueFalse": {
+        "falseCategory": "Knowledge",
+        "falseReference": "James 1:9"
+      }
+    }
+  },
+  {
+    "Id": 1697,
+    "Category": "Prayer",
+    "Reference": "James 4:2-3",
+    "Text": "You lust, and don’t have. You murder and covet, and can’t obtain. You fight and make war. You don’t have, because you don’t ask. You ask, and don’t receive, because you ask with wrong motives, so that you may spend it on your pleasures.",
+    "quizData": {
+      "missingWord": {
+        "question": "You don’t have, because you don’t _____. You ask, and don’t receive, because you ask with wrong motives, so that you may spend it on your pleasures.",
+        "answer": "ask",
+        "options": [
+          "ask",
+          "seek",
+          "believe",
+          "wait"
+        ]
+      },
+      "categoryMatch": {
+        "correctCategory": "Prayer",
+        "distractors": [
+          "Pride",
+          "Fear",
+          "Doubt"
+        ]
+      },
+      "trueFalse": {
+        "falseCategory": "Humility",
+        "falseReference": "James 4:1"
+      }
+    }
+  },
+  {
+    "Id": 1698,
+    "Category": "Prayer",
+    "Reference": "James 5:15-16",
+    "Text": "and the prayer of faith will heal him who is sick, and the Lord will raise him up. If he has committed sins, he will be forgiven. Confess your sins to one another and pray for one another, that you may be healed. The insistent prayer of a righteous person is powerfully effective.",
+    "quizData": {
+      "missingWord": {
+        "question": "and the prayer of faith will heal him who is sick, and the Lord will raise him up. If he has committed sins, he will be _____.",
+        "answer": "forgiven",
+        "options": [
+          "forgiven",
+          "restored",
+          "strengthened",
+          "cured"
+        ]
+      },
+      "categoryMatch": {
+        "correctCategory": "Prayer",
+        "distractors": [
+          "Fear",
+          "Doubt",
+          "Despair"
+        ]
+      },
+      "trueFalse": {
+        "falseCategory": "Healing",
+        "falseReference": "James 5:17"
+      }
+    }
+  },
+  {
+    "Id": 1699,
+    "Category": "Prayer",
+    "Reference": "1 John 3:21-22",
+    "Text": "Beloved, if our hearts don’t condemn us, we have boldness toward God; so whatever we ask, we receive from him, because we keep his commandments and do the things that are pleasing in his sight.",
+    "quizData": {
+      "missingWord": {
+        "question": "Beloved, if our hearts don’t condemn us, we have boldness toward God; so whatever we ask, we _____ from him, because we keep his commandments and do the things that are pleasing in his sight.",
+        "answer": "receive",
+        "options": [
+          "receive",
+          "believe",
+          "remember",
+          "repeat"
+        ]
+      },
+      "categoryMatch": {
+        "correctCategory": "Prayer",
+        "distractors": [
+          "Fear",
+          "Doubt",
+          "Despair"
+        ]
+      },
+      "trueFalse": {
+        "falseCategory": "Love",
+        "falseReference": "1 John 3:20"
+      }
+    }
+  },
+  {
+    "Id": 1700,
+    "Category": "Prayer",
+    "Reference": "1 John 5:14-15",
+    "Text": "This is the boldness which we have toward him, that if we ask anything according to his will, he listens to us. And if we know that he listens to us, whatever we ask, we know that we have the petitions which we have asked of him.",
+    "quizData": {
+      "missingWord": {
+        "question": "This is the boldness which we have toward him, that if we ask anything according to his will, he _____ to us.",
+        "answer": "listens",
+        "options": [
+          "listens",
+          "answers",
+          "moves",
+          "speaks"
+        ]
+      },
+      "categoryMatch": {
+        "correctCategory": "Prayer",
+        "distractors": [
+          "Fear",
+          "Doubt",
+          "Despair"
+        ]
+      },
+      "trueFalse": {
+        "falseCategory": "Hope",
+        "falseReference": "1 John 5:13"
+      }
+    }
+  },
+  {
+    "Id": 1701,
+    "Category": "Prayer",
+    "Reference": "Philippians 4:6-7",
+    "Text": "In nothing be anxious, but in everything, by prayer and petition with thanksgiving, let your requests be made known to God. And the peace of God, which surpasses all understanding, will guard your hearts and your thoughts in Christ Jesus.",
+    "quizData": {
+      "missingWord": {
+        "question": "In nothing be anxious, but in everything, by prayer and petition with thanksgiving, let your requests be made known to _____.",
+        "answer": "God",
+        "options": [
+          "God",
+          "Christ",
+          "people",
+          "angels"
+        ]
+      },
+      "categoryMatch": {
+        "correctCategory": "Prayer",
+        "distractors": [
+          "Fear",
+          "Doubt",
+          "Despair"
+        ]
+      },
+      "trueFalse": {
+        "falseCategory": "Joy",
+        "falseReference": "Philippians 4:5"
+      }
+    }
+  },
+  {
     "Id": 1377,
     "Category": "Prophecy",
     "Reference": "Amos 3:7",
