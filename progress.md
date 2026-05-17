@@ -219,6 +219,28 @@ Original prompt: Check the implementation of docs/multi-version-songs-implementa
     - screenshots captured under `output/web-game/3d-smoke/`, `output/web-game/3d-fire/`, and `output/web-game/3d-healcheck/`
     - browser run showed only expected autoplay-audio `NotAllowedError` noise after scripted load
 
+2026-05-18:
+- Followed `plans/JapaneseIntegrationPlan.md` with a scoped Japanese-only gameplay integration.
+- Added `ja` to both language selectors in `index.html`.
+- Loaded both Japanese bundles in `index.html`, with `bible-verses-deepseek-v4-pro.ja-kana.js` after `bible-verses-deepseek-v4-pro.ja.js` so gameplay uses the latest kana-annotated data.
+- Wired `game.js` to select `loadSelectedVersesJA()` anywhere verse bundles are chosen by language.
+- Extended `src/client/i18n.js` fallback capability data for `ja` and added `quiz.firstKana`.
+- Added Japanese locale metadata in `public/locales/ja.json`, including explicit `quizCapabilities`.
+- Updated `src/client/QuizManager.js` so Japanese `first_letter` mode uses `quizData.firstKana.candidates` to build kana-answer quizzes instead of Latin-letter generation.
+- Added `plans/JapaneseGameplayTestPlan.md`.
+- Verification:
+  - `node --check game.js`
+  - `node --check src/client/QuizManager.js`
+  - `node --check src/client/i18n.js`
+  - parsed `public/locales/ja.json`
+  - verified `bible-verses-deepseek-v4-pro.ja-kana.js` contains `220` verses and `0` missing `firstKana`
+  - browser smoke artifact: `output/web-game/japanese-menu-smoke/shot-0.png`
+    - main menu rendered with `日本語` selected
+  - browser smoke artifact: `output/web-game/japanese-first-kana-puppeteer-3.png`
+    - live solo flow reached Japanese gameplay with first-kana prompt visible at the bottom of the canvas
+- Residual finding:
+  - Japanese gameplay triggered existing `/api/verse-song` reference-format errors because that route still expects non-Japanese verse-reference formatting; this did not block quiz rendering, but song lookup is not fully locale-safe yet
+
 2026-04-01:
 - Investigated the new Flash Run / Scripture Maze mode.
 - Added explicit canvas pointer controls:
