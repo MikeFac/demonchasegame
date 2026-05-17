@@ -438,6 +438,11 @@
     "strong": "강함!",
     "blocked": "막음"
   },
+  "onboarding": {
+    "demonAttackingTitle": "악마가 공격하고 있습니다!",
+    "demonAttackingText": "맞서 싸우려면 아래의 퀴즈 정답을 누르세요.",
+    "dismissHint": "아무 곳이나 탭하거나 잠시 기다리면 계속됩니다..."
+  },
   "toasts": {
     "offlineMode": "📡 오프라인 모드 — 서버 연결 없음",
     "multiplayerRequiresInternet": "멀티플레이어 게임은 인터넷 연결이 필요합니다",

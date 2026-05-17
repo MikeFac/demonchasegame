@@ -375,6 +375,11 @@
     "strong": "MAZBOOT!",
     "blocked": "ROKA GAYA"
   },
+  "onboarding": {
+    "demonAttackingTitle": "Ek daanav tum par hamla kar raha hai!",
+    "demonAttackingText": "Wapas ladne ke lie neeche die gae quiz ke uttar par tap karen.",
+    "dismissHint": "Jaari rakhne ke lie kahin bhi tap karen ya thodi der pratiksha karen..."
+  },
   "toasts": {
     "offlineMode": "📡 ofalaain mod - koii sarvar kanekshan nahin",
     "multiplayerRequiresInternet": "maltiipleyar gem ke lie intaranet kanekshan aavashyak hai",

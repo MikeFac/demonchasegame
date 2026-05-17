@@ -424,6 +424,11 @@
     "strong": "IMARA!",
     "blocked": "IMEZUILIWA"
   },
+  "onboarding": {
+    "demonAttackingTitle": "Shetani anakushambulia!",
+    "demonAttackingText": "Bonyeza jibu la swali lililo chini ili upigane naye.",
+    "dismissHint": "Bonyeza popote au subiri ili kuendelea..."
+  },
   "toasts": {
     "offlineMode": "📡 Hali Nje ya Mtandao — Hakuna muunganisho wa seva",
     "multiplayerRequiresInternet": "Mchezo wa Wengi unahitaji muunganisho wa mtandao",

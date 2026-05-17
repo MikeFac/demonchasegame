@@ -1045,6 +1045,9 @@ function loadVersesFromBundle() {
     } else if (lang === 'kr' && typeof loadSelectedVersesKR === 'function') {
         console.log('Loading Korean verses from bundle');
         verses = loadSelectedVersesKR();
+    } else if (lang === 'ja' && typeof loadSelectedVersesJA === 'function') {
+        console.log('Loading Japanese verses from bundle');
+        verses = loadSelectedVersesJA();
     } else if (lang === 'id' && typeof loadSelectedVersesID === 'function') {
         console.log('Loading Indonesian verses from bundle');
         verses = loadSelectedVersesID();
@@ -3088,6 +3091,8 @@ async function init() {
                 verses = loadSelectedVersesZW();
             } else if (_vlang === 'kr' && typeof loadSelectedVersesKR === 'function') {
                 verses = loadSelectedVersesKR();
+            } else if (_vlang === 'ja' && typeof loadSelectedVersesJA === 'function') {
+                verses = loadSelectedVersesJA();
             } else if (_vlang === 'id' && typeof loadSelectedVersesID === 'function') {
                 verses = loadSelectedVersesID();
             } else if (typeof loadSelectedVerses === 'function') {
@@ -4953,8 +4958,8 @@ function gameLoop(generation) {
                             firstGameTips.demonAppeared = true;
                             if (window.Analytics) Analytics.trackFtueTip('first_damage');
                             showOnboardingModal(
-                                'A demon is attacking!',
-                                'Tap the quiz answer below to fight back.'
+                                typeof t === 'function' ? t('onboarding.demonAttackingTitle') : 'A demon is attacking!',
+                                typeof t === 'function' ? t('onboarding.demonAttackingText') : 'Tap the quiz answer below to fight back.'
                             );
                         }
 

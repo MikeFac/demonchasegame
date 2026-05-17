@@ -408,6 +408,11 @@
     "strong": "\u00a1FUERTE!",
     "blocked": "BLOQUEADO"
   },
+  "onboarding": {
+    "demonAttackingTitle": "\u00a1Un demonio te est\u00e1 atacando!",
+    "demonAttackingText": "Toca la respuesta del cuestionario de abajo para contraatacar.",
+    "dismissHint": "Toca en cualquier lugar o espera para continuar..."
+  },
   "toasts": {
     "offlineMode": "📡 Modo sin conexión — Sin conexión al servidor",
     "multiplayerRequiresInternet": "El juego multijugador requiere conexión a internet",

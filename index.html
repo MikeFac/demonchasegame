@@ -1341,6 +1341,7 @@
             <option value="hi-rom">Romanized Hindi</option>
             <option value="zw">Kiswahili</option>
             <option value="kr">한국어</option>
+            <option value="ja">日本語</option>
             <option value="id">Bahasa Indonesia</option>
           </select>
         </div>
@@ -1441,6 +1442,7 @@
           <option value="hi-rom">Romanized Hindi</option>
           <option value="zw">Kiswahili</option>
           <option value="kr">한국어</option>
+          <option value="ja">日本語</option>
           <option value="id">Bahasa Indonesia</option>
           <!-- <option value="tl">Tagalog</option> -->
         </select>
@@ -1503,7 +1505,7 @@
     <div id="onboardingModalPanel">
       <h3 id="onboardingModalTitle"></h3>
       <p id="onboardingModalText"></p>
-      <div class="dismiss-hint">Tap anywhere or wait to continue...</div>
+      <div class="dismiss-hint" data-i18n="onboarding.dismissHint">Tap anywhere or wait to continue...</div>
     </div>
   </div>
 
@@ -1666,6 +1668,8 @@
   <script src="bible-verses-hi-rom.js"></script>
     <script src="bible-verses-zw.js?v=1.0"></script>
     <script src="bible-verses-kr.js?v=1.0"></script>
+    <script src="bible-verses-deepseek-v4-pro.ja.js?v=1.0"></script>
+    <script src="bible-verses-deepseek-v4-pro.ja-kana.js?v=1.0"></script>
     <script src="bible-verses-id.js?v=1.0"></script>
   <script>
     // Load verses globally for VOTD on main menu (use language-appropriate bundle)
@@ -1682,6 +1686,8 @@
         window.allVerses = loadSelectedVersesZW();
     } else if (_lang === 'kr' && typeof loadSelectedVersesKR === 'function') {
         window.allVerses = loadSelectedVersesKR();
+    } else if (_lang === 'ja' && typeof loadSelectedVersesJA === 'function') {
+        window.allVerses = loadSelectedVersesJA();
     } else if (_lang === 'id' && typeof loadSelectedVersesID === 'function') {
         window.allVerses = loadSelectedVersesID();
     } else {

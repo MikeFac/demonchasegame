@@ -439,6 +439,11 @@
     "strong": "KUAT!",
     "blocked": "DIBLOKIR"
   },
+  "onboarding": {
+    "demonAttackingTitle": "Iblis sedang menyerangmu!",
+    "demonAttackingText": "Ketuk jawaban kuis di bawah untuk melawan.",
+    "dismissHint": "Ketuk di mana saja atau tunggu untuk melanjutkan..."
+  },
   "toasts": {
     "offlineMode": "📡 Mode Luring — Tidak ada koneksi server",
     "multiplayerRequiresInternet": "Permainan Multipemain membutuhkan koneksi internet",

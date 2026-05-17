@@ -408,6 +408,11 @@
     "strong": "MAANYI!",
     "blocked": "KIZIBIDDWA"
   },
+  "onboarding": {
+    "demonAttackingTitle": "Omulabe akulumba!",
+    "demonAttackingText": "Nyiga ku ddibbo lya kwiizi eryo wansi osobole okulwanyisa.",
+    "dismissHint": "Nyiga wonna oba linda okwongera mu maaso..."
+  },
   "toasts": {
     "offlineMode": "📡 Enkola etaliyo — Tewali yungiro ku seeba",
     "multiplayerRequiresInternet": "Omuzannyo ogw’abantu abangi weetaaga yungiro ku mtanda",

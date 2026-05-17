@@ -85,6 +85,39 @@
         return !!(qd && qd.question && Array.isArray(qd.answers) && qd.answers.length > 0);
     }
 
+    function isJapanese() {
+        return typeof I18n !== 'undefined' && I18n.getLang() === 'ja';
+    }
+
+    function extractJapaneseFirstKana(reading) {
+        if (typeof reading !== 'string') return '';
+        const cleaned = reading.replace(/[\s\u3000]/g, '');
+        for (let i = 0; i < cleaned.length; i++) {
+            const ch = cleaned.charAt(i);
+            if (/[ぁ-ゖゝゞー]/.test(ch)) {
+                return ch;
+            }
+        }
+        return cleaned.charAt(0) || '';
+    }
+
+    function getJapaneseFirstKanaCandidates(verse) {
+        const candidates = verse && verse.quizData && verse.quizData.firstKana && Array.isArray(verse.quizData.firstKana.candidates)
+            ? verse.quizData.firstKana.candidates
+            : [];
+        return candidates.filter(function(candidate) {
+            return candidate
+                && typeof candidate.surface === 'string'
+                && candidate.surface.trim()
+                && typeof candidate.reading === 'string'
+                && extractJapaneseFirstKana(candidate.reading);
+        });
+    }
+
+    function hasJapaneseFirstKanaQuizData(verse) {
+        return getJapaneseFirstKanaCandidates(verse).length > 0;
+    }
+
     function isModeSupportedForVerse(mode, verse, capabilities) {
         const caps = capabilities || getCurrentLanguageCapabilities();
         if (!caps.supportedQuizModes || caps.supportedQuizModes[mode] !== true) {
@@ -93,6 +126,9 @@
 
         switch (mode) {
             case 'first_letter':
+                if (isJapanese()) {
+                    return caps.supportsFirstLetterQuiz === true && hasJapaneseFirstKanaQuizData(verse);
+                }
                 return caps.supportsFirstLetterQuiz === true;
             case 'missing_word':
                 return hasMissingWordQuizData(verse) || caps.supportsAutoMissingWord === true;
@@ -437,6 +473,89 @@
         return options;
     }
 
+    function replaceFirstOccurrence(text, search, replacement) {
+        if (typeof text !== 'string' || typeof search !== 'string' || !search) return text;
+        var idx = text.indexOf(search);
+        if (idx === -1) return text;
+        return text.slice(0, idx) + replacement + text.slice(idx + search.length);
+    }
+
+    function buildJapaneseKanaPool(verse) {
+        var pool = new Set();
+
+        function addFromVerse(sourceVerse) {
+            var candidates = getJapaneseFirstKanaCandidates(sourceVerse);
+            for (var i = 0; i < candidates.length && pool.size < 80; i++) {
+                var kana = extractJapaneseFirstKana(candidates[i].reading);
+                if (kana) pool.add(kana);
+            }
+        }
+
+        addFromVerse(verse);
+        if (typeof organizedVerses !== 'undefined') {
+            var allCats = Object.keys(organizedVerses);
+            for (var c = 0; c < allCats.length && pool.size < 80; c++) {
+                var catVerses = organizedVerses[allCats[c]];
+                if (!catVerses) continue;
+                for (var v = 0; v < catVerses.length && pool.size < 80; v++) {
+                    addFromVerse(catVerses[v]);
+                }
+            }
+        }
+
+        if (pool.size < 8) {
+            ['あ', 'い', 'う', 'え', 'お', 'か', 'さ', 'た', 'な', 'は', 'ま', 'や', 'ら', 'わ'].forEach(function(kana) {
+                pool.add(kana);
+            });
+        }
+
+        var result = [];
+        pool.forEach(function(kana) { result.push(kana); });
+        return result;
+    }
+
+    function generateJapaneseFirstKanaData(verse) {
+        var candidates = getJapaneseFirstKanaCandidates(verse);
+        if (candidates.length === 0) return [null, null, null];
+
+        var shuffled = candidates.slice();
+        for (var i = shuffled.length - 1; i > 0; i--) {
+            var j = Math.floor(Math.random() * (i + 1));
+            var tmp = shuffled[i]; shuffled[i] = shuffled[j]; shuffled[j] = tmp;
+        }
+
+        var selected = shuffled.slice(0, Math.min(2, shuffled.length));
+        if (selected.length === 0) return [null, null, null];
+
+        var promptText = verse.Text;
+        var answerParts = [];
+        for (var s = 0; s < selected.length; s++) {
+            promptText = replaceFirstOccurrence(promptText, selected[s].surface, '______');
+            answerParts.push(extractJapaneseFirstKana(selected[s].reading));
+        }
+
+        var correctAnswer = answerParts.join('');
+        if (!correctAnswer) return [null, null, null];
+
+        var pool = buildJapaneseKanaPool(verse);
+        var options = [correctAnswer];
+        var attempts = 0;
+        while (options.length < 4 && attempts < 80) {
+            var distractorParts = [];
+            for (var p = 0; p < answerParts.length; p++) {
+                distractorParts.push(pool[Math.floor(Math.random() * pool.length)]);
+            }
+            var distractor = distractorParts.join('');
+            if (distractor && distractor !== correctAnswer && options.indexOf(distractor) === -1) {
+                options.push(distractor);
+            }
+            attempts++;
+        }
+
+        options.sort(function() { return Math.random() - 0.5; });
+        return [promptText, correctAnswer, options];
+    }
+
     // --- Quiz Generators ---
 
     // 1. First Letter mode (original logic from processVerse/generateQuiz)
@@ -456,6 +575,24 @@
                     return { text: opt, isCorrect: opt === koreanFirstLettersStr };
                 }),
                 correctAnswer: koreanFirstLettersStr
+            };
+        }
+
+        if (isJapanese()) {
+            const result = generateJapaneseFirstKanaData(verse);
+            const japaneseTestVerse = result[0];
+            const japaneseFirstKana = result[1];
+            const japaneseOptions = result[2];
+            if (!japaneseTestVerse) return null;
+
+            return {
+                mode: 'first_letter',
+                promptText: japaneseTestVerse,
+                questionLabel: typeof t === 'function' ? t('quiz.firstKana') : 'Choose the first kana of the missing words:',
+                options: japaneseOptions.map(function (opt) {
+                    return { text: opt, isCorrect: opt === japaneseFirstKana };
+                }),
+                correctAnswer: japaneseFirstKana
             };
         }
 

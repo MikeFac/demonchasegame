@@ -70,6 +70,20 @@ const I18n = (function () {
                 true_false: true,
                 cloze: false
             }
+        },
+        ja: {
+            scriptType: 'kana',
+            supportsRomanizedDisplay: false,
+            supportsFirstLetterQuiz: true,
+            supportsAutoMissingWord: false,
+            supportsAutoCloze: false,
+            supportedQuizModes: {
+                first_letter: true,
+                missing_word: true,
+                category_match: true,
+                true_false: true,
+                cloze: false
+            }
         }
     };
     
@@ -104,6 +118,7 @@ const I18n = (function () {
         },
         quiz: {
             firstLetters: "First letters of missing words:",
+            firstKana: "Choose the first kana of the missing words:",
             missingWord: "Fill in the missing word:",
             categoryMatch: "Which quality does this verse teach?",
             trueFalse: "TRUE",
@@ -134,6 +149,11 @@ const I18n = (function () {
             strongVsMonster: "{0} strong vs {1}!",
             strong: "STRONG!",
             blocked: "BLOCKED"
+        },
+        onboarding: {
+            demonAttackingTitle: "A demon is attacking!",
+            demonAttackingText: "Tap the quiz answer below to fight back.",
+            dismissHint: "Tap anywhere or wait to continue..."
         }
     };
 
