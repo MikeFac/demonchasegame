@@ -87,6 +87,21 @@
     "reference": "Reference: {0}",
     "learn": "Learn: {0}"
   },
+  "studyPlan": {
+    "button": "Study Plan",
+    "title": "Study Plan",
+    "loading": "Generating study plan...",
+    "loadingHint": "This may take up to a minute",
+    "errorTitle": "Could not load study plan",
+    "retry": "Retry",
+    "summary": "Summary",
+    "application": "Application",
+    "prayer": "Prayer",
+    "previous": "Previous",
+    "next": "Next",
+    "done": "Done",
+    "questionLabel": "Question {0} of {1}"
+  },
   "overland": {
     "title": "Select Mission",
     "locked": "[LOCKED]",

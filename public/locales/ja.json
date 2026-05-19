@@ -101,6 +101,21 @@
     "reference": "Reference: {0}",
     "learn": "Learn: {0}"
   },
+  "studyPlan": {
+    "button": "学習計画",
+    "title": "学習計画",
+    "loading": "学習計画を作成中...",
+    "loadingHint": "1分ほどかかることがあります",
+    "errorTitle": "学習計画を読み込めません",
+    "retry": "再試行",
+    "summary": "要約",
+    "application": "実践",
+    "prayer": "祈り",
+    "previous": "前へ",
+    "next": "次へ",
+    "done": "完了",
+    "questionLabel": "質問 {0} / {1}"
+  },
   "overland": {
     "title": "Select Mission",
     "locked": "[LOCKED]",

@@ -219,6 +219,49 @@ Original prompt: Check the implementation of docs/multi-version-songs-implementa
     - screenshots captured under `output/web-game/3d-smoke/`, `output/web-game/3d-fire/`, and `output/web-game/3d-healcheck/`
     - browser run showed only expected autoplay-audio `NotAllowedError` noise after scripted load
 
+2026-05-19:
+- Started the Study Plan feature implementation from `plans/StudyPlanLocalizationArchitecturePlan.md`.
+- Added backend study-plan models and generation services:
+  - `src/server/models/StudyPlanSource.js`
+  - `src/server/models/StudyPlanVariant.js`
+  - `src/server/services/StudyPlanGenerationService.js`
+  - `src/server/services/StudyPlanService.js`
+- Wired `/api/sermon/study-plan` and `/api/sermon/study-plan/regenerate`.
+- Added `src/client/StudyPlanViewer.js` and loaded it from `index.html`.
+- Wired study-plan entry points from:
+  - `src/client/ReviewMode.js`
+  - `src/client/SermonViewer.js`
+- Added study-plan overlay precedence in Review, VOTD learning, and Sermon viewers so the study plan renders above devotional content.
+- Added study-plan locale strings in:
+  - `src/client/i18n.js`
+  - `public/locales/en.json`
+  - `public/locales/ja.json`
+- Verification so far:
+  - `node --check src/client/ReviewMode.js`
+  - `node --check src/client/VotdLearningMode.js`
+  - `node --check src/client/SermonViewer.js`
+  - `node --check src/client/i18n.js`
+  - `node --check src/server/services/StudyPlanService.js`
+  - `node --check src/server/services/StudyPlanGenerationService.js`
+  - `node --check src/server/routes/sermon.js`
+  - `node --check src/server/models/StudyPlanSource.js`
+  - `node --check src/server/models/StudyPlanVariant.js`
+  - `node --check src/client/StudyPlanViewer.js`
+  - JSON parse check for `public/locales/en.json` and `public/locales/ja.json`
+- Next smoke step:
+  - browser-verify that the new `Study Plan` button shows on the Review screen and opens the overlay cleanly over both Review and Sermon flows.
+
+2026-05-19:
+- Browser smoke passed for the Review-screen Study Plan UI:
+  - screenshot with the button visible in the lower-center of the verse screen: `output/web-game/study-plan-smoke-2/shot-0.png`
+  - clicking the button opens the full-screen study-plan overlay: `output/web-game/study-plan-open-confirm/shot-0.png`
+- Layout adjustment made after the first smoke so the button no longer overlaps the verse text.
+- Backend note:
+  - the study-plan generation request currently fails upstream because the OpenRouter key is over limit
+  - the viewer correctly stays in loading/error flow instead of crashing
+- Follow-up TODO:
+  - once API capacity is restored, rerun the study-plan smoke to confirm the generated content screen and retry button path
+
 2026-05-18:
 - Followed `plans/JapaneseIntegrationPlan.md` with a scoped Japanese-only gameplay integration.
 - Added `ja` to both language selectors in `index.html`.

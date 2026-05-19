@@ -498,7 +498,11 @@
             
 
             
-            // If sermon viewer is open, let it render instead
+            // If study plan or sermon viewer is open, let it render instead
+            if (window.StudyPlanViewer && StudyPlanViewer.isOpen()) {
+                StudyPlanViewer.render();
+                return;
+            }
             if (window.SermonViewer && SermonViewer.isOpen()) {
                 SermonViewer.render();
                 return;
@@ -877,7 +881,11 @@
     function handleReviewClick(clickedX, clickedY) {
         console.log('[REVIEW CLICK]', clickedX.toFixed(0), clickedY.toFixed(0), 'hitRects:', hitRects.length, hitRects.map(r => r.name).join(','));
 
-        // If sermon viewer is open, delegate clicks to it
+        // If study plan or sermon viewer is open, delegate clicks to it
+        if (window.StudyPlanViewer && StudyPlanViewer.isOpen()) {
+            StudyPlanViewer.handleClick(clickedX, clickedY);
+            return;
+        }
         if (window.SermonViewer && SermonViewer.isOpen()) {
             SermonViewer.handleClick(clickedX, clickedY);
             return;
@@ -978,6 +986,26 @@
                             displayReviewVerseScreen();
                         });
                     }
+                } else if (rect.name === 'studyPlan') {
+                    const verseRef = getCurrentVerseReference();
+                    const verseDetails = getVerseDetails(verseRef);
+                    if (verseRef && verseDetails && window.StudyPlanViewer) {
+                        stopAudio();
+                        clearRepeatTimer();
+                        repeatEnabled = false;
+                        meditationMode = false;
+                        hasPlayed = false;
+                        delayDropdownOpen = false;
+                        StudyPlanViewer.open(
+                            verseRef,
+                            verseDetails.text,
+                            verseDetails.category,
+                            getCurrentLanguage(),
+                            function () {
+                                displayReviewVerseScreen();
+                            }
+                        );
+                    }
                 } else if (rect.name === 'prev') {
                     const verseRef = getCurrentVerseReference();
                     const verseInfo = verseRef ? getVerseDetails(verseRef) : null;
@@ -1073,6 +1101,10 @@
     }
 
     function handleMouseMove(mouseX, mouseY) {
+        if (window.StudyPlanViewer && StudyPlanViewer.isOpen()) {
+            return;
+        }
+
         let found = null;
         for (const rect of hitRects) {
             if (mouseX >= rect.x && mouseX <= rect.x + rect.w &&
@@ -1349,6 +1381,31 @@
         ctx.fillText('Devotional', devX + devW / 2, devY + devH / 2 + 4);
         ctx.textAlign = 'left';
         hitRects.push({ name: 'devotional', x: devX, y: devY, w: devW, h: devH, tooltip: 'Devotional' });
+
+        // === Study plan button (lower-center, below the verse body) ===
+        const studyW = 118;
+        const studyH = 30;
+        const studyX = Math.floor((canvas.width - studyW) / 2);
+        const studyY = Math.max(120, canvas.height - 180);
+        if (hoveredButton === 'studyPlan') {
+            ctx.fillStyle = 'rgba(60, 123, 214, 0.28)';
+        } else {
+            ctx.fillStyle = 'rgba(60, 123, 214, 0.12)';
+        }
+        ctx.beginPath();
+        ctx.roundRect(studyX, studyY, studyW, studyH, 15);
+        ctx.fill();
+        ctx.strokeStyle = '#8ec8ff';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.roundRect(studyX, studyY, studyW, studyH, 15);
+        ctx.stroke();
+        ctx.font = 'bold 11px Arial';
+        ctx.fillStyle = '#dcecff';
+        ctx.textAlign = 'center';
+        ctx.fillText(t('studyPlan.button'), studyX + studyW / 2, studyY + studyH / 2 + 4);
+        ctx.textAlign = 'left';
+        hitRects.push({ name: 'studyPlan', x: studyX, y: studyY, w: studyW, h: studyH, tooltip: t('studyPlan.button') });
     }
 
     function getCurrentVerseReference() {
@@ -1358,6 +1415,13 @@
             const reviewItems = getReviewItemsForCurrentCategory();
             return reviewItems[currentReviewVerseIndex] ? reviewItems[currentReviewVerseIndex].Reference : null;
         }
+    }
+
+    function getCurrentLanguage() {
+        if (typeof I18n !== 'undefined' && typeof I18n.getLang === 'function') {
+            return I18n.getLang();
+        }
+        return 'en';
     }
 
     // Public interface

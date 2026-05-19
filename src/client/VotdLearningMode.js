@@ -281,6 +281,10 @@
     }
 
     function handleMouseMove(x, y) {
+        if (window.StudyPlanViewer && StudyPlanViewer.isOpen()) {
+            return;
+        }
+
         let found = null;
         for (const rect of hitRects) {
             if (x >= rect.x && x <= rect.x + rect.w && y >= rect.y && y <= rect.y + rect.h) {
@@ -651,6 +655,11 @@
     }
 
     function render() {
+        if (window.StudyPlanViewer && StudyPlanViewer.isOpen()) {
+            StudyPlanViewer.render();
+            return;
+        }
+
         // If sermon viewer is open, let it render instead
         if (window.SermonViewer && SermonViewer.isOpen()) {
             SermonViewer.render();
@@ -699,6 +708,11 @@
     }
 
     function handleClick(x, y) {
+        if (window.StudyPlanViewer && StudyPlanViewer.isOpen()) {
+            StudyPlanViewer.handleClick(x, y);
+            return;
+        }
+
         // If sermon viewer is open, delegate clicks to it
         if (window.SermonViewer && SermonViewer.isOpen()) {
             SermonViewer.handleClick(x, y);

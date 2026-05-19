@@ -3,7 +3,7 @@ const http = require('http');
 const path = require('path');
 const socketIO = require('socket.io');
 const mongoose = require('mongoose');
-require('dotenv').config();
+require('dotenv').config({ override: true });
 const Game = require('./src/server/Game');
 const RoomManager = require('./src/server/RoomManager');
 const { buildMissionGameConfig } = require('./src/server/missionLoader');

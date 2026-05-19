@@ -61,7 +61,10 @@
             sermonData = {
                 pages: data.pages,
                 prayer: data.prayer,
-                verseReference: requestInfo ? requestInfo.verseReference : data.verseReference
+                verseReference: requestInfo ? requestInfo.verseReference : data.verseReference,
+                verseText: requestInfo ? requestInfo.verseText : '',
+                category: requestInfo ? requestInfo.category : 'General',
+                lang: requestInfo ? requestInfo.lang : (data.lang || getCurrentLanguage())
             };
             totalPages = data.pages.length + 1;
             currentPage = 0;
@@ -166,6 +169,11 @@
         var c = getCtx();
         if (!c) return;
 
+        if (window.StudyPlanViewer && StudyPlanViewer.isOpen()) {
+            StudyPlanViewer.render();
+            return;
+        }
+
         c.clearRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
 
         // Background
@@ -257,12 +265,35 @@
         drawWrappedText(c, pageText, 25, textY, maxWidth, 28);
 
         // Navigation buttons
+        drawStudyPlanButton(c);
         drawNavButtons(c);
 
         // Close button
         drawCloseButton(c);
 
         c.textAlign = 'left';
+    }
+
+    function drawStudyPlanButton(c) {
+        if (!sermonData || !window.StudyPlanViewer) return;
+
+        var btnY = CANVAS_HEIGHT - 98;
+        var btnW = 120;
+        var btnH = 28;
+        var btnX = CANVAS_WIDTH / 2 - btnW / 2;
+
+        c.fillStyle = 'rgba(60, 123, 214, 0.85)';
+        roundRect(c, btnX, btnY, btnW, btnH, 6);
+        c.fill();
+        c.strokeStyle = '#8ec8ff';
+        c.lineWidth = 1;
+        roundRect(c, btnX, btnY, btnW, btnH, 6);
+        c.stroke();
+        c.fillStyle = '#fff';
+        c.font = 'bold 12px Arial';
+        c.textAlign = 'center';
+        c.fillText(t('studyPlan.button'), btnX + btnW / 2, btnY + 19);
+        hitRects.push({ name: 'studyPlan', x: btnX, y: btnY, w: btnW, h: btnH });
     }
 
     function drawNavButtons(c) {
@@ -329,6 +360,10 @@
     // ==================== Interaction ====================
 
     function handleClick(x, y) {
+        if (window.StudyPlanViewer && StudyPlanViewer.isOpen()) {
+            return StudyPlanViewer.handleClick(x, y);
+        }
+
         for (var i = 0; i < hitRects.length; i++) {
             var r = hitRects[i];
             if (x >= r.x && x <= r.x + r.w && y >= r.y && y <= r.y + r.h) {
@@ -345,6 +380,18 @@
                                 ShareManager.showShareSuccess(result.method);
                             }
                         });
+                    }
+                } else if (r.name === 'studyPlan') {
+                    if (window.StudyPlanViewer && sermonData) {
+                        StudyPlanViewer.open(
+                            sermonData.verseReference,
+                            sermonData.verseText,
+                            sermonData.category,
+                            sermonData.lang,
+                            function () {
+                                render();
+                            }
+                        );
                     }
                 } else if (r.name === 'done' || r.name === 'close') {
                     close();

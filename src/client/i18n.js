@@ -150,6 +150,21 @@ const I18n = (function () {
             strong: "STRONG!",
             blocked: "BLOCKED"
         },
+        studyPlan: {
+            button: "Study Plan",
+            title: "Study Plan",
+            loading: "Generating study plan...",
+            loadingHint: "This may take up to a minute",
+            errorTitle: "Could not load study plan",
+            retry: "Retry",
+            summary: "Summary",
+            application: "Application",
+            prayer: "Prayer",
+            previous: "Previous",
+            next: "Next",
+            done: "Done",
+            questionLabel: "Question {0} of {1}"
+        },
         onboarding: {
             demonAttackingTitle: "A demon is attacking!",
             demonAttackingText: "Tap the quiz answer below to fight back.",
