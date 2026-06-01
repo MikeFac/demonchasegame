@@ -333,22 +333,73 @@
         }
 
         _spawnHealingPoint() {
-            if (this.gameState.healingPoints.length < Constants.MAX_HEALING_POINTS) {
-                var x, y;
-                var attempts = 0;
-                do {
-                    x = Math.random() * Constants.WORLD_WIDTH;
-                    y = Math.random() * Constants.WORLD_HEIGHT;
-                    attempts++;
-                } while (this.wallGrid.collides(x, y, 30, 30) && attempts < 50);
-
-                if (attempts < 50) {
-                    this.gameState.healingPoints.push({
-                        id: Date.now() + Math.random(),
-                        x: x, y: y, width: 30, height: 30
-                    });
-                }
+            if (this.gameState.healingPoints.length >= this._getHealingPointCapForLevel(this.gameState.gameLevel || 1)) {
+                return;
             }
+
+            var pointSize = 30;
+            var minPlayerDistance = 120;
+            var maxPlayerDistance = 520;
+            var minHealingSpacing = 90;
+            var attempts = 0;
+            var position = null;
+
+            while (attempts < 80 && !position) {
+                position = this._findHealingPointSpawnPosition(
+                    pointSize,
+                    minPlayerDistance,
+                    maxPlayerDistance,
+                    minHealingSpacing
+                );
+                attempts++;
+            }
+
+            if (position) {
+                this.gameState.healingPoints.push({
+                    id: Date.now() + Math.random(),
+                    x: position.x,
+                    y: position.y,
+                    width: pointSize,
+                    height: pointSize
+                });
+            }
+        }
+
+        _findHealingPointSpawnPosition(pointSize, minPlayerDistance, maxPlayerDistance, minHealingSpacing) {
+            var playerAnchors = Object.keys(this.gameState.players)
+                .map(function (code) { return this.gameState.players[code]; }, this)
+                .filter(function (player) {
+                    return player && player.state === 'alive' && typeof player.x === 'number' && typeof player.y === 'number';
+                });
+
+            var fallbackAnchor = { x: this.spawnX || this.constants.WORLD_WIDTH / 2, y: this.spawnY || this.constants.WORLD_HEIGHT / 2 };
+            var anchor = playerAnchors.length > 0
+                ? playerAnchors[Math.floor(Math.random() * playerAnchors.length)]
+                : fallbackAnchor;
+
+            var angle = Math.random() * Math.PI * 2;
+            var distanceFromAnchor = minPlayerDistance + Math.random() * (maxPlayerDistance - minPlayerDistance);
+            var x = anchor.x + Math.cos(angle) * distanceFromAnchor;
+            var y = anchor.y + Math.sin(angle) * distanceFromAnchor;
+
+            var margin = pointSize + 40;
+            x = Math.max(margin, Math.min(this.constants.WORLD_WIDTH - margin, x));
+            y = Math.max(margin, Math.min(this.constants.WORLD_HEIGHT - margin, y));
+
+            if (this.wallGrid && this.wallGrid.collides(x, y, pointSize, pointSize)) {
+                return null;
+            }
+
+            var tooCloseToOtherHealing = this.gameState.healingPoints.some(function (hp) {
+                var dx = hp.x - x;
+                var dy = hp.y - y;
+                return Math.sqrt(dx * dx + dy * dy) < minHealingSpacing;
+            });
+            if (tooCloseToOtherHealing) {
+                return null;
+            }
+
+            return { x: x, y: y };
         }
     }
 

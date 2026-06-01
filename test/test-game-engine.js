@@ -49,6 +49,7 @@ assert(engine.gameState !== null, 'gameState initialized');
 assert(engine.gameState.gameLevel === 1, 'Starting at level 1');
 assert(engine.gameState.monsters.length === 0, 'No monsters initially');
 assert(engine.gameState.healingPoints.length > 0, 'Healing points spawned');
+assert(engine.gameState.healingPoints.length === engine._getHealingPointCapForLevel(1), 'Initial healing points match level cap');
 assert(engine.walls.length > 0, 'Walls generated');
 assert(engine.wallGrid !== null, 'WallGrid created');
 
@@ -71,6 +72,15 @@ assert(player !== null && player !== undefined, 'Player object exists');
 assert(player.username === 'TestUser', 'Username set correctly');
 assert(player.health === 100, 'Player has 100 health');
 assert(player.ammo === 0, 'Player starts with 0 ammo');
+
+// Healing points should spawn within a reachable distance band of the player/spawn area
+const nearbyHealingPoint = engine.gameState.healingPoints.some(function (hp) {
+    const dx = hp.x - player.x;
+    const dy = hp.y - player.y;
+    const distance = Math.sqrt(dx * dx + dy * dy);
+    return distance >= 100 && distance <= 600;
+});
+assert(nearbyHealingPoint, 'At least one healing point spawns in a reachable range');
 
 // Check that walls, gameConfig, etc. were sent to the player
 assert(playerEvents.some(function (e) { return e.event === 'walls'; }), 'walls event sent to player');
@@ -145,6 +155,11 @@ for (let i = 0; i < engine.NETWORK_TICK_DIVISOR; i++) {
     engine.update();
 }
 assert(emittedEvents.some(function (e) { return e.event === 'gameStateUpdate'; }), 'gameStateUpdate emitted during throttled update cadence');
+
+// ---- Test: level advance reseeds healing ----
+engine.gameState.gameLevel = 2;
+engine._resetLevelData(2);
+assert(engine.gameState.healingPoints.length === engine._getHealingPointCapForLevel(2), 'Healing points respawn immediately on level reset');
 
 // ---- Test: start/stop ----
 origLog('\n=== Test: start/stop ===');

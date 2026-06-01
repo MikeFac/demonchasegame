@@ -176,6 +176,11 @@
             engine.monsterManager.spawnMonster();
         }
 
+        var initialHealingCount = engine._getHealingPointCapForLevel(level);
+        for (var hi = 0; hi < initialHealingCount; hi++) {
+            engine._spawnHealingPoint();
+        }
+
         console.log('Level ' + level + ' data reset.');
     }
 
