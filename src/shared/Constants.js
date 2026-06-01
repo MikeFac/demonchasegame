@@ -101,6 +101,15 @@ const Constants = {
     BOSS_SIZE_MULTIPLIER: 1.5,
     BOSS_XP_BONUS: 75,
 
+    // Score Constants
+    SCORE_MONSTER_KILL_MIN: 1,
+    SCORE_MONSTER_KILL_MAX: 5,
+    SCORE_BOSS_KILL: 100,
+    SCORE_MISSION_COMPLETE: 200,
+    SCORE_QUESTION_CLOZE: 25,
+    SCORE_QUESTION_FIRST_LETTER: 20,
+    SCORE_QUESTION_EASY: 5,
+
     // Spirit Drain (Poverty, Temptation)
     DRAIN_CHANCE: 0.40,              // 40% chance per hit on player
     POVERTY_XP_DRAIN: 5,             // XP drained per proc

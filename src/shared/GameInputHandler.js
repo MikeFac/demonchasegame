@@ -43,6 +43,20 @@
                     if (data && typeof data.category === 'string' && data.category) {
                         player.currentCombatCategory = data.category;
                     }
+
+                    // Only solo rooms can safely award quiz score by mode.
+                    // Multiplayer does not have authoritative server-side quiz context.
+                    var isSoloGame = engine.roomId && engine.roomId.startsWith('solo-');
+                    if (isSoloGame) {
+                        var quizMode = (data && data.quizMode) || 'easy';
+                        var questionScore = Constants.SCORE_QUESTION_EASY || 5;
+                        if (quizMode === 'cloze') {
+                            questionScore = Constants.SCORE_QUESTION_CLOZE || 25;
+                        } else if (quizMode === 'first_letter') {
+                            questionScore = Constants.SCORE_QUESTION_FIRST_LETTER || 20;
+                        }
+                        player.score = (player.score || 0) + questionScore;
+                    }
                 }
                 break;
 

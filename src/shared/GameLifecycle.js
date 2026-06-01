@@ -96,7 +96,8 @@
             playerStats[code] = {
                 username: p.username || 'Player',
                 level: p.level,
-                xp: p.xp
+                xp: p.xp,
+                score: p.score || 0
             };
         }
 

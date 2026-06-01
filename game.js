@@ -1506,7 +1506,7 @@ function resetGameState() {
         network = null;
     }
     playerCode = null;
-    player = { x: 0, y: 0, health: 100, maxHealth: 100, width: 48, height: 48, xp: 0, level: 1, ammo: 0, viewAngle: 0 };
+    player = { x: 0, y: 0, health: 100, maxHealth: 100, width: 48, height: 48, xp: 0, score: 0, level: 1, ammo: 0, viewAngle: 0 };
 
     // Game flags
     gameOverFlag = false;
@@ -2541,6 +2541,7 @@ async function init() {
                         width: 48,
                         height: 48,
                         xp: 0,
+                        score: 0,
                         level: 1,
                         ammo: 0, // Must earn ammo by answering quizzes correctly
                         viewAngle: 0
@@ -2794,11 +2795,13 @@ async function init() {
                     level: data.level,
                     monstersKilled: data.monstersKilled,
                     playerStats: data.playerStats,
+                    score: data.playerStats && data.playerStats[playerCode] ? (data.playerStats[playerCode].score || 0) : ((player && player.score) || 0),
+                    localPlayerCode: playerCode,
                     versesLearned: versesLearned,
                     timePlayed: sessionDuration,
                     isMission: !!currentMission,
                     showIntroMissionPitch: shouldShowIntroMissionPitch(),
-                    isSoloGame: true  // offline/solo games always true; multiplayer uses server.js
+                    isSoloGame: !!isSoloGame
                 };
                 console.log('[GAMEOVER] finalStats.isMission set to:', finalStats.isMission);
                 if (data.result === 'victory' && isStartHereMission(currentMission)) {
@@ -4269,6 +4272,10 @@ function completeMission(stars) {
     if (!currentMission) return;
     
     const xpEarned = Math.floor(100 * (currentMission.xpMultiplier || 1.0) * stars / 3);
+    const scoreEarned = Math.floor((window.Constants ? Constants.SCORE_MISSION_COMPLETE : 200) * stars / 3);
+    if (player) {
+        player.score = (player.score || 0) + scoreEarned;
+    }
     if (currentMission.worldId === START_HERE_WORLD_ID && currentMission.id === START_HERE_MISSION_ID) {
         localStorage.setItem(START_HERE_SEEN_KEY, 'true');
         if (window.Analytics) {
@@ -4295,8 +4302,9 @@ function completeMission(stars) {
     }
     
     // Show completion message
+    const completionMsg = t('overland.missionComplete', 'Mission Complete!') + ' +' + xpEarned + ' XP' + (scoreEarned > 0 ? ' +' + scoreEarned + ' Pts' : '');
     flashMessages.push({
-        text: t('overland.missionComplete', 'Mission Complete!') + ' +' + xpEarned + ' XP',
+        text: completionMsg,
         color: '#4CAF50',
         startTime: Date.now(),
         duration: 3000
@@ -4749,8 +4757,15 @@ function gameLoop(generation) {
                     const monsterDy = newY - monster.y;
                     const monsterDist = Math.sqrt(monsterDx * monsterDx + monsterDy * monsterDy);
                     if (monsterDist < (player.width / 2 + monster.width / 2)) {
-                        monsterCollision = true;
-                        break;
+                        // Only block movement if moving closer to the monster.
+                        // This allows the player to escape or flee when in contact.
+                        const currentDx = player.x - monster.x;
+                        const currentDy = player.y - monster.y;
+                        const currentDist = Math.sqrt(currentDx * currentDx + currentDy * currentDy);
+                        if (monsterDist < currentDist) {
+                            monsterCollision = true;
+                            break;
+                        }
                     }
                 }
 
@@ -4820,8 +4835,15 @@ function gameLoop(generation) {
                     const monsterDy = newY - monster.y;
                     const monsterDist = Math.sqrt(monsterDx * monsterDx + monsterDy * monsterDy);
                     if (monsterDist < (player.width / 2 + monster.width / 2)) {
-                        monsterCollision = true;
-                        break;
+                        // Only block movement if moving closer to the monster.
+                        // This allows the player to escape or flee when in contact.
+                        const currentDx = player.x - monster.x;
+                        const currentDy = player.y - monster.y;
+                        const currentDist = Math.sqrt(currentDx * currentDx + currentDy * currentDy);
+                        if (monsterDist < currentDist) {
+                            monsterCollision = true;
+                            break;
+                        }
                     }
                 }
 
@@ -5032,6 +5054,8 @@ function gameLoop(generation) {
                                     result: 'defeat',
                                     level: gameState.gameLevel || 1,
                                     monstersKilled: gameState.monstersKilled || 0,
+                                    score: (player && player.score) || 0,
+                                    localPlayerCode: playerCode,
                                     versesLearned: versesLearned,
                                     timePlayed: sessionDuration,
                                     isMission: !!currentMission,

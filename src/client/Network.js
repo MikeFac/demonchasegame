@@ -250,9 +250,9 @@ class Network {
     /**
      * Send quiz correct event (to award ammo)
      */
-    sendQuizCorrect(category) {
+    sendQuizCorrect(category, quizMode) {
         if (this.socket) {
-            this.socket.emit('quizCorrect', category ? { category: category } : null);
+            this.socket.emit('quizCorrect', { category: category || null, quizMode: quizMode || 'easy' });
         }
     }
 

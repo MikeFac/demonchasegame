@@ -79,6 +79,7 @@
                 code: playerCode,
                 color: 'blue',
                 xp: 0,
+                score: 0,
                 level: 1,
                 ammo: (this.gameConfig && this.gameConfig.startingAmmo) || 0,
                 votdDamageBonus: false,
@@ -148,6 +149,17 @@
                     gameState.monstersKilled++;
 
                     player.xp += 10 + bossBonusXp;
+
+                    // Award Score Points
+                    var scoreAwarded = 0;
+                    if (isBoss) {
+                        scoreAwarded = Constants.SCORE_BOSS_KILL || 100;
+                    } else {
+                        var minScore = Constants.SCORE_MONSTER_KILL_MIN || 1;
+                        var maxScore = Constants.SCORE_MONSTER_KILL_MAX || 5;
+                        scoreAwarded = Math.floor(Math.random() * (maxScore - minScore + 1)) + minScore;
+                    }
+                    player.score = (player.score || 0) + scoreAwarded;
 
                     var xpReqs = LevelConfig.levelXPRequirements;
                     var nextLevelIndex = player.level;

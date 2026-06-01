@@ -236,9 +236,9 @@ class LocalNetwork {
         }
     }
 
-    sendQuizCorrect(category) {
+    sendQuizCorrect(category, quizMode) {
         if (this.engine) {
-            this.engine.handlePlayerInput(this._playerId, 'quizCorrect', category ? { category: category } : null);
+            this.engine.handlePlayerInput(this._playerId, 'quizCorrect', { category: category || null, quizMode: quizMode || 'easy' });
         }
     }
 

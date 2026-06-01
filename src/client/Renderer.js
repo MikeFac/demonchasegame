@@ -454,6 +454,40 @@ class Renderer {
         this.ctx.textAlign = 'right';
         this.ctx.fillText(progressText, progressRightEdge, this.QUALITY_LINE_HEIGHT - 7);
         this.ctx.textAlign = 'left';
+
+        // Floating score badge in the top-right of the playing window
+        const badgeW = 90;
+        const badgeH = 28;
+        const badgeX = this.canvas.width - badgeW - 10;
+        const badgeY = this.QUALITY_LINE_HEIGHT + 8;
+        const radius = 6;
+        
+        // Background: semi-transparent elegant dark blue/black
+        this.ctx.fillStyle = 'rgba(26, 26, 46, 0.65)';
+        this.ctx.beginPath();
+        this.ctx.moveTo(badgeX + radius, badgeY);
+        this.ctx.lineTo(badgeX + badgeW - radius, badgeY);
+        this.ctx.quadraticCurveTo(badgeX + badgeW, badgeY, badgeX + badgeW, badgeY + radius);
+        this.ctx.lineTo(badgeX + badgeW, badgeY + badgeH - radius);
+        this.ctx.quadraticCurveTo(badgeX + badgeW, badgeY + badgeH, badgeX + badgeW - radius, badgeY + badgeH);
+        this.ctx.lineTo(badgeX + radius, badgeY + badgeH);
+        this.ctx.quadraticCurveTo(badgeX, badgeY + badgeH, badgeX, badgeY + badgeH - radius);
+        this.ctx.lineTo(badgeX, badgeY + radius);
+        this.ctx.quadraticCurveTo(badgeX, badgeY, badgeX + radius, badgeY);
+        this.ctx.closePath();
+        this.ctx.fill();
+        
+        // Subtle gold/orange border
+        this.ctx.strokeStyle = 'rgba(255, 215, 0, 0.35)';
+        this.ctx.lineWidth = 1.5;
+        this.ctx.stroke();
+        
+        // Draw star emoji and score value
+        this.ctx.font = 'bold 13px Arial';
+        this.ctx.textAlign = 'center';
+        this.ctx.fillStyle = '#FFD700'; // Gold color
+        this.ctx.fillText(`⭐ ${player.score || 0}`, badgeX + badgeW / 2, badgeY + 18);
+        this.ctx.textAlign = 'left';
     }
 
     drawOnboardingGuide(uiState, player, camera) {
@@ -672,7 +706,7 @@ class Renderer {
         const ctx = this.ctx;
         const isVictory = finalStats.result === 'victory';
         const isDefeat = finalStats.result === 'defeat';
-        const isMultiplayer = !!finalStats.playerStats;
+        const isMultiplayer = !!finalStats.playerStats && !finalStats.isSoloGame;
 
         if (finalStats.showIntroMissionPitch) {
             this.drawIntroMissionPitchModal(canvas, restartButtonRect);
@@ -730,6 +764,18 @@ class Renderer {
         ctx.fillText(t('stats.versesLearned', finalStats.versesLearned), statsX, statsY);
         statsY += lineHeight;
 
+        // Final score stat in Game Over modal
+        ctx.fillStyle = '#66ff66'; // Highlight score in bright green
+        ctx.font = 'bold 16px Arial';
+        let finalScore = typeof finalStats.score === 'number' ? finalStats.score : 0;
+        if (finalStats.playerStats && finalStats.localPlayerCode && finalStats.playerStats[finalStats.localPlayerCode]) {
+            finalScore = finalStats.playerStats[finalStats.localPlayerCode].score || 0;
+        }
+        ctx.fillText(`Final Score: ${finalScore} pts`, statsX, statsY);
+        ctx.fillStyle = '#ffffff'; // Restore font color
+        ctx.font = '16px Arial';
+        statsY += lineHeight;
+
         const minutes = Math.floor(finalStats.timePlayed / 60);
         const seconds = finalStats.timePlayed % 60;
         ctx.fillText(t('stats.timePlayed', minutes, seconds), statsX, statsY);
@@ -746,10 +792,10 @@ class Renderer {
 
             ctx.font = '13px Arial';
             ctx.textAlign = 'left';
-            const sorted = Object.values(finalStats.playerStats).sort((a, b) => (b.xp || 0) - (a.xp || 0));
+            const sorted = Object.values(finalStats.playerStats).sort((a, b) => (b.score || 0) - (a.score || 0) || (b.xp || 0) - (a.xp || 0));
             sorted.forEach((ps, i) => {
                 ctx.fillStyle = i === 0 ? '#FFD700' : '#cccccc';
-                ctx.fillText(`${i + 1}. ${ps.username} — Lv${ps.level} (${ps.xp || 0} XP)`, statsX, statsY);
+                ctx.fillText(`${i + 1}. ${ps.username} — Lv${ps.level} (${ps.score || 0} pts)`, statsX, statsY);
                 statsY += 20;
             });
         }

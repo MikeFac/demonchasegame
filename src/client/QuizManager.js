@@ -1015,7 +1015,7 @@
             }
 
             player.ammo = (player.ammo || 0) + Constants.AMMO_REWARD;
-            network.sendQuizCorrect();
+            network.sendQuizCorrect(undefined, "cloze");
 
             const correctVerse = organizedVerses[vQuality] && organizedVerses[vQuality][currentVerseIndex];
             answerFullVerse = correctVerse ? correctVerse.Text : '';
@@ -1152,7 +1152,7 @@
             }
 
             player.ammo = (player.ammo || 0) + Constants.AMMO_REWARD;
-            network.sendQuizCorrect(currentCategory);
+            network.sendQuizCorrect(currentCategory, currentQuiz ? currentQuiz.mode : "cloze");
 
             const correctVerse = organizedVerses[vQuality] && organizedVerses[vQuality][currentVerseIndex];
             answerFullVerse = currentQuiz.answerRevealText || (correctVerse ? correctVerse.Text : '');
