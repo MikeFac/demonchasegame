@@ -42,11 +42,23 @@
                 }
                 const data = await response.json();
                 this._worldsCache = data.chapters || [];
+                this._featuredMissions = data.featuredMissions || [];
                 return this._worldsCache;
             } catch (error) {
                 console.error('FileContentProvider.getWorlds() error:', error);
                 return [];
             }
+        }
+
+        /**
+         * Get featured missions (standalone missions not tied to chapters).
+         * @returns {Promise<Array>} Array of featured mission objects
+         */
+        async getFeaturedMissions() {
+            if (!this._featuredMissions) {
+                await this.getWorlds();
+            }
+            return this._featuredMissions || [];
         }
         
         /**

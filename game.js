@@ -3614,8 +3614,18 @@ async function initializeMissions() {
         // Initialize overland renderer (always recreate to ensure current canvas/ctx)
         if (window.OverlandRenderer) {
             overlandRenderer = new OverlandRenderer(ctx, canvas);
-            overlandRenderer.setWorlds(window.worldsWithMissions);
-            console.log('OverlandRenderer created with', window.worldsWithMissions.length, 'worlds');
+            // Load featured missions alongside worlds
+            var featuredMissions = [];
+            if (missionClient && missionClient.provider && typeof missionClient.provider.getFeaturedMissions === 'function') {
+                try {
+                    featuredMissions = await missionClient.provider.getFeaturedMissions();
+                } catch (e) {
+                    console.warn('Failed to load featured missions:', e);
+                }
+            }
+            overlandRenderer.setWorlds(window.worldsWithMissions, featuredMissions);
+            window.featuredMissions = featuredMissions;
+            console.log('OverlandRenderer created with', window.worldsWithMissions.length, 'worlds and', featuredMissions.length, 'featured missions');
         } else {
             console.error('OverlandRenderer not available');
         }

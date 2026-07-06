@@ -29,7 +29,9 @@
             this.selectedWorld = null;
             this.selectedMission = null;
             this.worlds = [];
+            this.featuredMissions = [];
             this.nodePositions = [];
+            this.featuredNodePositions = [];
             this.scrollOffset = 0;
             this.contentHeight = 0;
         }
@@ -37,9 +39,11 @@
         /**
          * Set the worlds data to render.
          * @param {Array} worlds - Array of world objects
+         * @param {Array} featuredMissions - Optional array of featured mission objects
          */
-        setWorlds(worlds) {
+        setWorlds(worlds, featuredMissions) {
             this.worlds = worlds;
+            this.featuredMissions = Array.isArray(featuredMissions) ? featuredMissions : [];
             this._calculateNodePositions();
         }
         
@@ -48,6 +52,7 @@
          */
         _calculateNodePositions() {
             this.nodePositions = [];
+            this.featuredNodePositions = [];
 
             const listX = 12;
             const listWidth = Math.max(260, this.canvas.width - 24);
@@ -58,6 +63,35 @@
             const chapterGap = 10;
 
             let currentY = 62;
+
+            // Featured missions section (top)
+            if (this.featuredMissions.length > 0) {
+                const featuredHeaderY = currentY;
+                currentY += headerHeight + headerGap;
+
+                for (let f = 0; f < this.featuredMissions.length; f++) {
+                    const fm = this.featuredMissions[f];
+                    this.featuredNodePositions.push({
+                        worldId: fm.worldId || 'featured',
+                        worldName: fm.name || 'Featured',
+                        missionId: fm.id,
+                        missionName: fm.name || fm.nameKey || 'Featured Mission',
+                        missionDescription: fm.description || '',
+                        missionQualities: [],
+                        x: listX,
+                        y: currentY,
+                        width: listWidth,
+                        height: rowHeight,
+                        radius: 0,
+                        shape: fm.nodeShape || 'star',
+                        listIndex: f + 1,
+                        isFeatured: true
+                    });
+                    currentY += rowHeight + rowGap;
+                }
+
+                currentY += chapterGap;
+            }
 
             for (let w = 0; w < this.worlds.length; w++) {
                 const world = this.worlds[w];
@@ -173,6 +207,20 @@
             ctx.beginPath();
             ctx.rect(viewport.x, viewport.y, viewport.width, viewport.height);
             ctx.clip();
+
+            // Draw featured missions section
+            if (this.featuredNodePositions.length > 0) {
+                ctx.font = 'bold 15px Arial';
+                ctx.fillStyle = '#ffd666';
+                ctx.textAlign = 'left';
+                ctx.fillText(t('overland.featured', 'Featured Mission'), 10, 62 - this.scrollOffset);
+
+                for (const node of this.featuredNodePositions) {
+                    const rowY = node.y - this.scrollOffset;
+                    if (rowY + node.height < viewport.y || rowY > viewport.y + viewport.height) continue;
+                    this._drawMissionRow(ctx, Object.assign({}, node, { screenY: rowY }), progressManager, true);
+                }
+            }
 
             for (const chapterData of this.nodePositions) {
                 const world = this.worlds.find(w => w.id === chapterData.worldId);
@@ -412,6 +460,16 @@
             const viewport = this._getListViewport();
             if (screenY < viewport.y || screenY > viewport.y + viewport.height) {
                 return null;
+            }
+
+            // Check featured missions first
+            for (const node of this.featuredNodePositions) {
+                if (screenX >= node.x && screenX <= node.x + node.width &&
+                    screenY + this.scrollOffset >= node.y && screenY + this.scrollOffset <= node.y + node.height) {
+                    this.selectedMission = node;
+                    this.selectedWorld = node.worldId;
+                    return node;
+                }
             }
 
             for (const chapterData of this.nodePositions) {
