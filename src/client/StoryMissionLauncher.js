@@ -163,7 +163,7 @@
 
     // ==================== INPUT ====================
 
-    var _clickHandler, _keydownHandler;
+    var _clickHandler, _keydownHandler, _mousemoveHandler;
 
     function _setupInputHandlers(engine) {
         _clickHandler = function (e) {
@@ -174,13 +174,8 @@
             var y = e.clientY - rect.top;
 
             if (lastStorySnapshot && (lastStorySnapshot.ended)) {
-                if (lastStorySnapshot.combatResult === 'defeat') {
-                    stopStoryMission();
-                    if (_onEndGame) _onEndGame();
-                } else {
-                    stopStoryMission();
-                    if (_onEndGame) _onEndGame();
-                }
+                stopStoryMission();
+                if (_onEndGame) _onEndGame();
                 return;
             }
 
@@ -211,14 +206,25 @@
                 }
             }
         };
+        _mousemoveHandler = function (e) {
+            if (!lastStorySnapshot || lastStorySnapshot.ended) return;
+            var rect = canvas.getBoundingClientRect();
+            var x = e.clientX - rect.left;
+            var y = e.clientY - rect.top;
+            if (window.StoryMissionRenderer && typeof window.StoryMissionRenderer.updateHover === 'function') {
+                window.StoryMissionRenderer.updateHover(x, y, lastStorySnapshot, canvas, { mission: _launchOpts ? _launchOpts.mission : null });
+            }
+        };
 
         canvas.addEventListener('click', _clickHandler);
         document.addEventListener('keydown', _keydownHandler);
+        canvas.addEventListener('mousemove', _mousemoveHandler);
     }
 
     function _removeInputHandlers() {
         if (_clickHandler) canvas.removeEventListener('click', _clickHandler);
         if (_keydownHandler) document.removeEventListener('keydown', _keydownHandler);
+        if (_mousemoveHandler) canvas.removeEventListener('mousemove', _mousemoveHandler);
     }
 
     // ==================== MUSIC ====================
