@@ -1,0 +1,65 @@
+{
+  "schemaVersion": 1,
+  "id": "featured",
+  "missions": [
+    {
+      "id": "david-01",
+      "gameMode": "story",
+      "name": "David & Goliath: Faith Over Fear",
+      "description": "Anointed by Samuel, gather five stones, arm your heart with the Word, and face the giant.",
+      "qualities": ["Faith", "Courage"],
+      "mapStyle": "open",
+      "xpMultiplier": 1.5,
+      "music": {
+        "phaseTracks": { "intro": null, "collectStones": null, "puzzle": null, "bossFight": null, "victory": null },
+        "fallbackTrackIndex": 0
+      },
+      "storyPhases": [
+        { "id": "intro", "type": "dialogue", "npcId": "samuel", "i18nLines": ["story.david.intro.1", "story.david.intro.2"], "nextPhase": "collectStones" },
+        { "id": "collectStones", "type": "collect", "targetCount": 5, "objectType": "smoothStone", "nextPhase": "puzzle" },
+        { "id": "puzzle", "type": "puzzle", "puzzleId": "courageCloze", "nextPhase": "bossFight" },
+        { "id": "bossFight", "type": "combat", "nextPhase": "victory" },
+        { "id": "victory", "type": "dialogue", "npcId": "david", "i18nLines": ["story.david.victory.1", "story.david.victory.2"], "sermonRef": "1 Samuel 17:47", "endMission": true }
+      ],
+      "npcs": [
+        { "id": "samuel", "nameKey": "story.david.npc.samuel", "portrait": "images/npcs/samuel.png", "position": { "x": 1500, "y": 1500 } },
+        { "id": "david", "nameKey": "story.david.npc.david", "portrait": "images/npcs/david.png", "position": { "x": 1500, "y": 1500 } }
+      ],
+      "specialObjects": [
+        { "id": "smoothStone", "labelKey": "story.david.object.stone", "count": 5, "spawnArea": { "x": 800, "y": 800, "w": 1400, "h": 1400 } }
+      ],
+      "puzzles": [
+        { "id": "courageCloze", "mode": "cloze", "verseRef": "1 Samuel 17:47", "i18nPrompt": "story.david.puzzle.prompt", "answer": "Lord" }
+      ],
+      "combatConfig": {
+        "monsters": ["Fear", "Doubt"],
+        "monsterDamageFactor": 1.1,
+        "monsterSpeed": 5,
+        "playerSpeed": 5,
+        "maxMonsters": 6,
+        "monstersToKill": 1,
+        "spawnRate": 999,
+        "randomSpawnsEnabled": false,
+        "disableLevelBoss": true,
+        "fixedMonsters": [
+          {
+            "x": 1500, "y": 600, "demonType": "Fear", "isBoss": true, "label": "Goliath",
+            "behavior": { "type": "guard", "patrolRadius": 200 },
+            "stats": { "healthMultiplier": 6.0, "damageMultiplier": 3.0, "sizeMultiplier": 1.5 },
+            "spawnTrigger": { "type": "immediate", "value": 0 }
+          },
+          {
+            "x": 1100, "y": 800, "demonType": "Doubt",
+            "spawnTrigger": { "type": "immediate", "value": 0 },
+            "stats": { "healthMultiplier": 1.0 }
+          },
+          {
+            "x": 1900, "y": 800, "demonType": "Fear",
+            "spawnTrigger": { "type": "immediate", "value": 0 },
+            "stats": { "healthMultiplier": 1.0 }
+          }
+        ]
+      }
+    }
+  ]
+}

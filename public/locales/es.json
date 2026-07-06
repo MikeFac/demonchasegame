@@ -423,5 +423,25 @@
     "quizTipDamage": "💡 CONSEJO: ¡Responde correctamente para infligir daño!",
     "goToMenuLearn": "📖 ¡Ve al Menú para aprender versículos!",
     "healingCrosses": "💡 Pasa sobre las cruces verdes para recuperar salud"
+  },
+  "story": {
+    "david": {
+      "title": "David y Goliat: Fe sobre el temor",
+      "description": "Ungido por Samuel, recoge cinco piedras, arma tu corazón con la Palabra y enfrenta al gigante.",
+      "npc": { "samuel": "Samuel", "david": "David" },
+      "object": { "stone": "Piedra lisa" },
+      "collect": { "instruction": "Recorre el campo y recoge {0} piedras lisas." },
+      "intro": {
+        "1": "El Señor no mira lo que mira el hombre. El hombre mira lo exterior, pero el Señor mira el corazón.",
+        "2": "Eres elegido. Ahora ve — recoge cinco piedras lisas del arroyo, porque la batalla por delante es del Señor."
+      },
+      "puzzle": { "prompt": "Completa el espacio: 'La batalla es del ___.'" },
+      "victory": {
+        "1": "Así David triunfó sobre el filisteo con una honda y una piedra — sin espada en la mano.",
+        "2": "Fe sobre el temor. La batalla fue del Señor. Camina con ese mismo valor."
+      },
+      "hud": { "stonesCollected": "Piedras: {0} / {1}", "objective": "Objetivo: {0}" },
+      "buttons": { "continue": "Continuar", "readDevotional": "Leer devocional", "next": "Siguiente" }
+    }
   }
 }

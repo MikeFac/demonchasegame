@@ -369,14 +369,14 @@
     "move": "TAMBULA",
     "gameSpeed": "Emisinde gy'Omuzannyo",
     "tooFastOrSlow": "Obwangu obungi oba obutono?",
-    "useArrowsToAdjust": "Kozesa \u25c0 \u25b6 mu baala ey'waggulu okukyusa.",
+    "useArrowsToAdjust": "Kozesa ◀ ▶ mu baala ey'waggulu okukyusa.",
     "speedKeys": "Amapeesa: 1 (0.25x)  2 (obunya)  3 (ekyenkana)  4 (obwangu)",
     "gotIt": "Kale!",
     "adjustSpeed": "Kyusa Obwangu",
-    "slowerFaster": "\u25c0 obunya    obwangu \u25b6"
+    "slowerFaster": "◀ obunya    obwangu ▶"
   },
   "game": {
-    "levelComplete": "\ud83c\udfc6 Omutendera {0} Gwamaliridwa! \ud83c\udfc6",
+    "levelComplete": "🏆 Omutendera {0} Gwamaliridwa! 🏆",
     "demonsDefeated": "Balabe {0} Basangiddwa!",
     "backToMissions": "Komya ku Ebirimu",
     "missionComplete": "Omulimu Gwamaliridwa!",
@@ -395,12 +395,12 @@
     "vbBullet5b": "obuzito n'omuzannyo.",
     "vbBullet6a": "Abazannyi abasajidde",
     "vbBullet6b": "basobola okubumba ebintu.",
-    "clozeCorrect": "\u2713 Kyakyo!",
-    "clozeAnswer": "\u2717 Jjawulo: {0}",
+    "clozeCorrect": "✓ Kyakyo!",
+    "clozeAnswer": "✗ Jjawulo: {0}",
     "goals": "Bigendererwa",
     "tapToClose": "Nyiga wonna okugalawo",
     "futureFeatures": "Ebirimu Ebya Bujuuju",
-    "shareGame": "\ud83d\udce4 Gaba Omuzannyo",
+    "shareGame": "📤 Gaba Omuzannyo",
     "verseIs": "Ekigambo kino kye {0}",
     "verseIsAbout": "Ekigambo kino kigenderera {0}",
     "combatHintFleeAndLearn": "Dduka oyige",
@@ -424,5 +424,41 @@
     "goToMenuLearn": "📖 Genda ku Menyu oyigire ebigambo!",
     "settingsDifficultyHint": "⚙️ Obwangu n’obuzito bwa balabe busobola okuteekebwa mu Enteekateeka.",
     "healingCrosses": "💡 Yitawo ku bisalire ebyeguluddwa oszze obulamu"
+  },
+  "story": {
+    "david": {
+      "title": "David & Goliath: Faith Over Fear",
+      "description": "Anointed by Samuel, gather five stones, arm your heart with the Word, and face the giant.",
+      "npc": {
+        "samuel": "Samuel",
+        "david": "David"
+      },
+      "object": {
+        "stone": "Smooth Stone"
+      },
+      "collect": {
+        "instruction": "Walk through the field and collect {0} smooth stones."
+      },
+      "intro": {
+        "1": "The Lord does not look at the things people look at. People look at the outward appearance, but the Lord looks at the heart.",
+        "2": "You are chosen. Now go — gather five smooth stones from the brook, for the battle ahead is the Lord's."
+      },
+      "puzzle": {
+        "prompt": "Fill in the blank: 'The battle is the ___'s.'"
+      },
+      "victory": {
+        "1": "So David triumphed over the Philistine with a sling and a stone — no sword in hand.",
+        "2": "Faith over fear. The battle was the Lord's. Walk in that same courage."
+      },
+      "hud": {
+        "stonesCollected": "Stones: {0} / {1}",
+        "objective": "Objective: {0}"
+      },
+      "buttons": {
+        "continue": "Continue",
+        "readDevotional": "Read devotional",
+        "next": "Next"
+      }
+    }
   }
 }

@@ -141,6 +141,28 @@
                 // Single level game
                 maxLevels: 1
             };
+            
+            // Pass through story mission fields unchanged
+            if (Array.isArray(mission.storyPhases)) {
+                result.storyPhases = mission.storyPhases.slice();
+            }
+            if (Array.isArray(mission.npcs)) {
+                result.npcs = mission.npcs.slice();
+            }
+            if (Array.isArray(mission.specialObjects)) {
+                result.specialObjects = mission.specialObjects.slice();
+            }
+            if (Array.isArray(mission.puzzles)) {
+                result.puzzles = mission.puzzles.slice();
+            }
+            if (mission.combatConfig && typeof mission.combatConfig === 'object') {
+                result.combatConfig = mission.combatConfig;
+            }
+            if (mission.music && typeof mission.music === 'object') {
+                result.music = mission.music;
+            }
+            
+            return result;
         }
     }
     

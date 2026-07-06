@@ -336,14 +336,14 @@
     "move": "chalen",
     "gameSpeed": "khel kii gati",
     "tooFastOrSlow": "bahut tez ya bahut dheema?",
-    "useArrowsToAdjust": "samaayojit karane ke lie uuparii baar men \u25c0 \u25b6 kaa upayog karen.",
+    "useArrowsToAdjust": "samaayojit karane ke lie uuparii baar men ◀ ▶ kaa upayog karen.",
     "speedKeys": "kunjiyaan: 1 (0.25x)  2 (dheema)  3 (saamaanya)  4 (tez)",
     "gotIt": "samajh gaya!",
     "adjustSpeed": "gati samaayojit karen",
-    "slowerFaster": "\u25c0 dheema    tez \u25b6"
+    "slowerFaster": "◀ dheema    tez ▶"
   },
   "game": {
-    "levelComplete": "\ud83c\udfc6 star {0} puura! \ud83c\udfc6",
+    "levelComplete": "🏆 star {0} puura! 🏆",
     "demonsDefeated": "{0} daanav paraajit!",
     "backToMissions": "mishan par vaapas",
     "missionComplete": "mishan puura!",
@@ -362,12 +362,12 @@
     "vbBullet5b": "kathinaay aur gameplay.",
     "vbBullet6a": "panjeekrut upayogakartaa",
     "vbBullet6b": "duniyaa design kar sakte hain.",
-    "clozeCorrect": "\u2713 sahi!",
-    "clozeAnswer": "\u2717 uttar: {0}",
+    "clozeCorrect": "✓ sahi!",
+    "clozeAnswer": "✗ uttar: {0}",
     "goals": "lakshya",
     "tapToClose": "band karane ke lie kahin bhi taip karen",
     "futureFeatures": "bhavishy ke suvidhaen",
-    "shareGame": "\ud83d\udce4 game saajha karen",
+    "shareGame": "📤 game saajha karen",
     "verseIs": "yah aayat {0} hai",
     "verseIsAbout": "yah aayat {0} ke baare men hai",
     "combatHintFleeAndLearn": "bhaago aur seekho",
@@ -454,5 +454,41 @@
         "content": "<h3>daanav prakaar</h3><ul><li><span class=\"highlight\">piichhaa karane vaale</span> - aapakaa lagaataar piichhaa karate hain.</li><li><span class=\"highlight\">bhatakane vaale</span> - betaratiib dhang se chalate hain, lekin yadi aap kariib aate hain to bhii chot pahunchaate hain.</li></ul><h3>vishesh kshamataaen (baad ke star)</h3><ul><li><span class=\"highlight\">phriijing oraa</span> - paas hone par aapakii chaal ko dhiimaa kar detaa hai.</li><li><span class=\"highlight\">abhimaan kavach</span> - tuutane tak lie gae nukasaan ko kam karataa hai.</li><li><span class=\"highlight\">spirit dren</span> - hit hone par aapakaa emo churaa letaa hai.</li><li><span class=\"highlight\">kalah daish</span> - gati ke ek jhatake ke saath aap par hamalaa karataa hai.</li></ul><p>shubhakaamanaaen, aur vachan aapakii talavaar bane!</p>"
       }
     ]
+  },
+  "story": {
+    "david": {
+      "title": "David & Goliath: Faith Over Fear",
+      "description": "Anointed by Samuel, gather five stones, arm your heart with the Word, and face the giant.",
+      "npc": {
+        "samuel": "Samuel",
+        "david": "David"
+      },
+      "object": {
+        "stone": "Smooth Stone"
+      },
+      "collect": {
+        "instruction": "Walk through the field and collect {0} smooth stones."
+      },
+      "intro": {
+        "1": "The Lord does not look at the things people look at. People look at the outward appearance, but the Lord looks at the heart.",
+        "2": "You are chosen. Now go — gather five smooth stones from the brook, for the battle ahead is the Lord's."
+      },
+      "puzzle": {
+        "prompt": "Fill in the blank: 'The battle is the ___'s.'"
+      },
+      "victory": {
+        "1": "So David triumphed over the Philistine with a sling and a stone — no sword in hand.",
+        "2": "Faith over fear. The battle was the Lord's. Walk in that same courage."
+      },
+      "hud": {
+        "stonesCollected": "Stones: {0} / {1}",
+        "objective": "Objective: {0}"
+      },
+      "buttons": {
+        "continue": "Continue",
+        "readDevotional": "Read devotional",
+        "next": "Next"
+      }
+    }
   }
 }

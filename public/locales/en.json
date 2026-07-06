@@ -432,5 +432,25 @@
     "goToMenuLearn": "📖 Go to Menu to learn verses!",
     "settingsDifficultyHint": "⚙️ Monster speed and difficulty can be adjusted in Options.",
     "healingCrosses": "💡 Walk over green crosses to restore health"
+  },
+  "story": {
+    "david": {
+      "title": "David & Goliath: Faith Over Fear",
+      "description": "Anointed by Samuel, gather five stones, arm your heart with the Word, and face the giant.",
+      "npc": { "samuel": "Samuel", "david": "David" },
+      "object": { "stone": "Smooth Stone" },
+      "collect": { "instruction": "Walk through the field and collect {0} smooth stones." },
+      "intro": {
+        "1": "The Lord does not look at the things people look at. People look at the outward appearance, but the Lord looks at the heart.",
+        "2": "You are chosen. Now go — gather five smooth stones from the brook, for the battle ahead is the Lord's."
+      },
+      "puzzle": { "prompt": "Fill in the blank: 'The battle is the ___'s.'" },
+      "victory": {
+        "1": "So David triumphed over the Philistine with a sling and a stone — no sword in hand.",
+        "2": "Faith over fear. The battle was the Lord's. Walk in that same courage."
+      },
+      "hud": { "stonesCollected": "Stones: {0} / {1}", "objective": "Objective: {0}" },
+      "buttons": { "continue": "Continue", "readDevotional": "Read devotional", "next": "Next" }
+    }
   }
 }

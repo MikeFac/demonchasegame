@@ -91,5 +91,17 @@
       "missionIds": ["maze-01"],
       "unlockRequirement": null
     }
+  ],
+  "featuredMissions": [
+    {
+      "id": "david-01",
+      "worldId": "featured",
+      "name": "David & Goliath: Faith Over Fear",
+      "nameKey": "story.david.title",
+      "description": "Anointed by Samuel, gather five stones, arm your heart with the Word, and face the giant.",
+      "nodeShape": "star",
+      "theme": "stone",
+      "position": "top-center"
+    }
   ]
 }

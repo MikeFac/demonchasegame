@@ -336,14 +336,14 @@
     "move": "चलें",
     "gameSpeed": "खेल की गति",
     "tooFastOrSlow": "बहुत तेज़ या बहुत धीमा?",
-    "useArrowsToAdjust": "समायोजित करने के लिए ऊपरी बार में \u25c0 \u25b6 का उपयोग करें।",
+    "useArrowsToAdjust": "समायोजित करने के लिए ऊपरी बार में ◀ ▶ का उपयोग करें।",
     "speedKeys": "कुंजियाँ: 1 (0.25x)  2 (धीमा)  3 (सामान्य)  4 (तेज़)",
     "gotIt": "समझ गया!",
     "adjustSpeed": "गति समायोजित करें",
-    "slowerFaster": "\u25c0 धीमा    तेज़ \u25b6"
+    "slowerFaster": "◀ धीमा    तेज़ ▶"
   },
   "game": {
-    "levelComplete": "\ud83c\udfc6 स्तर {0} पूरा! \ud83c\udfc6",
+    "levelComplete": "🏆 स्तर {0} पूरा! 🏆",
     "demonsDefeated": "{0} दानव पराजित!",
     "backToMissions": "मिशन पर वापस",
     "missionComplete": "मिशन पूरा!",
@@ -362,12 +362,12 @@
     "vbBullet5b": "कठिनाई और गेमप्ले।",
     "vbBullet6a": "पंजीकृत उपयोगकर्ता",
     "vbBullet6b": "दुनिया डिज़ाइन कर सकते हैं।",
-    "clozeCorrect": "\u2713 सही!",
-    "clozeAnswer": "\u2717 उत्तर: {0}",
+    "clozeCorrect": "✓ सही!",
+    "clozeAnswer": "✗ उत्तर: {0}",
     "goals": "लक्ष्य",
     "tapToClose": "बंद करने के लिए कहीं भी टैप करें",
     "futureFeatures": "भविष्य की सुविधाएँ",
-    "shareGame": "\ud83d\udce4 गेम साझा करें",
+    "shareGame": "📤 गेम साझा करें",
     "verseIs": "यह आयत {0} है",
     "verseIsAbout": "यह आयत {0} के बारे में है",
     "combatHintFleeAndLearn": "भागो और सीखो",
@@ -454,5 +454,41 @@
         "content": "<h3>दानव प्रकार</h3><ul><li><span class=\"highlight\">पीछा करने वाले</span> — आपका लगातार पीछा करते हैं।</li><li><span class=\"highlight\">भटकने वाले</span> — बेतरतीब ढंग से चलते हैं, लेकिन यदि आप करीब आते हैं तो भी चोट पहुँचाते हैं।</li></ul><h3>विशेष क्षमताएँ (बाद के स्तर)</h3><ul><li><span class=\"highlight\">फ्रीजिंग ऑरा</span> — पास होने पर आपकी चाल को धीमा कर देता है।</li><li><span class=\"highlight\">अभिमान कवच</span> — टूटने तक लिए गए नुकसान को कम करता है।</li><li><span class=\"highlight\">स्पिरिट ड्रेन</span> — हिट होने पर आपका एमो चुरा लेता है।</li><li><span class=\"highlight\">कलह डैश</span> — गति के एक झटके के साथ आप पर हमला करता है।</li></ul><p>शुभकामनाएँ, और वचन आपकी तलवार बने!</p>"
       }
     ]
+  },
+  "story": {
+    "david": {
+      "title": "David & Goliath: Faith Over Fear",
+      "description": "Anointed by Samuel, gather five stones, arm your heart with the Word, and face the giant.",
+      "npc": {
+        "samuel": "Samuel",
+        "david": "David"
+      },
+      "object": {
+        "stone": "Smooth Stone"
+      },
+      "collect": {
+        "instruction": "Walk through the field and collect {0} smooth stones."
+      },
+      "intro": {
+        "1": "The Lord does not look at the things people look at. People look at the outward appearance, but the Lord looks at the heart.",
+        "2": "You are chosen. Now go — gather five smooth stones from the brook, for the battle ahead is the Lord's."
+      },
+      "puzzle": {
+        "prompt": "Fill in the blank: 'The battle is the ___'s.'"
+      },
+      "victory": {
+        "1": "So David triumphed over the Philistine with a sling and a stone — no sword in hand.",
+        "2": "Faith over fear. The battle was the Lord's. Walk in that same courage."
+      },
+      "hud": {
+        "stonesCollected": "Stones: {0} / {1}",
+        "objective": "Objective: {0}"
+      },
+      "buttons": {
+        "continue": "Continue",
+        "readDevotional": "Read devotional",
+        "next": "Next"
+      }
+    }
   }
 }

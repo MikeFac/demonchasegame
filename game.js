@@ -744,6 +744,41 @@ async function ensureDemonImagesLoaded() {
     return demonImages;
 }
 
+let npcImages = {};
+
+async function ensureNpcImagesLoaded(mission) {
+    if (!mission || !Array.isArray(mission.npcs)) return npcImages;
+
+    const loadPromises = mission.npcs.map((npc) => {
+        return new Promise((resolve) => {
+            if (npcImages[npc.id] && npcImages[npc.id].complete && npcImages[npc.id].naturalWidth > 0) {
+                resolve(npcImages[npc.id]);
+                return;
+            }
+
+            const img = new Image();
+            npcImages[npc.id] = img;
+
+            img.onload = function () {
+                img.onload = null;
+                img.onerror = null;
+                console.log('NPC image loaded: ' + npc.id);
+                resolve(img);
+            };
+            img.onerror = function () {
+                img.onload = null;
+                img.onerror = null;
+                console.warn('NPC image failed to load: ' + npc.id + ' (using fallback)');
+                resolve(img);
+            };
+            img.src = resolveAssetUrl(npc.portrait);
+        });
+    });
+
+    await Promise.all(loadPromises);
+    return npcImages;
+}
+
 const levelXPRequirements = LevelConfig.levelXPRequirements;
 
 // Audio assets - Enhanced sound effects with variety
@@ -1704,6 +1739,25 @@ function initializeModeManager() {
         legacyGameMode: 'overland',
         start: function () {
             return showOverlandInternal();
+        },
+        handleResize: function () {
+            ensureCanvasSize();
+        }
+    });
+
+    ModeManager.register({
+        id: 'story',
+        legacyGameMode: 'story',
+        canStart: function (context) {
+            return !!(context && typeof context.launch === 'function');
+        },
+        start: function (context) {
+            return context.launch();
+        },
+        stop: function () {
+            if (window.StoryMissionLauncher && typeof window.StoryMissionLauncher.isRunning === 'function' && StoryMissionLauncher.isRunning()) {
+                StoryMissionLauncher.stop();
+            }
         },
         handleResize: function () {
             ensureCanvasSize();
@@ -4225,6 +4279,56 @@ async function startMission(worldId, missionId) {
                 }
             } else {
                 console.error('ScriptureMazeLauncher not available');
+            }
+            return;
+        }
+
+        // ===== STORY MODE: Launch story-driven mission if gameMode "story" =====
+        if (mission.gameMode === 'story') {
+            console.log('Starting STORY mode mission:', mission.name);
+            if (!organizedVerses || Object.keys(organizedVerses).length === 0) {
+                loadVersesFromBundle();
+            }
+            window.organizedVerses = organizedVerses;
+            if (!window.vQuality) {
+                window.vQuality = (mission.qualities && mission.qualities[0]) || 'Faith';
+            }
+            if (window.StoryMissionLauncher) {
+                try {
+                    await ensureNpcImagesLoaded(mission);
+                } catch (error) {
+                    console.error('Failed to load NPC images for story mode:', error);
+                }
+                const launchStoryMode = function () {
+                    StoryMissionLauncher.start({
+                        canvas: document.getElementById('gameCanvas'),
+                        ctx: document.getElementById('gameCanvas').getContext('2d'),
+                        npcImages: npcImages,
+                        mission: mission,
+                        onEndGame: function () {
+                            if (currentMission) {
+                                completeMission(3);
+                            }
+                            returnToOverland();
+                        },
+                        onLeaveGame: function () {
+                            returnToOverland();
+                        },
+                        onRestartGame: function () {
+                            startMission(mission.worldId, mission.id);
+                        }
+                    });
+                };
+                if (window.ModeManager && typeof window.ModeManager.start === 'function') {
+                    ModeManager.start('story', {
+                        mission: mission,
+                        launch: launchStoryMode
+                    });
+                } else {
+                    launchStoryMode();
+                }
+            } else {
+                console.error('StoryMissionLauncher not available');
             }
             return;
         }
