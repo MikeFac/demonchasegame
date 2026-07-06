@@ -413,9 +413,39 @@
 
     // ==================== PUZZLE ====================
 
+    // Puzzle UI state
+    var _puzzleState = {
+        inputText: '',
+        showError: false,
+        phaseId: null,
+        solved: false
+    };
+    var _puzzleInputRect = null;
+    var _puzzleSubmitRect = null;
+
+    function _getPuzzleInputRect(canvas) {
+        var w = canvas.width - 80;
+        var h = 40;
+        return { x: 40, y: 230, w: w, h: h };
+    }
+
+    function _getPuzzleSubmitRect(canvas) {
+        var w = 120;
+        var h = 38;
+        return { x: (canvas.width - w) / 2, y: 290, w: w, h: h };
+    }
+
     function _drawPuzzle(ctx, canvas, snapshot, phase, mission) {
         var puzzle = _findPuzzle(mission, phase.puzzleId);
         if (!puzzle) return;
+
+        // Reset puzzle state on phase change
+        if (_puzzleState.phaseId !== snapshot.currentPhaseId) {
+            _puzzleState.phaseId = snapshot.currentPhaseId;
+            _puzzleState.inputText = '';
+            _puzzleState.showError = false;
+            _puzzleState.solved = false;
+        }
 
         var grad = ctx.createLinearGradient(0, 0, 0, canvas.height);
         grad.addColorStop(0, '#2e1a1a');
@@ -439,14 +469,116 @@
         ctx.font = '18px Arial';
         _drawWrappedText(ctx, _t(puzzle.i18nPrompt), 20, 150, canvas.width - 40, 26);
 
-        // Full puzzle UI will be built in Phase C
-        ctx.fillStyle = '#888';
+        // Input field
+        _puzzleInputRect = _getPuzzleInputRect(canvas);
+        var inputRect = _puzzleInputRect;
+        ctx.fillStyle = 'rgba(255,255,255,0.1)';
+        ctx.fillRect(inputRect.x, inputRect.y, inputRect.w, inputRect.h);
+        ctx.strokeStyle = _puzzleState.showError ? '#ff4444' : '#4a90e2';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(inputRect.x, inputRect.y, inputRect.w, inputRect.h);
+
+        // Input text
+        ctx.fillStyle = '#fff';
+        ctx.font = '18px Arial';
+        ctx.textAlign = 'center';
+        var displayText = _puzzleState.inputText;
+        if (displayText) {
+            ctx.fillText(displayText, canvas.width / 2, inputRect.y + 27);
+        } else {
+            ctx.fillStyle = 'rgba(255,255,255,0.35)';
+            ctx.font = 'italic 15px Arial';
+            ctx.fillText('Type your answer...', canvas.width / 2, inputRect.y + 26);
+        }
+
+        // Cursor blink
+        if (displayText) {
+            var cursorX = canvas.width / 2 + ctx.measureText(displayText).width / 2 + 2;
+            if (Math.floor(Date.now() / 500) % 2 === 0) {
+                ctx.fillStyle = '#fff';
+                ctx.fillRect(cursorX, inputRect.y + 8, 2, inputRect.h - 16);
+            }
+        }
+
+        // Submit button
+        _puzzleSubmitRect = _getPuzzleSubmitRect(canvas);
+        var btnRect = _puzzleSubmitRect;
+        ctx.fillStyle = 'rgba(74,144,226,0.3)';
+        ctx.fillRect(btnRect.x, btnRect.y, btnRect.w, btnRect.h);
+        ctx.strokeStyle = '#4a90e2';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(btnRect.x, btnRect.y, btnRect.w, btnRect.h);
+        ctx.fillStyle = '#fff';
+        ctx.font = 'bold 16px Arial';
+        ctx.textAlign = 'center';
+        ctx.fillText('Submit', btnRect.x + btnRect.w / 2, btnRect.y + 25);
+
+        // Error message
+        if (_puzzleState.showError) {
+            ctx.fillStyle = '#ff6666';
+            ctx.font = '14px Arial';
+            ctx.fillText('Incorrect. Try again!', canvas.width / 2, 350);
+        }
+
+        // Hint
+        ctx.fillStyle = 'rgba(255,255,255,0.5)';
         ctx.font = '12px Arial';
-        ctx.fillText('[Puzzle UI - Phase C]', canvas.width / 2, canvas.height - 20);
+        ctx.fillText('Type the missing word, then tap Submit', canvas.width / 2, canvas.height - 30);
     }
 
     function _handlePuzzleClick(x, y, snapshot, phase, canvas, mission) {
-        return { type: 'puzzleSolved' };
+        var puzzle = _findPuzzle(mission, phase.puzzleId);
+        if (!puzzle) return null;
+
+        // Check submit button click
+        if (_puzzleSubmitRect) {
+            if (x >= _puzzleSubmitRect.x && x <= _puzzleSubmitRect.x + _puzzleSubmitRect.w &&
+                y >= _puzzleSubmitRect.y && y <= _puzzleSubmitRect.y + _puzzleSubmitRect.h) {
+                var val = (_puzzleState.inputText || '').trim();
+                if (val.toLowerCase() === (puzzle.answer || '').toLowerCase()) {
+                    _puzzleState.solved = true;
+                    _puzzleState.showError = false;
+                    return { type: 'puzzleSolved' };
+                } else {
+                    _puzzleState.showError = true;
+                    return null;
+                }
+            }
+        }
+
+        // Click on input field - show keyboard via StoryPuzzleScreen overlay
+        if (_puzzleInputRect) {
+            if (x >= _puzzleInputRect.x && x <= _puzzleInputRect.x + _puzzleInputRect.w &&
+                y >= _puzzleInputRect.y && y <= _puzzleInputRect.y + _puzzleInputRect.h) {
+                _openPuzzleInput(mission, phase, puzzle);
+                return null;
+            }
+        }
+
+        return null;
+    }
+
+    function _openPuzzleInput(mission, phase, puzzle) {
+        if (!window.StoryPuzzleScreen || typeof window.StoryPuzzleScreen.buildPuzzleOverlay !== 'function') return;
+
+        // Remove any existing overlay
+        var existing = document.getElementById('storyPuzzleInputOverlay');
+        if (existing) existing.remove();
+
+        var overlay = window.StoryPuzzleScreen.buildPuzzleOverlay(null, puzzle, function (correct) {
+            var el = document.getElementById('storyPuzzleInputOverlay');
+            if (el) el.remove();
+            if (correct) {
+                _puzzleState.solved = true;
+                _puzzleState.showError = false;
+                // Trigger the engine via a synthetic action
+                // We need to return the puzzleSolved action - but since this is async,
+                // we'll set a flag the launcher can check
+                _puzzleState.pendingSolved = true;
+            }
+        });
+        overlay.id = 'storyPuzzleInputOverlay';
+        document.body.appendChild(overlay);
     }
 
     // ==================== COMBAT ====================

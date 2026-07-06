@@ -8,6 +8,7 @@
     var _storyAnimFrame = null;
     var npcImages = {};
     var _launchOpts = null;
+    var _storyEngine = null;
 
     var _onEndGame = null;
     var _onLeaveGame = null;
@@ -88,6 +89,7 @@
 
         if (StoryMissionEngine) {
             engine = new StoryMissionEngine(emitter, mission, 'story-' + Date.now());
+            _storyEngine = engine;
             engine.start();
         }
 
@@ -114,6 +116,7 @@
             network.disconnect();
             network = null;
         }
+        _storyEngine = null;
         _removeInputHandlers();
         _removeStoryMenu();
         lastStorySnapshot = null;
@@ -148,6 +151,14 @@
                 npcImages: npcImages,
                 mission: _launchOpts ? _launchOpts.mission : null
             });
+
+            // Check for pending puzzle solved (from DOM overlay input)
+            if (window.StoryMissionRenderer._puzzleState && window.StoryMissionRenderer._puzzleState.pendingSolved) {
+                window.StoryMissionRenderer._puzzleState.pendingSolved = false;
+                if (_storyEngine) {
+                    _storyEngine.handleInput('local', 'puzzleSolved');
+                }
+            }
         } else {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             ctx.fillStyle = '#1a1a2e';
