@@ -91,6 +91,8 @@
             return _handlePuzzleClick(x, y, snapshot, phase, canvas, mission);
         } else if (phase.type === 'collect') {
             return _handleCollectClick(x, y, snapshot, phase, canvas, mission);
+        } else if (phase.type === 'combat') {
+            return { type: 'combatClick', x: x, y: y };
         }
 
         return null;
@@ -584,17 +586,169 @@
     // ==================== COMBAT ====================
 
     function _drawCombat(ctx, canvas, snapshot, phase, mission) {
+        var combatState = snapshot.combatState;
+        if (!combatState) {
+            // Loading combat
+            ctx.fillStyle = '#0a0a14';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = '#ffd666';
+            ctx.font = 'bold 20px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText('Preparing for battle...', canvas.width / 2, canvas.height / 2);
+            return;
+        }
+
+        // Dark background
         ctx.fillStyle = '#0a0a14';
         ctx.fillRect(0, 0, canvas.width, canvas.height);
 
+        // Camera: center on player
+        var player = null;
+        var playerCode = null;
+        for (var code in combatState.players) {
+            if (combatState.players[code]) {
+                player = combatState.players[code];
+                playerCode = code;
+                break;
+            }
+        }
+
+        var camera = { x: 0, y: 0 };
+        if (player) {
+            camera.x = player.x - canvas.width / 2;
+            camera.y = player.y - canvas.height / 2;
+        }
+
+        // Clamp camera to world bounds
+        var worldW = 3000, worldH = 3000;
+        camera.x = Math.max(0, Math.min(worldW - canvas.width, camera.x));
+        camera.y = Math.max(0, Math.min(worldH - canvas.height, camera.y));
+
+        // Draw monsters
+        var monsters = combatState.monsters || [];
+        for (var mi = 0; mi < monsters.length; mi++) {
+            var m = monsters[mi];
+            if (!m) continue;
+            var mx = m.x - camera.x;
+            var my = m.y - camera.y;
+            if (mx < -50 || mx > canvas.width + 50 || my < -50 || my > canvas.height + 50) continue;
+
+            var mw = m.width || 48;
+            var mh = m.height || 48;
+            var sizeMult = m.sizeMultiplier || 1;
+
+            // Monster body
+            ctx.fillStyle = m.isBoss ? '#cc2222' : '#882222';
+            ctx.beginPath();
+            ctx.arc(mx, my, mw / 2 * sizeMult, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.strokeStyle = m.isBoss ? '#ff4444' : '#aa3333';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+
+            // Label
+            ctx.fillStyle = '#fff';
+            ctx.font = 'bold 10px Arial';
+            ctx.textAlign = 'center';
+            var label = m.label || m.demonType || 'Demon';
+            if (m.isBoss) label = m.label || 'GOLIATH';
+            ctx.fillText(label, mx, my + 3);
+
+            // Health bar
+            if (m.health !== undefined && m.maxHealth > 0) {
+                var barW = mw * sizeMult;
+                var barH = 4;
+                var barY = my - mh / 2 * sizeMult - 8;
+                ctx.fillStyle = 'rgba(0,0,0,0.6)';
+                ctx.fillRect(mx - barW / 2, barY, barW, barH);
+                var hpRatio = Math.max(0, m.health / m.maxHealth);
+                ctx.fillStyle = hpRatio > 0.5 ? '#44ff44' : (hpRatio > 0.25 ? '#ffaa44' : '#ff4444');
+                ctx.fillRect(mx - barW / 2, barY, barW * hpRatio, barH);
+            }
+        }
+
+        // Draw player
+        if (player) {
+            var px = player.x - camera.x;
+            var py = player.y - camera.y;
+            var pw = player.width || 48;
+            var ph = player.height || 48;
+
+            ctx.fillStyle = '#4a90e2';
+            ctx.beginPath();
+            ctx.arc(px, py, pw / 2, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.strokeStyle = '#ffd666';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+
+            // Health bar
+            if (player.health !== undefined && player.maxHealth > 0) {
+                var pBarW = pw;
+                var pBarH = 4;
+                var pBarY = py - ph / 2 - 8;
+                ctx.fillStyle = 'rgba(0,0,0,0.6)';
+                ctx.fillRect(px - pBarW / 2, pBarY, pBarW, pBarH);
+                var pHpRatio = Math.max(0, player.health / player.maxHealth);
+                ctx.fillStyle = pHpRatio > 0.5 ? '#44ff44' : (pHpRatio > 0.25 ? '#ffaa44' : '#ff4444');
+                ctx.fillRect(px - pBarW / 2, pBarY, pBarW * pHpRatio, pBarH);
+            }
+        }
+
+        // Draw healing points
+        var healingPoints = combatState.healingPoints || [];
+        for (var hi = 0; hi < healingPoints.length; hi++) {
+            var hp = healingPoints[hi];
+            if (!hp) continue;
+            var hx = hp.x - camera.x;
+            var hy = hp.y - camera.y;
+            ctx.fillStyle = '#44ff44';
+            ctx.beginPath();
+            ctx.arc(hx, hy, 8, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.strokeStyle = '#22aa22';
+            ctx.lineWidth = 1;
+            ctx.stroke();
+        }
+
+        // Draw bullets
+        var bullets = combatState.bullets || [];
+        for (var bi = 0; bi < bullets.length; bi++) {
+            var b = bullets[bi];
+            if (!b) continue;
+            var bx = b.x - camera.x;
+            var by = b.y - camera.y;
+            ctx.fillStyle = '#ffd666';
+            ctx.beginPath();
+            ctx.arc(bx, by, 4, 0, Math.PI * 2);
+            ctx.fill();
+        }
+
+        // HUD: Mission title + objective
+        ctx.fillStyle = 'rgba(0,0,20,0.8)';
+        ctx.fillRect(0, 0, canvas.width, HUD_HEIGHT);
+        ctx.strokeStyle = '#ff4444';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(0, 0, canvas.width, HUD_HEIGHT);
+
         ctx.fillStyle = '#ff4444';
-        ctx.font = 'bold 24px Arial';
-        ctx.textAlign = 'center';
-        ctx.fillText('FACE GOLIATH', canvas.width / 2, canvas.height / 2 - 20);
+        ctx.font = 'bold 14px Arial';
+        ctx.textAlign = 'left';
+        ctx.fillText('FACE GOLIATH', 10, 20);
 
         ctx.fillStyle = '#fff';
-        ctx.font = '14px Arial';
-        ctx.fillText('[Combat rendering - Phase D]', canvas.width / 2, canvas.height / 2 + 10);
+        ctx.font = '12px Arial';
+        ctx.textAlign = 'right';
+        var killsText = 'Kills: ' + (combatState.monstersKilled || 0) + ' / ' + (combatState.monstersToKill || 1);
+        ctx.fillText(killsText, canvas.width - 10, 18);
+
+        // Player HP/ammo HUD
+        if (player) {
+            ctx.fillStyle = '#fff';
+            ctx.font = '12px Arial';
+            ctx.textAlign = 'right';
+            ctx.fillText('HP: ' + Math.ceil(player.health || 0) + '  Ammo: ' + (player.ammo || 0), canvas.width - 10, 32);
+        }
     }
 
     // ==================== END SCREEN ====================
