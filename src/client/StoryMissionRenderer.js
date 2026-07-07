@@ -56,6 +56,8 @@
                 _drawDialogue(ctx, canvas, snapshot, phase, mission, npcImages);
             } else if (phase.type === 'collect') {
                 _drawCollect(ctx, canvas, snapshot, phase, mission);
+            } else if (phase.type === 'combatCollect') {
+                _drawCombatCollect(ctx, canvas, snapshot, phase, mission);
             } else if (phase.type === 'puzzle') {
                 _drawPuzzle(ctx, canvas, snapshot, phase, mission);
             } else if (phase.type === 'combat') {
@@ -91,6 +93,8 @@
             return _handlePuzzleClick(x, y, snapshot, phase, canvas, mission);
         } else if (phase.type === 'collect') {
             return _handleCollectClick(x, y, snapshot, phase, canvas, mission);
+        } else if (phase.type === 'combatCollect') {
+            return { type: 'combatClick', x: x, y: y };
         } else if (phase.type === 'combat') {
             return { type: 'combatClick', x: x, y: y };
         }
@@ -417,25 +421,13 @@
 
     // Puzzle UI state
     var _puzzleState = {
-        inputText: '',
+        selectedOption: null,
         showError: false,
         phaseId: null,
-        solved: false
+        solved: false,
+        pendingSolved: false
     };
-    var _puzzleInputRect = null;
-    var _puzzleSubmitRect = null;
-
-    function _getPuzzleInputRect(canvas) {
-        var w = canvas.width - 80;
-        var h = 40;
-        return { x: 40, y: 230, w: w, h: h };
-    }
-
-    function _getPuzzleSubmitRect(canvas) {
-        var w = 120;
-        var h = 38;
-        return { x: (canvas.width - w) / 2, y: 290, w: w, h: h };
-    }
+    var _puzzleOptionRects = [];
 
     function _drawPuzzle(ctx, canvas, snapshot, phase, mission) {
         var puzzle = _findPuzzle(mission, phase.puzzleId);
@@ -444,7 +436,7 @@
         // Reset puzzle state on phase change
         if (_puzzleState.phaseId !== snapshot.currentPhaseId) {
             _puzzleState.phaseId = snapshot.currentPhaseId;
-            _puzzleState.inputText = '';
+            _puzzleState.selectedOption = null;
             _puzzleState.showError = false;
             _puzzleState.solved = false;
         }
@@ -459,85 +451,73 @@
         ctx.fillStyle = '#ffd666';
         ctx.font = 'bold 20px Arial';
         ctx.textAlign = 'center';
-        ctx.fillText('Verse Challenge', canvas.width / 2, 80);
+        ctx.fillText('Verse Challenge', canvas.width / 2, 70);
 
         // Verse reference
         ctx.fillStyle = '#a5c8ff';
         ctx.font = '14px Arial';
-        ctx.fillText(puzzle.verseRef, canvas.width / 2, 110);
+        ctx.fillText(puzzle.verseRef, canvas.width / 2, 96);
 
         // Prompt
         ctx.fillStyle = '#fff';
-        ctx.font = '18px Arial';
-        _drawWrappedText(ctx, _t(puzzle.i18nPrompt), 20, 150, canvas.width - 40, 26);
+        ctx.font = '17px Arial';
+        _drawWrappedText(ctx, _t(puzzle.i18nPrompt), 20, 130, canvas.width - 40, 24);
 
-        // Input field
-        _puzzleInputRect = _getPuzzleInputRect(canvas);
-        var inputRect = _puzzleInputRect;
-        ctx.fillStyle = 'rgba(255,255,255,0.1)';
-        ctx.fillRect(inputRect.x, inputRect.y, inputRect.w, inputRect.h);
-        ctx.strokeStyle = _puzzleState.showError ? '#ff4444' : '#4a90e2';
-        ctx.lineWidth = 2;
-        ctx.strokeRect(inputRect.x, inputRect.y, inputRect.w, inputRect.h);
+        // Multiple-choice option buttons
+        var options = puzzle.options || [puzzle.answer];
+        var btnW = canvas.width - 40;
+        var btnH = 42;
+        var btnGap = 8;
+        var startY = 220;
+        _puzzleOptionRects = [];
 
-        // Input text
-        ctx.fillStyle = '#fff';
-        ctx.font = '18px Arial';
-        ctx.textAlign = 'center';
-        var displayText = _puzzleState.inputText;
-        if (displayText) {
-            ctx.fillText(displayText, canvas.width / 2, inputRect.y + 27);
-        } else {
-            ctx.fillStyle = 'rgba(255,255,255,0.35)';
-            ctx.font = 'italic 15px Arial';
-            ctx.fillText('Type your answer...', canvas.width / 2, inputRect.y + 26);
+        for (var oi = 0; oi < options.length; oi++) {
+            var bx = 20;
+            var by = startY + oi * (btnH + btnGap);
+            var rect = { x: bx, y: by, w: btnW, h: btnH, option: options[oi] };
+            _puzzleOptionRects.push(rect);
+
+            var isSelected = _puzzleState.selectedOption === oi;
+            var fillCol = isSelected ? 'rgba(74,144,226,0.5)' : 'rgba(255,255,255,0.08)';
+            var strokeCol = isSelected ? '#ffd666' : '#4a90e2';
+
+            ctx.fillStyle = fillCol;
+            ctx.fillRect(rect.x, rect.y, rect.w, rect.h);
+            ctx.strokeStyle = strokeCol;
+            ctx.lineWidth = isSelected ? 3 : 2;
+            ctx.strokeRect(rect.x, rect.y, rect.w, rect.h);
+
+            ctx.fillStyle = '#fff';
+            ctx.font = 'bold 18px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText(options[oi], rect.x + rect.w / 2, rect.y + 27);
         }
 
-        // Cursor blink
-        if (displayText) {
-            var cursorX = canvas.width / 2 + ctx.measureText(displayText).width / 2 + 2;
-            if (Math.floor(Date.now() / 500) % 2 === 0) {
-                ctx.fillStyle = '#fff';
-                ctx.fillRect(cursorX, inputRect.y + 8, 2, inputRect.h - 16);
-            }
-        }
-
-        // Submit button
-        _puzzleSubmitRect = _getPuzzleSubmitRect(canvas);
-        var btnRect = _puzzleSubmitRect;
-        ctx.fillStyle = 'rgba(74,144,226,0.3)';
-        ctx.fillRect(btnRect.x, btnRect.y, btnRect.w, btnRect.h);
-        ctx.strokeStyle = '#4a90e2';
-        ctx.lineWidth = 2;
-        ctx.strokeRect(btnRect.x, btnRect.y, btnRect.w, btnRect.h);
-        ctx.fillStyle = '#fff';
-        ctx.font = 'bold 16px Arial';
-        ctx.textAlign = 'center';
-        ctx.fillText('Submit', btnRect.x + btnRect.w / 2, btnRect.y + 25);
-
-        // Error message
+        // Error feedback
         if (_puzzleState.showError) {
             ctx.fillStyle = '#ff6666';
             ctx.font = '14px Arial';
-            ctx.fillText('Incorrect. Try again!', canvas.width / 2, 350);
+            ctx.textAlign = 'center';
+            ctx.fillText('Not quite. Try again!', canvas.width / 2, startY + options.length * (btnH + btnGap) + 20);
         }
 
         // Hint
         ctx.fillStyle = 'rgba(255,255,255,0.5)';
         ctx.font = '12px Arial';
-        ctx.fillText('Type the missing word, then tap Submit', canvas.width / 2, canvas.height - 30);
+        ctx.textAlign = 'center';
+        ctx.fillText('Tap the correct word', canvas.width / 2, canvas.height - 20);
     }
 
     function _handlePuzzleClick(x, y, snapshot, phase, canvas, mission) {
         var puzzle = _findPuzzle(mission, phase.puzzleId);
         if (!puzzle) return null;
 
-        // Check submit button click
-        if (_puzzleSubmitRect) {
-            if (x >= _puzzleSubmitRect.x && x <= _puzzleSubmitRect.x + _puzzleSubmitRect.w &&
-                y >= _puzzleSubmitRect.y && y <= _puzzleSubmitRect.y + _puzzleSubmitRect.h) {
-                var val = (_puzzleState.inputText || '').trim();
-                if (val.toLowerCase() === (puzzle.answer || '').toLowerCase()) {
+        for (var i = 0; i < _puzzleOptionRects.length; i++) {
+            var rect = _puzzleOptionRects[i];
+            if (x >= rect.x && x <= rect.x + rect.w && y >= rect.y && y <= rect.y + rect.h) {
+                _puzzleState.selectedOption = i;
+                var chosen = rect.option;
+                if (chosen.toLowerCase() === (puzzle.answer || '').toLowerCase()) {
                     _puzzleState.solved = true;
                     _puzzleState.showError = false;
                     return { type: 'puzzleSolved' };
@@ -548,39 +528,7 @@
             }
         }
 
-        // Click on input field - show keyboard via StoryPuzzleScreen overlay
-        if (_puzzleInputRect) {
-            if (x >= _puzzleInputRect.x && x <= _puzzleInputRect.x + _puzzleInputRect.w &&
-                y >= _puzzleInputRect.y && y <= _puzzleInputRect.y + _puzzleInputRect.h) {
-                _openPuzzleInput(mission, phase, puzzle);
-                return null;
-            }
-        }
-
         return null;
-    }
-
-    function _openPuzzleInput(mission, phase, puzzle) {
-        if (!window.StoryPuzzleScreen || typeof window.StoryPuzzleScreen.buildPuzzleOverlay !== 'function') return;
-
-        // Remove any existing overlay
-        var existing = document.getElementById('storyPuzzleInputOverlay');
-        if (existing) existing.remove();
-
-        var overlay = window.StoryPuzzleScreen.buildPuzzleOverlay(null, puzzle, function (correct) {
-            var el = document.getElementById('storyPuzzleInputOverlay');
-            if (el) el.remove();
-            if (correct) {
-                _puzzleState.solved = true;
-                _puzzleState.showError = false;
-                // Trigger the engine via a synthetic action
-                // We need to return the puzzleSolved action - but since this is async,
-                // we'll set a flag the launcher can check
-                _puzzleState.pendingSolved = true;
-            }
-        });
-        overlay.id = 'storyPuzzleInputOverlay';
-        document.body.appendChild(overlay);
     }
 
     // ==================== COMBAT ====================
@@ -751,6 +699,185 @@
         }
     }
 
+    // ==================== COMBAT COLLECT ====================
+
+    function _drawCombatCollect(ctx, canvas, snapshot, phase, mission) {
+        var combatState = snapshot.combatState;
+        if (!combatState) {
+            ctx.fillStyle = '#0a0a14';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = '#ffd666';
+            ctx.font = 'bold 20px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText('Entering the field...', canvas.width / 2, canvas.height / 2);
+            return;
+        }
+
+        // Dark background
+        ctx.fillStyle = '#0a0a14';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        // Camera: center on player
+        var player = null;
+        for (var code in combatState.players) {
+            if (combatState.players[code]) { player = combatState.players[code]; break; }
+        }
+
+        var camera = { x: 0, y: 0 };
+        if (player) {
+            camera.x = player.x - canvas.width / 2;
+            camera.y = player.y - canvas.height / 2;
+        }
+        camera.x = Math.max(0, Math.min(3000 - canvas.width, camera.x));
+        camera.y = Math.max(0, Math.min(3000 - canvas.height, camera.y));
+
+        // Draw monsters (reuse combat drawing)
+        var monsters = combatState.monsters || [];
+        for (var mi = 0; mi < monsters.length; mi++) {
+            var m = monsters[mi];
+            if (!m) continue;
+            var mx = m.x - camera.x;
+            var my = m.y - camera.y;
+            if (mx < -50 || mx > canvas.width + 50 || my < -50 || my > canvas.height + 50) continue;
+
+            var mw = m.width || 48;
+            var sizeMult = m.sizeMultiplier || 1;
+            ctx.fillStyle = '#882222';
+            ctx.beginPath();
+            ctx.arc(mx, my, mw / 2 * sizeMult, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.strokeStyle = '#aa3333';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+
+            ctx.fillStyle = '#fff';
+            ctx.font = 'bold 10px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText(m.demonType || 'Demon', mx, my + 3);
+
+            if (m.health !== undefined && m.maxHealth > 0) {
+                var barW = mw * sizeMult;
+                var barY = my - mw / 2 * sizeMult - 8;
+                ctx.fillStyle = 'rgba(0,0,0,0.6)';
+                ctx.fillRect(mx - barW / 2, barY, barW, 4);
+                var hpRatio = Math.max(0, m.health / m.maxHealth);
+                ctx.fillStyle = hpRatio > 0.5 ? '#44ff44' : (hpRatio > 0.25 ? '#ffaa44' : '#ff4444');
+                ctx.fillRect(mx - barW / 2, barY, barW * hpRatio, 4);
+            }
+        }
+
+        // Draw stones in world space
+        var stonePositions = snapshot.stonePositions || [];
+        var collectedIndices = snapshot.collectedStoneIndices || {};
+        for (var si = 0; si < stonePositions.length; si++) {
+            if (collectedIndices[si]) continue;
+            var st = stonePositions[si];
+            var sx = st.x - camera.x;
+            var sy = st.y - camera.y;
+            if (sx < -30 || sx > canvas.width + 30 || sy < -30 || sy > canvas.height + 30) continue;
+            _drawStone(ctx, sx, sy, false);
+        }
+
+        // Draw player
+        if (player) {
+            var px = player.x - camera.x;
+            var py = player.y - camera.y;
+            var pw = player.width || 48;
+            ctx.fillStyle = '#4a90e2';
+            ctx.beginPath();
+            ctx.arc(px, py, pw / 2, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.strokeStyle = '#ffd666';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+
+            if (player.health !== undefined && player.maxHealth > 0) {
+                var pBarW = pw;
+                var pBarY = py - pw / 2 - 8;
+                ctx.fillStyle = 'rgba(0,0,0,0.6)';
+                ctx.fillRect(px - pBarW / 2, pBarY, pBarW, 4);
+                var pHpRatio = Math.max(0, player.health / player.maxHealth);
+                ctx.fillStyle = pHpRatio > 0.5 ? '#44ff44' : (pHpRatio > 0.25 ? '#ffaa44' : '#ff4444');
+                ctx.fillRect(px - pBarW / 2, pBarY, pBarW * pHpRatio, 4);
+            }
+
+            // Check stone proximity for auto-collect
+            var collectRadius = 40;
+            for (var ci = 0; ci < stonePositions.length; ci++) {
+                if (collectedIndices[ci]) continue;
+                var stn = stonePositions[ci];
+                var dx = player.x - stn.x;
+                var dy = player.y - stn.y;
+                if (Math.sqrt(dx * dx + dy * dy) <= collectRadius) {
+                    // Auto-collect this stone
+                    if (_pendingStoneCollect.indexOf(ci) === -1) {
+                        _pendingStoneCollect.push(ci);
+                    }
+                }
+            }
+        }
+
+        // Draw healing points
+        var healingPoints = combatState.healingPoints || [];
+        for (var hi = 0; hi < healingPoints.length; hi++) {
+            var hp = healingPoints[hi];
+            if (!hp) continue;
+            ctx.fillStyle = '#44ff44';
+            ctx.beginPath();
+            ctx.arc(hp.x - camera.x, hp.y - camera.y, 8, 0, Math.PI * 2);
+            ctx.fill();
+        }
+
+        // Draw bullets
+        var bullets = combatState.bullets || [];
+        for (var bi = 0; bi < bullets.length; bi++) {
+            var b = bullets[bi];
+            if (!b) continue;
+            ctx.fillStyle = '#ffd666';
+            ctx.beginPath();
+            ctx.arc(b.x - camera.x, b.y - camera.y, 4, 0, Math.PI * 2);
+            ctx.fill();
+        }
+
+        // HUD
+        ctx.fillStyle = 'rgba(0,0,20,0.85)';
+        ctx.fillRect(0, 0, canvas.width, HUD_HEIGHT);
+        ctx.strokeStyle = '#4a90e2';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(0, 0, canvas.width, HUD_HEIGHT);
+
+        var objLabel = (mission.specialObjects && mission.specialObjects[0]) ? _t(mission.specialObjects[0].labelKey) : 'Stones';
+        var objective = _t('story.david.hud.objective', objLabel);
+        var collected = snapshot.collectedObjects ? (snapshot.collectedObjects[phase.objectType] || 0) : 0;
+        var targetCount = phase.targetCount || 5;
+        var countText = _t('story.david.hud.stonesCollected', collected, targetCount);
+
+        ctx.fillStyle = '#ffd666';
+        ctx.font = 'bold 14px Arial';
+        ctx.textAlign = 'left';
+        ctx.fillText(objective, 10, 20);
+        ctx.fillStyle = '#fff';
+        ctx.font = 'bold 16px Arial';
+        ctx.textAlign = 'right';
+        ctx.fillText(countText, canvas.width - 10, 22);
+
+        if (player) {
+            ctx.fillStyle = '#fff';
+            ctx.font = '12px Arial';
+            ctx.textAlign = 'right';
+            ctx.fillText('HP: ' + Math.ceil(player.health || 0) + '  Ammo: ' + (player.ammo || 0), canvas.width - 10, 35);
+        }
+    }
+
+    // Pending stone auto-collects (checked by render loop in launcher)
+    var _pendingStoneCollect = [];
+
+    function consumePendingStoneCollect() {
+        var result = _pendingStoneCollect.slice();
+        _pendingStoneCollect = [];
+        return result;
+    }
+
     // ==================== END SCREEN ====================
 
     function _getSermonButtonRect(canvas) {
@@ -847,6 +974,7 @@
     window.StoryMissionRenderer = {
         render: render,
         handleClick: handleClick,
-        updateHover: updateHover
+        updateHover: updateHover,
+        consumePendingStoneCollect: consumePendingStoneCollect
     };
 })();

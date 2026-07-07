@@ -70,9 +70,9 @@ function testPhaseTransitions() {
     engine.handleInput('p1', 'advanceDialogue');
     assert(engine.storyState.currentPhaseId === 'collectStones', 'After dialogue, should be in collectStones');
 
-    // Collect 5 stones
+    // Collect 5 stones (combatCollect phase)
     for (let i = 0; i < 5; i++) {
-        engine.handleInput('p1', 'collectObject', { objectId: 'smoothStone' });
+        engine.handleInput('p1', 'collectObject', { objectId: 'smoothStone', stoneId: i });
     }
     assert(engine.storyState.getCollectedCount('smoothStone') === 5, 'Should have collected 5 stones');
     assert(engine.storyState.currentPhaseId === 'puzzle', 'After collecting, should be in puzzle');
@@ -155,6 +155,19 @@ function testCombatConfig() {
     assert(combat.fixedMonsters[0].stats.healthMultiplier === 6.0, 'Goliath should have 6x health');
     assert(combat.disableLevelBoss === true, 'Level boss spawning should be disabled');
     assert(combat.randomSpawnsEnabled === false, 'Random spawns should be disabled');
+
+    // Collect combat config
+    const collectCombat = mission.collectCombatConfig;
+    assert(!!collectCombat, 'Collect combat config should exist');
+    assert(collectCombat.fixedMonsters.length === 5, 'Should have 5 guarding demons');
+    assert(collectCombat.monsters.includes('Fear'), 'Should include Fear demons');
+    assert(collectCombat.monsters.includes('Shame'), 'Should include Shame demons');
+    assert(collectCombat.randomSpawnsEnabled === true, 'Random spawns enabled for collect phase');
+
+    // Puzzle should have multiple-choice options (no typing)
+    const puzzle = mission.puzzles[0];
+    assert(Array.isArray(puzzle.options) && puzzle.options.length >= 4, 'Puzzle should have multiple-choice options array');
+    assert(puzzle.options.includes(puzzle.answer), 'Correct answer should be in options');
 }
 
 // Run all tests

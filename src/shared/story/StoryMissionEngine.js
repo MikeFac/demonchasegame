@@ -35,6 +35,8 @@
 
             this.combatEngine = null;
             this._gameEndedHandler = null;
+            this._stonePositions = [];
+            this._collectedStoneIndices = {};
         }
 
         start() {
@@ -52,28 +54,42 @@
         }
 
         handleInput(playerId, event, data) {
-            if (this.combatEngine && this._isCombatPhase()) {
-                this.combatEngine.handlePlayerInput(playerId, event, data);
-                return;
+            if (this.combatEngine && (this._isCombatPhase() || this._isCombatCollectPhase())) {
+                if (event === 'playerPosition' || event === 'playerShoot' || event === 'playerHit' ||
+                    event === 'quizCorrect' || event === 'setCombatCategory') {
+                    this.combatEngine.handlePlayerInput(playerId, event, data);
+                    return;
+                }
             }
 
             this._handleStoryInput(playerId, event, data);
         }
 
         getGameState() {
-            if (this.combatEngine && this._isCombatPhase()) {
+            if (this.combatEngine && (this._isCombatPhase() || this._isCombatCollectPhase())) {
                 return this.combatEngine.gameState;
             }
             return null;
         }
 
         getSnapshot() {
-            return this.storyState.snapshot();
+            var snap = this.storyState.snapshot();
+            if (this.combatEngine && (this._isCombatPhase() || this._isCombatCollectPhase())) {
+                snap.combatState = this.combatEngine.gameState;
+                snap.stonePositions = this._stonePositions;
+                snap.collectedStoneIndices = this._collectedStoneIndices;
+            }
+            return snap;
         }
 
         _isCombatPhase() {
             var phase = this.storyState.getPhase();
             return phase && phase.type === 'combat';
+        }
+
+        _isCombatCollectPhase() {
+            var phase = this.storyState.getPhase();
+            return phase && phase.type === 'combatCollect';
         }
 
         _enterPhase(phaseId) {
@@ -91,15 +107,20 @@
                 this.combatEngine = null;
             }
 
+            this._collectedStoneIndices = {};
+            this._stonePositions = [];
+
             if (phase.type === 'combat') {
                 this._startCombat(phase);
+            } else if (phase.type === 'combatCollect') {
+                this._startCombatCollect(phase);
             }
 
-            this.emitter.emit('storyPhase', this.storyState.snapshot());
+            this.emitter.emit('storyPhase', this.getSnapshot());
         }
 
         _startCombat(phase) {
-            var combatConfig = this._buildCombatConfig();
+            var combatConfig = this._buildCombatConfig(this.storyConfig.combatConfig);
             if (!combatConfig) {
                 console.error('StoryMissionEngine: no combatConfig available');
                 return;
@@ -116,7 +137,7 @@
                 if (data && data.result === 'victory') {
                     self._advancePhase();
                 } else {
-                    self.emitter.emit('storyPhase', self.storyState.snapshot());
+                    self.emitter.emit('storyPhase', self.getSnapshot());
                 }
             };
 
@@ -124,12 +145,46 @@
             this.combatEngine.start();
         }
 
-        _buildCombatConfig() {
-            var combat = this.storyConfig.combatConfig;
+        _startCombatCollect(phase) {
+            var collectConfig = this._buildCombatConfig(this.storyConfig.collectCombatConfig);
+            if (!collectConfig) {
+                console.error('StoryMissionEngine: no collectCombatConfig available');
+                return;
+            }
+
+            // Don't end the game on monstersToKill — we end when stones are collected
+            this.combatEngine = new GameEngine(this.emitter, collectConfig, this.roomId);
+
+            // Generate stone positions in world space
+            var objConfig = null;
+            for (var i = 0; i < (this.storyConfig.specialObjects || []).length; i++) {
+                if (this.storyConfig.specialObjects[i].id === phase.objectType) {
+                    objConfig = this.storyConfig.specialObjects[i];
+                    break;
+                }
+            }
+
+            if (objConfig) {
+                var area = objConfig.spawnArea || { x: 800, y: 800, w: 1400, h: 1400 };
+                var count = phase.targetCount || objConfig.count || 5;
+                for (var s = 0; s < count; s++) {
+                    var seed = s * 7919 + 31;
+                    var rx = ((seed * 2654435761) % 1000) / 1000;
+                    var ry = ((seed * 40503) % 1000) / 1000;
+                    this._stonePositions.push({
+                        x: area.x + Math.floor(rx * area.w),
+                        y: area.y + Math.floor(ry * area.h),
+                        id: s
+                    });
+                }
+            }
+
+            this.combatEngine.start();
+        }
+
+        _buildCombatConfig(combat) {
             if (!combat) return null;
 
-            // Build a GameConfig using createFromCustomBalance, then overlay
-            // combat-specific level data and fixed monsters.
             var balance = {
                 monsterHealth: 1.0,
                 monsterDamage: combat.monsterDamageFactor || 1.0,
@@ -165,15 +220,19 @@
                 this._onAdvanceInput();
             } else if (event === 'collectObject') {
                 var objectId = data && data.objectId;
+                var stoneId = data && data.stoneId;
                 if (objectId) {
                     this.storyState.collectObject(objectId);
+                    if (stoneId !== undefined) {
+                        this._collectedStoneIndices[stoneId] = true;
+                    }
                     this.emitter.emit('objectCollected', { objectId: objectId, count: this.storyState.getCollectedCount(objectId) });
 
                     var phase = this.storyState.getPhase();
-                    if (phase && phase.type === 'collect' && this.storyState.isCollectComplete(phase)) {
+                    if (phase && (phase.type === 'collect' || phase.type === 'combatCollect') && this.storyState.isCollectComplete(phase)) {
                         this._advancePhase();
                     } else {
-                        this.emitter.emit('storyPhase', this.storyState.snapshot());
+                        this.emitter.emit('storyPhase', this.getSnapshot());
                     }
                 }
             } else if (event === 'puzzleSolved') {
@@ -192,7 +251,7 @@
             if (phase.type === 'dialogue') {
                 if (!this.storyState.isDialogueComplete()) {
                     this.storyState.advanceDialogue();
-                    this.emitter.emit('storyPhase', this.storyState.snapshot());
+                    this.emitter.emit('storyPhase', this.getSnapshot());
                 }
                 if (this.storyState.isDialogueComplete() && phase.endMission) {
                     this.storyState.ended = true;

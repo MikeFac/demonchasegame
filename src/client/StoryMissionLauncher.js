@@ -62,9 +62,6 @@
                 lastStorySnapshot = snapshot;
                 _applyPhaseMusic(snapshot && snapshot.currentPhaseId);
             },
-            onObjectCollected: function (data) {
-                // re-render handled by snapshot updates
-            },
             onStoryEnded: function (data) {
                 _setupEndGameClick(data);
             },
@@ -74,6 +71,13 @@
             onGameStateUpdate: function (state) {
                 lastStorySnapshot = lastStorySnapshot || {};
                 lastStorySnapshot.combatState = state;
+                // Refresh stone positions and collected indices from engine
+                if (_storyEngine) {
+                    var snap = _storyEngine.getSnapshot();
+                    lastStorySnapshot.stonePositions = snap.stonePositions;
+                    lastStorySnapshot.collectedStoneIndices = snap.collectedStoneIndices;
+                    lastStorySnapshot.collectedObjects = snap.collectedObjects;
+                }
             }
         });
 
@@ -157,6 +161,19 @@
                 window.StoryMissionRenderer._puzzleState.pendingSolved = false;
                 if (_storyEngine) {
                     _storyEngine.handleInput('local', 'puzzleSolved');
+                }
+            }
+
+            // Check for pending stone auto-collects (combatCollect phase)
+            if (window.StoryMissionRenderer.consumePendingStoneCollect) {
+                var pending = window.StoryMissionRenderer.consumePendingStoneCollect();
+                for (var i = 0; i < pending.length; i++) {
+                    if (_storyEngine) {
+                        _storyEngine.handleInput('local', 'collectObject', {
+                            objectId: 'smoothStone',
+                            stoneId: pending[i]
+                        });
+                    }
                 }
             }
         } else {
