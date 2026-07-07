@@ -128,6 +128,7 @@
 
             var self = this;
             this.combatEngine = new GameEngine(this.emitter, combatConfig, this.roomId);
+            this._addPlayerToCombat();
 
             this._gameEndedHandler = function (data) {
                 self.storyState.setCombatResult(data && data.result);
@@ -154,6 +155,7 @@
 
             // Don't end the game on monstersToKill — we end when stones are collected
             this.combatEngine = new GameEngine(this.emitter, collectConfig, this.roomId);
+            this._addPlayerToCombat();
 
             // Generate stone positions in world space
             var objConfig = null;
@@ -180,6 +182,13 @@
             }
 
             this.combatEngine.start();
+        }
+
+        _addPlayerToCombat() {
+            if (!this.combatEngine) return;
+            var playerId = 'story-player';
+            this.combatEngine.registerPlayerSend(playerId, function () {});
+            this.combatEngine.addPlayer(playerId, 'David');
         }
 
         _buildCombatConfig(combat) {

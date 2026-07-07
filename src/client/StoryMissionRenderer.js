@@ -136,7 +136,7 @@
 
     function _t(key) {
         if (typeof window !== 'undefined' && typeof window.t === 'function') {
-            return window.t(key);
+            return window.t.apply(window, arguments);
         }
         return key;
     }

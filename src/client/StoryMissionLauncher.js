@@ -233,8 +233,8 @@
                                 var camY = Math.max(0, Math.min(3000 - canvas.height, p.y - canvas.height / 2));
                                 var worldX = action.x + camX;
                                 var worldY = action.y + camY;
-                                _storyEngine.combatEngine.handlePlayerInput('local', 'playerPosition', { x: worldX, y: worldY });
-                                _storyEngine.combatEngine.handlePlayerInput('local', 'playerShoot', { x: worldX, y: worldY });
+                                _storyEngine.combatEngine.handlePlayerInput('story-player', 'playerPosition', { x: worldX, y: worldY });
+                                _storyEngine.combatEngine.handlePlayerInput('story-player', 'playerShoot', { x: worldX, y: worldY });
                             }
                         }
                     }
