@@ -90,6 +90,18 @@
       "visibility": "public",
       "missionIds": ["maze-01"],
       "unlockRequirement": null
+    },
+    {
+      "id": "featured",
+      "slug": "featured-david-goliath",
+      "name": "Featured Story Mission",
+      "description": "Story-driven missions with NPCs, puzzles, and Biblical lessons.",
+      "nodeShape": "star",
+      "theme": "stone",
+      "authorId": "system",
+      "visibility": "public",
+      "missionIds": ["david-01"],
+      "unlockRequirement": null
     }
   ],
   "featuredMissions": [

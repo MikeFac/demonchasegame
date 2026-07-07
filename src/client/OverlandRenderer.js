@@ -95,6 +95,8 @@
 
             for (let w = 0; w < this.worlds.length; w++) {
                 const world = this.worlds[w];
+                // Skip 'featured' chapter — it's rendered in the featured section above
+                if (world.id === 'featured') continue;
                 const worldNodes = [];
                 const missions = world.missions || [];
                 const headerY = currentY;
