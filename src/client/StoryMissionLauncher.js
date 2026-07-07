@@ -7,12 +7,74 @@
     var _storyLoopRunning = false;
     var _storyAnimFrame = null;
     var npcImages = {};
+    var storyRenderAssets = {
+        playerImg: null,
+        healingPointImg: null,
+        demonImages: {}
+    };
+    var _storyAssetsPromise = null;
     var _launchOpts = null;
     var _storyEngine = null;
 
     var _onEndGame = null;
     var _onLeaveGame = null;
     var _onRestartGame = null;
+
+    var STORY_DEMON_ASSET_PATHS = {
+        Fear: '/images/monsters/fear_demon.png',
+        Shame: '/images/monsters/SHAME-ACCUSATION.png',
+        Doubt: '/images/monsters/doubt_spirit.png',
+        Confusion: '/images/monsters/confusion_spirit.png',
+        Ignorance: '/images/monsters/ignorance_spirit.png',
+        Unbelief: '/images/monsters/unbelief_demon.png',
+        Condemnation: '/images/monsters/condemnation_demon.png',
+        Deception: '/images/monsters/DECEPTION_SPIRIT1.png',
+        Despair: '/images/monsters/DISCOURAGEMENT.png',
+        Pride: '/images/monsters/PRIDE.png',
+        Temptation: '/images/monsters/JEZEBEL.png',
+        Poverty: '/images/monsters/DEMON-OF-POVERTY.png',
+        Blindness: '/images/monsters/SPIRITUALBLINDNESS.png',
+        Swarm: '/images/monsters/DEMON-SWARM.png'
+    };
+
+    function _loadImage(src) {
+        return new Promise(function (resolve, reject) {
+            var img = new Image();
+            img.onload = function () { resolve(img); };
+            img.onerror = function () { reject(new Error('Failed to load image: ' + src)); };
+            img.src = src;
+        });
+    }
+
+    function _loadStoryRenderAssets() {
+        if (_storyAssetsPromise) return _storyAssetsPromise;
+
+        _storyAssetsPromise = Promise.allSettled([
+            _loadImage('/images/player1-sprite96.png'),
+            _loadImage('/images/healing_point.png')
+        ]).then(function (results) {
+            if (results[0] && results[0].status === 'fulfilled') {
+                storyRenderAssets.playerImg = results[0].value;
+            }
+            if (results[1] && results[1].status === 'fulfilled') {
+                storyRenderAssets.healingPointImg = results[1].value;
+            }
+
+            var demonEntries = Object.keys(STORY_DEMON_ASSET_PATHS).map(function (demonType) {
+                return _loadImage(STORY_DEMON_ASSET_PATHS[demonType]).then(function (img) {
+                    storyRenderAssets.demonImages[demonType] = img;
+                }).catch(function (error) {
+                    console.warn('StoryMissionLauncher: failed to load demon image for', demonType, error);
+                });
+            });
+
+            return Promise.all(demonEntries);
+        }).catch(function (error) {
+            console.warn('StoryMissionLauncher: failed to preload story render assets', error);
+        });
+
+        return _storyAssetsPromise;
+    }
 
     function _hideNonGameplayOverlays() {
         var splashScreen = document.getElementById('splashScreen');
@@ -55,6 +117,8 @@
 
         var mission = opts.mission;
 
+        _loadStoryRenderAssets();
+
         network = new LocalNetwork();
 
         network.setCallbacks({
@@ -83,11 +147,34 @@
 
         var StoryMissionEngine = window.StoryMissionEngine;
         var engine;
+        var emitterListeners = {};
         var emitter = {
             emit: function (event, data) {
                 if (network) {
                     network._handleEngineEvent(event, data);
                 }
+                var listeners = emitterListeners[event];
+                if (!listeners || !listeners.length) return;
+                listeners.slice().forEach(function (listener) {
+                    try {
+                        listener(data);
+                    } catch (error) {
+                        console.error('StoryMissionLauncher emitter listener failed for', event, error);
+                    }
+                });
+            },
+            on: function (event, listener) {
+                if (!emitterListeners[event]) {
+                    emitterListeners[event] = [];
+                }
+                emitterListeners[event].push(listener);
+            },
+            removeListener: function (event, listener) {
+                var listeners = emitterListeners[event];
+                if (!listeners || !listeners.length) return;
+                emitterListeners[event] = listeners.filter(function (entry) {
+                    return entry !== listener;
+                });
             }
         };
 
@@ -153,7 +240,8 @@
         if (lastStorySnapshot && window.StoryMissionRenderer) {
             window.StoryMissionRenderer.render(ctx, canvas, lastStorySnapshot, {
                 npcImages: npcImages,
-                mission: _launchOpts ? _launchOpts.mission : null
+                mission: _launchOpts ? _launchOpts.mission : null,
+                assets: storyRenderAssets
             });
 
             // Check for pending puzzle solved (from DOM overlay input)

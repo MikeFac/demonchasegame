@@ -142,9 +142,11 @@ class Renderer {
         this.drawCategoryPicker(uiState);
 
         // Draw speed first-launch prompt (topmost overlay)
-        if (uiState.speedPromptVisible) {
+        if (uiState.speedPromptVisible && !uiState.storyPause) {
             this.drawSpeedPrompt();
         }
+
+        this.drawStoryPauseOverlay(uiState.storyPause);
     }
 
     drawTopBar(uiState) {
@@ -273,6 +275,205 @@ class Renderer {
 
         if (uiState.speedOnboardingVisible) {
             this._drawSpeedOnboardingTooltip(baseX, baseY, chevW + labelW + chevW, h);
+        }
+    }
+
+    drawStoryPauseOverlay(storyPause) {
+        if (!storyPause) return;
+
+        const margin = 10;
+        const isPuzzle = storyPause.type === 'puzzle';
+        const boxH = isPuzzle
+            ? Math.min(340, Math.max(270, Math.floor(this.canvas.height * 0.5)))
+            : Math.min(210, Math.max(166, Math.floor(this.canvas.height * 0.34)));
+        const boxY = this.canvas.height - boxH - margin;
+        const boxX = margin;
+        const boxW = this.canvas.width - margin * 2;
+        const line = (storyPause.lines && storyPause.lines[storyPause.lineIndex]) || storyPause.text || '';
+        const title = storyPause.speaker || storyPause.title || 'Story';
+        const phaseLabel = this._getStoryPausePhaseLabel(storyPause);
+        const btnW = 112;
+        const btnH = 30;
+        const btnX = boxX + boxW - btnW - 14;
+        const btnY = boxY + boxH - btnH - 12;
+
+        storyPause.buttonRects = [];
+
+        this.ctx.save();
+        this.ctx.fillStyle = 'rgba(0, 0, 0, 0.34)';
+        this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+
+        // Story pause should visually own the whole lower interaction area,
+        // otherwise quiz prompts/buttons behind it compete with dialogue.
+        this.ctx.fillStyle = 'rgba(3, 6, 15, 0.78)';
+        this.ctx.fillRect(0, Math.max(0, boxY - 18), this.canvas.width, this.canvas.height - Math.max(0, boxY - 18));
+
+        this.ctx.fillStyle = 'rgba(5, 8, 18, 0.97)';
+        this.ctx.fillRect(boxX, boxY, boxW, boxH);
+        this.ctx.strokeStyle = '#ffd666';
+        this.ctx.lineWidth = 2;
+        this.ctx.strokeRect(boxX, boxY, boxW, boxH);
+
+        if (phaseLabel) {
+            this.ctx.font = 'bold 12px Arial';
+            const badgeW = Math.min(190, Math.max(96, this.ctx.measureText(phaseLabel).width + 28));
+            const badgeH = 24;
+            const badgeX = boxX + boxW - badgeW - 14;
+            const badgeY = boxY + 13;
+            this.ctx.fillStyle = 'rgba(255, 214, 102, 0.16)';
+            this.ctx.fillRect(badgeX, badgeY, badgeW, badgeH);
+            this.ctx.strokeStyle = 'rgba(255, 214, 102, 0.72)';
+            this.ctx.lineWidth = 1;
+            this.ctx.strokeRect(badgeX, badgeY, badgeW, badgeH);
+            this.ctx.fillStyle = '#ffe49a';
+            this.ctx.textAlign = 'center';
+            this.ctx.fillText(phaseLabel, badgeX + badgeW / 2, badgeY + 16);
+        }
+
+        this.ctx.fillStyle = '#ffd666';
+        this.ctx.font = 'bold 16px Arial';
+        this.ctx.textAlign = 'left';
+        this.ctx.fillText(title, boxX + 14, boxY + 26);
+
+        this.ctx.fillStyle = '#ffffff';
+        this.ctx.font = '15px Arial';
+        this._drawWrappedText(line, boxX + 14, boxY + 54, boxW - 28, 21, 3);
+
+        if (isPuzzle) {
+            const options = Array.isArray(storyPause.options) ? storyPause.options : [];
+            const cols = 2;
+            const gap = 10;
+            const optW = (boxW - 28 - gap) / cols;
+            const optH = 34;
+            const startX = boxX + 14;
+            const startY = boxY + 118;
+
+            options.forEach((option, index) => {
+                const col = index % cols;
+                const row = Math.floor(index / cols);
+                const x = startX + col * (optW + gap);
+                const y = startY + row * (optH + gap);
+                const selected = storyPause.selectedAnswer === option;
+                const correctSelected = selected && storyPause.isCorrect;
+                const wrongSelected = selected && storyPause.selectedAnswer && !storyPause.isCorrect;
+
+                storyPause.buttonRects.push({
+                    id: 'option',
+                    value: option,
+                    x,
+                    y,
+                    width: optW,
+                    height: optH
+                });
+
+                this.ctx.fillStyle = correctSelected
+                    ? 'rgba(76, 175, 80, 0.36)'
+                    : (wrongSelected ? 'rgba(244, 67, 54, 0.32)' : 'rgba(255, 214, 102, 0.16)');
+                this.ctx.fillRect(x, y, optW, optH);
+                this.ctx.strokeStyle = correctSelected ? '#7CFF8A' : (wrongSelected ? '#ff8a80' : '#ffd666');
+                this.ctx.lineWidth = 1.5;
+                this.ctx.strokeRect(x, y, optW, optH);
+                this.ctx.fillStyle = '#ffffff';
+                this.ctx.font = 'bold 14px Arial';
+                this.ctx.textAlign = 'center';
+                this.ctx.fillText(option, x + optW / 2, y + 22);
+            });
+
+            if (storyPause.feedback) {
+                this.ctx.fillStyle = storyPause.isCorrect ? '#7CFF8A' : '#ffb3aa';
+                this.ctx.font = 'bold 14px Arial';
+                this.ctx.textAlign = 'left';
+                this.ctx.fillText(storyPause.feedback, boxX + 14, boxY + boxH - 22);
+            }
+
+            if (storyPause.completed) {
+                storyPause.buttonRects.push({
+                    id: 'continue',
+                    x: btnX,
+                    y: btnY,
+                    width: btnW,
+                    height: btnH
+                });
+                this.ctx.fillStyle = 'rgba(255, 214, 102, 0.22)';
+                this.ctx.fillRect(btnX, btnY, btnW, btnH);
+                this.ctx.strokeStyle = '#ffd666';
+                this.ctx.lineWidth = 1;
+                this.ctx.strokeRect(btnX, btnY, btnW, btnH);
+                this.ctx.fillStyle = '#ffffff';
+                this.ctx.font = 'bold 13px Arial';
+                this.ctx.textAlign = 'center';
+                this.ctx.fillText(storyPause.prompt || 'Continue', btnX + btnW / 2, btnY + 20);
+            }
+        } else {
+            storyPause.buttonRects.push({
+                id: 'continue',
+                x: btnX,
+                y: btnY,
+                width: btnW,
+                height: btnH
+            });
+
+            this.ctx.fillStyle = 'rgba(255, 214, 102, 0.18)';
+            this.ctx.fillRect(btnX, btnY, btnW, btnH);
+            this.ctx.strokeStyle = '#ffd666';
+            this.ctx.lineWidth = 1;
+            this.ctx.strokeRect(btnX, btnY, btnW, btnH);
+            this.ctx.fillStyle = '#ffffff';
+            this.ctx.font = 'bold 13px Arial';
+            this.ctx.textAlign = 'center';
+            this.ctx.fillText(storyPause.prompt || 'Continue', btnX + btnW / 2, btnY + 20);
+
+            const total = storyPause.lines ? storyPause.lines.length : 0;
+            if (total > 1) {
+                this.ctx.fillStyle = 'rgba(255,255,255,0.58)';
+                this.ctx.font = '12px Arial';
+                this.ctx.textAlign = 'left';
+                this.ctx.fillText(`${storyPause.lineIndex + 1}/${total}`, boxX + 14, boxY + boxH - 18);
+            }
+        }
+
+        this.ctx.restore();
+    }
+
+    _getStoryPausePhaseLabel(storyPause) {
+        if (!storyPause) return '';
+        if (storyPause.type === 'puzzle') return 'Courage Check';
+        switch (storyPause.phaseId) {
+            case 'intro':
+                return 'Story Moment';
+            case 'victory':
+                return 'Victory';
+            case 'bossFight':
+                return 'Face Goliath';
+            case 'collectStones':
+                return 'Gather Stones';
+            default:
+                return storyPause.type === 'dialogue' ? 'Dialogue' : '';
+        }
+    }
+
+    _drawWrappedText(text, x, y, maxWidth, lineHeight, maxLines) {
+        if (!text) return;
+        const words = String(text).split(/\s+/);
+        let line = '';
+        let lineY = y;
+        let linesDrawn = 0;
+
+        for (let i = 0; i < words.length; i++) {
+            const testLine = line ? `${line} ${words[i]}` : words[i];
+            if (this.ctx.measureText(testLine).width > maxWidth && line) {
+                this.ctx.fillText(line, x, lineY);
+                linesDrawn++;
+                if (maxLines && linesDrawn >= maxLines) return;
+                line = words[i];
+                lineY += lineHeight;
+            } else {
+                line = testLine;
+            }
+        }
+
+        if (line && (!maxLines || linesDrawn < maxLines)) {
+            this.ctx.fillText(line, x, lineY);
         }
     }
 
@@ -454,6 +655,14 @@ class Renderer {
         this.ctx.textAlign = 'right';
         this.ctx.fillText(progressText, progressRightEdge, this.QUALITY_LINE_HEIGHT - 7);
         this.ctx.textAlign = 'left';
+
+        const story = gameState.integratedStory;
+        if (story && story.targetCount) {
+            this.ctx.fillStyle = '#F6D36B';
+            this.ctx.font = 'bold 15px Arial';
+            const label = story.label || 'Stones';
+            this.ctx.fillText(`${label}: ${story.collected || 0} / ${story.targetCount}`, 18, this.QUALITY_LINE_HEIGHT + 32);
+        }
 
         // Floating score badge in the top-right of the playing window
         const badgeW = 90;
@@ -1695,6 +1904,26 @@ class Renderer {
             // Visibility check
             if (screenX + item.width / 2 < 0 || screenX - item.width / 2 > this.canvas.width ||
                 screenY + item.height / 2 < 0 || screenY - item.height / 2 > this.canvas.height) return;
+
+            if (item.type === 'smoothStone' || item.storyObjectId === 'smoothStone') {
+                this.ctx.save();
+                this.ctx.shadowBlur = 9;
+                this.ctx.shadowColor = '#F6D36B';
+                this.ctx.fillStyle = '#C7B08A';
+                this.ctx.strokeStyle = '#FFE08A';
+                this.ctx.lineWidth = 2;
+                this.ctx.beginPath();
+                this.ctx.ellipse(screenX, screenY, item.width / 2, item.height / 2, -0.2, 0, Math.PI * 2);
+                this.ctx.fill();
+                this.ctx.stroke();
+                this.ctx.shadowBlur = 0;
+                this.ctx.fillStyle = 'rgba(255,255,255,0.35)';
+                this.ctx.beginPath();
+                this.ctx.ellipse(screenX - 5, screenY - 4, 5, 3, -0.3, 0, Math.PI * 2);
+                this.ctx.fill();
+                this.ctx.restore();
+                return;
+            }
 
             // Try to use loaded image (shield uses shieldImg)
             if (item.type === 'shield' && this.assets.shieldImg && this.assets.shieldImg.complete) {

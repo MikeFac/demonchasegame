@@ -840,3 +840,511 @@ Original prompt: Check the implementation of docs/multi-version-songs-implementa
   - implement a proper per-language song-style layer for live `/api/verse-song` generation
   - current language-specific genre/style logic mostly exists only in batch scripts (`generate-korean-songs.js`, `generate-hindi-songs.js`, `generate-indonesian-songs.js`, `generate-zwahili-songs.js`)
   - the live server path still relies on the shared `CategoryStyle` collection, so Japanese category-specific genre defaults need a non-destructive live override mechanism rather than reusing the English/global style table
+
+2026-07-07:
+- Investigated the broken `featured/david-01` story mission visuals.
+- Found the direct cause in `src/client/StoryMissionRenderer.js`: story combat and combatCollect phases were bypassing the normal sprite pipeline and drawing placeholder circles with demon names.
+- Updated `src/client/StoryMissionLauncher.js` to preload the existing player sprite, healing pickup image, and standard demon images for story mode.
+- Fixed a launcher/runtime bug uncovered during smoke testing:
+  - `StoryMissionLauncher`'s internal emitter now implements `on` and `removeListener` in addition to `emit`
+  - without that, story missions failed when entering combat because `StoryMissionEngine._startCombat()` subscribes to `gameEnded`
+- Updated `src/client/StoryMissionRenderer.js` so story combat phases now render:
+  - the existing `player1-sprite96.png` player sheet instead of a blue circle
+  - standard demon icons from `images/monsters/*` instead of red circles with text labels
+  - healing pickups via the existing healing sprite when available
+  - a lightweight world backdrop/grid so the story arena is readable without fallback placeholder styling
+- Added a reusable browser smoke script:
+  - `scripts/test-story-visual-smoke.js`
+  - launches the story mission directly into `collectStones` and `bossFight` for screenshot verification
+- Verification completed:
+  - `node --check src/client/StoryMissionLauncher.js`
+  - `node --check src/client/StoryMissionRenderer.js`
+  - `node --check scripts/test-story-visual-smoke.js`
+  - `node test/test-story-mission.js`
+- Browser smoke completed outside the sandbox:
+  - `node scripts/test-story-visual-smoke.js`
+  - screenshots:
+    - `output/web-game/story-david-goliath-smoke/collect-phase.png`
+    - `output/web-game/story-david-goliath-smoke/boss-phase.png`
+  - logs:
+  - `output/web-game/story-david-goliath-smoke/errors.json`
+
+2026-07-07:
+- Started the safer integrated story migration path without changing live mission behavior.
+- Added migration/rollback plan:
+  - `docs/storymode/integrated-migration-plan.md`
+  - includes phase gates, stop conditions, and rollback patch commands
+  - documents the core-loop story pause requirement before deeper story work begins
+- Added target regression harness:
+  - `scripts/test-david-goliath-integrated.js`
+  - default mode expects `featured/david-01` to launch through the core game loop (`gameMode === "game"`)
+  - `--expect-legacy-story-mode` verifies the current known state while the standalone story path is still active
+  - captures state/screenshots under `output/web-game/david-goliath-integrated/`
+- Updated `docs/test-scripts.md` with the new migration regression script and artifact list.
+- Verification completed:
+  - `node --check scripts/test-david-goliath-integrated.js`
+  - `node test/test-story-mission.js`
+  - `node scripts/test-david-goliath-integrated.js --expect-legacy-story-mode`
+- Phase 0 artifact confirms current blocker:
+  - `output/web-game/david-goliath-integrated/summary.json`
+  - `gameMode: "story"`
+  - `modeManagerId: "story"`
+  - standalone `storyMenuVisible: true`
+- Next migration gate:
+  - add the generic core-loop story pause/dialogue scaffold behind a disabled flag or debug-only trigger
+  - do not route David/Goliath through it until baseline regressions remain green
+- Environment note:
+  - browser smoke still requires running Chrome outside the sandbox in this environment; in-sandbox Playwright/Chrome launch hit Linux sandbox/crashpad restrictions before app code loaded
+
+2026-07-07:
+- Completed Phase 1 of the integrated story migration path: generic core-loop story pause scaffold.
+- Added core pause helpers in `game.js`:
+  - `enterStoryPause(options)`
+  - `exitStoryPause(options)`
+  - `isStoryPaused()`
+  - `handleStoryPauseClick(x, y)`
+  - `advanceStoryPause()`
+- Added localhost-only debug hook:
+  - `window.__storyPauseDebug.enterDemo()`
+  - `window.__storyPauseDebug.advance()`
+  - `window.__storyPauseDebug.exit()`
+  - `window.__storyPauseDebug.snapshot()`
+- Behavior implemented:
+  - render loop keeps drawing the normal world
+  - LocalNetwork engine stops while story pause is active and restarts on exit
+  - movement targets and 3D forward movement are cleared on pause
+  - movement/combat/collection processing exits early while paused
+  - Enter/Space advances story pause dialogue
+  - canvas clicks are consumed by story pause before gameplay controls
+  - existing DOM toasts are cleared when story pause opens so dialogue remains unobstructed
+- Added renderer support:
+  - `Renderer.drawStoryPauseOverlay(storyPause)`
+  - story pause suppresses the speed prompt while active
+- Added input support:
+  - `InputHandler` consumes clicks while `window.isStoryPaused()`
+- Added regression script:
+  - `scripts/test-story-pause-scaffold.js`
+  - artifacts under `output/web-game/story-pause-scaffold/`
+- Updated `docs/test-scripts.md` with the story pause scaffold test.
+- Rollback patch saved before Phase 1:
+  - `/tmp/david-goliath-story-before-phase-1.patch`
+- Verification completed:
+  - `node --check game.js`
+  - `node --check src/client/Renderer.js`
+  - `node --check src/client/InputHandler.js`
+  - `node --check scripts/test-story-pause-scaffold.js`
+  - `node scripts/test-story-pause-scaffold.js`
+  - `node test/test-game-config.js` (prints existing assertion noise but exits 0)
+  - `node test/test-fixed-monster-spawns.js`
+  - `node test/test-guard-behavior.js`
+  - `node test/test-story-mission.js`
+  - `node scripts/test-david-goliath-integrated.js --expect-legacy-story-mode`
+  - `node scripts/test-mode-manager-smoke.js`
+  - `node scripts/test-start-here-summary.js`
+- Known baseline issue:
+  - `node test/test-game-engine.js` still fails 1 assertion unrelated to Phase 1
+  - hidden assertion is `No monsters initially`
+  - current engine instantiation already contains one monster before `addPlayer`, so this appears to predate the story pause scaffold
+- Next migration gate:
+  - Phase 2 should route only the David/Goliath intro dialogue into this core-loop pause system behind an explicit flag
+  - do not add stones/puzzle/Goliath choreography in the same phase
+
+2026-07-07:
+- Completed Phase 2 of the integrated story migration path: opt-in David/Goliath intro dialogue in the core loop.
+- Rollback patch saved before Phase 2:
+  - `/tmp/david-goliath-story-before-phase-2.patch`
+- Added an explicit integration flag:
+  - `localStorage.dcgame_integratedStoryIntro=true`
+  - or URL param `?integratedStoryIntro=1`
+- Default behavior is unchanged:
+  - `featured/david-01` still uses the legacy standalone story launcher when the flag is off
+- Flag-on behavior:
+  - `featured/david-01` launches through normal Solo/core-loop gameplay
+  - mission state is marked with `storyIntegration: "coreLoopIntro"`
+  - the collect-combat config is mapped into the normal custom mission config path
+  - Samuel intro dialogue opens through `enterStoryPause()`
+  - player/gameplay updates pause during dialogue and resume afterward
+  - DOM toasts are suppressed while story pause is active so dialogue stays readable
+- Updated `scripts/test-david-goliath-integrated.js`:
+  - `--expect-legacy-story-mode` verifies the safe fallback path
+  - `--enable-integrated-intro` verifies the opt-in core-loop intro path
+  - checks story pause state, movement freeze during dialogue, and click-target movement after resume
+  - corrected the movement sampler to use the real 2D click-target movement model instead of arrow keys
+- Updated docs:
+  - `docs/test-scripts.md`
+  - `docs/storymode/integrated-migration-plan.md`
+- Browser artifacts inspected:
+  - `output/web-game/david-goliath-integrated/initial.png`
+  - `output/web-game/david-goliath-integrated/after-move.png`
+- Verification completed:
+  - `node --check game.js`
+  - `node --check scripts/test-david-goliath-integrated.js`
+  - `node --check scripts/test-story-pause-scaffold.js`
+  - `node scripts/test-david-goliath-integrated.js --expect-legacy-story-mode`
+  - `node scripts/test-david-goliath-integrated.js --enable-integrated-intro`
+  - `node scripts/test-story-pause-scaffold.js`
+  - `node test/test-fixed-monster-spawns.js`
+  - `node test/test-guard-behavior.js`
+  - `node test/test-story-mission.js`
+  - `node scripts/test-mode-manager-smoke.js`
+  - `node scripts/test-start-here-summary.js` (required unsandboxed Chromium because in-sandbox Playwright hit sandbox_host_linux)
+  - `node test/test-game-config.js` (prints existing assertion noise but exits 0)
+  - `node /home/michael/.codex/skills/develop-web-game/scripts/web_game_playwright_client.js --url http://localhost:3500/ --actions-json '{"steps":[{"buttons":[],"frames":20}]}' --iterations 1`
+- Known baseline issues unchanged:
+  - `node test/test-game-engine.js` still fails outside this phase
+  - exposed failures in the latest run were `No monsters initially` and a randomized `At least one healing point spawns in a reachable range`
+  - direct state check showed the engine has 1 monster immediately after construction; the healing-point assertion depends on the random spawn position
+- Next migration gate:
+  - Phase 3 should add smooth stones as normal core-loop collectibles behind the same integration flag
+  - keep legacy fallback until stones, puzzle, boss, and completion all pass repeatedly
+
+2026-07-08:
+- Completed Phase 3 of the integrated story migration path: smooth stones as normal core-loop collectibles.
+- Rollback patch saved before Phase 3:
+  - `/tmp/david-goliath-story-before-phase-3.patch`
+- Default behavior remains unchanged:
+  - `featured/david-01` still uses the legacy standalone story launcher while the integration flag is off
+- Flag-on behavior added:
+  - authored `smoothStone` collectibles are seeded into the normal `gameState.collectibles` array after the LocalNetwork engine starts
+  - the stones render through the normal `Renderer.drawCollectibles()` path with a distinct glowing stone style
+  - core HUD shows `Smooth Stone: collected / 5`
+  - collecting a story stone updates `window.__integratedStoryState`, removes the stone via the normal `collectCollectible` engine path, and does not add `smoothStone` to Armor of God inventory
+  - after five stones, integrated story state marks `phaseId: "collectStones"` as `complete: true`
+  - no puzzle/boss transition is triggered yet; Phase 4 should attach puzzle pause deliberately
+- Updated `scripts/test-david-goliath-integrated.js`:
+  - captures `collectibles`, `inventory`, and `integratedStoryState`
+  - verifies five stones are seeded in the core loop
+  - uses real collision collection by moving the browser player onto each stone
+  - verifies counter reaches 5, stones are removed, and inventory is unchanged
+- Updated docs:
+  - `docs/test-scripts.md`
+  - `docs/storymode/integrated-migration-plan.md`
+- Browser artifacts inspected:
+  - `output/web-game/david-goliath-integrated/after-intro.png`
+  - `output/web-game/david-goliath-integrated/after-stones.png`
+  - `output/web-game/david-goliath-integrated/after-stones.json`
+- Verification completed:
+  - `node --check game.js`
+  - `node --check src/client/Renderer.js`
+  - `node --check src/client/InputHandler.js`
+  - `node --check scripts/test-david-goliath-integrated.js`
+  - `node scripts/test-david-goliath-integrated.js --expect-legacy-story-mode`
+  - `node scripts/test-david-goliath-integrated.js --enable-integrated-intro`
+  - `node scripts/test-story-pause-scaffold.js`
+  - `node test/test-fixed-monster-spawns.js`
+  - `node test/test-guard-behavior.js`
+  - `node test/test-story-mission.js`
+  - `node scripts/test-mode-manager-smoke.js`
+  - `node scripts/test-start-here-summary.js`
+  - `node test/test-game-config.js` (prints existing assertion noise but exits 0)
+  - `node /home/michael/.codex/skills/develop-web-game/scripts/web_game_playwright_client.js --url http://localhost:3500/ --actions-json '{"steps":[{"buttons":[],"frames":20}]}' --iterations 1`
+- Known baseline issue unchanged:
+  - `node test/test-game-engine.js` still fails outside this phase; latest run reported `Passed: 43, Failed: 1`
+  - previous expanded diagnostics showed the hidden failure can be `No monsters initially`, and a randomized healing-point reachability assertion may also fail depending on spawn position
+- Next migration gate:
+  - Phase 4 should use the reusable story pause system for the courage cloze puzzle after stones reach 5
+  - keep the puzzle behind the same integration flag and keep legacy fallback intact
+
+2026-07-08:
+- Completed Phase 4 of the integrated story migration path: courage cloze puzzle through the reusable core story pause.
+- Rollback patch saved before Phase 4:
+  - `/tmp/david-goliath-story-before-phase-4.patch`
+- Default behavior remains unchanged:
+  - `featured/david-01` still uses the legacy standalone story launcher while the integration flag is off
+- Flag-on behavior added:
+  - after the fifth smooth stone is collected, the core game loop enters a `storyPause` of type `puzzle`
+  - puzzle content is built from the existing `courageCloze` mission config and localized `story.david.puzzle.prompt`
+  - wrong answer keeps the story pause active and shows `Try again`
+  - correct answer marks `window.__integratedStoryState.puzzleComplete = true`, records `phaseId: "puzzle"` and `nextPhase: "bossFight"`, and shows Continue
+  - Continue exits story pause and resumes normal gameplay
+  - Goliath/boss combat is intentionally not spawned in this phase
+- Updated renderer:
+  - `Renderer.drawStoryPauseOverlay()` now supports both dialogue and puzzle layouts
+  - puzzle layout renders answer options as canvas buttons and only shows Continue after a correct answer
+- Updated `scripts/test-david-goliath-integrated.js`:
+  - verifies puzzle opens after five stones
+  - clicks wrong answer (`king`) and verifies pause remains active
+  - clicks correct answer (`Lord`) and verifies integrated puzzle state completes
+  - clicks Continue and verifies gameplay resumes
+  - verifies Phase 4 does not spawn Goliath yet
+- Updated docs:
+  - `docs/test-scripts.md`
+  - `docs/storymode/integrated-migration-plan.md`
+- Browser artifacts inspected:
+  - `output/web-game/david-goliath-integrated/after-stones.png`
+  - `output/web-game/david-goliath-integrated/after-puzzle-wrong.png`
+  - `output/web-game/david-goliath-integrated/after-puzzle-correct.png`
+  - `output/web-game/david-goliath-integrated/after-puzzle-resume.png`
+- Verification completed:
+  - `node --check game.js`
+  - `node --check src/client/Renderer.js`
+  - `node --check src/client/InputHandler.js`
+  - `node --check scripts/test-david-goliath-integrated.js`
+  - `node scripts/test-david-goliath-integrated.js --expect-legacy-story-mode`
+  - `node scripts/test-david-goliath-integrated.js --enable-integrated-intro`
+  - `node scripts/test-story-pause-scaffold.js`
+  - `node test/test-fixed-monster-spawns.js`
+  - `node test/test-guard-behavior.js`
+  - `node test/test-story-mission.js`
+  - `node scripts/test-mode-manager-smoke.js`
+  - `node scripts/test-start-here-summary.js`
+  - `node test/test-game-config.js` (prints existing assertion noise but exits 0)
+  - `node /home/michael/.codex/skills/develop-web-game/scripts/web_game_playwright_client.js --url http://localhost:3500/ --actions-json '{"steps":[{"buttons":[],"frames":20}]}' --iterations 1`
+- Known baseline issue unchanged:
+  - `node test/test-game-engine.js` still fails outside this phase; latest run reported `Passed: 42, Failed: 2`
+  - previous diagnostics showed hidden failures can be `No monsters initially` and randomized healing-point reachability
+- Next migration gate:
+  - Phase 5 should spawn Goliath as a normal fixed boss monster only after `puzzleComplete`
+  - keep the legacy fallback and integration flag intact until boss victory/completion is proven
+
+2026-07-08:
+- Completed Phase 5 of the integrated story migration path: Goliath spawns as a normal core-loop fixed boss monster.
+- Rollback patch saved before Phase 5:
+  - `/tmp/david-goliath-story-before-phase-5.patch`
+- Default behavior remains unchanged:
+  - `featured/david-01` still uses the legacy standalone story launcher while the integration flag is off
+- Flag-on behavior added:
+  - clicking Continue after the completed courage puzzle starts `bossFight`
+  - collect-phase demons are cleared before boss phase
+  - random spawns are disabled for boss phase
+  - `monstersKilled` resets to 0 and `monstersToKill` becomes 1
+  - the authored `combatConfig.fixedMonsters` boss entry spawns through `network.engine.monsterManager.spawnFixedMonsters([bossConfig])`
+  - integrated story state records `phaseId: "bossFight"`, `nextPhase: "victory"`, `bossStarted: true`, and `boss.label: "Goliath"`
+  - Goliath renders through the existing normal demon/boss renderer with boss label and health bar
+- Updated `scripts/test-david-goliath-integrated.js`:
+  - verifies Goliath appears as `isBoss: true` and `label: "Goliath"`
+  - verifies core kill target is 1 in boss phase
+  - verifies integrated story state enters `bossFight`
+  - captures a visual boss-focused screenshot by moving the test player near Goliath
+- Updated docs:
+  - `docs/test-scripts.md`
+  - `docs/storymode/integrated-migration-plan.md`
+- Browser artifacts inspected:
+  - `output/web-game/david-goliath-integrated/after-puzzle-resume.png`
+  - `output/web-game/david-goliath-integrated/after-boss-focus.png`
+  - `output/web-game/david-goliath-integrated/after-boss-focus.json`
+- Verification completed:
+  - `node --check game.js`
+  - `node --check src/client/Renderer.js`
+  - `node --check src/client/InputHandler.js`
+  - `node --check scripts/test-david-goliath-integrated.js`
+  - `node scripts/test-david-goliath-integrated.js --expect-legacy-story-mode`
+  - `node scripts/test-david-goliath-integrated.js --enable-integrated-intro`
+  - `node scripts/test-story-pause-scaffold.js`
+  - `node test/test-fixed-monster-spawns.js`
+  - `node test/test-guard-behavior.js`
+  - `node test/test-story-mission.js`
+  - `node scripts/test-mode-manager-smoke.js`
+  - `node scripts/test-start-here-summary.js`
+  - `node test/test-game-config.js` (prints existing assertion noise but exits 0)
+  - `node /home/michael/.codex/skills/develop-web-game/scripts/web_game_playwright_client.js --url http://localhost:3500/ --actions-json '{"steps":[{"buttons":[],"frames":20}]}' --iterations 1`
+- Known baseline issue unchanged:
+  - `node test/test-game-engine.js` still fails outside this phase; latest run reported `Passed: 42, Failed: 2`
+- Next migration gate:
+  - Phase 6 should handle Goliath defeat into victory dialogue and mission completion
+  - decide whether to keep only boss or reintroduce authored adds after victory/completion is stable
+
+2026-07-08:
+- Completed Phase 6 of the integrated story migration path: Goliath defeat opens David victory dialogue and completes the mission back to overland.
+- Rollback patch saved before Phase 6:
+  - `/tmp/david-goliath-story-before-phase-6.patch`
+- Default behavior remains unchanged:
+  - `featured/david-01` still uses the legacy standalone story launcher while the integration flag is off
+- Flag-on behavior added:
+  - Goliath defeat suppresses the generic game-over modal
+  - integrated story state advances to `phaseId: "victory"` and enters a reusable dialogue story pause
+  - final victory Continue marks the integrated story mission complete, calls normal mission completion, and returns to overland
+  - the overland mission list shows David/Goliath as Completed after the integrated flow finishes
+- Browser artifacts inspected:
+  - `output/web-game/david-goliath-integrated/after-boss-victory.png`
+  - `output/web-game/david-goliath-integrated/after-victory-complete.png`
+  - `output/web-game/david-goliath-integrated/after-victory-complete.json`
+- Verification completed:
+  - `node --check game.js`
+  - `node --check scripts/test-david-goliath-integrated.js`
+  - `node --check src/client/Renderer.js`
+  - `node --check src/client/InputHandler.js`
+  - `node scripts/test-david-goliath-integrated.js --expect-legacy-story-mode`
+  - `node scripts/test-david-goliath-integrated.js --enable-integrated-intro`
+  - `node scripts/test-story-pause-scaffold.js`
+  - `node test/test-fixed-monster-spawns.js`
+  - `node test/test-guard-behavior.js`
+- Known baseline issue unchanged:
+  - `node test/test-game-engine.js` fails outside this phase
+
+2026-07-08:
+- Completed Phase 7 of the integrated story migration path: generalized the integration gate naming without changing gameplay behavior.
+- Rollback patch saved before Phase 7:
+  - `/tmp/david-goliath-story-before-phase-7.patch`
+- Default behavior remains unchanged:
+  - `featured/david-01` still uses the legacy standalone story launcher while the integration flag is off
+- Flag-on behavior changed:
+  - preferred opt-in flag is now `localStorage.dcgame_integratedStory=true`
+  - preferred URL opt-in is now `?integratedStory=1`
+  - mission runtime state now uses `storyIntegration: "coreLoop"`
+  - `localStorage.dcgame_integratedStoryIntro=true`, `?integratedStoryIntro=1`, and `--enable-integrated-intro` remain compatibility aliases during migration
+  - launch debug state is now exposed as `window.__integratedStoryLaunchState`, with `window.__integratedStoryIntroState` retained as an alias
+- Updated docs:
+  - `docs/test-scripts.md`
+  - `docs/storymode/integrated-migration-plan.md`
+- Browser artifacts inspected:
+  - `output/web-game/david-goliath-integrated/after-intro.png`
+  - `output/web-game/david-goliath-integrated/after-boss-victory.png`
+  - `output/web-game/david-goliath-integrated/after-victory-complete.png`
+  - latest `summary.json` reported `storyIntegration: "coreLoop"`, 36 assertions, 0 failures, and final mode `overland`
+- Verification completed:
+  - `git diff --check`
+  - `node --check game.js`
+  - `node --check scripts/test-david-goliath-integrated.js`
+  - `./restart-server.sh`
+  - `node scripts/test-david-goliath-integrated.js --expect-legacy-story-mode`
+  - `node scripts/test-david-goliath-integrated.js --enable-integrated-story`
+  - `node scripts/test-david-goliath-integrated.js --enable-integrated-intro`
+  - `node scripts/test-story-pause-scaffold.js`
+  - `node test/test-fixed-monster-spawns.js`
+  - `node test/test-guard-behavior.js`
+  - `node test/test-story-mission.js`
+  - `node scripts/test-mode-manager-smoke.js`
+  - `node scripts/test-start-here-summary.js`
+  - `node test/test-game-config.js` (prints existing assertion noise but exits 0)
+  - `node /home/michael/.codex/skills/develop-web-game/scripts/web_game_playwright_client.js --url http://localhost:3500/ --actions-json '{"steps":[{"buttons":[],"frames":20}]}' --iterations 1`
+- Known baseline issue unchanged:
+  - `node test/test-game-engine.js` still fails outside this phase; latest run reported `Passed: 43, Failed: 1`
+- Next migration gate:
+  - do not retire standalone story combat yet
+  - next safe phase should either promote the integrated path behind a mission-level/config flag or improve core story overlay polish before deleting legacy story code
+
+2026-07-08:
+- Completed Phase 8 of the integrated story migration path: mission-level promotion switch with forced legacy rollback.
+- Rollback patch saved before Phase 8:
+  - `/tmp/david-goliath-story-before-phase-8.patch`
+- Default behavior remains unchanged:
+  - `featured/david-01` now explicitly has `storyIntegration: "legacy"` in `missions/featured-david-goliath.json`
+  - changing that field to `"coreLoop"` is the one-line promotion switch, but it was not flipped in this phase
+- Routing behavior added:
+  - `storyIntegration: "coreLoop"` routes David/Goliath through the integrated core-loop story director by default
+  - `localStorage.dcgame_integratedStory=true` and `?integratedStory=1` still force the integrated route
+  - `localStorage.dcgame_forceLegacyStory=true` and `?legacyStory=1` force the standalone legacy story path even when mission config is promoted
+  - integrated launch now copies the mission object and sets runtime `storyIntegration: "coreLoop"` without mutating the mission catalog object
+  - localhost-only `window.__storyIntegrationMissionOverrides` supports config-promotion regression tests without changing the mission file
+- Updated `scripts/test-david-goliath-integrated.js`:
+  - added `--simulate-core-loop-config`
+  - added `--force-legacy-story`
+  - captures `configuredStoryIntegration` in state snapshots
+- Updated docs:
+  - `docs/test-scripts.md`
+  - `docs/storymode/integrated-migration-plan.md`
+- Browser artifacts inspected after simulated config promotion:
+  - `output/web-game/david-goliath-integrated/after-intro.png`
+  - `output/web-game/david-goliath-integrated/after-boss-victory.png`
+  - `output/web-game/david-goliath-integrated/after-victory-complete.png`
+  - latest `summary.json` reported `simulateCoreLoopConfig: true`, `storyIntegration: "coreLoop"`, `configuredStoryIntegration: "coreLoop"`, 36 assertions, 0 failures, and final mode `overland`
+- Verification completed:
+  - `node --check game.js`
+  - `node --check scripts/test-david-goliath-integrated.js`
+  - `node -e "JSON.parse(require('fs').readFileSync('missions/featured-david-goliath.json','utf8')); console.log('OK')"`
+  - `./restart-server.sh`
+  - `node scripts/test-david-goliath-integrated.js --expect-legacy-story-mode`
+  - `node scripts/test-david-goliath-integrated.js --enable-integrated-story`
+  - `node scripts/test-david-goliath-integrated.js --simulate-core-loop-config`
+  - `node scripts/test-david-goliath-integrated.js --simulate-core-loop-config --force-legacy-story --expect-legacy-story-mode`
+  - `node scripts/test-story-pause-scaffold.js`
+  - `node test/test-fixed-monster-spawns.js`
+  - `node test/test-guard-behavior.js`
+  - `node test/test-story-mission.js`
+  - `node scripts/test-mode-manager-smoke.js`
+  - `node scripts/test-start-here-summary.js`
+  - `node test/test-game-config.js` (prints existing assertion noise but exits 0)
+  - `node /home/michael/.codex/skills/develop-web-game/scripts/web_game_playwright_client.js --url http://localhost:3500/ --actions-json '{"steps":[{"buttons":[],"frames":20}]}' --iterations 1`
+  - `git diff --check`
+  - `node test/test-game-engine.js` (latest run passed: `Passed: 44, Failed: 0`)
+- Next migration gate:
+  - run this promoted-config simulation gate at least once more after any cleanup
+  - then flip `missions/featured-david-goliath.json` from `storyIntegration: "legacy"` to `"coreLoop"` in a separate promotion phase
+  - do not remove standalone story combat until after promoted default behavior has passed repeatedly
+
+2026-07-08:
+- Completed Phase 9 of the integrated story migration path: David/Goliath is now promoted to the core-loop story director by default.
+- Rollback patch saved before Phase 9:
+  - `/tmp/david-goliath-story-before-phase-9.patch`
+- Promotion change:
+  - `missions/featured-david-goliath.json` now has `storyIntegration: "coreLoop"`
+  - a plain `node scripts/test-david-goliath-integrated.js` now validates the full integrated story path without localStorage/URL opt-in flags
+  - forced rollback remains available through `localStorage.dcgame_forceLegacyStory=true`, `?legacyStory=1`, or `node scripts/test-david-goliath-integrated.js --force-legacy-story --expect-legacy-story-mode`
+- Updated `scripts/test-david-goliath-integrated.js`:
+  - detects runtime `storyIntegration: "coreLoop"` and runs full integrated assertions even with no CLI opt-in flag
+  - fails explicitly if `--expect-legacy-story-mode` is requested but the legacy path is not reached
+- Updated docs:
+  - `docs/test-scripts.md`
+  - `docs/storymode/integrated-migration-plan.md`
+- Browser artifacts inspected after the final promoted default run:
+  - `output/web-game/david-goliath-integrated/after-intro.png`
+  - `output/web-game/david-goliath-integrated/after-boss-victory.png`
+  - `output/web-game/david-goliath-integrated/after-victory-complete.png`
+  - latest `summary.json` reported no opt-in flags, `integratedStoryDetected: true`, `shouldRunIntegratedStoryAssertions: true`, `storyIntegration: "coreLoop"`, 36 assertions, 0 failures, and final mode `overland`
+- Verification completed:
+  - `node --check scripts/test-david-goliath-integrated.js`
+  - `node --check game.js`
+  - `node -e "const fs=require('fs'); const m=JSON.parse(fs.readFileSync('missions/featured-david-goliath.json','utf8')).missions.find(x=>x.id==='david-01'); console.log(m.storyIntegration); if(m.storyIntegration!=='coreLoop') process.exit(1);"`
+  - `./restart-server.sh`
+  - `node scripts/test-david-goliath-integrated.js`
+  - `node scripts/test-david-goliath-integrated.js --force-legacy-story --expect-legacy-story-mode`
+  - `node scripts/test-david-goliath-integrated.js --enable-integrated-story`
+  - `node scripts/test-david-goliath-integrated.js --enable-integrated-intro`
+  - `node scripts/test-story-pause-scaffold.js`
+  - `node test/test-story-mission.js`
+  - `node test/test-guard-behavior.js`
+  - `node scripts/test-mode-manager-smoke.js`
+  - `node scripts/test-start-here-summary.js`
+  - `node test/test-fixed-monster-spawns.js` (first run hit the known spawn-count flake, immediate rerun passed)
+  - `node test/test-game-config.js` (prints existing assertion noise but exits 0)
+  - `node /home/michael/.codex/skills/develop-web-game/scripts/web_game_playwright_client.js --url http://localhost:3500/ --actions-json '{"steps":[{"buttons":[],"frames":20}]}' --iterations 1`
+  - `git diff --check`
+- Known baseline issue:
+  - `node test/test-game-engine.js` failed twice with the hidden `Passed: 43, Failed: 1` pattern seen earlier in the migration; this is outside the promoted mission path
+- Next migration gate:
+  - leave standalone story code in place for at least one more cleanup/polish pass
+  - next safe phase should remove obsolete opt-in naming or improve integrated story overlay polish, not delete the legacy story combat loop yet
+
+2026-07-08:
+- Completed Phase 10 of the integrated story migration path: story pause overlay readability polish and small naming cleanup.
+- Rollback patch saved before Phase 10:
+  - `/tmp/david-goliath-story-before-phase-10.patch`
+- Overlay polish:
+  - story pause now darkens the full lower interaction area, so quiz prompts/buttons behind the overlay no longer compete with story content
+  - dialogue overlay height is increased for better separation from bottom UI
+  - puzzle overlay remains large enough for options while scrubbing underlying gameplay UI
+  - compact phase badges were added:
+    - `Story Moment`
+    - `Courage Check`
+    - `Victory`
+    - future labels for `Gather Stones` and `Face Goliath`
+- Naming cleanup:
+  - removed the unused `isIntegratedStoryIntroEnabled()` helper from `game.js`
+  - kept legacy aliases `dcgame_integratedStoryIntro`, `?integratedStoryIntro=1`, and `--enable-integrated-intro` functional for rollback compatibility
+- Updated docs:
+  - `docs/storymode/integrated-migration-plan.md`
+- Browser artifacts inspected after promoted default run:
+  - `output/web-game/david-goliath-integrated/after-puzzle-wrong.png`
+  - `output/web-game/david-goliath-integrated/after-boss-victory.png`
+  - latest `summary.json` reported 36 assertions, 0 failures, `integratedStoryDetected: true`, and final mode `overland`
+- Verification completed:
+  - `node --check src/client/Renderer.js`
+  - `node --check game.js`
+  - `node --check scripts/test-david-goliath-integrated.js`
+  - `./restart-server.sh`
+  - `node scripts/test-david-goliath-integrated.js`
+  - `node scripts/test-david-goliath-integrated.js --force-legacy-story --expect-legacy-story-mode`
+  - `node scripts/test-story-pause-scaffold.js`
+  - `node test/test-story-mission.js`
+  - `node test/test-guard-behavior.js`
+  - `node test/test-fixed-monster-spawns.js`
+  - `node scripts/test-mode-manager-smoke.js`
+  - `node scripts/test-start-here-summary.js`
+  - `node test/test-game-config.js` (prints existing assertion noise but exits 0)
+  - `node /home/michael/.codex/skills/develop-web-game/scripts/web_game_playwright_client.js --url http://localhost:3500/ --actions-json '{"steps":[{"buttons":[],"frames":20}]}' --iterations 1`
+- Known baseline issue:
+  - `node test/test-game-engine.js` still hit the hidden `Passed: 43, Failed: 1` intermittent pattern seen earlier in the migration
+- Next migration gate:
+  - keep legacy story combat in place for now
+  - next safe phase is to extract the integrated story director out of `game.js` behind identical tests, or run another promoted-default soak before removing legacy code

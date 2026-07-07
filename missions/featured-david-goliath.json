@@ -5,6 +5,7 @@
     {
       "id": "david-01",
       "gameMode": "story",
+      "storyIntegration": "coreLoop",
       "name": "David & Goliath: Faith Over Fear",
       "description": "Anointed by Samuel, gather five stones, arm your heart with the Word, and face the giant.",
       "qualities": ["Faith", "Courage"],

@@ -243,6 +243,15 @@ class InputHandler {
             return;
         }
 
+        if (typeof window !== 'undefined' &&
+            typeof window.isStoryPaused === 'function' &&
+            window.isStoryPaused()) {
+            if (typeof window.handleStoryPauseClick === 'function') {
+                window.handleStoryPauseClick(clickedX, clickedY);
+            }
+            return;
+        }
+
         // Check if goals overlay is visible (dismiss on any click)
         if (typeof goalsOverlayVisible !== 'undefined' && goalsOverlayVisible) {
             goalsOverlayVisible = false;

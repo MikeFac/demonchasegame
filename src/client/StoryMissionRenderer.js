@@ -33,6 +33,7 @@
         opts = opts || {};
         var mission = opts.mission || {};
         var npcImages = opts.npcImages || {};
+        var assets = opts.assets || {};
 
         if (!snapshot) {
             _drawLoading(ctx, canvas);
@@ -57,11 +58,11 @@
             } else if (phase.type === 'collect') {
                 _drawCollect(ctx, canvas, snapshot, phase, mission);
             } else if (phase.type === 'combatCollect') {
-                _drawCombatCollect(ctx, canvas, snapshot, phase, mission);
+                _drawCombatCollect(ctx, canvas, snapshot, phase, mission, assets);
             } else if (phase.type === 'puzzle') {
                 _drawPuzzle(ctx, canvas, snapshot, phase, mission);
             } else if (phase.type === 'combat') {
-                _drawCombat(ctx, canvas, snapshot, phase, mission);
+                _drawCombat(ctx, canvas, snapshot, phase, mission, assets);
             }
         }
     }
@@ -533,7 +534,7 @@
 
     // ==================== COMBAT ====================
 
-    function _drawCombat(ctx, canvas, snapshot, phase, mission) {
+    function _drawCombat(ctx, canvas, snapshot, phase, mission, assets) {
         var combatState = snapshot.combatState;
         if (!combatState) {
             // Loading combat
@@ -572,6 +573,8 @@
         camera.x = Math.max(0, Math.min(worldW - canvas.width, camera.x));
         camera.y = Math.max(0, Math.min(worldH - canvas.height, camera.y));
 
+        _drawStoryCombatBackdrop(ctx, canvas, camera, worldW, worldH, '#0a0a14', '#11192c');
+
         // Draw monsters
         var monsters = combatState.monsters || [];
         for (var mi = 0; mi < monsters.length; mi++) {
@@ -585,22 +588,7 @@
             var mh = m.height || 48;
             var sizeMult = m.sizeMultiplier || 1;
 
-            // Monster body
-            ctx.fillStyle = m.isBoss ? '#cc2222' : '#882222';
-            ctx.beginPath();
-            ctx.arc(mx, my, mw / 2 * sizeMult, 0, Math.PI * 2);
-            ctx.fill();
-            ctx.strokeStyle = m.isBoss ? '#ff4444' : '#aa3333';
-            ctx.lineWidth = 2;
-            ctx.stroke();
-
-            // Label
-            ctx.fillStyle = '#fff';
-            ctx.font = 'bold 10px Arial';
-            ctx.textAlign = 'center';
-            var label = m.label || m.demonType || 'Demon';
-            if (m.isBoss) label = m.label || 'GOLIATH';
-            ctx.fillText(label, mx, my + 3);
+            _drawStoryMonster(ctx, m, mx, my, mw, mh, sizeMult, assets);
 
             // Health bar
             if (m.health !== undefined && m.maxHealth > 0) {
@@ -613,6 +601,13 @@
                 ctx.fillStyle = hpRatio > 0.5 ? '#44ff44' : (hpRatio > 0.25 ? '#ffaa44' : '#ff4444');
                 ctx.fillRect(mx - barW / 2, barY, barW * hpRatio, barH);
             }
+
+            if (m.isBoss) {
+                ctx.fillStyle = '#ffe6a6';
+                ctx.font = 'bold 11px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText(m.label || 'Goliath', mx, my - mh * sizeMult * 0.65 - 10);
+            }
         }
 
         // Draw player
@@ -622,13 +617,7 @@
             var pw = player.width || 48;
             var ph = player.height || 48;
 
-            ctx.fillStyle = '#4a90e2';
-            ctx.beginPath();
-            ctx.arc(px, py, pw / 2, 0, Math.PI * 2);
-            ctx.fill();
-            ctx.strokeStyle = '#ffd666';
-            ctx.lineWidth = 2;
-            ctx.stroke();
+            _drawStoryPlayer(ctx, player, px, py, pw, ph, assets);
 
             // Health bar
             if (player.health !== undefined && player.maxHealth > 0) {
@@ -650,13 +639,7 @@
             if (!hp) continue;
             var hx = hp.x - camera.x;
             var hy = hp.y - camera.y;
-            ctx.fillStyle = '#44ff44';
-            ctx.beginPath();
-            ctx.arc(hx, hy, 8, 0, Math.PI * 2);
-            ctx.fill();
-            ctx.strokeStyle = '#22aa22';
-            ctx.lineWidth = 1;
-            ctx.stroke();
+            _drawHealingPoint(ctx, hx, hy, assets);
         }
 
         // Draw bullets
@@ -701,7 +684,7 @@
 
     // ==================== COMBAT COLLECT ====================
 
-    function _drawCombatCollect(ctx, canvas, snapshot, phase, mission) {
+    function _drawCombatCollect(ctx, canvas, snapshot, phase, mission, assets) {
         var combatState = snapshot.combatState;
         if (!combatState) {
             ctx.fillStyle = '#0a0a14';
@@ -712,10 +695,6 @@
             ctx.fillText('Entering the field...', canvas.width / 2, canvas.height / 2);
             return;
         }
-
-        // Dark background
-        ctx.fillStyle = '#0a0a14';
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
 
         // Camera: center on player
         var player = null;
@@ -731,6 +710,8 @@
         camera.x = Math.max(0, Math.min(3000 - canvas.width, camera.x));
         camera.y = Math.max(0, Math.min(3000 - canvas.height, camera.y));
 
+        _drawStoryCombatBackdrop(ctx, canvas, camera, 3000, 3000, '#0a0a14', '#112130');
+
         // Draw monsters (reuse combat drawing)
         var monsters = combatState.monsters || [];
         for (var mi = 0; mi < monsters.length; mi++) {
@@ -742,18 +723,7 @@
 
             var mw = m.width || 48;
             var sizeMult = m.sizeMultiplier || 1;
-            ctx.fillStyle = '#882222';
-            ctx.beginPath();
-            ctx.arc(mx, my, mw / 2 * sizeMult, 0, Math.PI * 2);
-            ctx.fill();
-            ctx.strokeStyle = '#aa3333';
-            ctx.lineWidth = 2;
-            ctx.stroke();
-
-            ctx.fillStyle = '#fff';
-            ctx.font = 'bold 10px Arial';
-            ctx.textAlign = 'center';
-            ctx.fillText(m.demonType || 'Demon', mx, my + 3);
+            _drawStoryMonster(ctx, m, mx, my, mw, m.height || 48, sizeMult, assets);
 
             if (m.health !== undefined && m.maxHealth > 0) {
                 var barW = mw * sizeMult;
@@ -783,13 +753,8 @@
             var px = player.x - camera.x;
             var py = player.y - camera.y;
             var pw = player.width || 48;
-            ctx.fillStyle = '#4a90e2';
-            ctx.beginPath();
-            ctx.arc(px, py, pw / 2, 0, Math.PI * 2);
-            ctx.fill();
-            ctx.strokeStyle = '#ffd666';
-            ctx.lineWidth = 2;
-            ctx.stroke();
+            var ph = player.height || 48;
+            _drawStoryPlayer(ctx, player, px, py, pw, ph, assets);
 
             if (player.health !== undefined && player.maxHealth > 0) {
                 var pBarW = pw;
@@ -822,10 +787,7 @@
         for (var hi = 0; hi < healingPoints.length; hi++) {
             var hp = healingPoints[hi];
             if (!hp) continue;
-            ctx.fillStyle = '#44ff44';
-            ctx.beginPath();
-            ctx.arc(hp.x - camera.x, hp.y - camera.y, 8, 0, Math.PI * 2);
-            ctx.fill();
+            _drawHealingPoint(ctx, hp.x - camera.x, hp.y - camera.y, assets);
         }
 
         // Draw bullets
@@ -969,6 +931,99 @@
                 return;
             }
         }
+    }
+
+    function _drawStoryCombatBackdrop(ctx, canvas, camera, worldW, worldH, topColor, bottomColor) {
+        var grad = ctx.createLinearGradient(0, 0, 0, canvas.height);
+        grad.addColorStop(0, topColor);
+        grad.addColorStop(1, bottomColor);
+        ctx.fillStyle = grad;
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        ctx.strokeStyle = 'rgba(255,255,255,0.05)';
+        ctx.lineWidth = 1;
+        var startX = -((camera.x % 200) + 200) % 200;
+        var startY = -((camera.y % 200) + 200) % 200;
+        for (var gx = startX; gx < canvas.width; gx += 200) {
+            ctx.beginPath();
+            ctx.moveTo(gx, 0);
+            ctx.lineTo(gx, canvas.height);
+            ctx.stroke();
+        }
+        for (var gy = startY; gy < canvas.height; gy += 200) {
+            ctx.beginPath();
+            ctx.moveTo(0, gy);
+            ctx.lineTo(canvas.width, gy);
+            ctx.stroke();
+        }
+    }
+
+    function _drawStoryMonster(ctx, monster, x, y, width, height, sizeMult, assets) {
+        var demonImages = assets && assets.demonImages ? assets.demonImages : null;
+        var image = demonImages ? demonImages[monster.demonType] : null;
+        var drawW = width * sizeMult;
+        var drawH = height * sizeMult;
+
+        if (image && image.complete && image.naturalWidth > 0) {
+            ctx.drawImage(image, x - drawW / 2, y - drawH / 2, drawW, drawH);
+            if (monster.isAttacked) {
+                ctx.save();
+                ctx.globalAlpha = 0.35;
+                ctx.fillStyle = '#ffffff';
+                ctx.fillRect(x - drawW / 2, y - drawH / 2, drawW, drawH);
+                ctx.restore();
+            }
+            return;
+        }
+
+        ctx.fillStyle = monster.isBoss ? '#cc2222' : '#882222';
+        ctx.beginPath();
+        ctx.arc(x, y, drawW / 2, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = monster.isBoss ? '#ff4444' : '#aa3333';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+    }
+
+    function _drawStoryPlayer(ctx, player, x, y, width, height, assets) {
+        var playerImg = assets ? assets.playerImg : null;
+        if (playerImg && (playerImg.complete || playerImg.tagName === 'CANVAS')) {
+            var frameIndex = player.currentFrame || 0;
+            var facingDirection = player.facingDirection || 'right';
+            var sourceY = facingDirection === 'right' ? 0 : 48;
+            var sourceX = frameIndex * 48;
+            ctx.drawImage(
+                playerImg,
+                sourceX, sourceY, 48, 48,
+                x - width / 2, y - height / 2,
+                width, height
+            );
+            return;
+        }
+
+        ctx.fillStyle = '#4a90e2';
+        ctx.beginPath();
+        ctx.arc(x, y, width / 2, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = '#ffd666';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+    }
+
+    function _drawHealingPoint(ctx, x, y, assets) {
+        var healingPointImg = assets ? assets.healingPointImg : null;
+        if (healingPointImg && healingPointImg.complete && healingPointImg.naturalWidth > 0) {
+            ctx.drawImage(healingPointImg, x - 12, y - 12, 24, 24);
+            return;
+        }
+
+        ctx.fillStyle = '#44ff44';
+        ctx.beginPath();
+        ctx.arc(x, y, 8, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = '#22aa22';
+        ctx.lineWidth = 1;
+        ctx.stroke();
     }
 
     window.StoryMissionRenderer = {

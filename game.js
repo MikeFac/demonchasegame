@@ -56,6 +56,663 @@ let movementFrozen = false;
 let levelTransitionStartTime = 0;
 const MAX_TRANSITION_FREEZE_MS = 10000; // Safety timeout: 10 seconds max freeze
 
+let storyPauseState = null;
+let storyPauseEngineWasRunning = false;
+let integratedStoryState = null;
+let integratedStoryPuzzlePause = null;
+const INTEGRATED_STORY_FLAG_KEY = 'dcgame_integratedStory';
+const INTEGRATED_STORY_LEGACY_INTRO_FLAG_KEY = 'dcgame_integratedStoryIntro';
+const FORCE_LEGACY_STORY_FLAG_KEY = 'dcgame_forceLegacyStory';
+
+function isStoryPaused() {
+    return !!storyPauseState;
+}
+
+function enterStoryPause(options) {
+    options = options || {};
+    storyPauseState = {
+        type: options.type || 'dialogue',
+        missionId: options.missionId || (currentMission && currentMission.id) || null,
+        phaseId: options.phaseId || null,
+        puzzleId: options.puzzleId || null,
+        title: options.title || '',
+        speaker: options.speaker || '',
+        lines: Array.isArray(options.lines) ? options.lines.slice() : [],
+        lineIndex: Math.max(0, options.lineIndex || 0),
+        text: options.text || '',
+        options: Array.isArray(options.options) ? options.options.slice() : [],
+        answer: options.answer || null,
+        selectedAnswer: options.selectedAnswer || null,
+        isCorrect: options.isCorrect === true,
+        feedback: options.feedback || '',
+        completed: options.completed === true,
+        nextPhase: options.nextPhase || null,
+        endMission: options.endMission === true,
+        prompt: options.prompt || 'Continue',
+        startedAt: Date.now(),
+        buttonRects: []
+    };
+
+    if (gameState) {
+        gameState.pausedForStory = true;
+        gameState.storyPhaseId = storyPauseState.phaseId;
+    }
+
+    if (network && network.engine && network.engine.shouldRun) {
+        storyPauseEngineWasRunning = true;
+        network.engine.stop();
+    } else {
+        storyPauseEngineWasRunning = false;
+    }
+
+    if (inputHandler) {
+        inputHandler.clearTarget();
+        if (inputHandler.viewMode === '3d' && typeof inputHandler.stopForwardMovement === 'function') {
+            inputHandler.stopForwardMovement();
+        }
+    }
+
+    if (typeof clearToasts === 'function') {
+        clearToasts();
+    }
+
+    if (player) {
+        player.isMoving = false;
+        player.currentFrame = 0;
+        player.frameTimer = 0;
+    }
+
+    return storyPauseState;
+}
+
+function exitStoryPause(options) {
+    options = options || {};
+    const previous = storyPauseState;
+    storyPauseState = null;
+
+    if (gameState) {
+        gameState.pausedForStory = false;
+        gameState.storyPhaseId = null;
+    }
+
+    if (storyPauseEngineWasRunning && network && network.engine) {
+        network.engine.start();
+    }
+    storyPauseEngineWasRunning = false;
+    return previous;
+}
+
+function advanceStoryPause() {
+    if (!storyPauseState) return null;
+    if (storyPauseState.type === 'puzzle' && !storyPauseState.completed) {
+        return storyPauseState;
+    }
+    const completedPuzzlePause = storyPauseState.type === 'puzzle' && storyPauseState.completed
+        ? storyPauseState
+        : null;
+    const completedVictoryPause = storyPauseState.type === 'dialogue' &&
+        storyPauseState.phaseId === 'victory' &&
+        storyPauseState.endMission === true
+        ? storyPauseState
+        : null;
+    const lines = storyPauseState.lines || [];
+    if (storyPauseState.lineIndex < lines.length - 1) {
+        storyPauseState.lineIndex += 1;
+        return storyPauseState;
+    }
+    const previous = exitStoryPause({ advancePhase: true });
+    if (completedPuzzlePause) {
+        startIntegratedStoryBossPhase(completedPuzzlePause);
+    } else if (completedVictoryPause) {
+        finishIntegratedStoryMission();
+    }
+    return previous;
+}
+
+function handleStoryPauseClick(x, y) {
+    if (!storyPauseState) return false;
+    const rects = storyPauseState.buttonRects || [];
+    for (let i = 0; i < rects.length; i++) {
+        const rect = rects[i];
+        if (x >= rect.x && x <= rect.x + rect.width &&
+            y >= rect.y && y <= rect.y + rect.height) {
+            if (storyPauseState.type === 'puzzle' && rect.id === 'option') {
+                answerStoryPuzzle(rect.value);
+                return true;
+            }
+            advanceStoryPause();
+            return true;
+        }
+    }
+    return true;
+}
+
+function answerStoryPuzzle(value) {
+    if (!storyPauseState || storyPauseState.type !== 'puzzle') return null;
+    storyPauseState.selectedAnswer = value;
+    storyPauseState.isCorrect = value === storyPauseState.answer;
+
+    if (storyPauseState.isCorrect) {
+        storyPauseState.completed = true;
+        storyPauseState.feedback = 'Correct';
+        completeIntegratedStoryPuzzle(storyPauseState);
+    } else {
+        storyPauseState.completed = false;
+        storyPauseState.feedback = 'Try again';
+    }
+
+    return storyPauseState;
+}
+
+function isForceLegacyStoryEnabled() {
+    try {
+        const params = new URLSearchParams(window.location.search || '');
+        if (params.get('legacyStory') === '1') return true;
+    } catch (_) {
+        // Ignore malformed URL state and keep the safe default.
+    }
+
+    try {
+        const stored = localStorage.getItem(FORCE_LEGACY_STORY_FLAG_KEY);
+        return stored === 'true' || stored === '1';
+    } catch (_) {
+        return false;
+    }
+}
+
+function isIntegratedStoryOverrideEnabled() {
+    try {
+        const params = new URLSearchParams(window.location.search || '');
+        if (params.get('integratedStory') === '1') return true;
+        if (params.get('integratedStoryIntro') === '1') return true;
+    } catch (_) {
+        // Ignore malformed URL state and keep the safe default.
+    }
+
+    try {
+        const stored = localStorage.getItem(INTEGRATED_STORY_FLAG_KEY);
+        const legacyStored = localStorage.getItem(INTEGRATED_STORY_LEGACY_INTRO_FLAG_KEY);
+        return stored === 'true' || stored === '1' || legacyStored === 'true' || legacyStored === '1';
+    } catch (_) {
+        return false;
+    }
+}
+
+function isIntegratedStoryEnabled(mission) {
+    if (isForceLegacyStoryEnabled()) return false;
+    if (isIntegratedStoryOverrideEnabled()) return true;
+    return !!mission && mission.storyIntegration === 'coreLoop';
+}
+
+function isDavidGoliathStoryMission(mission) {
+    return !!mission && mission.worldId === 'featured' && mission.id === 'david-01';
+}
+
+function applyStoryIntegrationMissionOverride(mission, worldId, missionId) {
+    if (!mission || typeof window === 'undefined') return mission;
+    const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+    if (!isLocalhost || !window.__storyIntegrationMissionOverrides) return mission;
+    const key = worldId + '/' + missionId;
+    const override = window.__storyIntegrationMissionOverrides[key];
+    if (!override) return mission;
+    return { ...mission, ...override };
+}
+
+function translateMissionText(key) {
+    if (!key) return '';
+    if (typeof t === 'function') return t(key);
+    if (window.I18n && typeof window.I18n.t === 'function') return window.I18n.t(key);
+    return key;
+}
+
+function buildStoryIntroPause(mission) {
+    if (!mission || !Array.isArray(mission.storyPhases)) return null;
+
+    const phase = mission.storyPhases.find((entry) => entry && entry.id === 'intro' && entry.type === 'dialogue');
+    if (!phase || !Array.isArray(phase.i18nLines) || phase.i18nLines.length === 0) return null;
+
+    const npc = Array.isArray(mission.npcs)
+        ? mission.npcs.find((entry) => entry && entry.id === phase.npcId)
+        : null;
+
+    const speaker = npc && npc.nameKey
+        ? translateMissionText(npc.nameKey)
+        : (phase.npcId || translateMissionText('story.david.title'));
+
+    return {
+        type: 'dialogue',
+        missionId: mission.id,
+        phaseId: phase.id,
+        title: translateMissionText('story.david.title'),
+        speaker: speaker,
+        lines: phase.i18nLines.map(translateMissionText),
+        prompt: translateMissionText('story.david.buttons.continue')
+    };
+}
+
+function buildStoryCollectCombatConfig(mission) {
+    const combat = (mission && mission.collectCombatConfig) || {};
+    const rawSpawnRate = combat.spawnRate || mission.spawnRate || 18;
+    const spawnRateSeconds = rawSpawnRate > 1000 ? rawSpawnRate / 1000 : rawSpawnRate;
+
+    return {
+        balance: {
+            monsterHealth: 1.0,
+            monsterDamage: combat.monsterDamageFactor || mission.monsterDamageFactor || 1.0,
+            monsterSpeed: 1.0,
+            spawnRate: 1.0,
+            maxMonsters: 1.0,
+            healingFrequency: 1.0
+        },
+        levels: [{
+            qualities: combat.qualities || mission.qualities || ['Faith'],
+            monsters: combat.monsters || mission.monsters || ['Fear'],
+            monstersToKill: combat.monstersToKill || mission.monstersToKill || 99,
+            maxMonsters: combat.maxMonsters || mission.maxMonsters || 8,
+            spawnRate: spawnRateSeconds
+        }],
+        quizSettings: mission.quizSettings || null,
+        disableLevelBoss: combat.disableLevelBoss === true,
+        fixedMonsters: Array.isArray(combat.fixedMonsters) ? combat.fixedMonsters.slice() : [],
+        randomSpawnsEnabled: combat.randomSpawnsEnabled !== false,
+        randomSpawnBudget: typeof combat.randomSpawnBudget === 'number' ? combat.randomSpawnBudget : undefined
+    };
+}
+
+function buildStoryCollectibleSeed(mission) {
+    if (!mission || !Array.isArray(mission.storyPhases) || !Array.isArray(mission.specialObjects)) return null;
+
+    const collectPhase = mission.storyPhases.find((entry) => entry && entry.type === 'combatCollect');
+    if (!collectPhase || !collectPhase.objectType) return null;
+
+    const objectConfig = mission.specialObjects.find((entry) => entry && entry.id === collectPhase.objectType);
+    if (!objectConfig) return null;
+
+    const targetCount = collectPhase.targetCount || objectConfig.count || 0;
+    if (!targetCount) return null;
+
+    const area = objectConfig.spawnArea || { x: 1300, y: 1300, w: 400, h: 400 };
+    const centerX = area.x + area.w / 2;
+    const centerY = area.y + area.h / 2;
+    const label = objectConfig.labelKey ? translateMissionText(objectConfig.labelKey) : objectConfig.id;
+    const stones = [];
+
+    for (let i = 0; i < targetCount; i++) {
+        const angle = (-Math.PI / 2) + (i * (Math.PI * 2 / Math.max(1, targetCount)));
+        const radius = 120 + ((i % 2) * 70);
+        stones.push({
+            id: `${mission.id}-${objectConfig.id}-${i + 1}`,
+            type: objectConfig.id,
+            storyCollectible: true,
+            storyObjectId: objectConfig.id,
+            label: label,
+            x: Math.round(centerX + Math.cos(angle) * radius),
+            y: Math.round(centerY + Math.sin(angle) * radius),
+            width: 28,
+            height: 22
+        });
+    }
+
+    return {
+        missionId: mission.id,
+        phaseId: collectPhase.id,
+        nextPhase: collectPhase.nextPhase || null,
+        objectType: objectConfig.id,
+        label: label,
+        targetCount: targetCount,
+        collected: 0,
+        collectedIds: [],
+        complete: false,
+        collectibles: stones
+    };
+}
+
+function buildStoryPuzzlePause(mission) {
+    if (!mission || !Array.isArray(mission.storyPhases) || !Array.isArray(mission.puzzles)) return null;
+
+    const puzzlePhase = mission.storyPhases.find((entry) => entry && entry.type === 'puzzle' && entry.puzzleId);
+    if (!puzzlePhase) return null;
+
+    const puzzle = mission.puzzles.find((entry) => entry && entry.id === puzzlePhase.puzzleId);
+    if (!puzzle || !Array.isArray(puzzle.options) || !puzzle.answer) return null;
+
+    return {
+        type: 'puzzle',
+        missionId: mission.id,
+        phaseId: puzzlePhase.id,
+        puzzleId: puzzle.id,
+        title: translateMissionText('story.david.title'),
+        speaker: 'Courage Test',
+        text: puzzle.i18nPrompt ? translateMissionText(puzzle.i18nPrompt) : '',
+        options: puzzle.options.slice(),
+        answer: puzzle.answer,
+        nextPhase: puzzlePhase.nextPhase || null,
+        prompt: translateMissionText('story.david.buttons.continue')
+    };
+}
+
+function buildStoryVictoryPause(mission) {
+    if (!mission || !Array.isArray(mission.storyPhases)) return null;
+
+    const phase = mission.storyPhases.find((entry) => entry && entry.id === 'victory' && entry.type === 'dialogue');
+    if (!phase || !Array.isArray(phase.i18nLines) || phase.i18nLines.length === 0) return null;
+
+    const npc = Array.isArray(mission.npcs)
+        ? mission.npcs.find((entry) => entry && entry.id === phase.npcId)
+        : null;
+    const speaker = npc && npc.nameKey
+        ? translateMissionText(npc.nameKey)
+        : 'David';
+
+    return {
+        type: 'dialogue',
+        missionId: mission.id,
+        phaseId: phase.id,
+        title: translateMissionText('story.david.title'),
+        speaker: speaker,
+        lines: phase.i18nLines.map(translateMissionText),
+        prompt: translateMissionText('story.david.buttons.continue'),
+        nextPhase: null,
+        endMission: phase.endMission === true
+    };
+}
+
+function syncIntegratedStoryState() {
+    window.__integratedStoryState = integratedStoryState;
+    if (gameState) {
+        gameState.integratedStory = integratedStoryState;
+    }
+    if (network && network.engine && network.engine.gameState) {
+        network.engine.gameState.integratedStory = integratedStoryState;
+    }
+}
+
+function setIntegratedStoryLaunchState(state) {
+    const snapshot = state ? { ...state } : null;
+    window.__integratedStoryLaunchState = snapshot;
+    // Compatibility alias for pre-Phase-7 scripts and snapshots.
+    window.__integratedStoryIntroState = snapshot;
+    return snapshot;
+}
+
+function seedIntegratedStoryCollectibles(seed) {
+    if (!seed || !Array.isArray(seed.collectibles)) return false;
+    if (!network || !network.engine || !network.engine.gameState) return false;
+
+    integratedStoryState = {
+        missionId: seed.missionId || (currentMission && currentMission.id) || null,
+        phaseId: seed.phaseId,
+        nextPhase: seed.nextPhase || null,
+        objectType: seed.objectType,
+        label: seed.label,
+        targetCount: seed.targetCount,
+        collected: 0,
+        collectedIds: [],
+        complete: false
+    };
+    integratedStoryPuzzlePause = seed.puzzlePause || null;
+
+    const engineState = network.engine.gameState;
+    const existing = Array.isArray(engineState.collectibles)
+        ? engineState.collectibles.filter((item) => !item.storyCollectible)
+        : [];
+    engineState.collectibles = existing.concat(seed.collectibles.map((item) => ({ ...item })));
+    gameState.collectibles = engineState.collectibles;
+    collectibles = gameState.collectibles;
+    syncIntegratedStoryState();
+
+    if (network.engine.emitter && typeof network.engine.emitter.emit === 'function') {
+        network.engine.emitter.emit('gameStateUpdate', network.engine.gameState);
+    }
+    return true;
+}
+
+function isIntegratedStoryBossVictoryReady() {
+    return !!(currentMission &&
+        isDavidGoliathStoryMission(currentMission) &&
+        integratedStoryState &&
+        integratedStoryState.bossStarted &&
+        !integratedStoryState.victoryStarted);
+}
+
+function startIntegratedStoryVictory(data) {
+    if (!isIntegratedStoryBossVictoryReady()) return false;
+    const victoryPause = buildStoryVictoryPause(currentMission);
+    if (!victoryPause) return false;
+
+    gameOverFlag = false;
+    gameOverModalVisible = false;
+    finalStats = null;
+    if (network && network.engine) {
+        network.engine.stop();
+    }
+
+    integratedStoryState.phaseId = 'victory';
+    integratedStoryState.nextPhase = null;
+    integratedStoryState.victoryStarted = true;
+    integratedStoryState.victory = {
+        result: data && data.result ? data.result : 'victory',
+        monstersKilled: data && typeof data.monstersKilled === 'number' ? data.monstersKilled : 1,
+        complete: false
+    };
+    syncIntegratedStoryState();
+    enterStoryPause(victoryPause);
+    return true;
+}
+
+function finishIntegratedStoryMission() {
+    if (!currentMission || !isDavidGoliathStoryMission(currentMission) || !integratedStoryState || !integratedStoryState.victoryStarted) {
+        return false;
+    }
+
+    integratedStoryState.victory.complete = true;
+    integratedStoryState.missionComplete = true;
+    syncIntegratedStoryState();
+    completeMission(3);
+    returnToOverland();
+    return true;
+}
+
+function completeIntegratedStoryPuzzle(puzzlePause) {
+    if (!integratedStoryState || !puzzlePause) return;
+    integratedStoryState.phaseId = puzzlePause.phaseId || integratedStoryState.phaseId;
+    integratedStoryState.nextPhase = puzzlePause.nextPhase || integratedStoryState.nextPhase || null;
+    integratedStoryState.puzzle = {
+        id: puzzlePause.puzzleId || null,
+        selectedAnswer: puzzlePause.selectedAnswer || null,
+        complete: true
+    };
+    integratedStoryState.puzzleComplete = true;
+    syncIntegratedStoryState();
+}
+
+function startIntegratedStoryBossPhase(puzzlePause) {
+    if (!currentMission || !isDavidGoliathStoryMission(currentMission)) return false;
+    if (!integratedStoryState || !integratedStoryState.puzzleComplete || integratedStoryState.bossStarted) return false;
+    if (!network || !network.engine || !network.engine.gameState || !network.engine.monsterManager) return false;
+
+    const combat = currentMission.combatConfig || {};
+    const fixed = Array.isArray(combat.fixedMonsters) ? combat.fixedMonsters : [];
+    const bossConfig = fixed.find((entry) => entry && entry.isBoss);
+    if (!bossConfig) return false;
+
+    const bossPhase = Array.isArray(currentMission.storyPhases)
+        ? currentMission.storyPhases.find((entry) => entry && entry.id === (puzzlePause.nextPhase || 'bossFight'))
+        : null;
+    const engine = network.engine;
+    const engineState = engine.gameState;
+
+    if (engine._spawnTimeout) {
+        clearTimeout(engine._spawnTimeout);
+        engine._spawnTimeout = null;
+    }
+    if (engine.monsterManager && typeof engine.monsterManager.configureSpawner === 'function') {
+        engine.monsterManager.configureSpawner({
+            randomSpawnsEnabled: false,
+            randomSpawnBudget: 0
+        });
+        engine.monsterManager.pendingFixedSpawns = [];
+    }
+
+    engineState.monsters = [];
+    engineState.monstersKilled = 0;
+    engineState.monstersToKill = combat.monstersToKill || 1;
+    engineState.maxSpawns = combat.maxMonsters || 1;
+    engineState.spawnsLeft = 0;
+    if (engine.levelData && engine.levelData[engineState.gameLevel]) {
+        engine.levelData[engineState.gameLevel].monstersToKill = engineState.monstersToKill;
+        engine.levelData[engineState.gameLevel].maxMonsters = Math.max(combat.maxMonsters || 1, 1);
+        engine.levelData[engineState.gameLevel].monsters = combat.monsters || engine.levelData[engineState.gameLevel].monsters;
+        if (combat.spawnRate) {
+            engine.levelData[engineState.gameLevel].spawnRate = combat.spawnRate > 1000 ? combat.spawnRate : combat.spawnRate * 1000;
+        }
+    }
+
+    engine.monsterManager.spawnFixedMonsters([bossConfig]);
+
+    integratedStoryState.phaseId = bossPhase ? bossPhase.id : 'bossFight';
+    integratedStoryState.nextPhase = bossPhase ? (bossPhase.nextPhase || null) : 'victory';
+    integratedStoryState.bossStarted = true;
+    integratedStoryState.boss = {
+        label: bossConfig.label || 'Goliath',
+        demonType: bossConfig.demonType || null,
+        spawned: engineState.monsters.some((monster) => monster && monster.isBoss)
+    };
+    syncIntegratedStoryState();
+
+    if (engine.emitter && typeof engine.emitter.emit === 'function') {
+        engine.emitter.emit('gameStateUpdate', engineState);
+    }
+    return true;
+}
+
+function scheduleIntegratedStoryCollectibles(seed, attempt) {
+    if (!seed) return;
+    const attemptNumber = attempt || 0;
+    if (seedIntegratedStoryCollectibles(seed)) return;
+    if (attemptNumber < 40) {
+        setTimeout(() => scheduleIntegratedStoryCollectibles(seed, attemptNumber + 1), 100);
+    }
+}
+
+function collectIntegratedStoryItem(item) {
+    if (!item || !item.storyCollectible || !integratedStoryState) return false;
+    if (integratedStoryState.collectedIds.indexOf(item.id) !== -1) return true;
+
+    integratedStoryState.collectedIds.push(item.id);
+    integratedStoryState.collected = Math.min(integratedStoryState.targetCount, integratedStoryState.collected + 1);
+    integratedStoryState.complete = integratedStoryState.collected >= integratedStoryState.targetCount;
+    syncIntegratedStoryState();
+
+    if (window.Analytics) Analytics.trackItemCollected(item.storyObjectId || item.type);
+    network.sendCollectCollectible(item.id);
+
+    const countText = integratedStoryState.label + ': ' + integratedStoryState.collected + ' / ' + integratedStoryState.targetCount;
+    flashMessages.push({
+        text: countText,
+        color: integratedStoryState.complete ? '#4CAF50' : '#F6D36B',
+        startTime: Date.now(),
+        duration: integratedStoryState.complete ? 2400 : 1500
+    });
+
+    if (integratedStoryState.complete && integratedStoryPuzzlePause && !integratedStoryState.puzzleStarted) {
+        integratedStoryState.puzzleStarted = true;
+        syncIntegratedStoryState();
+        setTimeout(() => {
+            if (!isStoryPaused()) {
+                enterStoryPause(integratedStoryPuzzlePause);
+            }
+        }, 150);
+    }
+
+    return true;
+}
+
+function scheduleStoryIntroPause(pauseOptions, attempt) {
+    if (!pauseOptions) return;
+    const attemptNumber = attempt || 0;
+    setIntegratedStoryLaunchState({
+        scheduled: true,
+        entered: false,
+        attempts: attemptNumber,
+        missionId: pauseOptions.missionId || null,
+        phaseId: pauseOptions.phaseId || null
+    });
+
+    setTimeout(() => {
+        const ready = window.gameMode === 'game' && !!player && !!gameState && !!network;
+        if (ready && !isStoryPaused()) {
+            enterStoryPause(pauseOptions);
+            setIntegratedStoryLaunchState({
+                scheduled: true,
+                entered: true,
+                attempts: attemptNumber,
+                missionId: pauseOptions.missionId || null,
+                phaseId: pauseOptions.phaseId || null
+            });
+            return;
+        }
+
+        if (attemptNumber < 40) {
+            scheduleStoryIntroPause(pauseOptions, attemptNumber + 1);
+        } else {
+            setIntegratedStoryLaunchState({
+                scheduled: true,
+                entered: false,
+                failed: true,
+                attempts: attemptNumber,
+                missionId: pauseOptions.missionId || null,
+                phaseId: pauseOptions.phaseId || null
+            });
+        }
+    }, 100);
+}
+
+window.enterStoryPause = enterStoryPause;
+window.exitStoryPause = exitStoryPause;
+window.isStoryPaused = isStoryPaused;
+window.handleStoryPauseClick = handleStoryPauseClick;
+window.__integratedStoryIntroState = null;
+window.__integratedStoryLaunchState = null;
+window.__integratedStoryState = null;
+if (typeof window !== 'undefined' &&
+    (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')) {
+    window.__storyPauseDebug = {
+        enterDemo: function () {
+            return enterStoryPause({
+                type: 'dialogue',
+                missionId: 'debug-story-pause',
+                phaseId: 'debug-dialogue',
+                speaker: 'Samuel',
+                lines: [
+                    'The Lord looks at the heart. This pauses the battle while the world stays visible.',
+                    'When the story continues, the same game loop resumes from the same position.'
+                ],
+                prompt: 'Continue'
+            });
+        },
+        exit: function () {
+            return exitStoryPause({ debug: true });
+        },
+        advance: advanceStoryPause,
+        snapshot: function () {
+            return {
+                paused: isStoryPaused(),
+                state: storyPauseState,
+                gameState: gameState ? {
+                    pausedForStory: !!gameState.pausedForStory,
+                    storyPhaseId: gameState.storyPhaseId || null
+                } : null,
+                player: player ? {
+                    x: player.x,
+                    y: player.y,
+                    isMoving: !!player.isMoving
+                } : null
+            };
+        }
+    };
+}
+
 let isGameLoaded = false;
 
 // [WallSpawn] Periodic wall-collision diagnostic (check every ~1s, not every frame)
@@ -136,6 +793,11 @@ window.addEventListener('orientationchange', handleResize);
 
 window.addEventListener('keydown', function (e) {
     if (typeof gameMode === 'undefined' || gameMode !== 'game') return;
+    if (isStoryPaused() && (e.key === 'Enter' || e.key === ' ')) {
+        advanceStoryPause();
+        e.preventDefault();
+        return;
+    }
     if (e.key === '1') { applyGameSpeed('verySlow'); e.preventDefault(); }
     else if (e.key === '2') { applyGameSpeed('slow'); e.preventDefault(); }
     else if (e.key === '3') { applyGameSpeed('normal'); e.preventDefault(); }
@@ -939,6 +1601,8 @@ function hideOnboardingModal() {
  * @param {number} duration - Duration in ms (default 3500)
  */
 function showToast(message, duration = 3500) {
+    if (isStoryPaused()) return;
+
     const container = document.getElementById('toastContainer');
     if (!container) return;
 
@@ -1575,6 +2239,13 @@ function resetGameState() {
     };
     monsters = [];
     healingPoints = [];
+    collectibles = [];
+    storyPauseState = null;
+    storyPauseEngineWasRunning = false;
+    integratedStoryState = null;
+    integratedStoryPuzzlePause = null;
+    window.__integratedStoryState = null;
+    setIntegratedStoryLaunchState(null);
 
     // Custom config — reset so solo games don't inherit mission config
     customLevelData = null;
@@ -1931,6 +2602,12 @@ function _startGameInternal(mode, roomId, missionOpts) {
                 || (document.getElementById('mapStyleSelect') ? document.getElementById('mapStyleSelect').value : 'classic');
             network.sendStartSoloGame('custom', quizSettings, 'normal', mapStyle, configData);
             if (!_gameLoopRunning) gameLoop();
+            if (missionOpts && missionOpts.storyIntroPause) {
+                scheduleStoryIntroPause(missionOpts.storyIntroPause);
+            }
+            if (missionOpts && missionOpts.storyCollectibleSeed) {
+                scheduleIntegratedStoryCollectibles(missionOpts.storyCollectibleSeed);
+            }
         }).catch((error) => {
             console.error('Error initializing game:', error);
         });
@@ -2841,6 +3518,10 @@ async function init() {
             },
             onGameEnded: (data) => {
                 console.log('[GAMEOVER] onGameEnded fired! currentMission:', currentMission, 'result:', data.result);
+                if (data.result === 'victory' && startIntegratedStoryVictory(data)) {
+                    console.log('[STORY] Integrated David/Goliath victory dialogue started');
+                    return;
+                }
                 gameOverFlag = true;
                 gameOverModalVisible = true;
                 const sessionDuration = Math.floor((Date.now() - sessionStartTime) / 1000);
@@ -4173,7 +4854,11 @@ async function startMission(worldId, missionId) {
     console.trace('[MISSION] startMission call stack');
     try {
         window._enterReviewAfterInit = false;
-        const mission = await missionClient.getMission(worldId, missionId);
+        const mission = applyStoryIntegrationMissionOverride(
+            await missionClient.getMission(worldId, missionId),
+            worldId,
+            missionId
+        );
         if (!mission) {
             console.error('Mission not found:', worldId, missionId);
             return;
@@ -4290,6 +4975,36 @@ async function startMission(worldId, missionId) {
             } else {
                 console.error('ScriptureMazeLauncher not available');
             }
+            return;
+        }
+
+        if (mission.gameMode === 'story' && isDavidGoliathStoryMission(mission) && isIntegratedStoryEnabled(mission)) {
+            console.log('Starting David/Goliath with integrated story core loop:', mission.name);
+            currentMission = {
+                ...mission,
+                configuredStoryIntegration: mission.storyIntegration || null,
+                storyIntegration: 'coreLoop'
+            };
+            window.currentMission = currentMission;
+            currentMissionConfig = buildStoryCollectCombatConfig(currentMission);
+            setIntegratedStoryLaunchState({
+                scheduled: false,
+                entered: false,
+                missionId: currentMission.id,
+                phaseId: 'intro'
+            });
+            const storyCollectibleSeed = buildStoryCollectibleSeed(currentMission);
+            if (storyCollectibleSeed) {
+                storyCollectibleSeed.puzzlePause = buildStoryPuzzlePause(currentMission);
+            }
+
+            startGame('solo', undefined, {
+                config: currentMissionConfig,
+                mapStyle: currentMission.mapStyle || 'open',
+                qualities: currentMission.qualities,
+                storyIntroPause: buildStoryIntroPause(currentMission),
+                storyCollectibleSeed: storyCollectibleSeed
+            });
             return;
         }
 
@@ -4598,7 +5313,9 @@ function gameLoop(generation) {
             flashMessages,
             currentGameSpeed,
             speedPromptVisible,
-            speedOnboardingVisible: !speedOnboardingDismissed
+            speedOnboardingVisible: !speedOnboardingDismissed,
+            storyPause: storyPauseState,
+            integratedStory: integratedStoryState
         };
 
         const assets = {
@@ -4719,6 +5436,20 @@ function gameLoop(generation) {
         // Draw VerseTestScreen overlay on top of everything
         if (VerseTestScreen.isActive()) {
             VerseTestScreen.render(ctx, canvas.width, canvas.height);
+        }
+
+        if (isStoryPaused()) {
+            if (inputHandler) {
+                inputHandler.clearTarget();
+                if (inputHandler.viewMode === '3d' && typeof inputHandler.stopForwardMovement === 'function') {
+                    inputHandler.stopForwardMovement();
+                }
+            }
+            player.isMoving = false;
+            player.currentFrame = 0;
+            player.frameTimer = 0;
+            nextFrame();
+            return;
         }
 
         // If game over, stop processing movement/combat but keep rendering
@@ -5276,6 +6007,10 @@ function gameLoop(generation) {
             let dy = item.y - player.y;
             let distance = Math.sqrt(dx * dx + dy * dy);
             if (distance < player.width / 2 + item.width / 2) {
+                if (collectIntegratedStoryItem(item)) {
+                    return;
+                }
+
                 // NEW: Track collected IDs to prevent duplicate messages
                 if (!window._collectedItems) window._collectedItems = new Set();
                 if (window._collectedItems.has(item.id)) {
