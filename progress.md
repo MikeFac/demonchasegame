@@ -1348,3 +1348,49 @@ Original prompt: Check the implementation of docs/multi-version-songs-implementa
 - Next migration gate:
   - keep legacy story combat in place for now
   - next safe phase is to extract the integrated story director out of `game.js` behind identical tests, or run another promoted-default soak before removing legacy code
+
+2026-07-08:
+- Completed Phase 11 of the integrated story migration path: extracted pure core story director helpers out of `game.js`.
+- Rollback patch saved before Phase 11:
+  - `/tmp/david-goliath-story-before-phase-11.patch`
+- Extraction boundary:
+  - new `src/client/CoreStoryDirector.js` owns pure mission logic:
+    - forced legacy / integrated override flag handling
+    - localhost-only mission override for regression tests
+    - David/Goliath mission detection
+    - collect-combat config building
+    - intro/puzzle/victory pause option builders
+    - smooth-stone collectible seed building
+  - `game.js` still owns stateful game-loop wiring:
+    - story pause state
+    - engine start/stop during pause
+    - integrated story state mutation
+    - collectible mutation
+    - boss phase mutation
+    - mission completion and overland return
+  - `index.html` now loads `CoreStoryDirector.js` before `game.js`
+- Browser artifacts inspected after the final promoted default run:
+  - `output/web-game/david-goliath-integrated/after-puzzle-wrong.png`
+  - `output/web-game/david-goliath-integrated/after-boss-victory.png`
+  - `output/web-game/david-goliath-integrated/after-victory-complete.png`
+  - latest `summary.json` reported 36 assertions, 0 failures, `integratedStoryDetected: true`, and final mode `overland`
+- Verification completed:
+  - `node --check src/client/CoreStoryDirector.js`
+  - `node --check game.js`
+  - `node --check scripts/test-david-goliath-integrated.js`
+  - `./restart-server.sh`
+  - `node scripts/test-david-goliath-integrated.js`
+  - `node scripts/test-david-goliath-integrated.js --force-legacy-story --expect-legacy-story-mode`
+  - `node scripts/test-story-pause-scaffold.js`
+  - `node test/test-story-mission.js`
+  - `node test/test-guard-behavior.js`
+  - `node test/test-fixed-monster-spawns.js`
+  - `node scripts/test-mode-manager-smoke.js`
+  - `node scripts/test-start-here-summary.js`
+  - `node test/test-game-config.js` (prints existing assertion noise but exits 0)
+  - `node /home/michael/.codex/skills/develop-web-game/scripts/web_game_playwright_client.js --url http://localhost:3500/ --actions-json '{"steps":[{"buttons":[],"frames":20}]}' --iterations 1`
+- Known baseline issue:
+  - `node test/test-game-engine.js` hit the hidden `Passed: 43, Failed: 1` intermittent pattern seen earlier
+- Next migration gate:
+  - keep standalone story combat in place
+  - next safe extraction is to move stateful integrated story runtime into a small adapter/controller, or run another promoted-default soak before deleting legacy story code

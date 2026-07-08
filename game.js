@@ -60,9 +60,6 @@ let storyPauseState = null;
 let storyPauseEngineWasRunning = false;
 let integratedStoryState = null;
 let integratedStoryPuzzlePause = null;
-const INTEGRATED_STORY_FLAG_KEY = 'dcgame_integratedStory';
-const INTEGRATED_STORY_LEGACY_INTRO_FLAG_KEY = 'dcgame_integratedStoryIntro';
-const FORCE_LEGACY_STORY_FLAG_KEY = 'dcgame_forceLegacyStory';
 
 function isStoryPaused() {
     return !!storyPauseState;
@@ -204,219 +201,6 @@ function answerStoryPuzzle(value) {
     return storyPauseState;
 }
 
-function isForceLegacyStoryEnabled() {
-    try {
-        const params = new URLSearchParams(window.location.search || '');
-        if (params.get('legacyStory') === '1') return true;
-    } catch (_) {
-        // Ignore malformed URL state and keep the safe default.
-    }
-
-    try {
-        const stored = localStorage.getItem(FORCE_LEGACY_STORY_FLAG_KEY);
-        return stored === 'true' || stored === '1';
-    } catch (_) {
-        return false;
-    }
-}
-
-function isIntegratedStoryOverrideEnabled() {
-    try {
-        const params = new URLSearchParams(window.location.search || '');
-        if (params.get('integratedStory') === '1') return true;
-        if (params.get('integratedStoryIntro') === '1') return true;
-    } catch (_) {
-        // Ignore malformed URL state and keep the safe default.
-    }
-
-    try {
-        const stored = localStorage.getItem(INTEGRATED_STORY_FLAG_KEY);
-        const legacyStored = localStorage.getItem(INTEGRATED_STORY_LEGACY_INTRO_FLAG_KEY);
-        return stored === 'true' || stored === '1' || legacyStored === 'true' || legacyStored === '1';
-    } catch (_) {
-        return false;
-    }
-}
-
-function isIntegratedStoryEnabled(mission) {
-    if (isForceLegacyStoryEnabled()) return false;
-    if (isIntegratedStoryOverrideEnabled()) return true;
-    return !!mission && mission.storyIntegration === 'coreLoop';
-}
-
-function isDavidGoliathStoryMission(mission) {
-    return !!mission && mission.worldId === 'featured' && mission.id === 'david-01';
-}
-
-function applyStoryIntegrationMissionOverride(mission, worldId, missionId) {
-    if (!mission || typeof window === 'undefined') return mission;
-    const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-    if (!isLocalhost || !window.__storyIntegrationMissionOverrides) return mission;
-    const key = worldId + '/' + missionId;
-    const override = window.__storyIntegrationMissionOverrides[key];
-    if (!override) return mission;
-    return { ...mission, ...override };
-}
-
-function translateMissionText(key) {
-    if (!key) return '';
-    if (typeof t === 'function') return t(key);
-    if (window.I18n && typeof window.I18n.t === 'function') return window.I18n.t(key);
-    return key;
-}
-
-function buildStoryIntroPause(mission) {
-    if (!mission || !Array.isArray(mission.storyPhases)) return null;
-
-    const phase = mission.storyPhases.find((entry) => entry && entry.id === 'intro' && entry.type === 'dialogue');
-    if (!phase || !Array.isArray(phase.i18nLines) || phase.i18nLines.length === 0) return null;
-
-    const npc = Array.isArray(mission.npcs)
-        ? mission.npcs.find((entry) => entry && entry.id === phase.npcId)
-        : null;
-
-    const speaker = npc && npc.nameKey
-        ? translateMissionText(npc.nameKey)
-        : (phase.npcId || translateMissionText('story.david.title'));
-
-    return {
-        type: 'dialogue',
-        missionId: mission.id,
-        phaseId: phase.id,
-        title: translateMissionText('story.david.title'),
-        speaker: speaker,
-        lines: phase.i18nLines.map(translateMissionText),
-        prompt: translateMissionText('story.david.buttons.continue')
-    };
-}
-
-function buildStoryCollectCombatConfig(mission) {
-    const combat = (mission && mission.collectCombatConfig) || {};
-    const rawSpawnRate = combat.spawnRate || mission.spawnRate || 18;
-    const spawnRateSeconds = rawSpawnRate > 1000 ? rawSpawnRate / 1000 : rawSpawnRate;
-
-    return {
-        balance: {
-            monsterHealth: 1.0,
-            monsterDamage: combat.monsterDamageFactor || mission.monsterDamageFactor || 1.0,
-            monsterSpeed: 1.0,
-            spawnRate: 1.0,
-            maxMonsters: 1.0,
-            healingFrequency: 1.0
-        },
-        levels: [{
-            qualities: combat.qualities || mission.qualities || ['Faith'],
-            monsters: combat.monsters || mission.monsters || ['Fear'],
-            monstersToKill: combat.monstersToKill || mission.monstersToKill || 99,
-            maxMonsters: combat.maxMonsters || mission.maxMonsters || 8,
-            spawnRate: spawnRateSeconds
-        }],
-        quizSettings: mission.quizSettings || null,
-        disableLevelBoss: combat.disableLevelBoss === true,
-        fixedMonsters: Array.isArray(combat.fixedMonsters) ? combat.fixedMonsters.slice() : [],
-        randomSpawnsEnabled: combat.randomSpawnsEnabled !== false,
-        randomSpawnBudget: typeof combat.randomSpawnBudget === 'number' ? combat.randomSpawnBudget : undefined
-    };
-}
-
-function buildStoryCollectibleSeed(mission) {
-    if (!mission || !Array.isArray(mission.storyPhases) || !Array.isArray(mission.specialObjects)) return null;
-
-    const collectPhase = mission.storyPhases.find((entry) => entry && entry.type === 'combatCollect');
-    if (!collectPhase || !collectPhase.objectType) return null;
-
-    const objectConfig = mission.specialObjects.find((entry) => entry && entry.id === collectPhase.objectType);
-    if (!objectConfig) return null;
-
-    const targetCount = collectPhase.targetCount || objectConfig.count || 0;
-    if (!targetCount) return null;
-
-    const area = objectConfig.spawnArea || { x: 1300, y: 1300, w: 400, h: 400 };
-    const centerX = area.x + area.w / 2;
-    const centerY = area.y + area.h / 2;
-    const label = objectConfig.labelKey ? translateMissionText(objectConfig.labelKey) : objectConfig.id;
-    const stones = [];
-
-    for (let i = 0; i < targetCount; i++) {
-        const angle = (-Math.PI / 2) + (i * (Math.PI * 2 / Math.max(1, targetCount)));
-        const radius = 120 + ((i % 2) * 70);
-        stones.push({
-            id: `${mission.id}-${objectConfig.id}-${i + 1}`,
-            type: objectConfig.id,
-            storyCollectible: true,
-            storyObjectId: objectConfig.id,
-            label: label,
-            x: Math.round(centerX + Math.cos(angle) * radius),
-            y: Math.round(centerY + Math.sin(angle) * radius),
-            width: 28,
-            height: 22
-        });
-    }
-
-    return {
-        missionId: mission.id,
-        phaseId: collectPhase.id,
-        nextPhase: collectPhase.nextPhase || null,
-        objectType: objectConfig.id,
-        label: label,
-        targetCount: targetCount,
-        collected: 0,
-        collectedIds: [],
-        complete: false,
-        collectibles: stones
-    };
-}
-
-function buildStoryPuzzlePause(mission) {
-    if (!mission || !Array.isArray(mission.storyPhases) || !Array.isArray(mission.puzzles)) return null;
-
-    const puzzlePhase = mission.storyPhases.find((entry) => entry && entry.type === 'puzzle' && entry.puzzleId);
-    if (!puzzlePhase) return null;
-
-    const puzzle = mission.puzzles.find((entry) => entry && entry.id === puzzlePhase.puzzleId);
-    if (!puzzle || !Array.isArray(puzzle.options) || !puzzle.answer) return null;
-
-    return {
-        type: 'puzzle',
-        missionId: mission.id,
-        phaseId: puzzlePhase.id,
-        puzzleId: puzzle.id,
-        title: translateMissionText('story.david.title'),
-        speaker: 'Courage Test',
-        text: puzzle.i18nPrompt ? translateMissionText(puzzle.i18nPrompt) : '',
-        options: puzzle.options.slice(),
-        answer: puzzle.answer,
-        nextPhase: puzzlePhase.nextPhase || null,
-        prompt: translateMissionText('story.david.buttons.continue')
-    };
-}
-
-function buildStoryVictoryPause(mission) {
-    if (!mission || !Array.isArray(mission.storyPhases)) return null;
-
-    const phase = mission.storyPhases.find((entry) => entry && entry.id === 'victory' && entry.type === 'dialogue');
-    if (!phase || !Array.isArray(phase.i18nLines) || phase.i18nLines.length === 0) return null;
-
-    const npc = Array.isArray(mission.npcs)
-        ? mission.npcs.find((entry) => entry && entry.id === phase.npcId)
-        : null;
-    const speaker = npc && npc.nameKey
-        ? translateMissionText(npc.nameKey)
-        : 'David';
-
-    return {
-        type: 'dialogue',
-        missionId: mission.id,
-        phaseId: phase.id,
-        title: translateMissionText('story.david.title'),
-        speaker: speaker,
-        lines: phase.i18nLines.map(translateMissionText),
-        prompt: translateMissionText('story.david.buttons.continue'),
-        nextPhase: null,
-        endMission: phase.endMission === true
-    };
-}
-
 function syncIntegratedStoryState() {
     window.__integratedStoryState = integratedStoryState;
     if (gameState) {
@@ -469,7 +253,8 @@ function seedIntegratedStoryCollectibles(seed) {
 
 function isIntegratedStoryBossVictoryReady() {
     return !!(currentMission &&
-        isDavidGoliathStoryMission(currentMission) &&
+        window.CoreStoryDirector &&
+        window.CoreStoryDirector.isDavidGoliathMission(currentMission) &&
         integratedStoryState &&
         integratedStoryState.bossStarted &&
         !integratedStoryState.victoryStarted);
@@ -477,7 +262,7 @@ function isIntegratedStoryBossVictoryReady() {
 
 function startIntegratedStoryVictory(data) {
     if (!isIntegratedStoryBossVictoryReady()) return false;
-    const victoryPause = buildStoryVictoryPause(currentMission);
+    const victoryPause = window.CoreStoryDirector.buildVictoryPause(currentMission);
     if (!victoryPause) return false;
 
     gameOverFlag = false;
@@ -501,7 +286,7 @@ function startIntegratedStoryVictory(data) {
 }
 
 function finishIntegratedStoryMission() {
-    if (!currentMission || !isDavidGoliathStoryMission(currentMission) || !integratedStoryState || !integratedStoryState.victoryStarted) {
+    if (!currentMission || !window.CoreStoryDirector || !window.CoreStoryDirector.isDavidGoliathMission(currentMission) || !integratedStoryState || !integratedStoryState.victoryStarted) {
         return false;
     }
 
@@ -527,7 +312,7 @@ function completeIntegratedStoryPuzzle(puzzlePause) {
 }
 
 function startIntegratedStoryBossPhase(puzzlePause) {
-    if (!currentMission || !isDavidGoliathStoryMission(currentMission)) return false;
+    if (!currentMission || !window.CoreStoryDirector || !window.CoreStoryDirector.isDavidGoliathMission(currentMission)) return false;
     if (!integratedStoryState || !integratedStoryState.puzzleComplete || integratedStoryState.bossStarted) return false;
     if (!network || !network.engine || !network.engine.gameState || !network.engine.monsterManager) return false;
 
@@ -4854,7 +4639,7 @@ async function startMission(worldId, missionId) {
     console.trace('[MISSION] startMission call stack');
     try {
         window._enterReviewAfterInit = false;
-        const mission = applyStoryIntegrationMissionOverride(
+        const mission = window.CoreStoryDirector.applyMissionOverride(
             await missionClient.getMission(worldId, missionId),
             worldId,
             missionId
@@ -4978,7 +4763,10 @@ async function startMission(worldId, missionId) {
             return;
         }
 
-        if (mission.gameMode === 'story' && isDavidGoliathStoryMission(mission) && isIntegratedStoryEnabled(mission)) {
+        if (mission.gameMode === 'story' &&
+            window.CoreStoryDirector &&
+            window.CoreStoryDirector.isDavidGoliathMission(mission) &&
+            window.CoreStoryDirector.isEnabled(mission)) {
             console.log('Starting David/Goliath with integrated story core loop:', mission.name);
             currentMission = {
                 ...mission,
@@ -4986,23 +4774,23 @@ async function startMission(worldId, missionId) {
                 storyIntegration: 'coreLoop'
             };
             window.currentMission = currentMission;
-            currentMissionConfig = buildStoryCollectCombatConfig(currentMission);
+            currentMissionConfig = window.CoreStoryDirector.buildCollectCombatConfig(currentMission);
             setIntegratedStoryLaunchState({
                 scheduled: false,
                 entered: false,
                 missionId: currentMission.id,
                 phaseId: 'intro'
             });
-            const storyCollectibleSeed = buildStoryCollectibleSeed(currentMission);
+            const storyCollectibleSeed = window.CoreStoryDirector.buildCollectibleSeed(currentMission);
             if (storyCollectibleSeed) {
-                storyCollectibleSeed.puzzlePause = buildStoryPuzzlePause(currentMission);
+                storyCollectibleSeed.puzzlePause = window.CoreStoryDirector.buildPuzzlePause(currentMission);
             }
 
             startGame('solo', undefined, {
                 config: currentMissionConfig,
                 mapStyle: currentMission.mapStyle || 'open',
                 qualities: currentMission.qualities,
-                storyIntroPause: buildStoryIntroPause(currentMission),
+                storyIntroPause: window.CoreStoryDirector.buildIntroPause(currentMission),
                 storyCollectibleSeed: storyCollectibleSeed
             });
             return;

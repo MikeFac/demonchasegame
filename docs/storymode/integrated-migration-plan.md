@@ -274,7 +274,32 @@ node scripts/test-mode-manager-smoke.js
 node scripts/test-start-here-summary.js
 ```
 
-### Phase 11: Retire Standalone Story Combat
+### Phase 11: Extract Core Story Director Module
+
+- Move pure story routing/config/pause-builder logic out of `game.js` into `src/client/CoreStoryDirector.js`.
+- Keep game-loop-owned state in `game.js` for this phase:
+  - pause state
+  - engine start/stop
+  - collectible mutation
+  - boss phase mutation
+  - mission completion/overland return
+- Preserve promoted default behavior and forced legacy fallback.
+- Do not delete the standalone story launcher yet.
+
+Gate:
+
+```bash
+node --check src/client/CoreStoryDirector.js
+node --check game.js
+node scripts/test-david-goliath-integrated.js
+node scripts/test-david-goliath-integrated.js --force-legacy-story --expect-legacy-story-mode
+node scripts/test-story-pause-scaffold.js
+node test/test-story-mission.js
+node scripts/test-mode-manager-smoke.js
+node scripts/test-start-here-summary.js
+```
+
+### Phase 12: Retire Standalone Story Combat
 
 - Remove or archive the standalone combat renderer only after the integrated path passes repeatedly after promotion.
 - Keep content provider/state tests if still useful.
