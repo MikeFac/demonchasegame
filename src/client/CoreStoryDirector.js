@@ -148,19 +148,31 @@
         var centerX = area.x + area.w / 2;
         var centerY = area.y + area.h / 2;
         var label = objectConfig.labelKey ? translateMissionText(objectConfig.labelKey) : objectConfig.id;
+        var placements = Array.isArray(objectConfig.placements) ? objectConfig.placements : [];
         var stones = [];
 
         for (var i = 0; i < targetCount; i++) {
-            var angle = (-Math.PI / 2) + (i * (Math.PI * 2 / Math.max(1, targetCount)));
-            var radius = 120 + ((i % 2) * 70);
+            var placement = placements[i] || null;
+            var x;
+            var y;
+            if (placement && typeof placement.x === 'number' && typeof placement.y === 'number') {
+                x = placement.x;
+                y = placement.y;
+            } else {
+                var angle = (-Math.PI / 2) + (i * (Math.PI * 2 / Math.max(1, targetCount)));
+                var radius = 120 + ((i % 2) * 70);
+                x = centerX + Math.cos(angle) * radius;
+                y = centerY + Math.sin(angle) * radius;
+            }
             stones.push({
                 id: mission.id + '-' + objectConfig.id + '-' + (i + 1),
                 type: objectConfig.id,
                 storyCollectible: true,
                 storyObjectId: objectConfig.id,
                 label: label,
-                x: Math.round(centerX + Math.cos(angle) * radius),
-                y: Math.round(centerY + Math.sin(angle) * radius),
+                x: Math.round(x),
+                y: Math.round(y),
+                guardDemonType: placement && placement.guardDemonType ? placement.guardDemonType : null,
                 width: 28,
                 height: 22
             });

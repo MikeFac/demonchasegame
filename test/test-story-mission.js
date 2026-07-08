@@ -151,20 +151,29 @@ function testCombatConfig() {
     assert(!!combat, 'Combat config should exist');
     assert(combat.fixedMonsters.length === 3, 'Should have 3 fixed monsters (Goliath + 2 adds)');
     assert(combat.fixedMonsters[0].isBoss === true, 'First monster should be boss (Goliath)');
-    assert(combat.fixedMonsters[0].demonType === 'Fear', 'Goliath should be Fear type');
+    assert(combat.fixedMonsters[0].demonType === 'Goliath', 'Goliath should use the distinct Goliath type');
     assert(combat.fixedMonsters[0].stats.healthMultiplier === 6.0, 'Goliath should have 6x health');
     assert(combat.disableLevelBoss === true, 'Level boss spawning should be disabled');
     assert(combat.randomSpawnsEnabled === false, 'Random spawns should be disabled');
 
     // Collect combat config
-    const collectCombat = mission.collectCombatConfig;
-    assert(!!collectCombat, 'Collect combat config should exist');
-    assert(collectCombat.fixedMonsters.length === 5, 'Should have 5 guarding demons');
-    assert(collectCombat.monsters.includes('Fear'), 'Should include Fear demons');
-    assert(collectCombat.monsters.includes('Shame'), 'Should include Shame demons');
-    assert(collectCombat.randomSpawnsEnabled === true, 'Random spawns enabled for collect phase');
+	    const collectCombat = mission.collectCombatConfig;
+	    assert(!!collectCombat, 'Collect combat config should exist');
+	    assert(collectCombat.fixedMonsters.length === 5, 'Should have 5 guarding demons');
+	    const guardTypes = collectCombat.fixedMonsters.map((monster) => monster.demonType);
+	    const distinctGuardTypes = new Set(guardTypes);
+	    assert(distinctGuardTypes.size === collectCombat.fixedMonsters.length, 'Each guarding demon should use a distinct demon type');
+	    assert(collectCombat.monsters.includes('Fear'), 'Should include Fear demons');
+	    assert(collectCombat.monsters.includes('Shame'), 'Should include Shame demons');
+	    assert(collectCombat.monsters.includes('Confusion'), 'Should include Confusion demons');
+	    assert(collectCombat.monsters.includes('Unbelief'), 'Should include Unbelief demons');
+	    assert(collectCombat.randomSpawnsEnabled === true, 'Random spawns enabled for collect phase');
+	    const placements = mission.specialObjects[0].placements || [];
+	    assert(placements.length === 5, 'Smooth stones should have five explicit placements');
+	    const placementGuardTypes = new Set(placements.map((placement) => placement.guardDemonType));
+	    assert(placementGuardTypes.size === 5, 'Each smooth stone placement should name a different guard type');
 
-    // Puzzle should have multiple-choice options (no typing)
+	    // Puzzle should have multiple-choice options (no typing)
     const puzzle = mission.puzzles[0];
     assert(Array.isArray(puzzle.options) && puzzle.options.length >= 4, 'Puzzle should have multiple-choice options array');
     assert(puzzle.options.includes(puzzle.answer), 'Correct answer should be in options');

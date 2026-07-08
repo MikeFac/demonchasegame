@@ -112,6 +112,7 @@ function enterStoryPause(options) {
     if (typeof clearToasts === 'function') {
         clearToasts();
     }
+    clearCombatHint();
 
     if (player) {
         player.isMoving = false;
@@ -219,6 +220,42 @@ function setIntegratedStoryLaunchState(state) {
     return snapshot;
 }
 
+function findSafeStoryCollectiblePosition(item, wallGrid, constants) {
+    if (!item || !wallGrid || typeof wallGrid.collides !== 'function') return null;
+
+    const width = item.width || 28;
+    const height = item.height || 22;
+    const worldWidth = constants && constants.WORLD_WIDTH ? constants.WORLD_WIDTH : 3000;
+    const worldHeight = constants && constants.WORLD_HEIGHT ? constants.WORLD_HEIGHT : 3000;
+    const margin = Math.max(width, height, 60);
+
+    function isClear(x, y) {
+        return x >= margin && x <= worldWidth - margin &&
+            y >= margin && y <= worldHeight - margin &&
+            !wallGrid.collides(x, y, width, height);
+    }
+
+    if (isClear(item.x, item.y)) {
+        return { x: item.x, y: item.y, adjusted: false };
+    }
+
+    const step = 60;
+    for (let ring = 1; ring <= 8; ring++) {
+        const radius = ring * step;
+        const samples = Math.max(12, ring * 8);
+        for (let index = 0; index < samples; index++) {
+            const angle = (Math.PI * 2 * index) / samples;
+            const x = Math.round(item.x + Math.cos(angle) * radius);
+            const y = Math.round(item.y + Math.sin(angle) * radius);
+            if (isClear(x, y)) {
+                return { x, y, adjusted: true };
+            }
+        }
+    }
+
+    return null;
+}
+
 function seedIntegratedStoryCollectibles(seed) {
     if (!seed || !Array.isArray(seed.collectibles)) return false;
     if (!network || !network.engine || !network.engine.gameState) return false;
@@ -237,10 +274,24 @@ function seedIntegratedStoryCollectibles(seed) {
     integratedStoryPuzzlePause = seed.puzzlePause || null;
 
     const engineState = network.engine.gameState;
+    engineState.disableKillCountVictory = true;
+    gameState.disableKillCountVictory = true;
     const existing = Array.isArray(engineState.collectibles)
         ? engineState.collectibles.filter((item) => !item.storyCollectible)
         : [];
-    engineState.collectibles = existing.concat(seed.collectibles.map((item) => ({ ...item })));
+    const storyCollectibles = seed.collectibles.map((item) => {
+        const resolved = findSafeStoryCollectiblePosition(item, network.engine.wallGrid, network.engine.constants);
+        if (!resolved) return { ...item };
+        return {
+            ...item,
+            x: Math.round(resolved.x),
+            y: Math.round(resolved.y),
+            authoredX: item.x,
+            authoredY: item.y,
+            positionAdjusted: resolved.adjusted
+        };
+    });
+    engineState.collectibles = existing.concat(storyCollectibles);
     gameState.collectibles = engineState.collectibles;
     collectibles = gameState.collectibles;
     syncIntegratedStoryState();
@@ -249,6 +300,14 @@ function seedIntegratedStoryCollectibles(seed) {
         network.engine.emitter.emit('gameStateUpdate', network.engine.gameState);
     }
     return true;
+}
+
+function isIntegratedStoryMissionActive() {
+    return !!(currentMission &&
+        window.CoreStoryDirector &&
+        window.CoreStoryDirector.isDavidGoliathMission(currentMission) &&
+        integratedStoryState &&
+        !integratedStoryState.victoryStarted);
 }
 
 function isIntegratedStoryBossVictoryReady() {
@@ -260,8 +319,36 @@ function isIntegratedStoryBossVictoryReady() {
         !integratedStoryState.victoryStarted);
 }
 
+function shouldBlockPrematureIntegratedStoryVictory(data) {
+    return !!(data &&
+        data.result === 'victory' &&
+        isIntegratedStoryMissionActive() &&
+        !integratedStoryState.bossDefeated);
+}
+
+function blockPrematureIntegratedStoryVictory(data) {
+    if (!shouldBlockPrematureIntegratedStoryVictory(data)) return false;
+
+    gameOverFlag = false;
+    gameOverModalVisible = false;
+    finalStats = null;
+
+    if (network && network.engine) {
+        network.engine._gameEnded = false;
+        if (network.engine.gameState && (network.engine.gameState.requireBossKillForVictory || network.engine.gameState.disableKillCountVictory)) {
+            network.engine.gameState.monstersKilled = 0;
+        }
+    }
+
+    integratedStoryState.prematureVictoryBlocked = true;
+    syncIntegratedStoryState();
+    console.warn('[STORY] Ignored David/Goliath victory before Goliath was defeated');
+    return true;
+}
+
 function startIntegratedStoryVictory(data) {
     if (!isIntegratedStoryBossVictoryReady()) return false;
+    if (!integratedStoryState.bossDefeated && !(data && data.goliathDefeated)) return false;
     const victoryPause = window.CoreStoryDirector.buildVictoryPause(currentMission);
     if (!victoryPause) return false;
 
@@ -269,6 +356,11 @@ function startIntegratedStoryVictory(data) {
     gameOverModalVisible = false;
     finalStats = null;
     if (network && network.engine) {
+        network.engine._gameEnded = true;
+        if (network.engine.gameState) {
+            network.engine.gameState.disableKillCountVictory = false;
+            network.engine.gameState.requireBossKillForVictory = false;
+        }
         network.engine.stop();
     }
 
@@ -283,6 +375,26 @@ function startIntegratedStoryVictory(data) {
     syncIntegratedStoryState();
     enterStoryPause(victoryPause);
     return true;
+}
+
+function startIntegratedStoryVictoryFromBossKill(data) {
+    if (!isIntegratedStoryBossVictoryReady()) return false;
+    if (!data || !data.isBoss) return false;
+
+    integratedStoryState.bossDefeated = true;
+    integratedStoryState.boss = {
+        ...(integratedStoryState.boss || {}),
+        defeated: true,
+        monsterId: data.monsterId || null,
+        label: data.bossLabel || (integratedStoryState.boss && integratedStoryState.boss.label) || 'Goliath'
+    };
+    syncIntegratedStoryState();
+
+    return startIntegratedStoryVictory({
+        ...data,
+        result: 'victory',
+        goliathDefeated: true
+    });
 }
 
 function finishIntegratedStoryMission() {
@@ -342,6 +454,8 @@ function startIntegratedStoryBossPhase(puzzlePause) {
     engineState.monsters = [];
     engineState.monstersKilled = 0;
     engineState.monstersToKill = combat.monstersToKill || 1;
+    engineState.disableKillCountVictory = false;
+    engineState.requireBossKillForVictory = true;
     engineState.maxSpawns = combat.maxMonsters || 1;
     engineState.spawnsLeft = 0;
     if (engine.levelData && engine.levelData[engineState.gameLevel]) {
@@ -358,6 +472,8 @@ function startIntegratedStoryBossPhase(puzzlePause) {
     integratedStoryState.phaseId = bossPhase ? bossPhase.id : 'bossFight';
     integratedStoryState.nextPhase = bossPhase ? (bossPhase.nextPhase || null) : 'victory';
     integratedStoryState.bossStarted = true;
+    integratedStoryState.bossDefeated = false;
+    integratedStoryState.prematureVictoryBlocked = false;
     integratedStoryState.boss = {
         label: bossConfig.label || 'Goliath',
         demonType: bossConfig.demonType || null,
@@ -1124,6 +1240,7 @@ function getCombatDistanceForMonster(monster) {
 }
 
 const DEMON_TYPES = {
+    Goliath: resolveAssetUrl('images/monsters/goliath_giant.png'),
     Fear: resolveAssetUrl('images/monsters/fear_demon.png'),
     Condemnation: resolveAssetUrl('images/monsters/condemnation_demon.png'),
     Unbelief: resolveAssetUrl('images/monsters/unbelief_demon.png'),
@@ -3184,12 +3301,12 @@ async function init() {
                     }
                 }
 
-                if (completedIntroMission) {
-                    flashMessages.push({
-                        text: 'Mission Complete!',
-                        color: '#a8ffb0',
-                        x: canvas.width / 2,
-                        y: canvas.height / 2 - 30,
+	                if (completedIntroMission) {
+	                    flashMessages.push({
+	                        text: 'Mission Complete!',
+	                        color: '#a8ffb0',
+	                        x: canvas.width / 2,
+	                        y: canvas.height / 2 - 30,
                         startTime: Date.now(),
                         duration: 2600,
                         fontSize: 34,
@@ -3203,11 +3320,16 @@ async function init() {
                         startTime: Date.now(),
                         type: 'confetti',
                         maxFrames: 22
-                    });
+	                    });
+	                }
+
+                if (isBoss && startIntegratedStoryVictoryFromBossKill({ monsterId, x, y, isBoss, bossLabel, bonusXp })) {
+                    console.log('[STORY] Integrated David/Goliath victory started after Goliath kill');
+                    return;
                 }
 
-                // Clear enemy HUD if this was the monster we were tracking
-                if (lastAttackedMonster && lastAttackedMonster.id === monsterId) {
+	                // Clear enemy HUD if this was the monster we were tracking
+	                if (lastAttackedMonster && lastAttackedMonster.id === monsterId) {
                     lastAttackedMonster = null;
                 }
             },
@@ -3297,16 +3419,27 @@ async function init() {
                 if (data.code !== playerCode) {
                     flashMessages.push({ text: `${data.username} disconnected`, color: '#ffaa00', startTime: Date.now(), duration: 3000 });
                 }
-            },
-            onPlayerReconnected: (data) => {
-                flashMessages.push({ text: `${data.username} reconnected!`, color: '#44ff44', startTime: Date.now(), duration: 3000 });
-            },
-            onGameEnded: (data) => {
-                console.log('[GAMEOVER] onGameEnded fired! currentMission:', currentMission, 'result:', data.result);
-                if (data.result === 'victory' && startIntegratedStoryVictory(data)) {
-                    console.log('[STORY] Integrated David/Goliath victory dialogue started');
+	            },
+	            onPlayerReconnected: (data) => {
+	                flashMessages.push({ text: `${data.username} reconnected!`, color: '#44ff44', startTime: Date.now(), duration: 3000 });
+	            },
+	            onGameEnded: (data) => {
+	                console.log('[GAMEOVER] onGameEnded fired! currentMission:', currentMission, 'result:', data.result);
+                if (data.result === 'victory' && blockPrematureIntegratedStoryVictory(data)) {
                     return;
                 }
+                if (data.result === 'victory' &&
+                    currentMission &&
+                    window.CoreStoryDirector &&
+                    window.CoreStoryDirector.isDavidGoliathMission(currentMission) &&
+                    integratedStoryState &&
+                    integratedStoryState.victoryStarted) {
+                    return;
+                }
+	                if (data.result === 'victory' && startIntegratedStoryVictory(data)) {
+	                    console.log('[STORY] Integrated David/Goliath victory dialogue started');
+	                    return;
+	                }
                 gameOverFlag = true;
                 gameOverModalVisible = true;
                 const sessionDuration = Math.floor((Date.now() - sessionStartTime) / 1000);
@@ -5057,7 +5190,6 @@ function gameLoop(generation) {
             vQuality: (currentQuiz && currentQuiz.contentCategory) ? currentQuiz.contentCategory : window.vQuality,
             currentCombatCategory: player ? player.currentCombatCategory : null,
             onboardingGuide,
-            combatHint: onboardingGuide ? null : combatHint,
             startHereSummaryVisible: !!startHereSummaryState,
             startHereSummaryState,
             categoryPickerOpen,
@@ -5082,7 +5214,7 @@ function gameLoop(generation) {
                 verseTestShielded,
                 viewMode
             },
-            combatHint: onboardingGuide ? null : (combatHint ? {
+            combatHint: (onboardingGuide || isStoryPaused()) ? null : (combatHint ? {
                 line1: combatHint.line1,
                 line2: combatHint.line2,
                 duration: combatHint.duration,
@@ -5718,7 +5850,7 @@ function gameLoop(generation) {
         const killed = gameState.monstersKilled || 0;
         const total = gameState.maxSpawns;
 
-        if (killed >= total * 0.6 && !levelCompleted) {
+        if (!gameState.disableKillCountVictory && killed >= total * 0.6 && !levelCompleted) {
             console.log("Checking level completion. Killed:", killed, "Total:", total);
             if (gameState.gameLevel < Object.keys(levelData).length) {
                 console.log("Level completed — notifying server");

@@ -1,6 +1,6 @@
 const ALL_DEMON_TYPES = [
     'Blindness', 'Condemnation', 'Confusion', 'Deception', 'Depression', 'Despair',
-    'Doubt', 'Fear', 'Ignorance', 'Infirmity', 'Poverty', 'Pride',
+    'Doubt', 'Fear', 'Goliath', 'Ignorance', 'Infirmity', 'Poverty', 'Pride',
     'Shame', 'Strife', 'Swarm', 'Temptation', 'Unbelief'
 ];
 
@@ -25,7 +25,7 @@ const LevelConfig = {
     combatMatrix: {
         affinities: {
             Courage: buildAffinityRow(
-                { Fear: 1.6, Shame: 1.3, Despair: 1.25, Strife: 1.2 },
+                { Fear: 1.6, Goliath: 1.5, Shame: 1.3, Despair: 1.25, Strife: 1.2 },
                 { Deception: 0.9, Temptation: 0.95 }
             ),
             Endurance: buildAffinityRow(
@@ -33,7 +33,7 @@ const LevelConfig = {
                 { Deception: 0.9, Blindness: 0.95 }
             ),
             Faith: buildAffinityRow(
-                { Fear: 1.6, Doubt: 1.5, Unbelief: 1.4, Despair: 1.2 },
+                { Fear: 1.6, Goliath: 1.5, Doubt: 1.5, Unbelief: 1.4, Despair: 1.2 },
                 { Pride: 0.95, Strife: 0.9 }
             ),
             Focus: buildAffinityRow(

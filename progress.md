@@ -1394,3 +1394,165 @@ Original prompt: Check the implementation of docs/multi-version-songs-implementa
 - Next migration gate:
   - keep standalone story combat in place
   - next safe extraction is to move stateful integrated story runtime into a small adapter/controller, or run another promoted-default soak before deleting legacy story code
+
+2026-07-08:
+- Completed Phase 12 mission-content polish for the integrated David/Goliath path.
+- Mission changes:
+  - five smooth stones now use explicit authored placements spread across the open map
+  - collect-phase guard demons now use five distinct types: `Fear`, `Shame`, `Doubt`, `Confusion`, `Unbelief`
+  - `CoreStoryDirector.buildCollectibleSeed()` supports explicit `specialObjects[].placements` with the old generated circular layout preserved as fallback
+- Runtime safety:
+  - story collectibles are nudged to the nearest nearby clear tile if the random OpenPlains wall layout would place an authored story stone inside generated walls
+  - seeded collectibles retain `authoredX`, `authoredY`, and `positionAdjusted` for browser-test/debug visibility
+- Regression updates:
+  - `scripts/test-david-goliath-integrated.js` now asserts:
+    - five story stones remain spread out (`minimumStoneDistance >= 650`)
+    - story stones do not collide with generated walls
+    - collect phase spawns all five expected guard demon types
+  - the same script now captures `stone-1-guard.png` through `stone-5-guard.png` for visual inspection of the guarded stones
+  - `test/test-story-mission.js` now checks distinct collect-phase guard types and five explicit stone placements
+- Visual artifacts inspected:
+  - `output/web-game/david-goliath-integrated/stone-1-guard.png`
+  - `output/web-game/david-goliath-integrated/stone-2-guard.png`
+  - `output/web-game/david-goliath-integrated/stone-3-guard.png`
+  - `output/web-game/david-goliath-integrated/stone-4-guard.png`
+  - `output/web-game/david-goliath-integrated/stone-5-guard.png`
+  - `output/web-game/shot-0.png` from the standard web-game client mission-menu smoke
+- Verification completed:
+  - `node --check game.js`
+  - `node --check src/client/CoreStoryDirector.js`
+  - `node --check scripts/test-david-goliath-integrated.js`
+  - `node -e "JSON.parse(require('fs').readFileSync('missions/featured-david-goliath.json','utf8')); console.log('OK')"`
+  - `node test/test-story-mission.js`
+  - `./restart-server.sh`
+  - `node scripts/test-david-goliath-integrated.js`
+  - `node test/test-fixed-monster-spawns.js` (first run hit known opening-count flake once; rerun passed)
+  - `node test/test-guard-behavior.js`
+  - `node "$HOME/.codex/skills/develop-web-game/scripts/web_game_playwright_client.js" --url http://localhost:3500/ --click-selector '#btnMissions' --actions-json '{"steps":[{"buttons":[],"frames":20}]}' --iterations 1`
+- Rollback patch for this phase:
+  - save/update current phase diff at `/tmp/david-goliath-story-phase-12.patch`
+  - rollback command: `git apply -R /tmp/david-goliath-story-phase-12.patch`
+
+2026-07-08:
+- Completed Phase 13 polish for David/Goliath integrated mission structures and boss completion.
+- Map/structure changes:
+  - `OpenPlains` now generates larger hollow buildings with three-cell doorways instead of narrow one-cell openings
+  - added five deterministic enterable landmark structures around the David/Goliath smooth-stone coordinates
+  - collect-phase guard demons were nudged deeper inside the landmark structures so 48px monster sprites do not overlap walls
+- Boss completion fix:
+  - integrated David/Goliath victory now requires an explicit Goliath/boss kill event
+  - generic `_endGame('victory')` events during the boss phase are blocked until `bossDefeated === true`
+  - the browser regression now verifies that premature victory leaves the mission in `bossFight`, keeps Goliath alive, and does not open the generic game-over modal
+- Regression updates:
+  - added `test/test-open-plains-structures.js` to assert stone points, guard points, and player-width entrances are clear in OpenPlains
+  - `scripts/test-david-goliath-integrated.js` now records `nearWallCount`, `engineEnded`, and an `after-premature-victory` snapshot
+  - integrated browser test now asserts stones are inside enterable landmark structures and that victory only starts after a boss kill event
+- Visual artifacts inspected:
+  - `output/web-game/david-goliath-integrated/stone-1-guard.png`
+  - `output/web-game/david-goliath-integrated/stone-4-guard.png`
+  - `output/web-game/david-goliath-integrated/after-premature-victory.png`
+  - `output/web-game/david-goliath-integrated/after-boss-victory.png`
+  - `output/web-game/shot-0.png`
+- Verification completed:
+  - `node --check game.js`
+  - `node --check scripts/test-david-goliath-integrated.js`
+  - `node --check src/shared/map-generators/OpenPlains.js`
+  - `node --check test/test-open-plains-structures.js`
+  - `node test/test-open-plains-structures.js`
+  - `node test/test-story-mission.js`
+  - JSON parse check for `missions/featured-david-goliath.json`
+  - `./restart-server.sh`
+  - `node scripts/test-david-goliath-integrated.js` (42 assertions, 0 failures, 0 console errors, 0 page errors)
+  - `node test/test-fixed-monster-spawns.js`
+  - `node test/test-guard-behavior.js`
+  - `node scripts/test-story-pause-scaffold.js`
+  - `node "$HOME/.codex/skills/develop-web-game/scripts/web_game_playwright_client.js" --url http://localhost:3500/ --click-selector '#btnMissions' --actions-json '{"steps":[{"buttons":[],"frames":20}]}' --iterations 1` (only existing module-type warning from the skill package)
+- Rollback for this phase:
+  - pre-phase file backups: `/tmp/david-goliath-story-phase-13-backup/`
+  - targeted phase patch: `/tmp/david-goliath-story-phase-13.patch`
+
+2026-07-08:
+- Completed Phase 14 follow-up for reusable rooms, Goliath victory hardening, and Goliath art.
+- Documentation:
+  - added `rooms-structure.md`
+  - documented enterable room sizing rules, 3-cell doorways, clear entry pads, authored object/guard placement rules, and the regression tests to run after room changes
+- Victory-condition hardening:
+  - added `gameState.requireBossKillForVictory` support in `src/shared/GameEngine.js`
+  - David/Goliath boss phase now sets `requireBossKillForVictory = true`
+  - engine kill-count victory is ignored while a required boss is still alive
+  - premature generic victory events reset the engine-ended state and kill count instead of advancing the story
+  - integrated browser regression now checks both:
+    - engine kill-count threshold does not end the mission while Goliath is alive
+    - direct generic victory is blocked until Goliath is defeated
+- Goliath art:
+  - generated a new Goliath giant source image using built-in image generation with chroma-key background
+  - removed the background locally and saved the final transparent 512x512 sprite:
+    - `images/monsters/goliath_giant.png`
+  - source chroma image retained for traceability:
+    - `output/imagegen/goliath_giant_chroma.png`
+  - wired `Goliath` into:
+    - `missions/featured-david-goliath.json`
+    - `game.js` demon sprite loading
+    - `src/client/StoryMissionLauncher.js`
+    - `src/shared/LevelConfig.js`
+    - `src/shared/entities/MonsterManager.js`
+- UI polish:
+  - story pause now clears/suppresses combat hints so the generic "A demon is attacking!" prompt cannot cover victory dialogue
+- Visual artifacts inspected:
+  - `images/monsters/goliath_giant.png`
+  - `output/web-game/david-goliath-integrated/after-boss-focus.png`
+  - `output/web-game/david-goliath-integrated/after-premature-victory.png`
+  - `output/web-game/david-goliath-integrated/after-boss-victory.png`
+- Verification completed:
+  - `node --check game.js`
+  - `node --check src/shared/GameEngine.js`
+  - `node --check scripts/test-david-goliath-integrated.js`
+  - `node --check src/shared/LevelConfig.js`
+  - `node --check src/shared/entities/MonsterManager.js`
+  - `node --check src/client/StoryMissionLauncher.js`
+  - `node test/test-open-plains-structures.js`
+  - `node test/test-story-mission.js`
+  - JSON parse check for `missions/featured-david-goliath.json`
+  - alpha validation for `images/monsters/goliath_giant.png`
+  - `./restart-server.sh`
+  - `node scripts/test-david-goliath-integrated.js` (44 assertions, 0 failures, 0 console errors, 0 page errors)
+  - `node test/test-fixed-monster-spawns.js`
+  - `node test/test-guard-behavior.js`
+  - `node scripts/test-story-pause-scaffold.js` (first run hit a Chrome launch SIGTRAP/crashpad flake; immediate rerun passed)
+  - standard web-game Playwright client mission-menu smoke (only existing skill package module-type warning)
+- Rollback for this phase:
+  - pre-phase file backups: `/tmp/david-goliath-story-phase-14-backup/`
+  - targeted phase patch: `/tmp/david-goliath-story-phase-14.patch`
+
+2026-07-08:
+- Completed Phase 15 fix for premature David/Goliath victory during stone collection.
+- Root cause:
+  - Phase 14 blocked generic kill-count victory only after the boss phase had started.
+  - During `collectStones`, the legacy kill-count and level-complete paths could still trigger after guard demons were killed.
+- Fix:
+  - added `gameState.disableKillCountVictory` support in `src/shared/GameEngine.js`
+  - David/Goliath integrated collect phase now sets `disableKillCountVictory = true`
+  - boss phase clears the collect lock and relies on `requireBossKillForVictory = true`
+  - generic premature victory blocking now applies to the whole active integrated story, not just the boss phase
+  - legacy `game.js` level-complete banner/send path now respects `disableKillCountVictory`
+- Regression updates:
+  - `scripts/test-david-goliath-integrated.js` now forces `monstersKilled >= monstersToKill` during `collectStones`
+  - test asserts no generic victory modal, engine does not end, and story remains in `collectStones`
+  - captured artifact: `output/web-game/david-goliath-integrated/after-collect-threshold.png`
+- Visual artifacts inspected:
+  - `output/web-game/david-goliath-integrated/after-collect-threshold.png`
+  - `output/web-game/shot-0.png`
+- Verification completed:
+  - `node --check game.js`
+  - `node --check src/shared/GameEngine.js`
+  - `node --check scripts/test-david-goliath-integrated.js`
+  - `./restart-server.sh`
+  - `node scripts/test-david-goliath-integrated.js --enable-integrated-story` (46 assertions, 0 failures, 0 page errors)
+  - `node test/test-story-mission.js`
+  - `node test/test-open-plains-structures.js`
+  - `node test/test-fixed-monster-spawns.js` (first run hit a spawn-position flake; immediate rerun passed)
+  - `node test/test-guard-behavior.js`
+  - standard web-game Playwright client mission-menu smoke (sandboxed run hit Chromium sandbox SIGTRAP; escalated rerun passed with only existing skill package module-type warning)
+- Rollback for this phase:
+  - pre-phase file backups: `/tmp/david-goliath-story-phase-15-backup/`
+  - targeted phase patch: `/tmp/david-goliath-story-phase-15.patch`

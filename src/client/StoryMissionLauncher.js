@@ -21,6 +21,7 @@
     var _onRestartGame = null;
 
     var STORY_DEMON_ASSET_PATHS = {
+        Goliath: '/images/monsters/goliath_giant.png',
         Fear: '/images/monsters/fear_demon.png',
         Shame: '/images/monsters/SHAME-ACCUSATION.png',
         Doubt: '/images/monsters/doubt_spirit.png',

@@ -98,6 +98,9 @@ async function captureState(page, name) {
           gameLevel: gameState.gameLevel,
           monstersKilled: gameState.monstersKilled,
           monstersToKill: gameState.monstersToKill,
+          disableKillCountVictory: !!gameState.disableKillCountVictory,
+          requireBossKillForVictory: !!gameState.requireBossKillForVictory,
+          engineEnded: typeof network !== 'undefined' && network && network.engine ? !!network.engine._gameEnded : null,
           pausedForStory: !!gameState.pausedForStory,
           storyPhaseId: gameState.storyPhaseId || null,
           integratedStory: gameState.integratedStory || null
@@ -115,10 +118,24 @@ async function captureState(page, name) {
           type: item.type,
           x: item.x,
           y: item.y,
+          authoredX: item.authoredX || null,
+          authoredY: item.authoredY || null,
+          positionAdjusted: !!item.positionAdjusted,
           storyCollectible: !!item.storyCollectible,
           storyObjectId: item.storyObjectId || null,
-          label: item.label || null
-        }));
+          guardDemonType: item.guardDemonType || null,
+	          wallCollides: typeof clientWallGrid !== 'undefined' && clientWallGrid
+	            ? clientWallGrid.collides(item.x, item.y, item.width || 28, item.height || 22)
+	            : null,
+	          nearWallCount: typeof clientWalls !== 'undefined' && Array.isArray(clientWalls)
+	            ? clientWalls.filter((wall) => {
+	                const wallCenterX = wall.x + wall.width / 2;
+	                const wallCenterY = wall.y + wall.height / 2;
+	                return Math.abs(wallCenterX - item.x) <= 180 && Math.abs(wallCenterY - item.y) <= 180;
+	              }).length
+	            : null,
+	          label: item.label || null
+	        }));
       }
     } catch (_) {
       collectiblesSnapshot = [];
@@ -250,6 +267,85 @@ async function samplePausedMovement(page) {
   };
 }
 
+async function setPlayerPosition(page, target) {
+  await page.evaluate((position) => {
+    let resolvedX = position.x;
+    let resolvedY = position.y;
+    try {
+      if (!position.allowUnsafe && typeof clientWallGrid !== 'undefined' && clientWallGrid &&
+          typeof player !== 'undefined' && player) {
+        const width = player.width || 48;
+        const height = player.height || 48;
+        const isClear = (x, y) => !clientWallGrid.collides(x, y, width, height);
+        if (!isClear(resolvedX, resolvedY)) {
+          let found = null;
+          for (let ring = 1; ring <= 8 && !found; ring++) {
+            const radius = ring * 60;
+            const samples = Math.max(12, ring * 8);
+            for (let index = 0; index < samples; index++) {
+              const angle = (Math.PI * 2 * index) / samples;
+              const x = Math.round(position.x + Math.cos(angle) * radius);
+              const y = Math.round(position.y + Math.sin(angle) * radius);
+              if (isClear(x, y)) {
+                found = { x, y };
+                break;
+              }
+            }
+          }
+          if (found) {
+            resolvedX = found.x;
+            resolvedY = found.y;
+          }
+        }
+      }
+    } catch (_) {
+      // Keep the requested position if wall-grid probing is unavailable.
+    }
+
+    if (typeof player !== 'undefined' && player) {
+      player.x = resolvedX;
+      player.y = resolvedY;
+    }
+    try {
+      if (typeof network !== 'undefined' && network && network.engine &&
+          typeof playerCode !== 'undefined' && playerCode &&
+          network.engine.gameState && network.engine.gameState.players[playerCode]) {
+        network.engine.gameState.players[playerCode].x = resolvedX;
+        network.engine.gameState.players[playerCode].y = resolvedY;
+      }
+    } catch (_) {
+      // local browser test only
+    }
+  }, target);
+}
+
+async function captureStoneGuardViews(page, stones) {
+  for (let i = 0; i < stones.length; i++) {
+    const stone = stones[i];
+    const viewPosition = await page.evaluate((target) => {
+      try {
+        const guard = typeof monsters !== 'undefined' && Array.isArray(monsters)
+          ? monsters.find((monster) => monster && monster.demonType === target.guardDemonType)
+          : null;
+        if (guard) {
+          return {
+            x: Math.round((target.x + guard.x) / 2),
+            y: Math.round((target.y + guard.y) / 2 + 120)
+          };
+        }
+      } catch (_) {
+        // Fall through to stone-relative framing.
+      }
+      return { x: target.x, y: target.y + 220 };
+    }, stone);
+    await setPlayerPosition(page, viewPosition);
+    await page.waitForTimeout(120);
+    await page.locator('#gameCanvas').screenshot({
+      path: path.join(OUTPUT_DIR, `stone-${i + 1}-guard.png`)
+    });
+  }
+}
+
 async function collectStoryStones(page) {
   const collectionLog = [];
   const stones = await page.evaluate(() => {
@@ -257,7 +353,7 @@ async function collectStoryStones(page) {
       if (typeof gameState !== 'undefined' && gameState && Array.isArray(gameState.collectibles)) {
         return gameState.collectibles
           .filter((item) => item && item.storyCollectible)
-          .map((item) => ({ id: item.id, x: item.x, y: item.y, type: item.type }));
+          .map((item) => ({ id: item.id, x: item.x, y: item.y, type: item.type, guardDemonType: item.guardDemonType }));
       }
     } catch (_) {
       return [];
@@ -265,27 +361,14 @@ async function collectStoryStones(page) {
     return [];
   });
 
+  await captureStoneGuardViews(page, stones);
+
   for (const stone of stones) {
     const before = await page.evaluate(() => {
       return window.__integratedStoryState ? window.__integratedStoryState.collected : 0;
     });
 
-    await page.evaluate((target) => {
-      if (typeof player !== 'undefined' && player) {
-        player.x = target.x;
-        player.y = target.y;
-      }
-      try {
-        if (typeof network !== 'undefined' && network && network.engine &&
-            typeof playerCode !== 'undefined' && playerCode &&
-            network.engine.gameState && network.engine.gameState.players[playerCode]) {
-          network.engine.gameState.players[playerCode].x = target.x;
-          network.engine.gameState.players[playerCode].y = target.y;
-        }
-      } catch (_) {
-        // local browser test only
-      }
-    }, stone);
+    await setPlayerPosition(page, Object.assign({}, stone, { allowUnsafe: true }));
 
     await page.waitForFunction((previousCount) => {
       return window.__integratedStoryState &&
@@ -344,6 +427,18 @@ function assertCondition(assertions, condition, message, details) {
   });
 }
 
+function getMinimumDistance(points) {
+  let minimum = Infinity;
+  for (let i = 0; i < points.length; i++) {
+    for (let j = i + 1; j < points.length; j++) {
+      const dx = points[i].x - points[j].x;
+      const dy = points[i].y - points[j].y;
+      minimum = Math.min(minimum, Math.sqrt(dx * dx + dy * dy));
+    }
+  }
+  return minimum === Infinity ? 0 : minimum;
+}
+
 async function main() {
   await ensureDir(OUTPUT_DIR);
   await fs.promises.rm(path.join(OUTPUT_DIR, 'fatal-error.json'), { force: true });
@@ -369,11 +464,14 @@ async function main() {
 
   let initialState = null;
   let afterIntroState = null;
+  let afterCollectThresholdState = null;
   let afterStonesState = null;
   let afterPuzzleWrongState = null;
   let afterPuzzleCorrectState = null;
   let afterPuzzleResumeState = null;
   let afterBossFocusState = null;
+  let afterEngineThresholdState = null;
+  let afterPrematureVictoryState = null;
   let afterBossVictoryState = null;
   let afterVictoryCompleteState = null;
   let afterMoveState = null;
@@ -499,10 +597,62 @@ async function main() {
       assertCondition(assertions, afterIntroState.integratedStoryState && afterIntroState.integratedStoryState.targetCount === 5, 'Integrated story seeds five smooth stones', {
         integratedStoryState: afterIntroState.integratedStoryState
       });
-      assertCondition(assertions, afterIntroState.collectibles.filter((item) => item.storyCollectible).length === 5, 'Five story stone collectibles are present in core game state', {
-        collectibles: afterIntroState.collectibles
+	      assertCondition(assertions, afterIntroState.collectibles.filter((item) => item.storyCollectible).length === 5, 'Five story stone collectibles are present in core game state', {
+	        collectibles: afterIntroState.collectibles
+	      });
+	      const storyStones = afterIntroState.collectibles.filter((item) => item.storyCollectible);
+	      const minimumStoneDistance = getMinimumDistance(storyStones);
+	      assertCondition(assertions, minimumStoneDistance >= 650, 'Story stones are spread across the mission area', {
+	        minimumStoneDistance,
+	        storyStones
+	      });
+	      assertCondition(assertions, storyStones.every((item) => item.wallCollides === false), 'Story stones are seeded outside generated walls', {
+	        storyStones
+	      });
+	      assertCondition(assertions, storyStones.every((item) => item.nearWallCount >= 8), 'Story stones are placed inside enterable landmark structures', {
+	        storyStones
+	      });
+	      const expectedGuardTypes = ['Fear', 'Shame', 'Doubt', 'Confusion', 'Unbelief'];
+      const liveGuardTypes = new Set(afterIntroState.monsters.map((monster) => monster.demonType).filter(Boolean));
+	      assertCondition(assertions, expectedGuardTypes.every((demonType) => liveGuardTypes.has(demonType)), 'Collect phase spawns a different guard demon type for each stone', {
+	        expectedGuardTypes,
+	        liveGuardTypes: Array.from(liveGuardTypes),
+	        monsters: afterIntroState.monsters
+	      });
+
+      assertCondition(assertions, afterIntroState.gameState && afterIntroState.gameState.disableKillCountVictory === true, 'Collect phase disables generic kill-count victory', {
+        gameState: afterIntroState.gameState
       });
-    }
+
+      await page.evaluate(() => {
+        if (typeof network !== 'undefined' && network && network.engine) {
+          if (network.engine.gameState) {
+            network.engine.gameState.monstersKilled = network.engine.gameState.monstersToKill || 5;
+          }
+          network.engine.update();
+        }
+      });
+      await page.waitForTimeout(250);
+      afterCollectThresholdState = await captureState(page, 'after-collect-threshold');
+      assertCondition(assertions, afterCollectThresholdState.gameState &&
+        afterCollectThresholdState.gameState.engineEnded === false &&
+        afterCollectThresholdState.gameOverModalVisible === false &&
+        afterCollectThresholdState.integratedStoryState &&
+        afterCollectThresholdState.integratedStoryState.phaseId === 'collectStones', 'Collection-phase kill threshold does not trigger generic victory', {
+        gameState: afterCollectThresholdState.gameState,
+        gameOverModalVisible: afterCollectThresholdState.gameOverModalVisible,
+        integratedStoryState: afterCollectThresholdState.integratedStoryState
+      });
+
+      await page.evaluate(() => {
+        if (typeof network !== 'undefined' && network && network.engine && network.engine.gameState) {
+          network.engine.gameState.monstersKilled = 0;
+          if (typeof gameState !== 'undefined' && gameState) {
+            gameState.monstersKilled = 0;
+          }
+        }
+      });
+	    }
 
     movement = await sampleMovement(page);
     await page.waitForTimeout(250);
@@ -575,10 +725,13 @@ async function main() {
       assertCondition(assertions, afterPuzzleResumeState.storyPaused === false, 'Puzzle Continue resumes core gameplay', {
         storyPaused: afterPuzzleResumeState.storyPaused
       });
-      assertCondition(assertions, afterPuzzleResumeState.monsters.some((monster) => monster.isBoss && monster.label === 'Goliath'), 'Phase 5 spawns Goliath as a normal fixed boss monster', {
+      assertCondition(assertions, afterPuzzleResumeState.monsters.some((monster) => monster.isBoss && monster.label === 'Goliath' && monster.demonType === 'Goliath'), 'Phase 5 spawns Goliath as a distinct fixed boss monster', {
         monsters: afterPuzzleResumeState.monsters
       });
       assertCondition(assertions, afterPuzzleResumeState.gameState && afterPuzzleResumeState.gameState.monstersToKill === 1, 'Boss phase sets the core kill target to one', {
+        gameState: afterPuzzleResumeState.gameState
+      });
+      assertCondition(assertions, afterPuzzleResumeState.gameState && afterPuzzleResumeState.gameState.requireBossKillForVictory === true, 'Boss phase requires a boss kill before victory', {
         gameState: afterPuzzleResumeState.gameState
       });
       assertCondition(assertions, afterPuzzleResumeState.integratedStoryState &&
@@ -587,25 +740,20 @@ async function main() {
         integratedStoryState: afterPuzzleResumeState.integratedStoryState
       });
 
-      await page.evaluate(() => {
+      const bossFocusPosition = await page.evaluate(() => {
         try {
           const boss = typeof monsters !== 'undefined' && Array.isArray(monsters)
             ? monsters.find((monster) => monster && monster.isBoss)
             : null;
-          if (boss && typeof player !== 'undefined' && player) {
-            player.x = boss.x;
-            player.y = boss.y + 180;
-            if (typeof playerCode !== 'undefined' && playerCode &&
-                typeof network !== 'undefined' && network && network.engine &&
-                network.engine.gameState && network.engine.gameState.players[playerCode]) {
-              network.engine.gameState.players[playerCode].x = player.x;
-              network.engine.gameState.players[playerCode].y = player.y;
-            }
-          }
+          if (boss) return { x: boss.x, y: boss.y + 180 };
         } catch (_) {
           // visual focus only
         }
+        return null;
       });
+      if (bossFocusPosition) {
+        await setPlayerPosition(page, bossFocusPosition);
+      }
       await page.waitForTimeout(250);
       afterBossFocusState = await captureState(page, 'after-boss-focus');
 
@@ -615,12 +763,57 @@ async function main() {
             network.engine.gameState.monstersKilled = 1;
             network.engine.gameState.monstersToKill = 1;
           }
+          network.engine.update();
+        }
+      });
+      await page.waitForTimeout(250);
+      afterEngineThresholdState = await captureState(page, 'after-engine-threshold');
+      assertCondition(assertions, afterEngineThresholdState.gameState &&
+        afterEngineThresholdState.gameState.engineEnded === false &&
+        afterEngineThresholdState.integratedStoryState &&
+        afterEngineThresholdState.integratedStoryState.phaseId === 'bossFight', 'Engine kill-count victory is blocked while Goliath is alive', {
+        gameState: afterEngineThresholdState.gameState,
+        integratedStoryState: afterEngineThresholdState.integratedStoryState
+      });
+
+      await page.evaluate(() => {
+        if (typeof network !== 'undefined' && network && network.engine) {
           network.engine._endGame('victory');
         }
       });
-      await page.waitForFunction(() => {
-        return typeof window.isStoryPaused === 'function' &&
-          window.isStoryPaused() &&
+      await page.waitForTimeout(350);
+      afterPrematureVictoryState = await captureState(page, 'after-premature-victory');
+      assertCondition(assertions, afterPrematureVictoryState.integratedStoryState &&
+        afterPrematureVictoryState.integratedStoryState.phaseId === 'bossFight' &&
+        afterPrematureVictoryState.integratedStoryState.prematureVictoryBlocked === true, 'Generic victory is blocked until Goliath is defeated', {
+        integratedStoryState: afterPrematureVictoryState.integratedStoryState,
+        gameState: afterPrematureVictoryState.gameState
+      });
+      assertCondition(assertions, afterPrematureVictoryState.gameOverModalVisible === false, 'Premature Goliath victory block does not open generic game-over modal', {
+        gameOverModalVisible: afterPrematureVictoryState.gameOverModalVisible
+      });
+
+	      await page.evaluate(() => {
+	        if (typeof network === 'undefined' || !network || !network.engine || !network.engine.gameState) {
+	          throw new Error('Engine unavailable for boss defeat simulation');
+	        }
+	        const boss = network.engine.gameState.monsters.find((monster) => monster && monster.isBoss);
+	        if (!boss) throw new Error('Goliath boss unavailable for defeat simulation');
+	        network.engine.gameState.monsters = network.engine.gameState.monsters.filter((monster) => monster.id !== boss.id);
+	        network.engine.gameState.monstersKilled = (network.engine.gameState.monstersKilled || 0) + 1;
+	        network.engine.emitter.emit('monsterKilled', {
+	          monsterId: boss.id,
+	          x: boss.x,
+	          y: boss.y,
+	          isBoss: true,
+	          bossLabel: boss.bossLabel || boss.label || 'Goliath',
+	          bonusXp: boss.bonusXp || 0
+	        });
+	        network.engine.emitter.emit('gameStateUpdate', network.engine.gameState);
+	      });
+	      await page.waitForFunction(() => {
+	        return typeof window.isStoryPaused === 'function' &&
+	          window.isStoryPaused() &&
           window.__integratedStoryState &&
           window.__integratedStoryState.phaseId === 'victory';
       }, null, { timeout: 5000 });
@@ -630,11 +823,12 @@ async function main() {
         storyPauseDebug: afterBossVictoryState.storyPauseDebug,
         gameOverModalVisible: afterBossVictoryState.gameOverModalVisible
       });
-      assertCondition(assertions, afterBossVictoryState.integratedStoryState &&
-        afterBossVictoryState.integratedStoryState.phaseId === 'victory' &&
-        afterBossVictoryState.integratedStoryState.victoryStarted === true, 'Integrated story state enters victory after Goliath defeat', {
-        integratedStoryState: afterBossVictoryState.integratedStoryState
-      });
+	      assertCondition(assertions, afterBossVictoryState.integratedStoryState &&
+	        afterBossVictoryState.integratedStoryState.phaseId === 'victory' &&
+	        afterBossVictoryState.integratedStoryState.victoryStarted === true &&
+	        afterBossVictoryState.integratedStoryState.bossDefeated === true, 'Integrated story state enters victory after Goliath defeat', {
+	        integratedStoryState: afterBossVictoryState.integratedStoryState
+	      });
       assertCondition(assertions, afterBossVictoryState.gameOverModalVisible === false, 'Integrated victory suppresses generic game-over modal', {
         gameOverModalVisible: afterBossVictoryState.gameOverModalVisible
       });
@@ -665,13 +859,16 @@ async function main() {
       assertions,
       initialState,
       afterIntroState,
+      afterCollectThresholdState,
       afterMoveState,
       afterStonesState,
       afterPuzzleWrongState,
-      afterPuzzleCorrectState,
-      afterPuzzleResumeState,
-      afterBossFocusState,
-      afterBossVictoryState,
+	      afterPuzzleCorrectState,
+	      afterPuzzleResumeState,
+	      afterBossFocusState,
+	      afterEngineThresholdState,
+	      afterPrematureVictoryState,
+	      afterBossVictoryState,
       afterVictoryCompleteState,
       pausedMovement,
       stoneCollection,

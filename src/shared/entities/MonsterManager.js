@@ -18,7 +18,7 @@
     var generateId = SharedUtils.generateId;
 
     var DEMON_MAX_DAMAGE = {
-        Condemnation: 2, Fear: 3, Unbelief: 5, Ignorance: 2,
+        Condemnation: 2, Fear: 3, Goliath: 9, Unbelief: 5, Ignorance: 2,
         Strife: 6, Confusion: 4, Depression: 3, Doubt: 4,
         Infirmity: 7, Deception: 4, Despair: 4, Temptation: 5,
         Pride: 6, Poverty: 3, Shame: 3, Slumber: 2,

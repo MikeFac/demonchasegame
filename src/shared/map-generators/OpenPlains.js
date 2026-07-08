@@ -30,15 +30,52 @@ function generateMaze(width, height, cellSize) {
         }
     }
 
-    // Place random buildings
-    const BUILDING_COUNT = 40; // Adjust density
-    const MIN_SIZE = 3;
-    const MAX_SIZE = 6;
+    // Place larger enterable buildings. A player is 48px wide and cells are
+    // usually 25px, so one-cell doors are visually open but mechanically tight.
+    const BUILDING_COUNT = 24;
+    const MIN_SIZE = 7;
+    const MAX_SIZE = 12;
 
     // Spawn area safe zone (center)
     const centerX = Math.floor(cols / 2);
     const centerY = Math.floor(rows / 2);
     const SAFE_RADIUS = 10;
+
+    function carveClearArea(x, y, w, h) {
+        for (let r = Math.max(1, y); r < Math.min(rows - 1, y + h); r++) {
+            for (let c = Math.max(1, x); c < Math.min(cols - 1, x + w); c++) {
+                grid[r][c] = false;
+            }
+        }
+    }
+
+    function placeHollowBuilding(x, y, w, h, doorSide) {
+        if (w < 5 || h < 5) return;
+
+        for (let r = y; r < y + h; r++) {
+            for (let c = x; c < x + w; c++) {
+                const isBorder = r === y || r === y + h - 1 || c === x || c === x + w - 1;
+                grid[r][c] = isBorder;
+            }
+        }
+
+        const doorWidth = Math.min(3, doorSide === 'top' || doorSide === 'bottom' ? w - 2 : h - 2);
+        const doorStart = Math.floor((doorSide === 'top' || doorSide === 'bottom' ? w : h) / 2) - Math.floor(doorWidth / 2);
+
+        if (doorSide === 'top') {
+            for (let c = x + doorStart; c < x + doorStart + doorWidth; c++) grid[y][c] = false;
+            carveClearArea(x + doorStart - 1, y - 3, doorWidth + 2, 4);
+        } else if (doorSide === 'bottom') {
+            for (let c = x + doorStart; c < x + doorStart + doorWidth; c++) grid[y + h - 1][c] = false;
+            carveClearArea(x + doorStart - 1, y + h - 1, doorWidth + 2, 4);
+        } else if (doorSide === 'left') {
+            for (let r = y + doorStart; r < y + doorStart + doorWidth; r++) grid[r][x] = false;
+            carveClearArea(x - 3, y + doorStart - 1, 4, doorWidth + 2);
+        } else {
+            for (let r = y + doorStart; r < y + doorStart + doorWidth; r++) grid[r][x + w - 1] = false;
+            carveClearArea(x + w - 1, y + doorStart - 1, 4, doorWidth + 2);
+        }
+    }
 
     for (let i = 0; i < BUILDING_COUNT; i++) {
         const w = Math.floor(Math.random() * (MAX_SIZE - MIN_SIZE + 1)) + MIN_SIZE;
@@ -52,31 +89,22 @@ function generateMaze(width, height, cellSize) {
         const dy = y + h / 2 - centerY;
         if (Math.sqrt(dx * dx + dy * dy) < SAFE_RADIUS) continue;
 
-        // Place building
-        for (let r = y; r < y + h; r++) {
-            for (let c = x; c < x + w; c++) {
-                grid[r][c] = true;
-            }
-        }
-
-        // Carve "door" or opening in building?
-        // Maybe some buildings are hollow?
-        if (Math.random() < 0.5) {
-            // Hollow out center
-            for (let r = y + 1; r < y + h - 1; r++) {
-                for (let c = x + 1; c < x + w - 1; c++) {
-                    grid[r][c] = false;
-                }
-            }
-            // Add door
-            const side = Math.floor(Math.random() * 4);
-            // 0: top, 1: bottom, 2: left, 3: right
-            if (side === 0) grid[y][x + Math.floor(w / 2)] = false;
-            else if (side === 1) grid[y + h - 1][x + Math.floor(w / 2)] = false;
-            else if (side === 2) grid[y + Math.floor(h / 2)][x] = false;
-            else if (side === 3) grid[y + Math.floor(h / 2)][x + w - 1] = false;
-        }
+        const sides = ['top', 'bottom', 'left', 'right'];
+        placeHollowBuilding(x, y, w, h, sides[Math.floor(Math.random() * sides.length)]);
     }
+
+    // Story landmark structures. These are broad enough for the 48px player and
+    // align with David/Goliath smooth-stone placements without requiring a
+    // mission-specific map format.
+    [
+        { x: 22, y: 22, w: 11, h: 11, door: 'bottom' },
+        { x: 88, y: 22, w: 11, h: 11, door: 'bottom' },
+        { x: 56, y: 48, w: 12, h: 10, door: 'bottom' },
+        { x: 32, y: 86, w: 11, h: 11, door: 'top' },
+        { x: 84, y: 86, w: 11, h: 11, door: 'top' }
+    ].forEach(function (building) {
+        placeHollowBuilding(building.x, building.y, building.w, building.h, building.door);
+    });
 
     // Create wall objects
     // For buildings, we can try to use specific tiles?

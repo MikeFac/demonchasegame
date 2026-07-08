@@ -245,7 +245,12 @@
             this._checkGameEnd();
 
             // Check Level Completion
-            if (this.gameState.monstersKilled >= (this.gameState.monstersToKill || 999) && !this._levelAdvancing && !this._gameEnded) {
+            var killCountVictoryDisabled = this.gameState.disableKillCountVictory === true;
+            var bossKillRequired = this.gameState.requireBossKillForVictory === true;
+            var bossStillAlive = bossKillRequired && this.gameState.monsters.some(function (monster) {
+                return monster && monster.isBoss && monster.health > 0;
+            });
+            if (!killCountVictoryDisabled && this.gameState.monstersKilled >= (this.gameState.monstersToKill || 999) && !bossStillAlive && !this._levelAdvancing && !this._gameEnded) {
                 if (typeof dbg === 'function') dbg('ENG-LVL', 'Level complete! killed=' + this.gameState.monstersKilled + '/' + this.gameState.monstersToKill + ' level=' + this.gameState.gameLevel + '/' + Object.keys(this.levelData).length);
                 if (this.gameState.gameLevel >= Object.keys(this.levelData).length) {
                     this._endGame('victory');

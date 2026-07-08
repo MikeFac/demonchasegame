@@ -27,7 +27,19 @@
         { "id": "david", "nameKey": "story.david.npc.david", "portrait": "images/npcs/david.png", "position": { "x": 1500, "y": 1500 } }
       ],
       "specialObjects": [
-        { "id": "smoothStone", "labelKey": "story.david.object.stone", "count": 5, "spawnArea": { "x": 800, "y": 800, "w": 1400, "h": 1400 } }
+        {
+          "id": "smoothStone",
+          "labelKey": "story.david.object.stone",
+          "count": 5,
+          "spawnArea": { "x": 600, "y": 600, "w": 1800, "h": 1800 },
+          "placements": [
+            { "x": 650, "y": 650, "guardDemonType": "Fear" },
+            { "x": 2350, "y": 650, "guardDemonType": "Shame" },
+            { "x": 1500, "y": 1300, "guardDemonType": "Doubt" },
+            { "x": 850, "y": 2300, "guardDemonType": "Confusion" },
+            { "x": 2250, "y": 2300, "guardDemonType": "Unbelief" }
+          ]
+        }
       ],
       "puzzles": [
         {
@@ -40,7 +52,7 @@
         }
       ],
       "collectCombatConfig": {
-        "monsters": ["Fear", "Shame", "Doubt"],
+        "monsters": ["Fear", "Shame", "Doubt", "Confusion", "Unbelief"],
         "monsterDamageFactor": 0.9,
         "monsterSpeed": 4,
         "playerSpeed": 5,
@@ -52,39 +64,39 @@
         "disableLevelBoss": true,
         "fixedMonsters": [
           {
-            "x": 1000, "y": 1200, "demonType": "Fear",
-            "behavior": { "type": "guard", "patrolRadius": 180 },
+            "x": 760, "y": 720, "demonType": "Fear",
+            "behavior": { "type": "guard", "patrolRadius": 140 },
             "stats": { "healthMultiplier": 1.2 },
             "spawnTrigger": { "type": "immediate", "value": 0 }
           },
           {
-            "x": 1800, "y": 1200, "demonType": "Shame",
-            "behavior": { "type": "guard", "patrolRadius": 180 },
+            "x": 2275, "y": 730, "demonType": "Shame",
+            "behavior": { "type": "guard", "patrolRadius": 140 },
             "stats": { "healthMultiplier": 1.2 },
             "spawnTrigger": { "type": "immediate", "value": 0 }
           },
           {
-            "x": 1400, "y": 900, "demonType": "Doubt",
-            "behavior": { "type": "guard", "patrolRadius": 200 },
+            "x": 1620, "y": 1275, "demonType": "Doubt",
+            "behavior": { "type": "guard", "patrolRadius": 150 },
             "stats": { "healthMultiplier": 1.0 },
             "spawnTrigger": { "type": "immediate", "value": 0 }
           },
           {
-            "x": 1100, "y": 1700, "demonType": "Fear",
-            "behavior": { "type": "guard", "patrolRadius": 160 },
+            "x": 970, "y": 2200, "demonType": "Confusion",
+            "behavior": { "type": "guard", "patrolRadius": 140 },
             "stats": { "healthMultiplier": 1.0 },
             "spawnTrigger": { "type": "immediate", "value": 0 }
           },
           {
-            "x": 1700, "y": 1700, "demonType": "Shame",
-            "behavior": { "type": "guard", "patrolRadius": 160 },
+            "x": 2175, "y": 2200, "demonType": "Unbelief",
+            "behavior": { "type": "guard", "patrolRadius": 140 },
             "stats": { "healthMultiplier": 1.0 },
             "spawnTrigger": { "type": "immediate", "value": 0 }
           }
         ]
       },
       "combatConfig": {
-        "monsters": ["Fear", "Doubt"],
+        "monsters": ["Goliath", "Doubt", "Fear"],
         "monsterDamageFactor": 1.1,
         "monsterSpeed": 5,
         "playerSpeed": 5,
@@ -95,7 +107,7 @@
         "disableLevelBoss": true,
         "fixedMonsters": [
           {
-            "x": 1500, "y": 600, "demonType": "Fear", "isBoss": true, "label": "Goliath",
+            "x": 1500, "y": 600, "demonType": "Goliath", "isBoss": true, "label": "Goliath",
             "behavior": { "type": "guard", "patrolRadius": 200 },
             "stats": { "healthMultiplier": 6.0, "damageMultiplier": 3.0, "sizeMultiplier": 1.5 },
             "spawnTrigger": { "type": "immediate", "value": 0 }
