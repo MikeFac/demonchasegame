@@ -60,6 +60,22 @@ let storyPauseState = null;
 let storyPauseEngineWasRunning = false;
 let integratedStoryState = null;
 let integratedStoryPuzzlePause = null;
+let integratedStoryBossHint = {
+    lastShownAt: 0,
+    intervalMs: 7000
+};
+
+function getActiveWorldWidth() {
+    return network && network.engine && network.engine.constants && network.engine.constants.WORLD_WIDTH
+        ? network.engine.constants.WORLD_WIDTH
+        : WORLD_WIDTH;
+}
+
+function getActiveWorldHeight() {
+    return network && network.engine && network.engine.constants && network.engine.constants.WORLD_HEIGHT
+        ? network.engine.constants.WORLD_HEIGHT
+        : WORLD_HEIGHT;
+}
 
 function isStoryPaused() {
     return !!storyPauseState;
@@ -477,8 +493,11 @@ function startIntegratedStoryBossPhase(puzzlePause) {
     integratedStoryState.boss = {
         label: bossConfig.label || 'Goliath',
         demonType: bossConfig.demonType || null,
+        x: bossConfig.x,
+        y: bossConfig.y,
         spawned: engineState.monsters.some((monster) => monster && monster.isBoss)
     };
+    integratedStoryBossHint.lastShownAt = 0;
     syncIntegratedStoryState();
 
     if (engine.emitter && typeof engine.emitter.emit === 'function') {
@@ -527,6 +546,44 @@ function collectIntegratedStoryItem(item) {
     }
 
     return true;
+}
+
+function getDirectionLabel(dx, dy) {
+    const absX = Math.abs(dx);
+    const absY = Math.abs(dy);
+    if (absX < 80 && absY < 80) return 'nearby';
+    if (absX > absY * 1.8) return dx > 0 ? 'east' : 'west';
+    if (absY > absX * 1.8) return dy > 0 ? 'south' : 'north';
+    if (dx > 0 && dy > 0) return 'southeast';
+    if (dx > 0 && dy < 0) return 'northeast';
+    if (dx < 0 && dy > 0) return 'southwest';
+    return 'northwest';
+}
+
+function updateIntegratedStoryBossGuide(now) {
+    if (!integratedStoryState || integratedStoryState.phaseId !== 'bossFight' || integratedStoryState.victoryStarted || integratedStoryState.bossDefeated) return;
+    if (!player || !Array.isArray(monsters)) return;
+    if (now - integratedStoryBossHint.lastShownAt < integratedStoryBossHint.intervalMs) return;
+
+    const boss = monsters.find((monster) => monster && monster.isBoss);
+    if (!boss) return;
+
+    const dx = boss.x - player.x;
+    const dy = boss.y - player.y;
+    const distance = Math.sqrt(dx * dx + dy * dy);
+    const direction = getDirectionLabel(dx, dy);
+    const distanceLabel = distance < 250 ? 'near' : (distance < 750 ? 'close' : 'far');
+    const text = direction === 'nearby'
+        ? 'Goliath is nearby!'
+        : 'Find Goliath: ' + direction.toUpperCase() + ' (' + distanceLabel + ')';
+
+    flashMessages.push({
+        text: text,
+        color: '#F6D36B',
+        startTime: now,
+        duration: 3600
+    });
+    integratedStoryBossHint.lastShownAt = now;
 }
 
 function scheduleStoryIntroPause(pauseOptions, attempt) {
@@ -2055,7 +2112,16 @@ function applyConfig(config) {
     }
     
     if (typeof GameConfig !== 'undefined' && GameConfig.createFromCustomBalance) {
-        const gameConfig = GameConfig.createFromCustomBalance(config.balance, config.quizSettings || null, config.levels || null);
+        const gameConfig = GameConfig.createFromCustomBalance(config.balance, config.quizSettings || null, config.levels || null, {
+            disableLevelBoss: config.disableLevelBoss === true,
+            fixedMonsters: config.fixedMonsters || null,
+            randomSpawnsEnabled: config.randomSpawnsEnabled,
+            randomSpawnBudget: config.randomSpawnBudget,
+            mapData: config.mapData || null,
+            playerSpawn: config.playerSpawn || null,
+            world: config.world || null,
+            constants: config.constants || null
+        });
         customLevelData = gameConfig.levelData;
         customMonsterHealthMultiplier = gameConfig.monsterHealthMultiplier;
 
@@ -5000,6 +5066,7 @@ async function startMission(worldId, missionId) {
                 spawnRate: mission.spawnRate || 18
             }],
             quizSettings: mission.quizSettings || null,
+            world: mission.world || null,
             disableLevelBoss: mission.disableLevelBoss === true,
             fixedMonsters: Array.isArray(mission.fixedMonsters) ? mission.fixedMonsters.slice() : [],
             randomSpawnsEnabled: mission.randomSpawnsEnabled !== false,
@@ -5305,6 +5372,7 @@ function gameLoop(generation) {
         if (combatHint && (Date.now() - combatHint.startTime) >= combatHint.duration) {
             clearCombatHint();
         }
+        updateIntegratedStoryBossGuide(Date.now());
 
         // ===== INTERPOLATION: Lerp monsters and other players toward target positions =====
         const INTERPOLATION_SPEED = 0.15; // How fast to catch up (0.15 = smooth but responsive)
@@ -5547,8 +5615,8 @@ function gameLoop(generation) {
                 }
 
                 player.facingDirection = Math.cos(player.viewAngle || 0) >= 0 ? 'right' : 'left';
-                player.x = Math.max(0, Math.min(player.x, WORLD_WIDTH));
-                player.y = Math.max(0, Math.min(player.y, WORLD_HEIGHT));
+                player.x = Math.max(0, Math.min(player.x, getActiveWorldWidth()));
+                player.y = Math.max(0, Math.min(player.y, getActiveWorldHeight()));
 
                 const now = Date.now();
                 if (now - _lastPositionSendTime >= POSITION_SEND_INTERVAL &&
@@ -5627,8 +5695,8 @@ function gameLoop(generation) {
                 }
 
                 // Keep player within world bounds
-                player.x = Math.max(0, Math.min(player.x, WORLD_WIDTH));
-                player.y = Math.max(0, Math.min(player.y, WORLD_HEIGHT));
+                player.x = Math.max(0, Math.min(player.x, getActiveWorldWidth()));
+                player.y = Math.max(0, Math.min(player.y, getActiveWorldHeight()));
 
                 // Send position to server (throttled to ~20Hz)
                 const now = Date.now();
@@ -5665,8 +5733,8 @@ function gameLoop(generation) {
         camera.y = player.y - canvas.height / 2;
 
         // Clamp camera to world bounds
-        camera.x = Math.max(0, Math.min(camera.x, WORLD_WIDTH - canvas.width));
-        camera.y = Math.max(0, Math.min(camera.y, WORLD_HEIGHT - canvas.height));
+        camera.x = Math.max(0, Math.min(camera.x, getActiveWorldWidth() - canvas.width));
+        camera.y = Math.max(0, Math.min(camera.y, getActiveWorldHeight() - canvas.height));
 
         // Update InputHandler with current camera for click-to-world coord conversion
         if (inputHandler) {

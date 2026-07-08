@@ -121,6 +121,7 @@
                 spawnRate: spawnRateSeconds
             }],
             quizSettings: mission.quizSettings || null,
+            world: mission.world || null,
             disableLevelBoss: combat.disableLevelBoss === true,
             fixedMonsters: Array.isArray(combat.fixedMonsters) ? combat.fixedMonsters.slice() : [],
             randomSpawnsEnabled: combat.randomSpawnsEnabled !== false,

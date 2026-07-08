@@ -89,7 +89,9 @@ class LocalNetwork {
                     randomSpawnsEnabled: urlConfig.randomSpawnsEnabled,
                     randomSpawnBudget: urlConfig.randomSpawnBudget,
                     mapData: urlConfig.mapData || null,
-                    playerSpawn: urlConfig.playerSpawn || null
+                    playerSpawn: urlConfig.playerSpawn || null,
+                    world: urlConfig.world || null,
+                    constants: urlConfig.constants || null
                 }
             );
         } else {

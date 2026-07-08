@@ -3,15 +3,15 @@ const Constants = require('../src/shared/Constants');
 const WallGrid = require('../src/shared/WallGrid');
 const MapGeneratorFactory = require('../src/shared/map-generators');
 
-const map = MapGeneratorFactory.generateMap('open', Constants.WORLD_WIDTH, Constants.WORLD_HEIGHT, Constants.CELL_SIZE);
+const map = MapGeneratorFactory.generateMap('open', 2000, 2000, Constants.CELL_SIZE);
 const wallGrid = new WallGrid(map.grid, map.rows, map.cols, Constants.CELL_SIZE);
 
 const storyLocations = [
-  { stone: { x: 650, y: 650 }, guard: { x: 760, y: 720 }, entry: { x: 675, y: 815 } },
-  { stone: { x: 2350, y: 650 }, guard: { x: 2275, y: 730 }, entry: { x: 2335, y: 815 } },
-  { stone: { x: 1500, y: 1300 }, guard: { x: 1620, y: 1275 }, entry: { x: 1550, y: 1440 } },
-  { stone: { x: 850, y: 2300 }, guard: { x: 970, y: 2200 }, entry: { x: 935, y: 2150 } },
-  { stone: { x: 2250, y: 2300 }, guard: { x: 2175, y: 2200 }, entry: { x: 2235, y: 2150 } }
+  { stone: { x: 450, y: 450 }, guard: { x: 560, y: 520 }, entry: { x: 475, y: 615 } },
+  { stone: { x: 1550, y: 450 }, guard: { x: 1530, y: 530 }, entry: { x: 1585, y: 615 } },
+  { stone: { x: 1000, y: 900 }, guard: { x: 1075, y: 900 }, entry: { x: 1000, y: 1115 } },
+  { stone: { x: 550, y: 1550 }, guard: { x: 575, y: 1500 }, entry: { x: 625, y: 1400 } },
+  { stone: { x: 1550, y: 1550 }, guard: { x: 1550, y: 1500 }, entry: { x: 1535, y: 1400 } }
 ];
 
 storyLocations.forEach((location, index) => {

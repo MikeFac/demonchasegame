@@ -1556,3 +1556,40 @@ Original prompt: Check the implementation of docs/multi-version-songs-implementa
 - Rollback for this phase:
   - pre-phase file backups: `/tmp/david-goliath-story-phase-15-backup/`
   - targeted phase patch: `/tmp/david-goliath-story-phase-15.patch`
+
+2026-07-08:
+- Completed Phase 16 pacing improvements for David/Goliath.
+- Gameplay pacing:
+  - David/Goliath now uses a compact `2000x2000` core-loop world instead of the default `3000x3000`
+  - smooth stones, guards, NPC positions, Goliath, and boss adds were moved into the smaller arena
+  - collect-phase random spawns are disabled so the authored guard encounters carry the pacing
+- Guidance:
+  - boss phase now periodically shows a flash popup pointing toward Goliath
+  - popup text uses directional/banded wording such as `Find Goliath: NORTH (far)`
+  - hint starts when the boss phase begins and stops after Goliath is defeated or story victory starts
+- Engine/config support:
+  - `GameConfig.createFromCustomBalance` now supports per-mission `world` and `constants` overrides
+  - `CoreStoryDirector` and `LocalNetwork` pass mission world overrides into the core engine
+  - `game.js` movement and camera clamps now use the active engine world size instead of global constants
+- Room structure:
+  - OpenPlains story landmark rooms now use proportional map positions
+  - landmark rooms reserve a clear buffer before placement so random wall clusters cannot block authored entrances
+- Regression updates:
+  - integrated browser test now asserts the compact `2000x2000` arena
+  - integrated browser test now asserts a Goliath direction popup appears in boss phase
+  - room structure test now targets the compact David/Goliath coordinates and was run repeatedly to catch random-overlap failures
+- Visual artifacts inspected:
+  - `output/web-game/david-goliath-integrated/after-boss-focus.png`
+  - `output/web-game/shot-0.png`
+- Verification completed:
+  - `node --check game.js`
+  - `node --check scripts/test-david-goliath-integrated.js`
+  - `node --check src/shared/GameConfig.js`
+  - `node --check src/client/CoreStoryDirector.js`
+  - `node --check src/client/LocalNetwork.js`
+  - `node --check src/shared/map-generators/OpenPlains.js`
+  - `node test/test-story-mission.js`
+  - `for i in 1 2 3; do node test/test-open-plains-structures.js || exit 1; done`
+  - `./restart-server.sh`
+  - `node scripts/test-david-goliath-integrated.js --enable-integrated-story` (48 assertions, 0 failures, 0 page errors)
+  - standard web-game Playwright client mission-menu smoke (only existing skill package module-type warning)

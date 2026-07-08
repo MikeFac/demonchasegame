@@ -266,6 +266,17 @@ function createFromCustomBalance(balance, customQuizSettings, levelOverrides, ex
   };
 
   if (extraOptions && typeof extraOptions === 'object') {
+    if (extraOptions.world && typeof extraOptions.world === 'object') {
+      if (typeof extraOptions.world.width === 'number' && extraOptions.world.width > 0) {
+        config.constants.WORLD_WIDTH = extraOptions.world.width;
+      }
+      if (typeof extraOptions.world.height === 'number' && extraOptions.world.height > 0) {
+        config.constants.WORLD_HEIGHT = extraOptions.world.height;
+      }
+    }
+    if (extraOptions.constants && typeof extraOptions.constants === 'object') {
+      config.constants = Object.assign({}, config.constants, extraOptions.constants);
+    }
     if (extraOptions.disableLevelBoss === true) {
       config.disableLevelBoss = true;
     }

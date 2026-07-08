@@ -167,7 +167,8 @@ function testCombatConfig() {
 	    assert(collectCombat.monsters.includes('Shame'), 'Should include Shame demons');
 	    assert(collectCombat.monsters.includes('Confusion'), 'Should include Confusion demons');
 	    assert(collectCombat.monsters.includes('Unbelief'), 'Should include Unbelief demons');
-	    assert(collectCombat.randomSpawnsEnabled === true, 'Random spawns enabled for collect phase');
+	    assert(collectCombat.randomSpawnsEnabled === false, 'Random spawns disabled for tighter collect phase pacing');
+	    assert(mission.world && mission.world.width === 2000 && mission.world.height === 2000, 'David/Goliath should use compact 2000x2000 world');
 	    const placements = mission.specialObjects[0].placements || [];
 	    assert(placements.length === 5, 'Smooth stones should have five explicit placements');
 	    const placementGuardTypes = new Set(placements.map((placement) => placement.guardDemonType));

@@ -97,13 +97,16 @@ function generateMaze(width, height, cellSize) {
     // align with David/Goliath smooth-stone placements without requiring a
     // mission-specific map format.
     [
-        { x: 22, y: 22, w: 11, h: 11, door: 'bottom' },
-        { x: 88, y: 22, w: 11, h: 11, door: 'bottom' },
-        { x: 56, y: 48, w: 12, h: 10, door: 'bottom' },
-        { x: 32, y: 86, w: 11, h: 11, door: 'top' },
-        { x: 84, y: 86, w: 11, h: 11, door: 'top' }
+        { x: 0.18, y: 0.18, w: 11, h: 11, door: 'bottom' },
+        { x: 0.72, y: 0.18, w: 11, h: 11, door: 'bottom' },
+        { x: 0.43, y: 0.43, w: 12, h: 10, door: 'bottom' },
+        { x: 0.18, y: 0.72, w: 11, h: 11, door: 'top' },
+        { x: 0.72, y: 0.72, w: 11, h: 11, door: 'top' }
     ].forEach(function (building) {
-        placeHollowBuilding(building.x, building.y, building.w, building.h, building.door);
+        var buildingX = Math.max(1, Math.min(cols - building.w - 1, Math.round(cols * building.x)));
+        var buildingY = Math.max(1, Math.min(rows - building.h - 1, Math.round(rows * building.y)));
+        carveClearArea(buildingX - 4, buildingY - 4, building.w + 8, building.h + 8);
+        placeHollowBuilding(buildingX, buildingY, building.w, building.h, building.door);
     });
 
     // Create wall objects

@@ -10,6 +10,7 @@
       "description": "Anointed by Samuel, gather five stones, arm your heart with the Word, and face the giant.",
       "qualities": ["Faith", "Courage"],
       "mapStyle": "open",
+      "world": { "width": 2000, "height": 2000 },
       "xpMultiplier": 1.5,
       "music": {
         "phaseTracks": { "intro": null, "collectStones": null, "puzzle": null, "bossFight": null, "victory": null },
@@ -23,21 +24,21 @@
         { "id": "victory", "type": "dialogue", "npcId": "david", "i18nLines": ["story.david.victory.1", "story.david.victory.2"], "sermonRef": "1 Samuel 17:47", "endMission": true }
       ],
       "npcs": [
-        { "id": "samuel", "nameKey": "story.david.npc.samuel", "portrait": "images/npcs/samuel.png", "position": { "x": 1500, "y": 1500 } },
-        { "id": "david", "nameKey": "story.david.npc.david", "portrait": "images/npcs/david.png", "position": { "x": 1500, "y": 1500 } }
+        { "id": "samuel", "nameKey": "story.david.npc.samuel", "portrait": "images/npcs/samuel.png", "position": { "x": 1000, "y": 1000 } },
+        { "id": "david", "nameKey": "story.david.npc.david", "portrait": "images/npcs/david.png", "position": { "x": 1000, "y": 1000 } }
       ],
       "specialObjects": [
         {
           "id": "smoothStone",
           "labelKey": "story.david.object.stone",
           "count": 5,
-          "spawnArea": { "x": 600, "y": 600, "w": 1800, "h": 1800 },
+          "spawnArea": { "x": 420, "y": 420, "w": 1160, "h": 1160 },
           "placements": [
-            { "x": 650, "y": 650, "guardDemonType": "Fear" },
-            { "x": 2350, "y": 650, "guardDemonType": "Shame" },
-            { "x": 1500, "y": 1300, "guardDemonType": "Doubt" },
-            { "x": 850, "y": 2300, "guardDemonType": "Confusion" },
-            { "x": 2250, "y": 2300, "guardDemonType": "Unbelief" }
+            { "x": 450, "y": 450, "guardDemonType": "Fear" },
+            { "x": 1550, "y": 450, "guardDemonType": "Shame" },
+            { "x": 1000, "y": 900, "guardDemonType": "Doubt" },
+            { "x": 550, "y": 1550, "guardDemonType": "Confusion" },
+            { "x": 1550, "y": 1550, "guardDemonType": "Unbelief" }
           ]
         }
       ],
@@ -59,36 +60,36 @@
         "maxMonsters": 8,
         "monstersToKill": 99,
         "spawnRate": 16000,
-        "randomSpawnsEnabled": true,
-        "randomSpawnBudget": 8,
+        "randomSpawnsEnabled": false,
+        "randomSpawnBudget": 0,
         "disableLevelBoss": true,
         "fixedMonsters": [
           {
-            "x": 760, "y": 720, "demonType": "Fear",
+            "x": 560, "y": 520, "demonType": "Fear",
             "behavior": { "type": "guard", "patrolRadius": 140 },
             "stats": { "healthMultiplier": 1.2 },
             "spawnTrigger": { "type": "immediate", "value": 0 }
           },
           {
-            "x": 2275, "y": 730, "demonType": "Shame",
+            "x": 1530, "y": 530, "demonType": "Shame",
             "behavior": { "type": "guard", "patrolRadius": 140 },
             "stats": { "healthMultiplier": 1.2 },
             "spawnTrigger": { "type": "immediate", "value": 0 }
           },
           {
-            "x": 1620, "y": 1275, "demonType": "Doubt",
+            "x": 1075, "y": 900, "demonType": "Doubt",
             "behavior": { "type": "guard", "patrolRadius": 150 },
             "stats": { "healthMultiplier": 1.0 },
             "spawnTrigger": { "type": "immediate", "value": 0 }
           },
           {
-            "x": 970, "y": 2200, "demonType": "Confusion",
+            "x": 575, "y": 1500, "demonType": "Confusion",
             "behavior": { "type": "guard", "patrolRadius": 140 },
             "stats": { "healthMultiplier": 1.0 },
             "spawnTrigger": { "type": "immediate", "value": 0 }
           },
           {
-            "x": 2175, "y": 2200, "demonType": "Unbelief",
+            "x": 1550, "y": 1500, "demonType": "Unbelief",
             "behavior": { "type": "guard", "patrolRadius": 140 },
             "stats": { "healthMultiplier": 1.0 },
             "spawnTrigger": { "type": "immediate", "value": 0 }
@@ -107,18 +108,18 @@
         "disableLevelBoss": true,
         "fixedMonsters": [
           {
-            "x": 1500, "y": 600, "demonType": "Goliath", "isBoss": true, "label": "Goliath",
+            "x": 1000, "y": 450, "demonType": "Goliath", "isBoss": true, "label": "Goliath",
             "behavior": { "type": "guard", "patrolRadius": 200 },
             "stats": { "healthMultiplier": 6.0, "damageMultiplier": 3.0, "sizeMultiplier": 1.5 },
             "spawnTrigger": { "type": "immediate", "value": 0 }
           },
           {
-            "x": 1100, "y": 800, "demonType": "Doubt",
+            "x": 760, "y": 620, "demonType": "Doubt",
             "spawnTrigger": { "type": "immediate", "value": 0 },
             "stats": { "healthMultiplier": 1.0 }
           },
           {
-            "x": 1900, "y": 800, "demonType": "Fear",
+            "x": 1240, "y": 620, "demonType": "Fear",
             "spawnTrigger": { "type": "immediate", "value": 0 },
             "stats": { "healthMultiplier": 1.0 }
           }

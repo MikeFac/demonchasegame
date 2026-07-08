@@ -100,6 +100,8 @@ async function captureState(page, name) {
           monstersToKill: gameState.monstersToKill,
           disableKillCountVictory: !!gameState.disableKillCountVictory,
           requireBossKillForVictory: !!gameState.requireBossKillForVictory,
+          worldWidth: typeof network !== 'undefined' && network && network.engine && network.engine.constants ? network.engine.constants.WORLD_WIDTH : null,
+          worldHeight: typeof network !== 'undefined' && network && network.engine && network.engine.constants ? network.engine.constants.WORLD_HEIGHT : null,
           engineEnded: typeof network !== 'undefined' && network && network.engine ? !!network.engine._gameEnded : null,
           pausedForStory: !!gameState.pausedForStory,
           storyPhaseId: gameState.storyPhaseId || null,
@@ -153,6 +155,18 @@ async function captureState(page, name) {
     const storyPauseDebug = window.__storyPauseDebug && typeof window.__storyPauseDebug.snapshot === 'function'
       ? window.__storyPauseDebug.snapshot()
       : null;
+    let flashMessagesSnapshot = [];
+    try {
+      if (typeof flashMessages !== 'undefined' && Array.isArray(flashMessages)) {
+        flashMessagesSnapshot = flashMessages.map((message) => ({
+          text: message.text,
+          color: message.color,
+          remainingMs: Math.max(0, (message.duration || 0) - (Date.now() - (message.startTime || 0)))
+        }));
+      }
+    } catch (_) {
+      flashMessagesSnapshot = [];
+    }
     const renderText = typeof window.render_game_to_text === 'function'
       ? window.render_game_to_text()
       : null;
@@ -181,6 +195,7 @@ async function captureState(page, name) {
       monsters: monstersSnapshot,
       collectibles: collectiblesSnapshot,
       inventory: inventorySnapshot,
+      flashMessages: flashMessagesSnapshot,
       gameState: gameStateSnapshot,
       renderText
     };
@@ -401,12 +416,17 @@ async function clickStoryPauseRect(page, matcher) {
     });
     const canvas = document.getElementById('gameCanvas');
     if (!rect || !canvas) return null;
+    if (typeof window.handleStoryPauseClick === 'function') {
+      window.handleStoryPauseClick(rect.x + rect.width / 2, rect.y + rect.height / 2);
+      return { handledDirectly: true, rect, canvasWidth: canvas.width, canvasHeight: canvas.height };
+    }
     return { rect, canvasWidth: canvas.width, canvasHeight: canvas.height };
   }, JSON.stringify(matcher));
 
   if (!result) {
     throw new Error(`Could not find story pause rect for ${JSON.stringify(matcher)}`);
   }
+  if (result.handledDirectly) return;
 
   const canvasBox = await page.locator('#gameCanvas').boundingBox();
   if (!canvasBox) throw new Error('Canvas bounding box unavailable');
@@ -594,6 +614,11 @@ async function main() {
         storyPaused: afterIntroState.storyPaused,
         gameState: afterIntroState.gameState
       });
+      assertCondition(assertions, afterIntroState.gameState &&
+        afterIntroState.gameState.worldWidth === 2000 &&
+        afterIntroState.gameState.worldHeight === 2000, 'David/Goliath integrated mission uses compact 2000x2000 arena', {
+        gameState: afterIntroState.gameState
+      });
       assertCondition(assertions, afterIntroState.integratedStoryState && afterIntroState.integratedStoryState.targetCount === 5, 'Integrated story seeds five smooth stones', {
         integratedStoryState: afterIntroState.integratedStoryState
       });
@@ -756,6 +781,9 @@ async function main() {
       }
       await page.waitForTimeout(250);
       afterBossFocusState = await captureState(page, 'after-boss-focus');
+      assertCondition(assertions, afterBossFocusState.flashMessages.some((message) => /Goliath/i.test(message.text || '')), 'Boss phase shows recurring direction popup toward Goliath', {
+        flashMessages: afterBossFocusState.flashMessages
+      });
 
       await page.evaluate(() => {
         if (typeof network !== 'undefined' && network && network.engine) {

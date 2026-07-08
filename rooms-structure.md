@@ -24,10 +24,11 @@ The player sprite is 48px wide, while the default OpenPlains cell size is usuall
 - `carveClearArea(x, y, w, h)` for doorway pads and local clearance.
 - Random OpenPlains buildings sized `7x7` to `12x12`.
 - Deterministic story landmark structures aligned to David/Goliath stone placements.
+- Landmark structures use proportional map positions rather than fixed 3000px-world coordinates, so the same pattern works in compact story arenas.
 
 The deterministic story landmark structures currently support:
 
-- five smooth-stone rooms spread around the map
+- five smooth-stone rooms spread around the active story map
 - one stone inside each room
 - one guard demon inside each room
 - a player-width entrance for each room
@@ -42,6 +43,7 @@ When placing story objects in rooms:
 - Check the entrance with `Constants.PLAYER_WIDTH` and `Constants.PLAYER_HEIGHT`.
 - Prefer explicit mission placements over generated circular placement when the story beat depends on spatial layout.
 - Keep runtime wall-safety nudging as a fallback, not as the primary design tool.
+- For story missions, prefer a compact authored arena when the goal is narrative pacing. David/Goliath now uses a `2000x2000` world so players spend less time crossing empty space.
 
 ## Regression Tests
 
