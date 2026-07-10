@@ -192,6 +192,11 @@
             throw new Error('MissionCompiler: unsupported schemaVersion ' + spec.schemaVersion);
         }
 
+        // Quest step mode: build a branching DAG with hub phases
+        if (Array.isArray(spec.questSteps) && spec.questSteps.length > 0) {
+            return compileQuestSteps(spec);
+        }
+
         var prng = makePRNG(spec.id || 'unnamed');
         var world = resolveWorldSize(spec.world, (spec.rooms || []).length);
         var mapStyle = (spec.world && spec.world.mapStyle) || 'open';
@@ -382,8 +387,383 @@
     }
 
     // -----------------------------------------------------------------
-    // Helper: build a dialogue phase (+ synthesized NPC)
+    // Quest step compilation — builds a branching DAG with questHub phases
     // -----------------------------------------------------------------
+    function compileQuestSteps(spec) {
+        var prng = makePRNG(spec.id || 'unnamed');
+        var steps = spec.questSteps;
+        var world = resolveWorldSize(spec.world, steps.length);
+        var mapStyle = (spec.world && spec.world.mapStyle) || 'open';
+        if (world.width <= 2000 && mapStyle !== 'open') {
+            mapStyle = 'open';
+        }
+
+        // Topological sort of steps by prerequisites
+        var sortedIds = topoSortSteps(steps);
+
+        // Assign sectors to steps that need placement (supplyCache, combatArena, bossArena)
+        var placeableSteps = steps.filter(function (s) {
+            return s.type === 'supplyCache' || s.type === 'combatArena' ||
+                   s.type === 'bossArena' || s.type === 'shrine' || s.type === 'ruinPuzzle';
+        });
+        var stepSectors = assignSectors(placeableSteps, prng);
+        var stepGeometries = {};
+        for (var si = 0; si < placeableSteps.length; si++) {
+            stepGeometries[placeableSteps[si].id] = roomGeometry(stepSectors[si], world, prng);
+        }
+
+        var mission = {
+            id: spec.id,
+            gameMode: 'story',
+            storyIntegration: 'coreLoop',
+            name: spec.name,
+            description: spec.description,
+            qualities: spec.qualities || [],
+            mapStyle: mapStyle,
+            world: { width: world.width, height: world.height },
+            xpMultiplier: spec.xpMultiplier || 1.0,
+            questSteps: steps
+        };
+
+        var phases = [];
+        var npcs = [];
+        var specialObjects = [];
+        var puzzles = [];
+        var allFixedMonsters = [];
+        var collectMonsterTypes = [];
+
+        // ---- Intro ----
+        var firstPhaseId = 'questHub-initial';
+        if (spec.intro) {
+            var introPhase = buildDialoguePhase('intro', spec.intro, 'questHub-initial', prng, world);
+            phases.push(introPhase);
+            if (introPhase._npc) npcs.push(introPhase._npc);
+            firstPhaseId = 'intro';
+        }
+
+        // ---- Build a phase (or phase chain) for each quest step ----
+        // Each step gets one phase. After completing, the engine returns to questHub.
+        var stepPhaseMap = {};  // stepId → phaseId
+
+        for (var i = 0; i < steps.length; i++) {
+            var step = steps[i];
+            var phaseId = 'step-' + step.id;
+            stepPhaseMap[step.id] = phaseId;
+
+            var stepType = step.type;
+            if (!stepType) {
+                stepType = step.npc ? 'learn' : 'combat';
+            }
+
+            var phase;
+
+            if (stepType === 'learn' || stepType === 'narrative') {
+                // Learn/narrative step: dialogue phase that grants a skill
+                var dialogue = step.npc || step.dialogue || {
+                    lines: step.label ? [step.label] : ['...'],
+                    endMission: false
+                };
+                phase = buildDialoguePhase(phaseId, dialogue, 'questHub', prng, world);
+                phase.stepId = step.id;
+                phase.grantsSkill = step.grantsSkill || null;
+                if (phase._npc) npcs.push(phase._npc);
+
+            } else if (stepType === 'supplyCache' && step.collectible) {
+                phase = {
+                    id: phaseId,
+                    type: 'combatCollect',
+                    targetCount: step.collectible.count || 1,
+                    objectType: step.collectible.id,
+                    nextPhase: 'questHub',
+                    stepId: step.id
+                };
+                var geo = stepGeometries[step.id];
+                if (geo) {
+                    addSpecialObject(specialObjects, step.collectible, geo, step.guard);
+                    if (step.guard) {
+                        addRoomFixedMonster(allFixedMonsters, collectMonsterTypes, step.guard, geo);
+                    }
+                }
+
+            } else if (stepType === 'ruinPuzzle' && step.puzzle) {
+                phase = {
+                    id: phaseId,
+                    type: 'puzzle',
+                    puzzleId: step.puzzle.id,
+                    nextPhase: 'questHub',
+                    stepId: step.id
+                };
+                puzzles.push(buildPuzzle(step.puzzle, spec));
+
+            } else if (stepType === 'combatArena') {
+                phase = {
+                    id: phaseId,
+                    type: 'combat',
+                    nextPhase: 'questHub',
+                    stepId: step.id
+                };
+                var geo2 = stepGeometries[step.id];
+                if (geo2 && step.guard) {
+                    addRoomFixedMonster(allFixedMonsters, collectMonsterTypes, step.guard, geo2);
+                }
+
+            } else if (stepType === 'bossArena') {
+                // Boss step — build combatConfig for this specific boss
+                phase = {
+                    id: phaseId,
+                    type: 'combat',
+                    nextPhase: spec.outro ? 'victory' : null,
+                    stepId: step.id,
+                    isBossPhase: true
+                };
+                var bossGeo = stepGeometries[step.id] || roomGeometry('center', world, prng);
+                mission._bossGeo = bossGeo;
+                mission._bossStep = step;
+
+            } else if (stepType === 'shrine') {
+                phase = {
+                    id: phaseId,
+                    type: 'dialogue',
+                    i18nLines: step.label ? [step.label] : ['You feel restored.'],
+                    nextPhase: 'questHub',
+                    stepId: step.id
+                };
+
+            } else {
+                // Fallback: treat as combat
+                phase = {
+                    id: phaseId,
+                    type: 'combat',
+                    nextPhase: 'questHub',
+                    stepId: step.id
+                };
+            }
+
+            phases.push(phase);
+        }
+
+        // ---- Boss handling ----
+        // If spec.boss is present (and no bossArena step), add a boss phase after the hub
+        var bossPhaseId = null;
+        var hasBossStep = steps.some(function (s) { return s.type === 'bossArena'; });
+
+        if (!hasBossStep && spec.boss) {
+            bossPhaseId = 'bossFight';
+            var bossGeo = roomGeometry('center', world, prng);
+            if (steps.length > 6) bossGeo = roomGeometry('n', world, prng);
+            var bossPhase = {
+                id: bossPhaseId,
+                type: 'combat',
+                nextPhase: spec.outro ? 'victory' : null,
+                isBossPhase: true
+            };
+            phases.push(bossPhase);
+            mission._bossGeo = bossGeo;
+        } else if (hasBossStep) {
+            // Find the boss step's phase
+            for (var b = 0; b < steps.length; b++) {
+                if (steps[b].type === 'bossArena') {
+                    bossPhaseId = stepPhaseMap[steps[b].id];
+                    break;
+                }
+            }
+        }
+
+        // ---- Quest Hub phase ----
+        // The hub is a choice screen. Its "nextPhase" is dynamically resolved
+        // by the engine based on which steps are unlocked. We set it to the boss
+        // phase if all required steps are done, or null (engine handles choice).
+        var hubPhase = {
+            id: 'questHub',
+            type: 'questHub',
+            nextPhase: null,  // engine resolves dynamically
+            stepPhaseMap: stepPhaseMap,
+            bossPhaseId: bossPhaseId
+        };
+        phases.push(hubPhase);
+
+        // The initial hub (first entry point if no intro)
+        var initialHubPhase = {
+            id: 'questHub-initial',
+            type: 'questHub',
+            nextPhase: null,
+            stepPhaseMap: stepPhaseMap,
+            bossPhaseId: bossPhaseId,
+            isInitial: true
+        };
+        phases.push(initialHubPhase);
+
+        // Wire intro → questHub-initial (already wired above if intro exists)
+        if (!spec.intro) {
+            // No intro: first phase is questHub-initial
+        }
+
+        // ---- Outro ----
+        if (spec.outro) {
+            var outroPhase = buildDialoguePhase('victory', spec.outro, null, prng, world);
+            if (outroPhase.endMission === undefined) outroPhase.endMission = true;
+            phases.push(outroPhase);
+            if (outroPhase._npc) npcs.push(outroPhase._npc);
+        }
+
+        mission.storyPhases = phases;
+        mission.npcs = npcs;
+        mission.specialObjects = specialObjects;
+        mission.puzzles = puzzles;
+
+        // ---- Combat configs ----
+        var diffKey = spec.difficulty || 'medium';
+        var defaultGuardHp = DIFFICULTY_GUARD_HP[diffKey] || 1.0;
+        var defaultBossHp = DIFFICULTY_BOSS_HP[diffKey] || 6.0;
+
+        // collectCombatConfig (for collection steps)
+        if (allFixedMonsters.length > 0) {
+            mission.collectCombatConfig = buildCollectCombatConfig(
+                spec, allFixedMonsters, collectMonsterTypes, defaultGuardHp
+            );
+        }
+
+        // Boss combatConfig
+        if (spec.boss || mission._bossStep) {
+            if (mission._bossStep && mission._bossStep.boss) {
+                // Boss comes from a bossArena step
+                mission.combatConfig = buildBossCombatConfigFromStep(
+                    spec, mission._bossStep, mission._bossGeo, defaultBossHp, defaultGuardHp
+                );
+            } else if (spec.boss) {
+                // Boss comes from spec.boss (top-level)
+                mission.combatConfig = buildBossCombatConfig(
+                    spec, mission._bossGeo, defaultBossHp, defaultGuardHp
+                );
+            }
+            delete mission._bossGeo;
+            delete mission._bossStep;
+        }
+
+        // ---- Music placeholders ----
+        mission.music = {
+            phaseTracks: buildMusicPlaceholders(phases),
+            fallbackTrackIndex: 0
+        };
+
+        // ---- i18n ----
+        if (spec.i18n && spec.i18n.strings) {
+            mission._i18n = { prefix: spec.i18n.prefix || ('mission.' + spec.id), strings: spec.i18n.strings };
+        }
+
+        return mission;
+    }
+
+    // -----------------------------------------------------------------
+    // Topological sort of quest steps by prerequisites
+    // -----------------------------------------------------------------
+    function topoSortSteps(steps) {
+        var visited = {};
+        var inPath = {};
+        var result = [];
+
+        function visit(stepId) {
+            if (visited[stepId]) return;
+            if (inPath[stepId]) {
+                throw new Error('MissionCompiler: cycle detected in quest step prerequisites at "' + stepId + '"');
+            }
+            inPath[stepId] = true;
+
+            // Find step and visit its prerequisites
+            for (var i = 0; i < steps.length; i++) {
+                if (steps[i].id === stepId) {
+                    var prereqs = steps[i].prerequisites || [];
+                    for (var j = 0; j < prereqs.length; j++) {
+                        visit(prereqs[j]);
+                    }
+                    break;
+                }
+            }
+
+            inPath[stepId] = false;
+            visited[stepId] = true;
+            result.push(stepId);
+        }
+
+        for (var k = 0; k < steps.length; k++) {
+            visit(steps[k].id);
+        }
+
+        return result;
+    }
+
+    // -----------------------------------------------------------------
+    // Helper: derive boss spec from a bossArena step
+    // -----------------------------------------------------------------
+    function deriveBossFromStep(step, fallbackBoss) {
+        return step.boss || fallbackBoss || {
+            demonType: 'Pride',
+            label: step.label || 'Boss',
+            stats: { healthMultiplier: 6.0, damageMultiplier: 3.0, sizeMultiplier: 1.5 }
+        };
+    }
+
+    // -----------------------------------------------------------------
+    // Helper: build boss combatConfig from a bossArena step
+    // -----------------------------------------------------------------
+    function buildBossCombatConfigFromStep(spec, step, bossGeo, defaultBossHp, defaultGuardHp) {
+        var boss = step.boss || spec.boss || {
+            demonType: 'Pride',
+            label: 'Boss',
+            stats: {}
+        };
+        var overrides = boss.combatOverrides || {};
+        var bossStats = boss.stats || {};
+
+        var fixedMonsters = [{
+            x: bossGeo.interiorX,
+            y: bossGeo.interiorY,
+            demonType: boss.demonType,
+            isBoss: true,
+            label: boss.label || boss.demonType,
+            behavior: { type: 'guard', patrolRadius: 200 },
+            stats: {
+                healthMultiplier: bossStats.healthMultiplier || defaultBossHp,
+                damageMultiplier: bossStats.damageMultiplier || 3.0,
+                sizeMultiplier: bossStats.sizeMultiplier || 1.5
+            },
+            spawnTrigger: { type: 'immediate', value: 0 }
+        }];
+
+        var monsterTypes = [boss.demonType];
+
+        if (boss.minions) {
+            for (var i = 0; i < boss.minions.length; i++) {
+                var m = boss.minions[i];
+                var mCount = m.count || 1;
+                for (var j = 0; j < mCount; j++) {
+                    var mX = bossGeo.interiorX + (j - mCount / 2) * 120;
+                    var mY = bossGeo.interiorY + 170;
+                    fixedMonsters.push({
+                        x: Math.max(100, mX),
+                        y: mY,
+                        demonType: m.demonType,
+                        stats: { healthMultiplier: (m.stats && m.stats.healthMultiplier) || 1.0 },
+                        spawnTrigger: { type: 'immediate', value: 0 }
+                    });
+                }
+                if (monsterTypes.indexOf(m.demonType) < 0) monsterTypes.push(m.demonType);
+            }
+        }
+
+        return {
+            monsters: monsterTypes,
+            monsterDamageFactor: overrides.monsterDamageFactor || 1.1,
+            monsterSpeed: overrides.monsterSpeed || 5,
+            playerSpeed: overrides.playerSpeed || 5,
+            maxMonsters: overrides.maxMonsters || Math.max(6, fixedMonsters.length),
+            monstersToKill: overrides.monstersToKill || 1,
+            spawnRate: overrides.spawnRate || 999,
+            randomSpawnsEnabled: overrides.randomSpawnsEnabled !== undefined ? overrides.randomSpawnsEnabled : false,
+            disableLevelBoss: true,
+            fixedMonsters: fixedMonsters
+        };
+    }
     function buildDialoguePhase(id, dialogue, nextPhaseId, prng, world) {
         var lines = dialogue.lines || [];
         // Store the raw text directly as i18nLines. translateMissionText() in

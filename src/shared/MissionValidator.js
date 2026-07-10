@@ -2,7 +2,7 @@
  * MissionValidator — validates mission JSON against the engine's safety rules.
  *
  * Pure function: validate(missionJSON, options) → ValidationResult.
- * A mission that passes is guaranteed loadable by StoryMissionEngine / MissionClient.
+ * A mission that passes is guaranteed loadable by the CoreStoryDirector / MissionClient.
  * It is NOT guaranteed fun.
  *
  * See docs/plans/mission-dsl-schema.md → "Layer 3 — Mission Validator".
@@ -84,6 +84,11 @@
             checkWinPath(mission, result);
         }
 
+        // H. Quest step DAG validation
+        if (Array.isArray(mission.questSteps) && mission.questSteps.length > 0) {
+            checkQuestSteps(mission, result);
+        }
+
         // F. Combat sanity
         checkCombatSanity(mission, result);
 
@@ -119,7 +124,7 @@
 
         // Each phase must have id + type
         if (Array.isArray(m.storyPhases)) {
-            var validTypes = { dialogue: 1, combat: 1, combatCollect: 1, puzzle: 1, collect: 1 };
+            var validTypes = { dialogue: 1, combat: 1, combatCollect: 1, puzzle: 1, collect: 1, questHub: 1, learn: 1 };
             m.storyPhases.forEach(function (p, i) {
                 if (!p || typeof p !== 'object') {
                     result.addError('SCHEMA_PHASE_NOT_OBJECT', 'phase[' + i + '] is not an object');
@@ -389,11 +394,19 @@
         // storyEnded event, which only endMission or storyState.ended=true triggers.
         // So flag terminal-without-endMission as an error.
         if (reachedTerminal && !reachedEndMission && terminalPhase && !terminalPhase.endMission) {
-            result.addError('WIN_NO_ENDMISSION', 'phase "' + terminalPhase.id + '" is terminal but has no endMission — mission cannot end cleanly');
+            // questHub phases are terminal by design — the engine resolves
+            // transitions dynamically. They're valid in quest step missions.
+            if (terminalPhase.type === 'questHub') {
+                // OK — quest hub is a valid terminal node, engine handles it
+            } else {
+                result.addError('WIN_NO_ENDMISSION', 'phase "' + terminalPhase.id + '" is terminal but has no endMission — mission cannot end cleanly');
+            }
         }
 
         // E21: defeatBoss — if a boss phase exists, combatConfig must have isBoss monster
-        var hasBossPhase = phases.some(function (p) { return p.type === 'combat' && p.id && /boss/i.test(p.id); });
+        var hasBossPhase = phases.some(function (p) {
+            return (p.type === 'combat' && p.id && /boss/i.test(p.id)) || (p.isBossPhase === true);
+        });
         if (hasBossPhase && m.combatConfig && Array.isArray(m.combatConfig.fixedMonsters)) {
             var hasBossMonster = m.combatConfig.fixedMonsters.some(function (fm) { return fm.isBoss === true; });
             if (!hasBossMonster) {
@@ -417,6 +430,138 @@
                 }
             }
         });
+    }
+
+    // -----------------------------------------------------------------
+    // H. Quest step DAG validation
+    // -----------------------------------------------------------------
+    function checkQuestSteps(m, result) {
+        var steps = m.questSteps;
+        if (!Array.isArray(steps) || steps.length === 0) return;
+
+        var stepIds = {};
+        steps.forEach(function (s, i) {
+            if (!s || !s.id) {
+                result.addError('QUEST_STEP_NO_ID', 'questStep[' + i + '] missing id');
+                return;
+            }
+            if (stepIds[s.id]) {
+                result.addError('QUEST_STEP_DUP_ID', 'duplicate quest step id: "' + s.id + '"');
+            }
+            stepIds[s.id] = true;
+        });
+
+        // Q1: No cycles in prerequisite graph
+        var visited = {};
+        var inPath = {};
+        function detectStepCycle(stepId) {
+            if (inPath[stepId]) {
+                result.addError('QUEST_CYCLE', 'cycle detected in quest step prerequisites at "' + stepId + '"');
+                return true;
+            }
+            if (visited[stepId]) return false;
+            visited[stepId] = true;
+            inPath[stepId] = true;
+            var step = steps.find(function (s) { return s.id === stepId; });
+            if (step) {
+                var prereqs = step.prerequisites || [];
+                for (var i = 0; i < prereqs.length; i++) {
+                    detectStepCycle(prereqs[i]);
+                }
+            }
+            inPath[stepId] = false;
+            return false;
+        }
+        steps.forEach(function (s) { if (s && s.id) detectStepCycle(s.id); });
+
+        // Q2: Every prerequisite references an existing step
+        steps.forEach(function (s) {
+            if (!s || !s.id) return;
+            var prereqs = s.prerequisites || [];
+            prereqs.forEach(function (p) {
+                if (!stepIds[p]) {
+                    result.addError('QUEST_PREREQ_MISSING', 'step "' + s.id + '" references unknown prerequisite "' + p + '"');
+                }
+            });
+        });
+
+        // Q3: Every requiredSkill is granted by some step
+        var grantedSkills = {};
+        steps.forEach(function (s) {
+            if (s && s.grantsSkill) grantedSkills[s.grantsSkill] = true;
+        });
+        steps.forEach(function (s) {
+            if (!s) return;
+            if (s.requiredSkill && !grantedSkills[s.requiredSkill]) {
+                result.addError('QUEST_SKILL_MISSING', 'step "' + s.id + '" requires skill "' + s.requiredSkill +
+                    '" but no step grants it');
+            }
+        });
+
+        // Q4: Every requiredItems id appears in some step's collectible
+        var collectibleIds = {};
+        steps.forEach(function (s) {
+            if (s && s.collectible && s.collectible.id) {
+                collectibleIds[s.collectible.id] = true;
+            }
+        });
+        steps.forEach(function (s) {
+            if (!s || !Array.isArray(s.requiredItems)) return;
+            s.requiredItems.forEach(function (itemId) {
+                if (!collectibleIds[itemId]) {
+                    result.addError('QUEST_ITEM_MISSING', 'step "' + s.id + '" requires item "' + itemId +
+                        '" but no step has that collectible');
+                }
+            });
+        });
+
+        // Q6 & Q7: All steps reachable from the initial state (no orphans)
+        // Starting from steps with no prerequisites, do BFS through the dep graph
+        var reachable = {};
+        var queue = [];
+        steps.forEach(function (s) {
+            if (s && s.id && (!s.prerequisites || s.prerequisites.length === 0)) {
+                queue.push(s.id);
+                reachable[s.id] = true;
+            }
+        });
+        while (queue.length > 0) {
+            var cur = queue.shift();
+            steps.forEach(function (s) {
+                if (!s || !s.id || reachable[s.id]) return;
+                var prereqs = s.prerequisites || [];
+                var allMet = true;
+                for (var i = 0; i < prereqs.length; i++) {
+                    if (!reachable[prereqs[i]]) { allMet = false; break; }
+                }
+                if (allMet) {
+                    reachable[s.id] = true;
+                    queue.push(s.id);
+                }
+            });
+        }
+        steps.forEach(function (s) {
+            if (s && s.id && !reachable[s.id]) {
+                result.addError('QUEST_STEP_UNREACHABLE', 'step "' + s.id + '" is unreachable — its prerequisites form an unsatisfiable chain');
+            }
+        });
+
+        // Q8: Learn steps must have npc with at least one line
+        steps.forEach(function (s, i) {
+            if (!s) return;
+            var type = s.type || (s.npc ? 'learn' : null);
+            if (type === 'learn') {
+                if (!s.npc || !Array.isArray(s.npc.lines) || s.npc.lines.length === 0) {
+                    result.addError('QUEST_LEARN_NO_DIALOGUE', 'learn step "' + (s.id || i) + '" must have npc with at least one line');
+                }
+            }
+        });
+
+        // Q-boss: If there's a bossArena step, it should have a boss spec (or spec.boss)
+        var hasBossStep = steps.some(function (s) { return s && s.type === 'bossArena'; });
+        if (hasBossStep && !m.boss && !steps.some(function (s) { return s && s.type === 'bossArena' && s.boss; })) {
+            result.addError('QUEST_BOSS_NO_SPEC', 'bossArena step exists but no boss spec found (need spec.boss or step.boss)');
+        }
     }
 
     // -----------------------------------------------------------------

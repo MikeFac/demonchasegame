@@ -112,7 +112,7 @@
       "theme": "forest",
       "authorId": "system",
       "visibility": "public",
-      "missionIds": ["lamps-of-hope", "derelict-station"],
+      "missionIds": ["lamps-of-hope", "derelict-station", "armor-of-god-01"],
       "unlockRequirement": null
     }
   ],

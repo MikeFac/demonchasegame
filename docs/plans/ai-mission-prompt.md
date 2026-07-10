@@ -127,6 +127,79 @@ For biblical story missions, prefer "verseMemorize" — it tests whether the pla
   trivial. A sequence of collect → solve → defeat is more engaging than just "defeat boss".
 - **Story arc:** intro sets the stakes, rooms are the journey, boss is the climax, outro
   delivers the resolution. Even secular missions benefit from this structure.
+
+## Quest Step Framework (for complex multi-stage missions)
+
+For missions with interdependent learning objectives, use `questSteps` instead of
+`rooms`. This creates a branching quest DAG where each step can require prerequisite
+steps, learned skills, or collected items before it unlocks. The player navigates via
+a "quest hub" choice screen between steps.
+
+Use `questSteps` when you want: "Learn A to defeat B and collect object X, learn C
+with X to beat enemy D, multiple preconditions until having all the elements to
+confront the final boss."
+
+### QuestStepSpec
+
+```json
+{
+  "questSteps": [
+    {
+      "id": "step-id",
+      "type": "learn" | "supplyCache" | "combatArena" | "ruinPuzzle" | "shrine" | "bossArena",
+      "npc": { "npcId": "...", "npcName": "...", "lines": ["..."] },
+      "grantsSkill": "skillId",
+      "prerequisites": ["other-step-id"],
+      "requiredSkill": "skillId",
+      "requiredItems": ["itemId1", "itemId2"],
+      "collectible": { "id": "objectId", "label": "Label", "count": 1 },
+      "guard": { "demonType": "Fear", ... },
+      "puzzle": { "id": "puzzleId", "mode": "verseMemorize", ... },
+      "position": "nw"|"n"|...|"auto",
+      "label": "Display Label",
+      "boss": { "demonType": "...", "label": "...", "stats": {...} }
+    }
+  ]
+}
+```
+
+### Step Types
+
+- **`learn`** — NPC dialogue that teaches a skill. Must have `npc` with `lines`.
+  Use `grantsSkill` to grant a skill id that other steps can require via `requiredSkill`.
+- **`supplyCache`** — Collect an item (optionally guarded). Must have `collectible`.
+  The collected item can be a prerequisite for other steps via `requiredItems`.
+- **`combatArena`** — Fight a guard demon. Must have `guard`.
+- **`ruinPuzzle`** — Solve a puzzle. Must have `puzzle`.
+- **`shrine`** — Heal/restore. Optional `label`.
+- **`bossArena`** — Final boss step. Must have `boss` spec or rely on top-level `boss`.
+
+### Preconditions
+
+- **`prerequisites`** — Step ids that must be completed first.
+- **`requiredSkill`** — A skill id that must have been granted by a prior `learn` step.
+- **`requiredItems`** — Collectible ids the player must hold before this step unlocks.
+
+### Rules for Quest Steps
+
+1. At least one step must have no prerequisites (entry point).
+2. No cycles — prerequisites must form a DAG (directed acyclic graph).
+3. Every `requiredSkill` must be granted by some step's `grantsSkill`.
+4. Every `requiredItems` entry must match some step's `collectible.id`.
+5. `learn` steps must have `npc` with at least one line.
+6. A `bossArena` step needs a `boss` spec (either in the step or top-level `spec.boss`).
+7. Use 3-8 quest steps. Too few is trivial, too many is tedious.
+8. The classic pattern: learn → collect → learn → collect → ... → boss.
+   Each learn grants a skill needed for the next collect, each collect provides
+   an item needed for the final boss.
+
+### When to Use `questSteps` vs `rooms`
+
+- **`rooms`** — Linear missions: intro → room1 → room2 → ... → boss → outro.
+  Simple, fast, good for short missions (2-5 rooms).
+- **`questSteps`** — Branching missions with learning objectives and item prerequisites.
+  Better for longer, educational missions where the player must learn concepts in
+  order and apply them. Use for "chapter boss" missions.
 ```
 
 ---
@@ -321,6 +394,93 @@ condemnation and shame, then faces a Pride boss. Keep it short.
     "npcName": "The Teacher",
     "lines": [ "Mercy triumphs over judgment. You are free." ],
     "endMission": true
+  }
+}
+```
+
+---
+
+## Few-Shot Example 4: Quest Steps (Armor of God — multi-stage learning chain)
+
+**User prompt:**
+```
+Generate a biblical mission about the Armor of God (Ephesians 6). The player learns
+each piece from Paul, collects it from a demon, and finally faces the Adversary (Pride).
+Medium difficulty. Use questSteps — each learn grants a skill needed for the next collect.
+```
+
+**Assistant output:**
+```json
+{
+  "schemaVersion": 1,
+  "id": "armor-of-god-01",
+  "name": "The Armor of God",
+  "description": "Learn the full armor of God piece by piece, then confront the Adversary.",
+  "theme": "spiritual warfare",
+  "tone": "combat",
+  "difficulty": "medium",
+  "contentMode": "biblical",
+  "objective": "Learn each piece of God's armor from Paul, collect them from demons, and face the Adversary.",
+  "world": { "size": "standard", "mapStyle": "open" },
+  "qualities": ["Faith", "Courage", "Knowledge", "Power"],
+  "xpMultiplier": 1.5,
+  "intro": {
+    "npcId": "paul", "npcName": "Paul", "portrait": "images/npcs/paul.png",
+    "lines": [
+      "Put on the whole armor of God, that you may stand against the schemes of the devil.",
+      "Learn each piece, gather them from the demons, and you will be ready."
+    ]
+  },
+  "questSteps": [
+    { "id": "learnBelt", "type": "learn",
+      "npc": { "npcId": "paul", "npcName": "Paul", "lines": [
+        "Stand therefore, having fastened on the belt of truth.",
+        "The belt holds everything together. Without truth, the rest falls apart."
+      ] },
+      "grantsSkill": "truthBelt", "prerequisites": [] },
+    { "id": "collectBreastplate", "type": "supplyCache", "position": "nw",
+      "label": "Breastplate of Righteousness",
+      "collectible": { "id": "breastplate", "label": "Breastplate of Righteousness", "count": 1, "required": true },
+      "guard": { "demonType": "Condemnation", "behavior": "guard", "patrolRadius": 140, "stats": { "healthMultiplier": 1.2 } },
+      "prerequisites": ["learnBelt"], "requiredSkill": "truthBelt" },
+    { "id": "learnShoes", "type": "learn",
+      "npc": { "npcId": "paul", "npcName": "Paul", "lines": [
+        "Having put on the readiness of the gospel of peace.",
+        "Your feet must be shod — ready to move, ready to share the good news."
+      ] },
+      "grantsSkill": "gospelShoes", "prerequisites": ["collectBreastplate"] },
+    { "id": "collectShield", "type": "supplyCache", "position": "ne",
+      "label": "Shield of Faith",
+      "collectible": { "id": "shield", "label": "Shield of Faith", "count": 1, "required": true },
+      "guard": { "demonType": "Doubt", "behavior": "guard", "patrolRadius": 150, "stats": { "healthMultiplier": 1.3 } },
+      "prerequisites": ["learnShoes"], "requiredSkill": "gospelShoes" },
+    { "id": "learnHelmet", "type": "learn",
+      "npc": { "npcId": "paul", "npcName": "Paul", "lines": [
+        "Take up the helmet of salvation.",
+        "Protect your mind. The enemy attacks your thoughts first."
+      ] },
+      "grantsSkill": "salvationHelmet", "prerequisites": ["collectShield"] },
+    { "id": "collectSword", "type": "supplyCache", "position": "sw",
+      "label": "Sword of the Spirit",
+      "collectible": { "id": "sword", "label": "Sword of the Spirit", "count": 1, "required": true },
+      "guard": { "demonType": "Deception", "behavior": "guard", "patrolRadius": 140, "stats": { "healthMultiplier": 1.4 } },
+      "prerequisites": ["learnHelmet"], "requiredSkill": "salvationHelmet" },
+    { "id": "finalBoss", "type": "bossArena", "position": "center",
+      "prerequisites": ["collectSword"], "requiredSkill": "salvationHelmet",
+      "requiredItems": ["breastplate", "shield", "sword"],
+      "boss": { "demonType": "Pride", "label": "The Adversary",
+        "stats": { "healthMultiplier": 8, "damageMultiplier": 3.5, "sizeMultiplier": 1.5 },
+        "minions": [ { "demonType": "Doubt", "count": 2 }, { "demonType": "Fear", "count": 1 } ]
+      }
+    }
+  ],
+  "outro": {
+    "npcId": "paul", "npcName": "Paul",
+    "lines": [
+      "You stood firm. The armor held.",
+      "Therefore take up the whole armor of God, that you may withstand in the evil day."
+    ],
+    "sermonRef": "Ephesians 6:13", "endMission": true
   }
 }
 ```

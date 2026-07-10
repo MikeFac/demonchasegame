@@ -146,7 +146,11 @@ class Renderer {
             this.drawSpeedPrompt();
         }
 
-        this.drawStoryPauseOverlay(uiState.storyPause);
+        if (uiState.storyPause && uiState.storyPause.type === 'questHub') {
+            this.drawQuestHubOverlay(uiState.storyPause);
+        } else {
+            this.drawStoryPauseOverlay(uiState.storyPause);
+        }
     }
 
     drawTopBar(uiState) {
@@ -442,6 +446,129 @@ class Renderer {
         }
 
         this.ctx.restore();
+    }
+
+    drawQuestHubOverlay(hub) {
+        if (!hub) return;
+        const ctx = this.ctx;
+        const canvas = this.canvas;
+        const cards = hub.stepCards || [];
+        const margin = 10;
+
+        hub.buttonRects = [];
+
+        ctx.save();
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.88)';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        // Title
+        ctx.fillStyle = '#ffd666';
+        ctx.font = 'bold 18px Arial';
+        ctx.textAlign = 'center';
+        ctx.fillText('Choose Your Path', canvas.width / 2, 30);
+
+        // Progress
+        ctx.fillStyle = '#a5c8ff';
+        ctx.font = '12px Arial';
+        ctx.fillText(hub.completedCount + ' / ' + hub.totalSteps + ' steps complete', canvas.width / 2, 48);
+
+        const cardH = 48;
+        const cardGap = 6;
+        const cardW = canvas.width - margin * 2;
+        const cardX = margin;
+        var startY = 58;
+
+        for (let i = 0; i < cards.length; i++) {
+            const card = cards[i];
+            const y = startY + i * (cardH + cardGap);
+
+            // Card background
+            if (card.complete) {
+                ctx.fillStyle = 'rgba(76,175,80,0.15)';
+            } else if (card.unlocked) {
+                ctx.fillStyle = card.isBoss ? 'rgba(204,34,34,0.2)' : 'rgba(74,144,226,0.15)';
+            } else {
+                ctx.fillStyle = 'rgba(60,60,80,0.12)';
+            }
+            ctx.fillRect(cardX, y, cardW, cardH);
+
+            // Card border
+            if (card.complete) {
+                ctx.strokeStyle = '#4caf50';
+            } else if (card.unlocked) {
+                ctx.strokeStyle = card.isBoss ? '#ff6666' : '#4a90e2';
+            } else {
+                ctx.strokeStyle = '#444';
+            }
+            ctx.lineWidth = card.unlocked ? 2 : 1;
+            ctx.strokeRect(cardX, y, cardW, cardH);
+
+            // Label
+            ctx.textAlign = 'left';
+            if (card.complete) {
+                ctx.fillStyle = '#4caf50';
+                ctx.font = 'bold 14px Arial';
+                ctx.fillText('[Done] ' + card.label, cardX + 10, y + 22);
+            } else if (card.unlocked) {
+                ctx.fillStyle = card.isBoss ? '#ff6666' : '#ffd666';
+                ctx.font = 'bold 14px Arial';
+                ctx.fillText(card.label, cardX + 10, y + 22);
+            } else {
+                ctx.fillStyle = '#666';
+                ctx.font = '14px Arial';
+                ctx.fillText('[Locked] ' + card.label, cardX + 10, y + 22);
+            }
+
+            // Type indicator
+            ctx.fillStyle = card.unlocked ? '#a5c8ff' : '#555';
+            ctx.font = '11px Arial';
+            ctx.textAlign = 'right';
+            ctx.fillText(card.typeText, cardX + cardW - 10, y + 22);
+
+            // Lock reason
+            if (!card.unlocked && !card.complete && card.lockedReason) {
+                ctx.fillStyle = '#888';
+                ctx.font = '10px Arial';
+                ctx.textAlign = 'left';
+                ctx.fillText(card.lockedReason, cardX + 10, y + 38);
+            }
+
+            // Store clickable rect for unlocked cards
+            if (card.unlocked) {
+                hub.buttonRects.push({
+                    id: 'questStep',
+                    stepId: card.stepId,
+                    isBoss: card.isBoss,
+                    x: cardX,
+                    y: y,
+                    width: cardW,
+                    height: cardH
+                });
+            }
+        }
+
+        // Boss button (if all done and no bossArena step)
+        if (hub.showBossButton) {
+            var bossY = startY + cards.length * (cardH + cardGap) + 6;
+            ctx.fillStyle = 'rgba(204,34,34,0.25)';
+            ctx.fillRect(cardX, bossY, cardW, cardH);
+            ctx.strokeStyle = '#ff4444';
+            ctx.lineWidth = 3;
+            ctx.strokeRect(cardX, bossY, cardW, cardH);
+            ctx.fillStyle = '#ff6666';
+            ctx.font = 'bold 16px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText('Fight the Boss!', canvas.width / 2, bossY + 30);
+            hub.buttonRects.push({
+                id: 'questBoss',
+                x: cardX,
+                y: bossY,
+                width: cardW,
+                height: cardH
+            });
+        }
+
+        ctx.restore();
     }
 
     _getStoryPausePhaseLabel(storyPause) {

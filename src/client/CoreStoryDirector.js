@@ -440,6 +440,410 @@
         };
     }
 
+    // -----------------------------------------------------------------
+    // Quest Step Framework
+    // -----------------------------------------------------------------
+
+    /**
+     * Check if a mission uses the quest step framework.
+     */
+    function hasQuestSteps(mission) {
+        return !!mission && Array.isArray(mission.questSteps) && mission.questSteps.length > 0;
+    }
+
+    /**
+     * Evaluate whether a quest step is unlocked given the current state.
+     * state = { completedSteps: {}, learnedSkills: {}, collectedObjects: {} }
+     */
+    function isStepUnlocked(step, state) {
+        if (!step || !step.id) return false;
+        state = state || {};
+        var completedSteps = state.completedSteps || {};
+        var learnedSkills = state.learnedSkills || {};
+        var collectedObjects = state.collectedObjects || {};
+
+        if (completedSteps[step.id]) return false;
+
+        var prereqs = step.prerequisites || [];
+        for (var i = 0; i < prereqs.length; i++) {
+            if (!completedSteps[prereqs[i]]) return false;
+        }
+
+        if (step.requiredSkill && !learnedSkills[step.requiredSkill]) {
+            return false;
+        }
+
+        if (Array.isArray(step.requiredItems)) {
+            for (var j = 0; j < step.requiredItems.length; j++) {
+                if ((collectedObjects[step.requiredItems[j]] || 0) < 1) {
+                    return false;
+                }
+            }
+        }
+
+        return true;
+    }
+
+    /**
+     * Get the list of unlocked step ids given the current state.
+     */
+    function getUnlockedSteps(mission, state) {
+        if (!hasQuestSteps(mission)) return [];
+        var result = [];
+        var steps = mission.questSteps;
+        for (var i = 0; i < steps.length; i++) {
+            if (isStepUnlocked(steps[i], state)) {
+                result.push(steps[i].id);
+            }
+        }
+        return result;
+    }
+
+    /**
+     * Check if all required quest steps are complete (boss is available).
+     */
+    function areAllRequiredStepsComplete(mission, state) {
+        if (!hasQuestSteps(mission)) return true;
+        var steps = mission.questSteps;
+        state = state || {};
+        var completedSteps = state.completedSteps || {};
+        var hasRequired = false;
+        for (var i = 0; i < steps.length; i++) {
+            if (steps[i].required) {
+                hasRequired = true;
+                if (!completedSteps[steps[i].id]) return false;
+            }
+        }
+        if (!hasRequired) {
+            for (var j = 0; j < steps.length; j++) {
+                if (!completedSteps[steps[j].id] && steps[j].type !== 'bossArena') return false;
+            }
+        }
+        return true;
+    }
+
+    /**
+     * Get a step spec by id.
+     */
+    function getStepById(mission, stepId) {
+        if (!hasQuestSteps(mission)) return null;
+        for (var i = 0; i < mission.questSteps.length; i++) {
+            if (mission.questSteps[i].id === stepId) return mission.questSteps[i];
+        }
+        return null;
+    }
+
+    /**
+     * Build a quest hub pause — a choice screen showing all quest steps
+     * with their status (completed, unlocked, locked).
+     * Returns a pause object for enterStoryPause().
+     */
+    function buildQuestHubPause(mission, state) {
+        if (!hasQuestSteps(mission)) return null;
+        var steps = mission.questSteps;
+        state = state || {};
+        var completedSteps = state.completedSteps || {};
+        var learnedSkills = state.learnedSkills || {};
+        var collectedObjects = state.collectedObjects || {};
+
+        var stepCards = [];
+        for (var i = 0; i < steps.length; i++) {
+            var step = steps[i];
+            var unlocked = isStepUnlocked(step, state);
+            var complete = !!completedSteps[step.id];
+
+            var lockedReason = '';
+            if (!unlocked && !complete) {
+                var prereqs = step.prerequisites || [];
+                for (var p = 0; p < prereqs.length; p++) {
+                    if (!completedSteps[prereqs[p]]) {
+                        lockedReason = 'Requires: ' + prereqs[p];
+                        break;
+                    }
+                }
+                if (!lockedReason && step.requiredSkill && !learnedSkills[step.requiredSkill]) {
+                    lockedReason = 'Requires skill: ' + step.requiredSkill;
+                }
+                if (!lockedReason && Array.isArray(step.requiredItems)) {
+                    for (var ri = 0; ri < step.requiredItems.length; ri++) {
+                        if ((collectedObjects[step.requiredItems[ri]] || 0) < 1) {
+                            lockedReason = 'Requires item: ' + step.requiredItems[ri];
+                            break;
+                        }
+                    }
+                }
+            }
+
+            var label = step.label || step.id;
+            var isBossStep = step.type === 'bossArena';
+            if (isBossStep && step.boss) label = step.boss.label || label;
+
+            var typeText = '';
+            if (step.type === 'learn' || step.npc) typeText = 'Learn';
+            else if (step.type === 'supplyCache') typeText = 'Collect';
+            else if (step.type === 'combatArena') typeText = 'Fight';
+            else if (step.type === 'bossArena') typeText = 'Boss';
+            else if (step.type === 'ruinPuzzle') typeText = 'Solve';
+
+            stepCards.push({
+                stepId: step.id,
+                label: label,
+                typeText: typeText,
+                isBoss: isBossStep,
+                unlocked: unlocked,
+                complete: complete,
+                lockedReason: lockedReason
+            });
+        }
+
+        var allRequiredDone = areAllRequiredStepsComplete(mission, state);
+        var hasBossStep = steps.some(function (s) { return s.type === 'bossArena'; });
+        var showBossButton = allRequiredDone && !hasBossStep;
+
+        return {
+            type: 'questHub',
+            missionId: mission.id,
+            phaseId: 'questHub',
+            title: mission.name || 'Quest',
+            stepCards: stepCards,
+            showBossButton: showBossButton,
+            allRequiredDone: allRequiredDone,
+            completedCount: Object.keys(completedSteps).length,
+            totalSteps: steps.length
+        };
+    }
+
+    /**
+     * Build a dialogue pause for a "learn" quest step (NPC teaches a skill).
+     */
+    function buildLearnDialoguePause(mission, stepId) {
+        if (!hasQuestSteps(mission)) return null;
+        var step = getStepById(mission, stepId);
+        if (!step || !step.npc) return null;
+
+        var npc = step.npc;
+        var speaker = npc.npcName || npc.npcId || 'NPC';
+        var lines = Array.isArray(npc.lines) ? npc.lines : [];
+
+        return {
+            type: 'dialogue',
+            missionId: mission.id,
+            phaseId: 'step-' + stepId,
+            stepId: stepId,
+            grantsSkill: step.grantsSkill || null,
+            title: mission.name || 'Story',
+            speaker: speaker,
+            lines: lines.map(translateMissionText),
+            nextPhase: 'questHub',
+            prompt: 'Continue'
+        };
+    }
+
+    /**
+     * Build a collectible seed for a specific quest step (supplyCache type).
+     */
+    function buildStepCollectibleSeed(mission, stepId) {
+        if (!hasQuestSteps(mission)) return null;
+        var step = getStepById(mission, stepId);
+        if (!step || !step.collectible) return null;
+
+        var objConfig = step.collectible;
+        var targetCount = objConfig.count || 1;
+
+        // Find placement from specialObjects array
+        var placement = null;
+        if (Array.isArray(mission.specialObjects)) {
+            var obj = mission.specialObjects.find(function (o) { return o.id === objConfig.id; });
+            if (obj && Array.isArray(obj.placements) && obj.placements.length > 0) {
+                placement = obj.placements[0];
+            }
+        }
+
+        var x = placement ? placement.x : 1500;
+        var y = placement ? placement.y : 1500;
+        var label = objConfig.label ? translateMissionText(objConfig.label) : objConfig.id;
+
+        var stones = [];
+        for (var i = 0; i < targetCount; i++) {
+            stones.push({
+                id: mission.id + '-' + objConfig.id + '-' + (i + 1),
+                type: objConfig.id,
+                storyCollectible: true,
+                storyObjectId: objConfig.id,
+                label: label,
+                x: Math.round(x + (i * 80 - targetCount * 40)),
+                y: Math.round(y),
+                guardDemonType: step.guard ? step.guard.demonType : null,
+                width: 28,
+                height: 22
+            });
+        }
+
+        return {
+            missionId: mission.id,
+            phaseId: 'step-' + stepId,
+            stepId: stepId,
+            nextPhase: 'questHub',
+            objectType: objConfig.id,
+            label: label,
+            targetCount: targetCount,
+            collected: 0,
+            collectedIds: [],
+            complete: false,
+            collectibles: stones
+        };
+    }
+
+    /**
+     * Build combat config for a combatArena quest step.
+     */
+    function buildStepCombatConfig(mission, stepId) {
+        if (!hasQuestSteps(mission)) return null;
+        var step = getStepById(mission, stepId);
+        if (!step) return null;
+
+        // For combatArena steps, use the collectCombatConfig from the mission
+        var combat = (mission.collectCombatConfig) || {};
+        var rawSpawnRate = combat.spawnRate || mission.spawnRate || 18;
+        var spawnRateSeconds = rawSpawnRate > 1000 ? rawSpawnRate / 1000 : rawSpawnRate;
+
+        return {
+            balance: {
+                monsterHealth: 1.0,
+                monsterDamage: combat.monsterDamageFactor || mission.monsterDamageFactor || 1.0,
+                monsterSpeed: 1.0,
+                spawnRate: 1.0,
+                maxMonsters: 1.0,
+                healingFrequency: 1.0
+            },
+            levels: [{
+                qualities: combat.qualities || mission.qualities || ['Faith'],
+                monsters: combat.monsters || mission.monsters || ['Fear'],
+                monstersToKill: combat.monstersToKill || 99,
+                maxMonsters: combat.maxMonsters || 8,
+                spawnRate: spawnRateSeconds
+            }],
+            quizSettings: mission.quizSettings || null,
+            world: mission.world || null,
+            disableLevelBoss: true,
+            fixedMonsters: Array.isArray(combat.fixedMonsters) ? combat.fixedMonsters.slice() : [],
+            randomSpawnsEnabled: combat.randomSpawnsEnabled !== false,
+            randomSpawnBudget: typeof combat.randomSpawnBudget === 'number' ? combat.randomSpawnBudget : undefined
+        };
+    }
+
+    /**
+     * Build a puzzle pause for a ruinPuzzle quest step.
+     */
+    function buildStepPuzzlePause(mission, stepId) {
+        if (!hasQuestSteps(mission)) return null;
+        var step = getStepById(mission, stepId);
+        if (!step || !step.puzzle) return null;
+
+        // Delegate to the existing buildPuzzlePause logic, but set the stepId
+        var puzzle = step.puzzle;
+        var mode = puzzle.mode || 'cloze';
+        var hasChoiceOptions = Array.isArray(puzzle.options) && puzzle.options.length > 0;
+
+        if (mode === 'verseMemorize') {
+            var rawVerseText = findVerseText(puzzle.verseRef) || puzzle.verseText || '';
+            if (rawVerseText.length > 120 && puzzle.verseRef) {
+                var shortVerse = findShortVerseForCategory(puzzle.verseRef);
+                if (shortVerse) {
+                    rawVerseText = shortVerse.Text;
+                    puzzle = Object.assign({}, puzzle, { verseRef: shortVerse.Reference, verseText: shortVerse.Text });
+                }
+            }
+            if (!rawVerseText || rawVerseText.length > 150) {
+                rawVerseText = puzzle.prompt || '';
+            }
+            if (!rawVerseText) {
+                return {
+                    type: 'puzzle',
+                    puzzleMode: 'verseMemorize',
+                    missionId: mission.id,
+                    phaseId: 'step-' + stepId,
+                    stepId: stepId,
+                    puzzleId: puzzle.id,
+                    title: mission.name || 'Challenge',
+                    speaker: 'Memory Check',
+                    text: 'No verse available',
+                    verseRef: puzzle.verseRef || null,
+                    blanks: [],
+                    blankOptions: [],
+                    currentBlankIndex: 0,
+                    completed: true,
+                    isCorrect: true,
+                    feedback: 'Verse not found — puzzle skipped',
+                    nextPhase: 'questHub',
+                    prompt: 'Continue'
+                };
+            }
+            var wordsToHide = puzzle.wordsToHide || 3;
+            var blankResult = generateMemorizationBlanks(rawVerseText, wordsToHide);
+            return {
+                type: 'puzzle',
+                puzzleMode: 'verseMemorize',
+                missionId: mission.id,
+                phaseId: 'step-' + stepId,
+                stepId: stepId,
+                puzzleId: puzzle.id,
+                title: mission.name || 'Challenge',
+                speaker: 'Memory Check',
+                text: rawVerseText,
+                verseRef: puzzle.verseRef || null,
+                blanks: blankResult.blanks,
+                blankOptions: blankResult.options,
+                currentBlankIndex: 0,
+                selectedAnswer: null,
+                usedWords: [],
+                completed: false,
+                nextPhase: 'questHub',
+                prompt: 'Continue'
+            };
+        }
+
+        return {
+            type: 'puzzle',
+            missionId: mission.id,
+            phaseId: 'step-' + stepId,
+            stepId: stepId,
+            puzzleId: puzzle.id,
+            title: mission.name || translateMissionText('story.david.title'),
+            speaker: 'Challenge',
+            text: puzzle.i18nPrompt ? translateMissionText(puzzle.i18nPrompt) : (puzzle.prompt || ''),
+            options: hasChoiceOptions ? puzzle.options.slice() : null,
+            answer: puzzle.answer || null,
+            mode: mode,
+            verseRef: puzzle.verseRef || null,
+            nextPhase: 'questHub',
+            prompt: translateMissionText('story.david.buttons.continue')
+        };
+    }
+
+    /**
+     * Build a boss combat config from a bossArena quest step.
+     */
+    function buildStepBossConfig(mission, stepId) {
+        if (!hasQuestSteps(mission)) return null;
+        var step = getStepById(mission, stepId);
+        if (!step) return null;
+
+        var boss = step.boss || mission.boss;
+        if (!boss) return null;
+
+        var combat = mission.combatConfig || {};
+        return {
+            monsters: combat.monsters || [boss.demonType],
+            monstersToKill: combat.monstersToKill || 1,
+            maxMonsters: combat.maxMonsters || 6,
+            spawnRate: combat.spawnRate || 999,
+            fixedMonsters: Array.isArray(combat.fixedMonsters) ? combat.fixedMonsters.slice() : [],
+            disableLevelBoss: true,
+            randomSpawnsEnabled: false
+        };
+    }
+
     window.CoreStoryDirector = {
         applyMissionOverride: applyMissionOverride,
         buildCollectCombatConfig: buildCollectCombatConfig,
@@ -451,6 +855,18 @@
         isCoreLoopStoryMission: isCoreLoopStoryMission,
         isEnabled: isEnabled,
         isForceLegacyStoryEnabled: isForceLegacyStoryEnabled,
-        isIntegratedStoryOverrideEnabled: isIntegratedStoryOverrideEnabled
+        isIntegratedStoryOverrideEnabled: isIntegratedStoryOverrideEnabled,
+        // Quest step framework
+        hasQuestSteps: hasQuestSteps,
+        isStepUnlocked: isStepUnlocked,
+        getUnlockedSteps: getUnlockedSteps,
+        areAllRequiredStepsComplete: areAllRequiredStepsComplete,
+        getStepById: getStepById,
+        buildQuestHubPause: buildQuestHubPause,
+        buildLearnDialoguePause: buildLearnDialoguePause,
+        buildStepCollectibleSeed: buildStepCollectibleSeed,
+        buildStepCombatConfig: buildStepCombatConfig,
+        buildStepPuzzlePause: buildStepPuzzlePause,
+        buildStepBossConfig: buildStepBossConfig
     };
 })();
