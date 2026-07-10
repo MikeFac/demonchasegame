@@ -1,0 +1,141 @@
+{
+  "schemaVersion": 1,
+  "id": "lamps-of-hope",
+  "name": "Beacons in the Dark",
+  "description": "Find hope in a desperate labyrinth",
+  "theme": "hope",
+  "tone": "adventure",
+  "difficulty": "hard",
+  "contentMode": "biblical",
+  "objective": "Illuminate the darkness with 3 lamps of hope and defeat Despair",
+  "winCondition": {
+    "type": "sequence",
+    "steps": [
+      {
+        "type": "collect",
+        "objectId": "lamp-of-hope",
+        "count": 3
+      },
+      {
+        "type": "solvePuzzles",
+        "count": 1
+      },
+      {
+        "type": "defeatBoss",
+        "bossId": "despair-boss"
+      }
+    ]
+  },
+  "world": {
+    "size": "large",
+    "mapStyle": "labyrinth"
+  },
+  "qualities": [
+    "Hope",
+    "Endurance"
+  ],
+  "xpMultiplier": 1.2,
+  "intro": {
+    "npcName": "Guide",
+    "lines": [
+      "The labyrinth of darkness has consumed many souls.",
+      "But with faith and hope, even the darkest paths can be illuminated."
+    ],
+    "portrait": "images/npcs/guide.png"
+  },
+  "rooms": [
+    {
+      "id": "room-1",
+      "type": "supplyCache",
+      "position": "nw",
+      "label": "Flickering Light",
+      "collectible": {
+        "id": "lamp-of-hope",
+        "label": "Lamp of Hope",
+        "count": 1,
+        "required": true
+      },
+      "guard": {
+        "demonType": "Doubt",
+        "behavior": "patrol",
+        "patrolRadius": 100,
+        "stats": {
+          "healthMultiplier": 1.2
+        }
+      }
+    },
+    {
+      "id": "room-2",
+      "type": "supplyCache",
+      "position": "ne",
+      "label": "Glimmer of Hope",
+      "collectible": {
+        "id": "lamp-of-hope",
+        "label": "Lamp of Hope",
+        "count": 1,
+        "required": true
+      },
+      "guard": {
+        "demonType": "Fear",
+        "behavior": "aggressive",
+        "stats": {
+          "healthMultiplier": 1.5
+        }
+      }
+    },
+    {
+      "id": "room-3",
+      "type": "supplyCache",
+      "position": "sw",
+      "label": "Beacon of Light",
+      "collectible": {
+        "id": "lamp-of-hope",
+        "label": "Lamp of Hope",
+        "count": 1,
+        "required": true
+      },
+      "guard": {
+        "demonType": "Unbelief",
+        "behavior": "guard",
+        "stats": {
+          "healthMultiplier": 1.2
+        }
+      }
+    },
+    {
+      "id": "room-4",
+      "type": "ruinPuzzle",
+      "position": "center",
+      "label": "Endurance Test",
+      "puzzle": {
+        "id": "endurance-puzzle",
+        "mode": "verseMemorize",
+        "verseRef": "Hebrews 12:1-3",
+        "wordsToHide": 3
+      }
+    }
+  ],
+  "boss": {
+    "id": "despair-boss",
+    "demonType": "Despair",
+    "stats": {
+      "healthMultiplier": 8,
+      "damageMultiplier": 4,
+      "sizeMultiplier": 2
+    }
+  },
+  "outro": {
+    "lines": [
+      "With the lamps of hope lit, the darkness recedes.",
+      "Despair is defeated, and the path ahead is illuminated."
+    ],
+    "endMission": true
+  },
+  "i18n": {
+    "prefix": "missions.lamps-of-hope",
+    "strings": {
+      "lamp-of-hope": "Lamp of Hope",
+      "endurance-puzzle": "Endurance Test"
+    }
+  }
+}

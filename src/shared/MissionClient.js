@@ -99,7 +99,7 @@
         missionToGameConfig(mission) {
             if (!mission) return null;
             
-            return {
+            var result = {
                 // Mission metadata
                 missionId: mission.id,
                 missionName: mission.name,
@@ -155,8 +155,14 @@
             if (Array.isArray(mission.puzzles)) {
                 result.puzzles = mission.puzzles.slice();
             }
+            if (mission.collectCombatConfig && typeof mission.collectCombatConfig === 'object') {
+                result.collectCombatConfig = mission.collectCombatConfig;
+            }
             if (mission.combatConfig && typeof mission.combatConfig === 'object') {
                 result.combatConfig = mission.combatConfig;
+            }
+            if (mission.world && typeof mission.world === 'object') {
+                result.world = mission.world;
             }
             if (mission.music && typeof mission.music === 'object') {
                 result.music = mission.music;

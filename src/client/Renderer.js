@@ -283,7 +283,10 @@ class Renderer {
 
         const margin = 10;
         const isPuzzle = storyPause.type === 'puzzle';
-        const boxH = isPuzzle
+        const isMemorize = isPuzzle && storyPause.puzzleMode === 'verseMemorize';
+        const boxH = isMemorize
+            ? Math.min(460, this.canvas.height - 20)
+            : isPuzzle
             ? Math.min(340, Math.max(270, Math.floor(this.canvas.height * 0.5)))
             : Math.min(210, Math.max(166, Math.floor(this.canvas.height * 0.34)));
         const boxY = this.canvas.height - boxH - margin;
@@ -335,11 +338,17 @@ class Renderer {
         this.ctx.textAlign = 'left';
         this.ctx.fillText(title, boxX + 14, boxY + 26);
 
-        this.ctx.fillStyle = '#ffffff';
-        this.ctx.font = '15px Arial';
-        this._drawWrappedText(line, boxX + 14, boxY + 54, boxW - 28, 21, 3);
+        // For verse memorization, the verse text is drawn inside _drawVerseMemorizePuzzle
+        // with blanks — skip the full text draw here to avoid showing the answers
+        if (!(isPuzzle && storyPause.puzzleMode === 'verseMemorize')) {
+            this.ctx.fillStyle = '#ffffff';
+            this.ctx.font = '15px Arial';
+            this._drawWrappedText(line, boxX + 14, boxY + 54, boxW - 28, 21, 3);
+        }
 
-        if (isPuzzle) {
+        if (isPuzzle && storyPause.puzzleMode === 'verseMemorize') {
+            this._drawVerseMemorizePuzzle(storyPause, boxX, boxY, boxW, boxH, btnX, btnY, btnW, btnH);
+        } else if (isPuzzle) {
             const options = Array.isArray(storyPause.options) ? storyPause.options : [];
             const cols = 2;
             const gap = 10;
@@ -437,18 +446,107 @@ class Renderer {
 
     _getStoryPausePhaseLabel(storyPause) {
         if (!storyPause) return '';
-        if (storyPause.type === 'puzzle') return 'Courage Check';
+        if (storyPause.type === 'puzzle') return storyPause.speaker || 'Challenge';
         switch (storyPause.phaseId) {
             case 'intro':
                 return 'Story Moment';
             case 'victory':
                 return 'Victory';
-            case 'bossFight':
-                return 'Face Goliath';
-            case 'collectStones':
-                return 'Gather Stones';
             default:
                 return storyPause.type === 'dialogue' ? 'Dialogue' : '';
+        }
+    }
+
+    _drawVerseMemorizePuzzle(storyPause, boxX, boxY, boxW, boxH, btnX, btnY, btnW, btnH) {
+        const ctx = this.ctx;
+        const blanks = storyPause.blanks || [];
+        const blankOptions = storyPause.blankOptions || [];
+        const currentIdx = storyPause.currentBlankIndex || 0;
+
+        // Render the verse text with blanks
+        const verseText = storyPause.text || '';
+        const words = verseText.split(/\s+/);
+        let displayWords = words.slice();
+        for (let b = 0; b < blanks.length; b++) {
+            const blank = blanks[b];
+            if (b < currentIdx) {
+                displayWords[blank.index] = '[' + blank.word + ']';
+            } else {
+                displayWords[blank.index] = '_____';
+            }
+        }
+
+        // Draw the verse with blanks
+        ctx.fillStyle = '#ffffff';
+        ctx.font = '14px Arial';
+        ctx.textAlign = 'left';
+        const verseDisplay = displayWords.join(' ');
+        this._drawWrappedText(verseDisplay, boxX + 14, boxY + 54, boxW - 28, 20, 4);
+
+        // Progress indicator
+        if (blanks.length > 0) {
+            ctx.fillStyle = '#ffd666';
+            ctx.font = 'bold 12px Arial';
+            ctx.fillText('Word ' + (currentIdx + 1) + ' of ' + blanks.length, boxX + 14, boxY + 142);
+        }
+
+        // Word option buttons for the current blank
+        if (currentIdx < blanks.length && !storyPause.completed) {
+            const cols = 2;
+            const gap = 8;
+            const optW = (boxW - 28 - gap) / cols;
+            const optH = 30;
+            const startX = boxX + 14;
+            const startY = boxY + 152;
+            const usedWords = storyPause.usedWords || [];
+
+            let btnIdx = 0;
+            blankOptions.forEach((option) => {
+                if (usedWords.indexOf(option) >= 0) return;
+
+                const col = btnIdx % cols;
+                const row = Math.floor(btnIdx / cols);
+                const x = startX + col * (optW + gap);
+                const y = startY + row * (optH + gap);
+                if (y + optH > boxY + boxH - btnH - 20) return;
+
+                storyPause.buttonRects.push({
+                    id: 'memorizeOption',
+                    value: option,
+                    x, y, width: optW, height: optH
+                });
+
+                ctx.fillStyle = 'rgba(255, 214, 102, 0.16)';
+                ctx.fillRect(x, y, optW, optH);
+                ctx.strokeStyle = '#ffd666';
+                ctx.lineWidth = 1.5;
+                ctx.strokeRect(x, y, optW, optH);
+                ctx.fillStyle = '#ffffff';
+                ctx.font = 'bold 13px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText(option, x + optW / 2, y + 20);
+                btnIdx++;
+            });
+        }
+
+        if (storyPause.feedback) {
+            ctx.fillStyle = storyPause.isCorrect ? '#7CFF8A' : '#ffb3aa';
+            ctx.font = 'bold 14px Arial';
+            ctx.textAlign = 'left';
+            ctx.fillText(storyPause.feedback, boxX + 14, boxY + boxH - 22);
+        }
+
+        if (storyPause.completed) {
+            storyPause.buttonRects.push({ id: 'continue', x: btnX, y: btnY, width: btnW, height: btnH });
+            ctx.fillStyle = 'rgba(255, 214, 102, 0.22)';
+            ctx.fillRect(btnX, btnY, btnW, btnH);
+            ctx.strokeStyle = '#ffd666';
+            ctx.lineWidth = 1;
+            ctx.strokeRect(btnX, btnY, btnW, btnH);
+            ctx.fillStyle = '#ffffff';
+            ctx.font = 'bold 13px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText(storyPause.prompt || 'Continue', btnX + btnW / 2, btnY + 20);
         }
     }
 

@@ -1,8 +1,8 @@
 let PRD = false;
-let DEBUG_MOVEMENT = true; // Toggle position/movement debug logging
+let VERBOSE = false; // Set to true for verbose position/movement/mission debug logging
 const _dbgLog = []; // Ring buffer of recent debug events
 function dbg(tag, msg, data) {
-    if (!DEBUG_MOVEMENT) return;
+    if (!VERBOSE) return;
     const t = (performance.now() / 1000).toFixed(3);
     const entry = `[${t}][${tag}] ${msg}` + (data ? ' ' + JSON.stringify(data) : '');
     _dbgLog.push(entry);
@@ -88,6 +88,7 @@ function enterStoryPause(options) {
         missionId: options.missionId || (currentMission && currentMission.id) || null,
         phaseId: options.phaseId || null,
         puzzleId: options.puzzleId || null,
+        puzzleMode: options.puzzleMode || null,
         title: options.title || '',
         speaker: options.speaker || '',
         lines: Array.isArray(options.lines) ? options.lines.slice() : [],
@@ -103,7 +104,12 @@ function enterStoryPause(options) {
         endMission: options.endMission === true,
         prompt: options.prompt || 'Continue',
         startedAt: Date.now(),
-        buttonRects: []
+        buttonRects: [],
+        // Verse memorization fields
+        blanks: Array.isArray(options.blanks) ? options.blanks.slice() : [],
+        blankOptions: Array.isArray(options.blankOptions) ? options.blankOptions.slice() : [],
+        currentBlankIndex: options.currentBlankIndex || 0,
+        usedWords: Array.isArray(options.usedWords) ? options.usedWords.slice() : []
     };
 
     if (gameState) {
@@ -190,6 +196,10 @@ function handleStoryPauseClick(x, y) {
         const rect = rects[i];
         if (x >= rect.x && x <= rect.x + rect.width &&
             y >= rect.y && y <= rect.y + rect.height) {
+            if (storyPauseState.type === 'puzzle' && rect.id === 'memorizeOption') {
+                answerVerseMemorizeBlank(rect.value);
+                return true;
+            }
             if (storyPauseState.type === 'puzzle' && rect.id === 'option') {
                 answerStoryPuzzle(rect.value);
                 return true;
@@ -199,6 +209,35 @@ function handleStoryPauseClick(x, y) {
         }
     }
     return true;
+}
+
+function answerVerseMemorizeBlank(value) {
+    if (!storyPauseState || storyPauseState.type !== 'puzzle' || storyPauseState.puzzleMode !== 'verseMemorize') return;
+    if (storyPauseState.completed) return;
+
+    var currentIdx = storyPauseState.currentBlankIndex || 0;
+    var blanks = storyPauseState.blanks || [];
+    if (currentIdx >= blanks.length) return;
+
+    var correctWord = blanks[currentIdx].word;
+    if (value === correctWord) {
+        // Mark word as used
+        if (!storyPauseState.usedWords) storyPauseState.usedWords = [];
+        storyPauseState.usedWords.push(value);
+        storyPauseState.currentBlankIndex = currentIdx + 1;
+
+        if (storyPauseState.currentBlankIndex >= blanks.length) {
+            // All blanks filled!
+            storyPauseState.completed = true;
+            storyPauseState.isCorrect = true;
+            storyPauseState.feedback = 'Verse memorized!';
+            completeIntegratedStoryPuzzle(storyPauseState);
+        } else {
+            storyPauseState.feedback = '';
+        }
+    } else {
+        storyPauseState.feedback = 'Not quite — try again';
+    }
 }
 
 function answerStoryPuzzle(value) {
@@ -321,7 +360,7 @@ function seedIntegratedStoryCollectibles(seed) {
 function isIntegratedStoryMissionActive() {
     return !!(currentMission &&
         window.CoreStoryDirector &&
-        window.CoreStoryDirector.isDavidGoliathMission(currentMission) &&
+        window.CoreStoryDirector.isCoreLoopStoryMission(currentMission) &&
         integratedStoryState &&
         !integratedStoryState.victoryStarted);
 }
@@ -329,7 +368,7 @@ function isIntegratedStoryMissionActive() {
 function isIntegratedStoryBossVictoryReady() {
     return !!(currentMission &&
         window.CoreStoryDirector &&
-        window.CoreStoryDirector.isDavidGoliathMission(currentMission) &&
+        window.CoreStoryDirector.isCoreLoopStoryMission(currentMission) &&
         integratedStoryState &&
         integratedStoryState.bossStarted &&
         !integratedStoryState.victoryStarted);
@@ -364,7 +403,7 @@ function blockPrematureIntegratedStoryVictory(data) {
 
 function startIntegratedStoryVictory(data) {
     if (!isIntegratedStoryBossVictoryReady()) return false;
-    if (!integratedStoryState.bossDefeated && !(data && data.goliathDefeated)) return false;
+    if (!integratedStoryState.bossDefeated && !(data && data.bossDefeated)) return false;
     const victoryPause = window.CoreStoryDirector.buildVictoryPause(currentMission);
     if (!victoryPause) return false;
 
@@ -402,19 +441,19 @@ function startIntegratedStoryVictoryFromBossKill(data) {
         ...(integratedStoryState.boss || {}),
         defeated: true,
         monsterId: data.monsterId || null,
-        label: data.bossLabel || (integratedStoryState.boss && integratedStoryState.boss.label) || 'Goliath'
+        label: data.bossLabel || (integratedStoryState.boss && integratedStoryState.boss.label) || (currentMission && currentMission.combatConfig && currentMission.combatConfig.fixedMonsters && (currentMission.combatConfig.fixedMonsters.find(function(m){return m && m.isBoss;}) || {}).label) || 'Boss'
     };
     syncIntegratedStoryState();
 
     return startIntegratedStoryVictory({
         ...data,
         result: 'victory',
-        goliathDefeated: true
+        bossDefeated: true
     });
 }
 
 function finishIntegratedStoryMission() {
-    if (!currentMission || !window.CoreStoryDirector || !window.CoreStoryDirector.isDavidGoliathMission(currentMission) || !integratedStoryState || !integratedStoryState.victoryStarted) {
+    if (!currentMission || !window.CoreStoryDirector || !window.CoreStoryDirector.isCoreLoopStoryMission(currentMission) || !integratedStoryState || !integratedStoryState.victoryStarted) {
         return false;
     }
 
@@ -440,7 +479,7 @@ function completeIntegratedStoryPuzzle(puzzlePause) {
 }
 
 function startIntegratedStoryBossPhase(puzzlePause) {
-    if (!currentMission || !window.CoreStoryDirector || !window.CoreStoryDirector.isDavidGoliathMission(currentMission)) return false;
+    if (!currentMission || !window.CoreStoryDirector || !window.CoreStoryDirector.isCoreLoopStoryMission(currentMission)) return false;
     if (!integratedStoryState || !integratedStoryState.puzzleComplete || integratedStoryState.bossStarted) return false;
     if (!network || !network.engine || !network.engine.gameState || !network.engine.monsterManager) return false;
 
@@ -491,7 +530,7 @@ function startIntegratedStoryBossPhase(puzzlePause) {
     integratedStoryState.bossDefeated = false;
     integratedStoryState.prematureVictoryBlocked = false;
     integratedStoryState.boss = {
-        label: bossConfig.label || 'Goliath',
+        label: bossConfig.label || bossConfig.demonType || 'Boss',
         demonType: bossConfig.demonType || null,
         x: bossConfig.x,
         y: bossConfig.y,
@@ -538,6 +577,13 @@ function collectIntegratedStoryItem(item) {
     if (integratedStoryState.complete && integratedStoryPuzzlePause && !integratedStoryState.puzzleStarted) {
         integratedStoryState.puzzleStarted = true;
         syncIntegratedStoryState();
+        // Rebuild puzzle pause now — verses may not have been loaded at mission start
+        if (currentMission && window.CoreStoryDirector) {
+            var freshPuzzlePause = window.CoreStoryDirector.buildPuzzlePause(currentMission);
+            if (freshPuzzlePause) {
+                integratedStoryPuzzlePause = freshPuzzlePause;
+            }
+        }
         setTimeout(() => {
             if (!isStoryPaused()) {
                 enterStoryPause(integratedStoryPuzzlePause);
@@ -573,9 +619,10 @@ function updateIntegratedStoryBossGuide(now) {
     const distance = Math.sqrt(dx * dx + dy * dy);
     const direction = getDirectionLabel(dx, dy);
     const distanceLabel = distance < 250 ? 'near' : (distance < 750 ? 'close' : 'far');
+    const bossLabel = (integratedStoryState.boss && integratedStoryState.boss.label) || 'Boss';
     const text = direction === 'nearby'
-        ? 'Goliath is nearby!'
-        : 'Find Goliath: ' + direction.toUpperCase() + ' (' + distanceLabel + ')';
+        ? bossLabel + ' is nearby!'
+        : 'Find ' + bossLabel + ': ' + direction.toUpperCase() + ' (' + distanceLabel + ')';
 
     flashMessages.push({
         text: text,
@@ -3497,7 +3544,7 @@ async function init() {
                 if (data.result === 'victory' &&
                     currentMission &&
                     window.CoreStoryDirector &&
-                    window.CoreStoryDirector.isDavidGoliathMission(currentMission) &&
+                    window.CoreStoryDirector.isCoreLoopStoryMission(currentMission) &&
                     integratedStoryState &&
                     integratedStoryState.victoryStarted) {
                     return;
@@ -4834,8 +4881,7 @@ function setupReviewClickHandler() {
 }
 
 async function startMission(worldId, missionId) {
-    dbg('MISSION', `startMission called! worldId=${worldId} missionId=${missionId} window.gameMode=${window.gameMode} gameOverFlag=${gameOverFlag} killed=${gameState.monstersKilled}/${gameState.monstersToKill}`);
-    console.trace('[MISSION] startMission call stack');
+    if (VERBOSE) dbg('MISSION', `startMission called! worldId=${worldId} missionId=${missionId} window.gameMode=${window.gameMode} gameOverFlag=${gameOverFlag} killed=${gameState.monstersKilled}/${gameState.monstersToKill}`);
     try {
         window._enterReviewAfterInit = false;
         const mission = window.CoreStoryDirector.applyMissionOverride(
@@ -4964,9 +5010,14 @@ async function startMission(worldId, missionId) {
 
         if (mission.gameMode === 'story' &&
             window.CoreStoryDirector &&
-            window.CoreStoryDirector.isDavidGoliathMission(mission) &&
+            window.CoreStoryDirector.isCoreLoopStoryMission(mission) &&
             window.CoreStoryDirector.isEnabled(mission)) {
-            console.log('Starting David/Goliath with integrated story core loop:', mission.name);
+            console.log('Starting core-loop story mission:', mission.name);
+            // Ensure verses are loaded for puzzle phases
+            if (!organizedVerses || Object.keys(organizedVerses).length === 0) {
+                loadVersesFromBundle();
+            }
+            window.organizedVerses = organizedVerses;
             currentMission = {
                 ...mission,
                 configuredStoryIntegration: mission.storyIntegration || null,
@@ -5215,7 +5266,7 @@ function gameLoop(generation) {
     const elapsedTime = currentTime - lastUpdateTime;
 
     // Debug position heartbeat (every 2s)
-    if (DEBUG_MOVEMENT && player && currentTime - (_dbgHeartbeat || 0) > 2000) {
+    if (VERBOSE && player && currentTime - (_dbgHeartbeat || 0) > 2000) {
         _dbgHeartbeat = currentTime;
         const wt = inputHandler ? inputHandler.getWorldTarget() : null;
         dbg('POS', `(${player.x.toFixed(0)},${player.y.toFixed(0)}) hp=${player.health} ammo=${player.ammo} ans=${isAnswerCorrect} target=${wt ? '(' + wt.x.toFixed(0) + ',' + wt.y.toFixed(0) + ')' : 'none'} killed=${gameState.monstersKilled}/${gameState.monstersToKill}`);

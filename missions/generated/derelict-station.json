@@ -1,0 +1,282 @@
+{
+  "schemaVersion": 1,
+  "id": "generated",
+  "missions": [
+    {
+      "id": "derelict-station",
+      "gameMode": "story",
+      "storyIntegration": "coreLoop",
+      "name": "Reboot the Station",
+      "description": "Reactivate a derelict space station by collecting power cells and solving the wiring puzzle",
+      "qualities": [],
+      "mapStyle": "open",
+      "world": {
+        "width": 2000,
+        "height": 2000
+      },
+      "xpMultiplier": 1,
+      "storyPhases": [
+        {
+          "id": "intro",
+          "type": "dialogue",
+          "i18nLines": [
+            "Warning: station power failure imminent. Collect power cells to restart the reactor."
+          ],
+          "nextPhase": "room-1",
+          "npcId": "npc-intro",
+          "_npc": {
+            "id": "npc-intro",
+            "nameKey": "AI Assistant",
+            "position": {
+              "x": 1000,
+              "y": 1000
+            },
+            "portrait": "images/npcs/ai-assistant.png"
+          }
+        },
+        {
+          "id": "room-1",
+          "type": "combatCollect",
+          "targetCount": 1,
+          "objectType": "power-cell",
+          "nextPhase": "room-2"
+        },
+        {
+          "id": "room-2",
+          "type": "combatCollect",
+          "targetCount": 1,
+          "objectType": "power-cell",
+          "nextPhase": "room-3"
+        },
+        {
+          "id": "room-3",
+          "type": "combatCollect",
+          "targetCount": 1,
+          "objectType": "power-cell",
+          "nextPhase": "room-4"
+        },
+        {
+          "id": "room-4",
+          "type": "combatCollect",
+          "targetCount": 1,
+          "objectType": "power-cell",
+          "nextPhase": "room-5"
+        },
+        {
+          "id": "room-5",
+          "type": "puzzle",
+          "puzzleId": "wiring-puzzle",
+          "nextPhase": "bossFight"
+        },
+        {
+          "id": "bossFight",
+          "type": "combat",
+          "nextPhase": "victory"
+        },
+        {
+          "id": "victory",
+          "type": "dialogue",
+          "i18nLines": [
+            "The station's reactor is online. Nexus has been defeated."
+          ],
+          "nextPhase": null,
+          "endMission": true
+        }
+      ],
+      "npcs": [
+        {
+          "id": "npc-intro",
+          "nameKey": "AI Assistant",
+          "position": {
+            "x": 1000,
+            "y": 1000
+          },
+          "portrait": "images/npcs/ai-assistant.png"
+        }
+      ],
+      "specialObjects": [
+        {
+          "id": "power-cell",
+          "labelKey": "Power Cell",
+          "count": 4,
+          "spawnArea": {
+            "x": 350,
+            "y": 350,
+            "w": 1300,
+            "h": 650
+          },
+          "placements": [
+            {
+              "x": 350,
+              "y": 350,
+              "guardDemonType": "Swarm"
+            },
+            {
+              "x": 1000,
+              "y": 350,
+              "guardDemonType": "Temptation"
+            },
+            {
+              "x": 1650,
+              "y": 350,
+              "guardDemonType": "Deception"
+            },
+            {
+              "x": 1650,
+              "y": 1000,
+              "guardDemonType": "Strife"
+            }
+          ]
+        }
+      ],
+      "puzzles": [
+        {
+          "id": "wiring-puzzle",
+          "mode": "symbolChoice",
+          "i18nPrompt": "Correctly connect the wires to reactivate the station's systems.",
+          "answer": "A",
+          "options": [
+            "A",
+            "B",
+            "C"
+          ]
+        }
+      ],
+      "collectCombatConfig": {
+        "monsters": [
+          "Swarm",
+          "Temptation",
+          "Deception",
+          "Strife"
+        ],
+        "monsterDamageFactor": 0.9,
+        "monsterSpeed": 4,
+        "playerSpeed": 5,
+        "maxMonsters": 16,
+        "monstersToKill": 99,
+        "spawnRate": 4000,
+        "randomSpawnsEnabled": true,
+        "randomSpawnBudget": 20,
+        "disableLevelBoss": true,
+        "fixedMonsters": [
+          {
+            "x": 311,
+            "y": 352,
+            "demonType": "Swarm",
+            "behavior": {
+              "type": "aggressive",
+              "patrolRadius": 140
+            },
+            "stats": {
+              "healthMultiplier": 1.2
+            },
+            "spawnTrigger": {
+              "type": "immediate",
+              "value": 0
+            }
+          },
+          {
+            "x": 977,
+            "y": 377,
+            "demonType": "Temptation",
+            "behavior": {
+              "type": "patrol",
+              "patrolRadius": 140
+            },
+            "stats": {
+              "healthMultiplier": 1
+            },
+            "spawnTrigger": {
+              "type": "immediate",
+              "value": 0
+            }
+          },
+          {
+            "x": 1645,
+            "y": 344,
+            "demonType": "Deception",
+            "behavior": {
+              "type": "guard",
+              "patrolRadius": 140
+            },
+            "stats": {
+              "healthMultiplier": 1.2
+            },
+            "spawnTrigger": {
+              "type": "immediate",
+              "value": 0
+            }
+          },
+          {
+            "x": 1667,
+            "y": 1016,
+            "demonType": "Strife",
+            "behavior": {
+              "type": "aggressive",
+              "patrolRadius": 140
+            },
+            "stats": {
+              "healthMultiplier": 1.5
+            },
+            "spawnTrigger": {
+              "type": "immediate",
+              "value": 0
+            }
+          }
+        ]
+      },
+      "combatConfig": {
+        "monsters": [
+          "Nexus"
+        ],
+        "monsterDamageFactor": 1.1,
+        "monsterSpeed": 5,
+        "playerSpeed": 5,
+        "maxMonsters": 6,
+        "monstersToKill": 1,
+        "spawnRate": 999,
+        "randomSpawnsEnabled": false,
+        "disableLevelBoss": true,
+        "fixedMonsters": [
+          {
+            "x": 1000,
+            "y": 350,
+            "demonType": "Nexus",
+            "isBoss": true,
+            "label": "Nexus",
+            "behavior": {
+              "type": "guard",
+              "patrolRadius": 200
+            },
+            "stats": {
+              "healthMultiplier": 6,
+              "damageMultiplier": 3,
+              "sizeMultiplier": 1.5
+            },
+            "spawnTrigger": {
+              "type": "immediate",
+              "value": 0
+            }
+          }
+        ]
+      },
+      "music": {
+        "phaseTracks": {
+          "intro": null,
+          "room-1": null,
+          "room-2": null,
+          "room-3": null,
+          "room-4": null,
+          "room-5": null,
+          "bossFight": null,
+          "victory": null
+        },
+        "fallbackTrackIndex": 0
+      },
+      "_i18n": {
+        "prefix": "derelict-station",
+        "strings": {}
+      }
+    }
+  ]
+}

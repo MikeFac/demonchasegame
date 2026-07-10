@@ -1,0 +1,275 @@
+{
+  "schemaVersion": 1,
+  "id": "generated",
+  "missions": [
+    {
+      "id": "desert-rescue-01",
+      "gameMode": "story",
+      "storyIntegration": "coreLoop",
+      "name": "Desert Rescue",
+      "description": "Find the lost traveler before the sand wraith does.",
+      "qualities": [
+        "Courage"
+      ],
+      "mapStyle": "open",
+      "world": {
+        "width": 2000,
+        "height": 2000
+      },
+      "xpMultiplier": 1,
+      "storyPhases": [
+        {
+          "id": "intro",
+          "type": "dialogue",
+          "i18nLines": [
+            "A traveler is lost in the dunes. Take these water skins and find them.",
+            "Beware the sand wraith — it hunts at noon."
+          ],
+          "nextPhase": "room-1",
+          "npcId": "npc-intro",
+          "_npc": {
+            "id": "npc-intro",
+            "nameKey": "Caravan Master",
+            "position": {
+              "x": 1000,
+              "y": 1000
+            }
+          }
+        },
+        {
+          "id": "room-1",
+          "type": "combatCollect",
+          "targetCount": 1,
+          "objectType": "waterSkin",
+          "nextPhase": "room-2"
+        },
+        {
+          "id": "room-2",
+          "type": "combatCollect",
+          "targetCount": 1,
+          "objectType": "waterSkin",
+          "nextPhase": "room-3"
+        },
+        {
+          "id": "room-3",
+          "type": "combatCollect",
+          "targetCount": 1,
+          "objectType": "waterSkin",
+          "nextPhase": "room-4"
+        },
+        {
+          "id": "room-4",
+          "type": "puzzle",
+          "puzzleId": "glyph-choice",
+          "nextPhase": "bossFight"
+        },
+        {
+          "id": "bossFight",
+          "type": "combat",
+          "nextPhase": "victory"
+        },
+        {
+          "id": "victory",
+          "type": "dialogue",
+          "i18nLines": [
+            "The traveler is safe. The desert sleeps."
+          ],
+          "nextPhase": null,
+          "endMission": true
+        }
+      ],
+      "npcs": [
+        {
+          "id": "npc-intro",
+          "nameKey": "Caravan Master",
+          "position": {
+            "x": 1000,
+            "y": 1000
+          }
+        }
+      ],
+      "specialObjects": [
+        {
+          "id": "waterSkin",
+          "labelKey": "Water Skin",
+          "count": 3,
+          "spawnArea": {
+            "x": 350,
+            "y": 350,
+            "w": 1300,
+            "h": 1300
+          },
+          "placements": [
+            {
+              "x": 350,
+              "y": 350,
+              "guardDemonType": "Fear"
+            },
+            {
+              "x": 1650,
+              "y": 1000,
+              "guardDemonType": "Doubt"
+            },
+            {
+              "x": 1000,
+              "y": 1650,
+              "guardDemonType": "Confusion"
+            }
+          ]
+        }
+      ],
+      "puzzles": [
+        {
+          "id": "glyph-choice",
+          "mode": "symbolChoice",
+          "i18nPrompt": "Which glyph matches the temple inscription?",
+          "answer": "sun",
+          "options": [
+            "sun",
+            "moon",
+            "wave",
+            "flame"
+          ]
+        }
+      ],
+      "collectCombatConfig": {
+        "monsters": [
+          "Fear",
+          "Doubt",
+          "Confusion"
+        ],
+        "monsterDamageFactor": 0.9,
+        "monsterSpeed": 4,
+        "playerSpeed": 5,
+        "maxMonsters": 10,
+        "monstersToKill": 99,
+        "spawnRate": 8000,
+        "randomSpawnsEnabled": true,
+        "randomSpawnBudget": 8,
+        "disableLevelBoss": true,
+        "fixedMonsters": [
+          {
+            "x": 367,
+            "y": 320,
+            "demonType": "Fear",
+            "behavior": {
+              "type": "guard",
+              "patrolRadius": 140
+            },
+            "stats": {
+              "healthMultiplier": 1
+            },
+            "spawnTrigger": {
+              "type": "immediate",
+              "value": 0
+            }
+          },
+          {
+            "x": 1663,
+            "y": 1022,
+            "demonType": "Doubt",
+            "behavior": {
+              "type": "patrol",
+              "patrolRadius": 160
+            },
+            "stats": {
+              "healthMultiplier": 1
+            },
+            "spawnTrigger": {
+              "type": "immediate",
+              "value": 0
+            }
+          },
+          {
+            "x": 1026,
+            "y": 1650,
+            "demonType": "Confusion",
+            "behavior": {
+              "type": "guard",
+              "patrolRadius": 140
+            },
+            "stats": {
+              "healthMultiplier": 1
+            },
+            "spawnTrigger": {
+              "type": "immediate",
+              "value": 0
+            }
+          }
+        ]
+      },
+      "combatConfig": {
+        "monsters": [
+          "SandWraith",
+          "Fear"
+        ],
+        "monsterDamageFactor": 1.1,
+        "monsterSpeed": 5,
+        "playerSpeed": 5,
+        "maxMonsters": 6,
+        "monstersToKill": 1,
+        "spawnRate": 999,
+        "randomSpawnsEnabled": false,
+        "disableLevelBoss": true,
+        "fixedMonsters": [
+          {
+            "x": 1000,
+            "y": 350,
+            "demonType": "SandWraith",
+            "isBoss": true,
+            "label": "Sand Wraith",
+            "behavior": {
+              "type": "guard",
+              "patrolRadius": 200
+            },
+            "stats": {
+              "healthMultiplier": 6,
+              "damageMultiplier": 2.5,
+              "sizeMultiplier": 1.5
+            },
+            "spawnTrigger": {
+              "type": "immediate",
+              "value": 0
+            }
+          },
+          {
+            "x": 880,
+            "y": 520,
+            "demonType": "Fear",
+            "stats": {
+              "healthMultiplier": 1
+            },
+            "spawnTrigger": {
+              "type": "immediate",
+              "value": 0
+            }
+          },
+          {
+            "x": 1000,
+            "y": 520,
+            "demonType": "Fear",
+            "stats": {
+              "healthMultiplier": 1
+            },
+            "spawnTrigger": {
+              "type": "immediate",
+              "value": 0
+            }
+          }
+        ]
+      },
+      "music": {
+        "phaseTracks": {
+          "intro": null,
+          "room-1": null,
+          "room-2": null,
+          "room-3": null,
+          "room-4": null,
+          "bossFight": null,
+          "victory": null
+        },
+        "fallbackTrackIndex": 0
+      }
+    }
+  ]
+}

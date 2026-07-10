@@ -1,0 +1,163 @@
+{
+  "schemaVersion": 1,
+  "id": "derelict-station",
+  "name": "Reboot the Station",
+  "description": "Reactivate a derelict space station by collecting power cells and solving the wiring puzzle",
+  "theme": "sci-fi",
+  "tone": "adventure",
+  "difficulty": "medium",
+  "contentMode": "secular",
+  "objective": "Restart the station's reactor by collecting power cells and solving the wiring puzzle",
+  "winCondition": {
+    "type": "sequence",
+    "steps": [
+      {
+        "type": "collect",
+        "objectId": "power-cell",
+        "count": 4
+      },
+      {
+        "type": "solvePuzzles",
+        "count": 1
+      },
+      {
+        "type": "defeatBoss",
+        "bossId": "nexus"
+      }
+    ]
+  },
+  "world": {
+    "size": "standard",
+    "mapStyle": "labyrinth"
+  },
+  "qualities": [],
+  "xpMultiplier": 1,
+  "intro": {
+    "npcName": "AI Assistant",
+    "lines": [
+      "Warning: station power failure imminent. Collect power cells to restart the reactor."
+    ],
+    "portrait": "images/npcs/ai-assistant.png"
+  },
+  "rooms": [
+    {
+      "id": "room-1",
+      "type": "supplyCache",
+      "position": "nw",
+      "label": "Power Cell 1",
+      "collectible": {
+        "id": "power-cell",
+        "label": "Power Cell",
+        "count": 1,
+        "required": true
+      },
+      "guard": {
+        "demonType": "Swarm",
+        "behavior": "aggressive",
+        "patrolRadius": 140,
+        "stats": {
+          "healthMultiplier": 1.2
+        }
+      }
+    },
+    {
+      "id": "room-2",
+      "type": "supplyCache",
+      "position": "n",
+      "label": "Power Cell 2",
+      "collectible": {
+        "id": "power-cell",
+        "label": "Power Cell",
+        "count": 1,
+        "required": true
+      },
+      "guard": {
+        "demonType": "Temptation",
+        "behavior": "patrol",
+        "patrolRadius": 140,
+        "stats": {
+          "healthMultiplier": 1
+        }
+      }
+    },
+    {
+      "id": "room-3",
+      "type": "supplyCache",
+      "position": "ne",
+      "label": "Power Cell 3",
+      "collectible": {
+        "id": "power-cell",
+        "label": "Power Cell",
+        "count": 1,
+        "required": true
+      },
+      "guard": {
+        "demonType": "Deception",
+        "behavior": "guard",
+        "patrolRadius": 140,
+        "stats": {
+          "healthMultiplier": 1.2
+        }
+      }
+    },
+    {
+      "id": "room-4",
+      "type": "supplyCache",
+      "position": "e",
+      "label": "Power Cell 4",
+      "collectible": {
+        "id": "power-cell",
+        "label": "Power Cell",
+        "count": 1,
+        "required": true
+      },
+      "guard": {
+        "demonType": "Strife",
+        "behavior": "aggressive",
+        "patrolRadius": 140,
+        "stats": {
+          "healthMultiplier": 1.5
+        }
+      }
+    },
+    {
+      "id": "room-5",
+      "type": "ruinPuzzle",
+      "position": "center",
+      "label": "Wiring Puzzle",
+      "puzzle": {
+        "id": "wiring-puzzle",
+        "mode": "symbolChoice",
+        "prompt": "Correctly connect the wires to reactivate the station's systems.",
+        "answer": "A",
+        "options": [
+          "A",
+          "B",
+          "C"
+        ]
+      }
+    }
+  ],
+  "boss": {
+    "id": "nexus",
+    "demonType": "Nexus",
+    "stats": {
+      "healthMultiplier": 6,
+      "damageMultiplier": 3,
+      "sizeMultiplier": 1.5
+    }
+  },
+  "customBosses": [
+    "Nexus"
+  ],
+  "outro": {
+    "lines": [
+      "The station's reactor is online. Nexus has been defeated."
+    ],
+    "endMission": true
+  },
+  "i18n": {
+    "prefix": "derelict-station",
+    "strings": {}
+  }
+}

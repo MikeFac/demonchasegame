@@ -1,0 +1,155 @@
+{
+  "schemaVersion": 1,
+  "id": "david-goliath-01",
+  "name": "David & Goliath: Faith Over Fear",
+  "description": "Anointed by Samuel, gather five stones, arm your heart with the Word, and face the giant.",
+  "theme": "faith over fear",
+  "tone": "combat",
+  "difficulty": "medium",
+  "contentMode": "biblical",
+  "objective": "Gather five smooth stones, answer the call of courage, and defeat Goliath.",
+
+  "winCondition": {
+    "type": "sequence",
+    "steps": [
+      { "type": "collect", "objectId": "smoothStone", "count": 5 },
+      { "type": "solvePuzzles", "count": 1 },
+      { "type": "defeatBoss", "bossId": "goliath" }
+    ]
+  },
+
+  "world": { "size": "compact", "mapStyle": "open" },
+
+  "qualities": ["Faith", "Courage"],
+  "xpMultiplier": 1.5,
+
+  "intro": {
+    "npcId": "samuel",
+    "npcName": "Samuel",
+    "lines": [
+      "The Lord has chosen you, David. You will face the giant.",
+      "Go to the brook and choose five smooth stones. The battle is the Lord's."
+    ],
+    "portrait": "images/npcs/samuel.png",
+    "position": "center"
+  },
+
+  "rooms": [
+    {
+      "id": "stone-nw",
+      "type": "supplyCache",
+      "position": "nw",
+      "label": "The Brook — Northwest",
+      "collectible": { "id": "smoothStone", "label": "Smooth Stone", "count": 1, "required": true },
+      "guard": { "demonType": "Fear", "behavior": "guard", "patrolRadius": 140, "stats": { "healthMultiplier": 1.2 } }
+    },
+    {
+      "id": "stone-ne",
+      "type": "supplyCache",
+      "position": "ne",
+      "label": "The Brook — Northeast",
+      "collectible": { "id": "smoothStone", "label": "Smooth Stone", "count": 1, "required": true },
+      "guard": { "demonType": "Shame", "behavior": "guard", "patrolRadius": 140, "stats": { "healthMultiplier": 1.2 } }
+    },
+    {
+      "id": "stone-n",
+      "type": "supplyCache",
+      "position": "n",
+      "label": "The Brook — North",
+      "collectible": { "id": "smoothStone", "label": "Smooth Stone", "count": 1, "required": true },
+      "guard": { "demonType": "Doubt", "behavior": "guard", "patrolRadius": 150, "stats": { "healthMultiplier": 1.0 } }
+    },
+    {
+      "id": "stone-sw",
+      "type": "supplyCache",
+      "position": "sw",
+      "label": "The Brook — Southwest",
+      "collectible": { "id": "smoothStone", "label": "Smooth Stone", "count": 1, "required": true },
+      "guard": { "demonType": "Confusion", "behavior": "guard", "patrolRadius": 140, "stats": { "healthMultiplier": 1.0 } }
+    },
+    {
+      "id": "stone-se",
+      "type": "supplyCache",
+      "position": "se",
+      "label": "The Brook — Southeast",
+      "collectible": { "id": "smoothStone", "label": "Smooth Stone", "count": 1, "required": true },
+      "guard": { "demonType": "Unbelief", "behavior": "guard", "patrolRadius": 140, "stats": { "healthMultiplier": 1.0 } }
+    },
+    {
+      "id": "courage-shrine",
+      "type": "ruinPuzzle",
+      "position": "center",
+      "label": "The Shrine of Courage",
+      "puzzle": {
+        "id": "courageCloze",
+        "mode": "cloze",
+        "verseRef": "1 Samuel 17:47",
+        "prompt": "Fill in the missing word: 'The battle is the ___'s.'",
+        "answer": "Lord",
+        "options": ["Lord", "king", "world", "sword", "fight", "Israel"]
+      }
+    }
+  ],
+
+  "boss": {
+    "demonType": "Goliath",
+    "label": "Goliath",
+    "stats": { "healthMultiplier": 6.0, "damageMultiplier": 3.0, "sizeMultiplier": 1.5 },
+    "minions": [
+      { "demonType": "Doubt", "count": 1, "stats": { "healthMultiplier": 1.0 } },
+      { "demonType": "Fear", "count": 1, "stats": { "healthMultiplier": 1.0 } }
+    ],
+    "required": true
+  },
+
+  "outro": {
+    "npcId": "david",
+    "npcName": "David",
+    "lines": [
+      "The Lord saved me. There is no sword like the Word of God.",
+      "Faith over fear. The giant has fallen."
+    ],
+    "portrait": "images/npcs/david.png",
+    "sermonRef": "1 Samuel 17:47",
+    "endMission": true
+  },
+
+  "i18n": {
+    "prefix": "story.david",
+    "strings": {
+      "story.david.intro.1": "The Lord has chosen you, David. You will face the giant.",
+      "story.david.intro.2": "Go to the brook and choose five smooth stones. The battle is the Lord's.",
+      "story.david.npc.samuel": "Samuel",
+      "story.david.object.stone": "Smooth Stone",
+      "story.david.puzzle.prompt": "Fill in the missing word: 'The battle is the ___'s.'",
+      "story.david.victory.1": "The Lord saved me. There is no sword like the Word of God.",
+      "story.david.victory.2": "Faith over fear. The giant has fallen.",
+      "story.david.npc.david": "David"
+    }
+  },
+
+  "collectCombatConfig": {
+    "monsters": ["Fear", "Shame", "Doubt", "Confusion", "Unbelief"],
+    "monsterDamageFactor": 0.9,
+    "monsterSpeed": 4,
+    "playerSpeed": 5,
+    "maxMonsters": 8,
+    "monstersToKill": 99,
+    "spawnRate": 16000,
+    "randomSpawnsEnabled": false,
+    "randomSpawnBudget": 0,
+    "disableLevelBoss": true
+  },
+
+  "combatConfig": {
+    "monsters": ["Goliath", "Doubt", "Fear"],
+    "monsterDamageFactor": 1.1,
+    "monsterSpeed": 5,
+    "playerSpeed": 5,
+    "maxMonsters": 6,
+    "monstersToKill": 1,
+    "spawnRate": 999,
+    "randomSpawnsEnabled": false,
+    "disableLevelBoss": true
+  }
+}

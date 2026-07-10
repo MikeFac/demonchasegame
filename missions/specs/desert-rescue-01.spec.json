@@ -1,0 +1,72 @@
+{
+  "schemaVersion": 1,
+  "id": "desert-rescue-01",
+  "name": "Desert Rescue",
+  "description": "Find the lost traveler before the sand wraith does.",
+  "theme": "desert rescue",
+  "tone": "adventure",
+  "difficulty": "medium",
+  "contentMode": "secular",
+  "objective": "Collect 3 water skins, solve the ruin glyph, defeat the sand wraith.",
+
+  "winCondition": {
+    "type": "sequence",
+    "steps": [
+      { "type": "collect", "objectId": "waterSkin", "count": 3 },
+      { "type": "solvePuzzles", "count": 1 },
+      { "type": "defeatBoss", "bossId": "sandWraith" }
+    ]
+  },
+
+  "world": { "size": "compact", "mapStyle": "open" },
+  "qualities": ["Courage"],
+
+  "intro": {
+    "npcName": "Caravan Master",
+    "lines": ["A traveler is lost in the dunes. Take these water skins and find them.", "Beware the sand wraith — it hunts at noon."]
+  },
+
+  "rooms": [
+    {
+      "id": "cache-nw", "type": "supplyCache", "position": "nw",
+      "label": "Northwest Cache",
+      "collectible": { "id": "waterSkin", "label": "Water Skin", "count": 1, "required": true },
+      "guard": { "demonType": "Fear", "behavior": "guard" }
+    },
+    {
+      "id": "cache-e", "type": "supplyCache", "position": "e",
+      "label": "Eastern Cache",
+      "collectible": { "id": "waterSkin", "label": "Water Skin", "count": 1, "required": true },
+      "guard": { "demonType": "Doubt", "behavior": "patrol", "patrolRadius": 160 }
+    },
+    {
+      "id": "cache-s", "type": "supplyCache", "position": "s",
+      "label": "Southern Cache",
+      "collectible": { "id": "waterSkin", "label": "Water Skin", "count": 1, "required": true },
+      "guard": { "demonType": "Confusion", "behavior": "guard" }
+    },
+    {
+      "id": "ruin-glyph", "type": "ruinPuzzle", "position": "center",
+      "label": "Ancient Ruin",
+      "puzzle": {
+        "id": "glyph-choice", "mode": "symbolChoice",
+        "prompt": "Which glyph matches the temple inscription?",
+        "answer": "sun",
+        "options": ["sun", "moon", "wave", "flame"]
+      }
+    }
+  ],
+
+  "boss": {
+    "demonType": "SandWraith", "label": "Sand Wraith",
+    "stats": { "healthMultiplier": 6, "damageMultiplier": 2.5, "sizeMultiplier": 1.5 },
+    "minions": [ { "demonType": "Fear", "count": 2 } ],
+    "required": true
+  },
+  "customBosses": ["SandWraith"],
+
+  "outro": {
+    "lines": ["The traveler is safe. The desert sleeps."],
+    "endMission": true
+  }
+}

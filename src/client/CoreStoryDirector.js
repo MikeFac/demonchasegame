@@ -62,6 +62,16 @@
         return !!mission && mission.worldId === 'featured' && mission.id === 'david-01';
     }
 
+    /**
+     * Generic check: does this mission use the core-loop story integration?
+     * Any mission with storyIntegration === 'coreLoop' and story phases qualifies.
+     */
+    function isCoreLoopStoryMission(mission) {
+        if (!mission) return false;
+        if (mission.storyIntegration !== 'coreLoop') return false;
+        return Array.isArray(mission.storyPhases) && mission.storyPhases.length > 0;
+    }
+
     function applyMissionOverride(mission, worldId, missionId) {
         if (!mission || typeof window === 'undefined') return mission;
         var isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
@@ -86,13 +96,13 @@
 
         var speaker = npc && npc.nameKey
             ? translateMissionText(npc.nameKey)
-            : (phase.npcId || translateMissionText('story.david.title'));
+            : (phase.npcId || mission.name || 'Narrator');
 
         return {
             type: 'dialogue',
             missionId: mission.id,
             phaseId: phase.id,
-            title: translateMissionText('story.david.title'),
+            title: mission.name || translateMissionText('story.david.title'),
             speaker: speaker,
             lines: phase.i18nLines.map(translateMissionText),
             prompt: translateMissionText('story.david.buttons.continue')
@@ -204,21 +214,202 @@
         var puzzle = mission.puzzles.find(function (entry) {
             return entry && entry.id === puzzlePhase.puzzleId;
         });
-        if (!puzzle || !Array.isArray(puzzle.options) || !puzzle.answer) return null;
+        if (!puzzle) return null;
 
+        var mode = puzzle.mode || 'cloze';
+        var hasChoiceOptions = Array.isArray(puzzle.options) && puzzle.options.length > 0;
+
+        // Verse memorization puzzle: show verse with N hidden words, player taps correct words
+        if (mode === 'verseMemorize') {
+            var rawVerseText = findVerseText(puzzle.verseRef) || puzzle.verseText || '';
+            // If the verse is too long (>120 chars), try to find a shorter verse from the same category
+            if (rawVerseText.length > 120 && puzzle.verseRef) {
+                var shortVerse = findShortVerseForCategory(puzzle.verseRef);
+                if (shortVerse) {
+                    rawVerseText = shortVerse.Text;
+                    puzzle = Object.assign({}, puzzle, { verseRef: shortVerse.Reference, verseText: shortVerse.Text });
+                }
+            }
+            // If still too long or no text, use prompt as fallback
+            if (!rawVerseText || rawVerseText.length > 150) {
+                rawVerseText = puzzle.prompt || '';
+            }
+            if (!rawVerseText) {
+                return {
+                    type: 'puzzle',
+                    puzzleMode: 'verseMemorize',
+                    missionId: mission.id,
+                    phaseId: puzzlePhase.id,
+                    puzzleId: puzzle.id,
+                    title: mission.name || 'Challenge',
+                    speaker: 'Memory Check',
+                    text: 'No verse available',
+                    verseRef: puzzle.verseRef || null,
+                    blanks: [],
+                    blankOptions: [],
+                    currentBlankIndex: 0,
+                    completed: true,
+                    isCorrect: true,
+                    feedback: 'Verse not found — puzzle skipped',
+                    nextPhase: puzzlePhase.nextPhase || null,
+                    prompt: 'Continue'
+                };
+            }
+            var wordsToHide = puzzle.wordsToHide || 3;
+            var blankResult = generateMemorizationBlanks(rawVerseText, wordsToHide);
+            return {
+                type: 'puzzle',
+                puzzleMode: 'verseMemorize',
+                missionId: mission.id,
+                phaseId: puzzlePhase.id,
+                puzzleId: puzzle.id,
+                title: mission.name || 'Challenge',
+                speaker: 'Memory Check',
+                text: rawVerseText,
+                verseRef: puzzle.verseRef || null,
+                blanks: blankResult.blanks,
+                blankOptions: blankResult.options,
+                currentBlankIndex: 0,
+                selectedAnswer: null,
+                usedWords: [],
+                completed: false,
+                nextPhase: puzzlePhase.nextPhase || null,
+                prompt: 'Continue'
+            };
+        }
+
+        // Standard puzzle modes (cloze, symbolChoice, categoryMatch, etc.)
         return {
             type: 'puzzle',
             missionId: mission.id,
             phaseId: puzzlePhase.id,
             puzzleId: puzzle.id,
-            title: translateMissionText('story.david.title'),
-            speaker: 'Courage Test',
-            text: puzzle.i18nPrompt ? translateMissionText(puzzle.i18nPrompt) : '',
-            options: puzzle.options.slice(),
-            answer: puzzle.answer,
+            title: mission.name || translateMissionText('story.david.title'),
+            speaker: 'Challenge',
+            text: puzzle.i18nPrompt ? translateMissionText(puzzle.i18nPrompt) : (puzzle.prompt || ''),
+            options: hasChoiceOptions ? puzzle.options.slice() : null,
+            answer: puzzle.answer || null,
+            mode: mode,
+            verseRef: puzzle.verseRef || null,
             nextPhase: puzzlePhase.nextPhase || null,
             prompt: translateMissionText('story.david.buttons.continue')
         };
+    }
+
+    // Find verse text by reference from the loaded verse corpus
+    function findVerseText(ref) {
+        if (!ref) return null;
+        try {
+            if (typeof window !== 'undefined' && window.organizedVerses) {
+                for (var cat in window.organizedVerses) {
+                    if (!window.organizedVerses.hasOwnProperty(cat)) continue;
+                    var verses = window.organizedVerses[cat];
+                    if (!Array.isArray(verses)) continue;
+                    for (var i = 0; i < verses.length; i++) {
+                        if (verses[i] && verses[i].Reference === ref) return verses[i].Text || null;
+                    }
+                }
+            }
+        } catch (e) { /* ignore */ }
+        return null;
+    }
+
+    // Find a short verse (<=120 chars) from the same category as the given reference
+    function findShortVerseForCategory(ref) {
+        if (!ref || typeof window === 'undefined' || !window.organizedVerses) return null;
+        try {
+            // First find which category the reference belongs to
+            var targetCategory = null;
+            for (var cat in window.organizedVerses) {
+                if (!window.organizedVerses.hasOwnProperty(cat)) continue;
+                var verses = window.organizedVerses[cat];
+                if (!Array.isArray(verses)) continue;
+                for (var i = 0; i < verses.length; i++) {
+                    if (verses[i] && verses[i].Reference === ref) {
+                        targetCategory = cat;
+                        break;
+                    }
+                }
+                if (targetCategory) break;
+            }
+            if (!targetCategory) return null;
+
+            // Find a short verse from that category
+            var candidates = window.organizedVerses[targetCategory].filter(function(v) {
+                return v && v.Text && v.Text.length >= 40 && v.Text.length <= 120;
+            });
+            if (candidates.length === 0) return null;
+            return candidates[Math.floor(Math.random() * candidates.length)];
+        } catch (e) { /* ignore */ }
+        return null;
+    }
+
+    // Generate blanks and word options for verse memorization
+    function generateMemorizationBlanks(verseText, count) {
+        if (!verseText || !verseText.length) return { blanks: [], options: [] };
+        var words = verseText.split(/\s+/);
+        var wordCount = words.length;
+        if (wordCount < 6) return { blanks: [], options: [] };
+        var hideCount = Math.min(count, Math.floor(wordCount / 4));
+        if (hideCount < 1) hideCount = 1;
+
+        // Pick words to hide — prefer words >= 4 chars, spread across the verse
+        var candidates = [];
+        for (var i = 0; i < wordCount; i++) {
+            var clean = words[i].replace(/[^a-zA-Z']/g, '');
+            if (clean.length >= 4) candidates.push(i);
+        }
+        if (candidates.length < hideCount) {
+            // Relax to 3+ chars
+            candidates = [];
+            for (var j = 0; j < wordCount; j++) {
+                var c = words[j].replace(/[^a-zA-Z']/g, '');
+                if (c.length >= 3) candidates.push(j);
+            }
+        }
+        if (candidates.length < hideCount) {
+            return { blanks: [], options: [] };
+        }
+
+        // Shuffle and pick
+        for (var k = candidates.length - 1; k > 0; k--) {
+            var r = Math.floor(Math.random() * (k + 1));
+            var tmp = candidates[k]; candidates[k] = candidates[r]; candidates[r] = tmp;
+        }
+        var hiddenIndices = candidates.slice(0, hideCount).sort(function(a, b) { return a - b; });
+
+        var blanks = [];
+        var correctWords = [];
+        for (var h = 0; h < hiddenIndices.length; h++) {
+            var idx = hiddenIndices[h];
+            var word = words[idx];
+            blanks.push({ index: idx, word: word });
+            correctWords.push(word);
+        }
+
+        // Generate distractors from other words in the verse
+        var distractors = [];
+        for (var d = 0; d < wordCount; d++) {
+            if (hiddenIndices.indexOf(d) >= 0) continue;
+            var dw = words[d].replace(/[^a-zA-Z']/g, '');
+            if (dw.length >= 3 && correctWords.indexOf(words[d]) < 0 && distractors.indexOf(words[d]) < 0) {
+                distractors.push(words[d]);
+            }
+        }
+        // Shuffle distractors
+        for (var m = distractors.length - 1; m > 0; m--) {
+            var r2 = Math.floor(Math.random() * (m + 1));
+            var tmp2 = distractors[m]; distractors[m] = distractors[r2]; distractors[r2] = tmp2;
+        }
+        var numDistractors = Math.min(distractors.length, hideCount);
+        var allOptions = correctWords.concat(distractors.slice(0, numDistractors));
+        // Shuffle final options
+        for (var n = allOptions.length - 1; n > 0; n--) {
+            var r3 = Math.floor(Math.random() * (n + 1));
+            var tmp3 = allOptions[n]; allOptions[n] = allOptions[r3]; allOptions[r3] = tmp3;
+        }
+
+        return { blanks: blanks, options: allOptions };
     }
 
     function buildVictoryPause(mission) {
@@ -234,13 +425,13 @@
             : null;
         var speaker = npc && npc.nameKey
             ? translateMissionText(npc.nameKey)
-            : 'David';
+            : (mission.name || 'Victory');
 
         return {
             type: 'dialogue',
             missionId: mission.id,
             phaseId: phase.id,
-            title: translateMissionText('story.david.title'),
+            title: mission.name || translateMissionText('story.david.title'),
             speaker: speaker,
             lines: phase.i18nLines.map(translateMissionText),
             prompt: translateMissionText('story.david.buttons.continue'),
@@ -257,6 +448,7 @@
         buildPuzzlePause: buildPuzzlePause,
         buildVictoryPause: buildVictoryPause,
         isDavidGoliathMission: isDavidGoliathMission,
+        isCoreLoopStoryMission: isCoreLoopStoryMission,
         isEnabled: isEnabled,
         isForceLegacyStoryEnabled: isForceLegacyStoryEnabled,
         isIntegratedStoryOverrideEnabled: isIntegratedStoryOverrideEnabled

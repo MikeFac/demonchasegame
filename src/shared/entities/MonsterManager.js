@@ -450,6 +450,17 @@
                 if (monster && gameState.monsters.includes(monster)) monster.isAttacked = false;
             }, 500);
 
+            // A guard that takes damage becomes a wanderer — it leaves its territory
+            // and roams freely. Chaser pathing can't navigate around walls/corners,
+            // so wandering is more effective in maze-like maps.
+            if (monster.behaviorType === 'guard' || monster.behaviorType === 'patrol') {
+                monster.behaviorType = 'wanderer';
+                monster.chaser = false;
+                monster.guardRadius = 0;
+                monster.homeX = null;
+                monster.homeY = null;
+            }
+
             if (monster.health <= 0) {
                 return this._handleMonsterDeath(monsterIndex, monsterId, attackerPlayerCode);
             }

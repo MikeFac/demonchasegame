@@ -28,6 +28,7 @@ app.use(express.static(path.join(__dirname)));
 app.use(express.static(path.join(__dirname, 'public')));
 
 app.get('/', (req, res) => {
+  res.set('Cache-Control', 'no-cache, no-store, must-revalidate');
   res.sendFile(path.join(__dirname, 'index.html'));
 });
 

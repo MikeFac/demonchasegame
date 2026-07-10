@@ -1,0 +1,376 @@
+{
+  "schemaVersion": 1,
+  "id": "generated",
+  "missions": [
+    {
+      "id": "david-goliath-01",
+      "gameMode": "story",
+      "storyIntegration": "coreLoop",
+      "name": "David & Goliath: Faith Over Fear",
+      "description": "Anointed by Samuel, gather five stones, arm your heart with the Word, and face the giant.",
+      "qualities": [
+        "Faith",
+        "Courage"
+      ],
+      "mapStyle": "open",
+      "world": {
+        "width": 2000,
+        "height": 2000
+      },
+      "xpMultiplier": 1.5,
+      "storyPhases": [
+        {
+          "id": "intro",
+          "type": "dialogue",
+          "i18nLines": [
+            "The Lord has chosen you, David. You will face the giant.",
+            "Go to the brook and choose five smooth stones. The battle is the Lord's."
+          ],
+          "nextPhase": "room-1",
+          "npcId": "samuel",
+          "_npc": {
+            "id": "samuel",
+            "nameKey": "Samuel",
+            "position": {
+              "x": 1000,
+              "y": 1000
+            },
+            "portrait": "images/npcs/samuel.png"
+          }
+        },
+        {
+          "id": "room-1",
+          "type": "combatCollect",
+          "targetCount": 1,
+          "objectType": "smoothStone",
+          "nextPhase": "room-2"
+        },
+        {
+          "id": "room-2",
+          "type": "combatCollect",
+          "targetCount": 1,
+          "objectType": "smoothStone",
+          "nextPhase": "room-3"
+        },
+        {
+          "id": "room-3",
+          "type": "combatCollect",
+          "targetCount": 1,
+          "objectType": "smoothStone",
+          "nextPhase": "room-4"
+        },
+        {
+          "id": "room-4",
+          "type": "combatCollect",
+          "targetCount": 1,
+          "objectType": "smoothStone",
+          "nextPhase": "room-5"
+        },
+        {
+          "id": "room-5",
+          "type": "combatCollect",
+          "targetCount": 1,
+          "objectType": "smoothStone",
+          "nextPhase": "room-6"
+        },
+        {
+          "id": "room-6",
+          "type": "puzzle",
+          "puzzleId": "courageCloze",
+          "nextPhase": "bossFight"
+        },
+        {
+          "id": "bossFight",
+          "type": "combat",
+          "nextPhase": "victory"
+        },
+        {
+          "id": "victory",
+          "type": "dialogue",
+          "i18nLines": [
+            "The Lord saved me. There is no sword like the Word of God.",
+            "Faith over fear. The giant has fallen."
+          ],
+          "nextPhase": null,
+          "sermonRef": "1 Samuel 17:47",
+          "endMission": true,
+          "npcId": "david",
+          "_npc": {
+            "id": "david",
+            "nameKey": "David",
+            "position": {
+              "x": 1000,
+              "y": 1000
+            },
+            "portrait": "images/npcs/david.png"
+          }
+        }
+      ],
+      "npcs": [
+        {
+          "id": "samuel",
+          "nameKey": "Samuel",
+          "position": {
+            "x": 1000,
+            "y": 1000
+          },
+          "portrait": "images/npcs/samuel.png"
+        },
+        {
+          "id": "david",
+          "nameKey": "David",
+          "position": {
+            "x": 1000,
+            "y": 1000
+          },
+          "portrait": "images/npcs/david.png"
+        }
+      ],
+      "specialObjects": [
+        {
+          "id": "smoothStone",
+          "labelKey": "Smooth Stone",
+          "count": 5,
+          "spawnArea": {
+            "x": 350,
+            "y": 350,
+            "w": 1300,
+            "h": 1300
+          },
+          "placements": [
+            {
+              "x": 350,
+              "y": 350,
+              "guardDemonType": "Fear"
+            },
+            {
+              "x": 1650,
+              "y": 350,
+              "guardDemonType": "Shame"
+            },
+            {
+              "x": 1000,
+              "y": 350,
+              "guardDemonType": "Doubt"
+            },
+            {
+              "x": 350,
+              "y": 1650,
+              "guardDemonType": "Confusion"
+            },
+            {
+              "x": 1650,
+              "y": 1650,
+              "guardDemonType": "Unbelief"
+            }
+          ]
+        }
+      ],
+      "puzzles": [
+        {
+          "id": "courageCloze",
+          "mode": "cloze",
+          "verseRef": "1 Samuel 17:47",
+          "i18nPrompt": "Fill in the missing word: 'The battle is the ___'s.'",
+          "answer": "Lord",
+          "options": [
+            "Lord",
+            "king",
+            "world",
+            "sword",
+            "fight",
+            "Israel"
+          ]
+        }
+      ],
+      "collectCombatConfig": {
+        "monsters": [
+          "Fear",
+          "Shame",
+          "Doubt",
+          "Confusion",
+          "Unbelief"
+        ],
+        "monsterDamageFactor": 0.9,
+        "monsterSpeed": 4,
+        "playerSpeed": 5,
+        "maxMonsters": 8,
+        "monstersToKill": 99,
+        "spawnRate": 16000,
+        "randomSpawnsEnabled": false,
+        "randomSpawnBudget": 0,
+        "disableLevelBoss": true,
+        "fixedMonsters": [
+          {
+            "x": 337,
+            "y": 360,
+            "demonType": "Fear",
+            "behavior": {
+              "type": "guard",
+              "patrolRadius": 140
+            },
+            "stats": {
+              "healthMultiplier": 1.2
+            },
+            "spawnTrigger": {
+              "type": "immediate",
+              "value": 0
+            }
+          },
+          {
+            "x": 1680,
+            "y": 386,
+            "demonType": "Shame",
+            "behavior": {
+              "type": "guard",
+              "patrolRadius": 140
+            },
+            "stats": {
+              "healthMultiplier": 1.2
+            },
+            "spawnTrigger": {
+              "type": "immediate",
+              "value": 0
+            }
+          },
+          {
+            "x": 960,
+            "y": 356,
+            "demonType": "Doubt",
+            "behavior": {
+              "type": "guard",
+              "patrolRadius": 150
+            },
+            "stats": {
+              "healthMultiplier": 1
+            },
+            "spawnTrigger": {
+              "type": "immediate",
+              "value": 0
+            }
+          },
+          {
+            "x": 313,
+            "y": 1631,
+            "demonType": "Confusion",
+            "behavior": {
+              "type": "guard",
+              "patrolRadius": 140
+            },
+            "stats": {
+              "healthMultiplier": 1
+            },
+            "spawnTrigger": {
+              "type": "immediate",
+              "value": 0
+            }
+          },
+          {
+            "x": 1614,
+            "y": 1616,
+            "demonType": "Unbelief",
+            "behavior": {
+              "type": "guard",
+              "patrolRadius": 140
+            },
+            "stats": {
+              "healthMultiplier": 1
+            },
+            "spawnTrigger": {
+              "type": "immediate",
+              "value": 0
+            }
+          }
+        ]
+      },
+      "combatConfig": {
+        "monsters": [
+          "Goliath",
+          "Doubt",
+          "Fear"
+        ],
+        "monsterDamageFactor": 1.1,
+        "monsterSpeed": 5,
+        "playerSpeed": 5,
+        "maxMonsters": 6,
+        "monstersToKill": 1,
+        "spawnRate": 999,
+        "randomSpawnsEnabled": false,
+        "disableLevelBoss": true,
+        "fixedMonsters": [
+          {
+            "x": 1000,
+            "y": 350,
+            "demonType": "Goliath",
+            "isBoss": true,
+            "label": "Goliath",
+            "behavior": {
+              "type": "guard",
+              "patrolRadius": 200
+            },
+            "stats": {
+              "healthMultiplier": 6,
+              "damageMultiplier": 3,
+              "sizeMultiplier": 1.5
+            },
+            "spawnTrigger": {
+              "type": "immediate",
+              "value": 0
+            }
+          },
+          {
+            "x": 940,
+            "y": 520,
+            "demonType": "Doubt",
+            "stats": {
+              "healthMultiplier": 1
+            },
+            "spawnTrigger": {
+              "type": "immediate",
+              "value": 0
+            }
+          },
+          {
+            "x": 940,
+            "y": 520,
+            "demonType": "Fear",
+            "stats": {
+              "healthMultiplier": 1
+            },
+            "spawnTrigger": {
+              "type": "immediate",
+              "value": 0
+            }
+          }
+        ]
+      },
+      "music": {
+        "phaseTracks": {
+          "intro": null,
+          "room-1": null,
+          "room-2": null,
+          "room-3": null,
+          "room-4": null,
+          "room-5": null,
+          "room-6": null,
+          "bossFight": null,
+          "victory": null
+        },
+        "fallbackTrackIndex": 0
+      },
+      "_i18n": {
+        "prefix": "story.david",
+        "strings": {
+          "story.david.intro.1": "The Lord has chosen you, David. You will face the giant.",
+          "story.david.intro.2": "Go to the brook and choose five smooth stones. The battle is the Lord's.",
+          "story.david.npc.samuel": "Samuel",
+          "story.david.object.stone": "Smooth Stone",
+          "story.david.puzzle.prompt": "Fill in the missing word: 'The battle is the ___'s.'",
+          "story.david.victory.1": "The Lord saved me. There is no sword like the Word of God.",
+          "story.david.victory.2": "Faith over fear. The giant has fallen.",
+          "story.david.npc.david": "David"
+        }
+      }
+    }
+  ]
+}
