@@ -59,6 +59,7 @@ const MAX_TRANSITION_FREEZE_MS = 10000; // Safety timeout: 10 seconds max freeze
 let storyPauseState = null;
 let storyPauseEngineWasRunning = false;
 let integratedStoryState = null;
+let missionNpcInteractionState = { completed: {} };
 let integratedStoryPuzzlePause = null;
 let integratedStoryBossHint = {
     lastShownAt: 0,
@@ -118,7 +119,8 @@ function enterStoryPause(options) {
         totalSteps: options.totalSteps || 0,
         // Quest step fields
         stepId: options.stepId || null,
-        grantsSkill: options.grantsSkill || null
+        grantsSkill: options.grantsSkill || null,
+        npcInteractionId: options.npcInteractionId || null
     };
 
     if (gameState) {
@@ -185,6 +187,7 @@ function advanceStoryPause() {
     // Quest step dialogue completion (learn step)
     const isQuestStepDialogue = storyPauseState.type === 'dialogue' && storyPauseState.stepId;
     const isQuestStepPuzzle = storyPauseState.type === 'puzzle' && storyPauseState.stepId;
+    const isNpcInteractionDialogue = storyPauseState.type === 'dialogue' && storyPauseState.npcInteractionId;
 
     const completedPuzzlePause = storyPauseState.type === 'puzzle' && storyPauseState.completed
         ? storyPauseState
@@ -204,7 +207,9 @@ function advanceStoryPause() {
     const previous = exitStoryPause({ advancePhase: true });
 
     // Quest step completion paths
-    if (isQuestStepDialogue && previous.stepId) {
+    if (isNpcInteractionDialogue && previous.npcInteractionId) {
+        completeMissionNpcInteraction(previous.npcInteractionId);
+    } else if (isQuestStepDialogue && previous.stepId) {
         handleQuestStepDialogueComplete(previous);
     } else if (isQuestStepPuzzle && previous.stepId) {
         handleQuestStepPuzzleComplete(previous);
@@ -624,6 +629,65 @@ function getQuestStepState() {
         collectedObjects: integratedStoryState.collectedObjects || {}
     };
 }
+
+function getMissionNpcInteractions() {
+    return currentMission && Array.isArray(currentMission.npcInteractions)
+        ? currentMission.npcInteractions
+        : [];
+}
+
+function getNearbyMissionNpcInteraction() {
+    if (!player || isStoryPaused()) return null;
+    const interactions = getMissionNpcInteractions();
+    for (let i = 0; i < interactions.length; i++) {
+        const interaction = interactions[i];
+        if (!interaction || !interaction.position) continue;
+        if (interaction.once !== false && missionNpcInteractionState.completed[interaction.id]) continue;
+        const dx = player.x - interaction.position.x;
+        const dy = player.y - interaction.position.y;
+        const radius = interaction.radius || 110;
+        if (dx * dx + dy * dy <= radius * radius) return interaction;
+    }
+    return null;
+}
+
+function startMissionNpcInteraction(interaction) {
+    if (!interaction || isStoryPaused()) return false;
+    enterStoryPause({
+        type: 'dialogue',
+        missionId: currentMission && currentMission.id,
+        phaseId: interaction.id,
+        npcInteractionId: interaction.id,
+        title: currentMission && currentMission.name ? currentMission.name : 'Conversation',
+        speaker: interaction.npcName || interaction.npcId || 'NPC',
+        lines: Array.isArray(interaction.lines) ? interaction.lines : [],
+        prompt: 'Continue'
+    });
+    return true;
+}
+
+function completeMissionNpcInteraction(interactionId) {
+    if (!interactionId) return;
+    missionNpcInteractionState.completed[interactionId] = true;
+    if (window.Analytics && typeof window.Analytics.trackEvent === 'function') {
+        window.Analytics.trackEvent('mission_npc_interaction_completed', { interaction_id: interactionId });
+    }
+}
+
+function handleMissionNpcInteractionClick(screenX, screenY) {
+    const interaction = getNearbyMissionNpcInteraction();
+    if (!interaction || !interaction.position) return false;
+    const x = interaction.position.x - camera.x;
+    const y = interaction.position.y - camera.y;
+    const hitRadius = 38;
+    const dx = screenX - x;
+    const dy = screenY - y;
+    if (dx * dx + dy * dy > hitRadius * hitRadius) return false;
+    return startMissionNpcInteraction(interaction);
+}
+
+window.getNearbyMissionNpcInteraction = getNearbyMissionNpcInteraction;
+window.startMissionNpcInteraction = startMissionNpcInteraction;
 
 function isContinuousQuestMission() {
     return !!(currentMission && window.CoreStoryDirector &&
@@ -1270,6 +1334,10 @@ window.addEventListener('keydown', function (e) {
     if (typeof gameMode === 'undefined' || gameMode !== 'game') return;
     if (isStoryPaused() && (e.key === 'Enter' || e.key === ' ')) {
         advanceStoryPause();
+        e.preventDefault();
+        return;
+    }
+    if ((e.key === 'e' || e.key === 'E') && startMissionNpcInteraction(getNearbyMissionNpcInteraction())) {
         e.preventDefault();
         return;
     }
@@ -4615,6 +4683,9 @@ async function init() {
                     localStorage.setItem('dcgame_speedPromptShown', 'true');
                     return true;
                 }
+                if (handleMissionNpcInteractionClick(x, y)) {
+                    return true;
+                }
                 // Check inventory button click (floating "i" icon in top-left area)
                 const ib = UILayout.inventoryButton;
                 const invBtnX = UILayout.getInventoryButtonX();
@@ -5400,6 +5471,7 @@ async function startMission(worldId, missionId) {
 
         currentMission = mission;
         window.currentMission = currentMission;
+        missionNpcInteractionState = { completed: {} };
         currentMissionConfig = missionClient.missionToGameConfig(mission);
         if (worldId === START_HERE_WORLD_ID && missionId === START_HERE_MISSION_ID) {
             localStorage.setItem(START_HERE_SEEN_KEY, 'true');
@@ -5792,7 +5864,8 @@ function gameLoop(generation) {
     }
 
     if (window.gameMode === 'game') {
-        const onboardingGuide = buildStartHereGuide(player, monsters);
+            const onboardingGuide = buildStartHereGuide(player, monsters);
+        const nearbyNpcInteraction = getNearbyMissionNpcInteraction();
         const uiState = {
             vQuality: (currentQuiz && currentQuiz.contentCategory) ? currentQuiz.contentCategory : window.vQuality,
             currentCombatCategory: player ? player.currentCombatCategory : null,
@@ -5827,6 +5900,8 @@ function gameLoop(generation) {
                 duration: combatHint.duration,
                 remainingMs: Math.max(0, combatHint.duration - (Date.now() - combatHint.startTime))
             } : null),
+            npcInteractions: getMissionNpcInteractions(),
+            nearbyNpcInteractionId: nearbyNpcInteraction ? nearbyNpcInteraction.id : null,
             dailyChallengeProgress,
             dailyChallengeGoal,
             dailyChallengeCompleted,

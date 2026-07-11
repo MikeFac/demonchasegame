@@ -235,10 +235,13 @@ The structured win condition. One of:
 | `lines` | string[] | yes | 1+ lines of dialogue (raw text OR i18n keys) |
 | `portrait` | string | no | Portrait image path |
 | `position` | enum | no | Where to place the NPC: same enum as RoomSpec.position. Default `center`. |
+| `interaction` | object | no | Optional in-maze conversation: `{ "trigger": "proximity", "radius": 110, "once": true }`. Player must walk near and interact. |
 | `sermonRef` | string | no | Optional scripture reference to display |
 | `endMission` | bool | no | If true, mission ends after this dialogue (for outro) |
 
 > If `npcs` array is not provided, the compiler synthesizes one NPC per dialogue phase.
+> With `interaction.trigger: "proximity"`, that NPC is persisted in the maze at
+> `position`; otherwise NPC placement remains cosmetic and phase-bound.
 
 ### QuizSourceSpec
 

@@ -149,6 +149,9 @@
             if (Array.isArray(mission.npcs)) {
                 result.npcs = mission.npcs.slice();
             }
+            if (Array.isArray(mission.npcInteractions)) {
+                result.npcInteractions = mission.npcInteractions.slice();
+            }
             if (Array.isArray(mission.specialObjects)) {
                 result.specialObjects = mission.specialObjects.slice();
             }

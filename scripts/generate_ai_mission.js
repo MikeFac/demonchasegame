@@ -1,21 +1,24 @@
 #!/usr/bin/env node
 /**
- * generate_ai_mission.js — AI-driven mission spec generation via OpenRouter.
+ * generate_ai_mission.js — AI-driven mission spec generation via OpenRouter or Ollama Cloud.
  *
  * Pipeline:
  *   user prompt → AI generates spec JSON → MissionCompiler compiles it
  *                → MissionValidator validates → write spec + mission JSON
  *
  * Usage:
- *   OPENROUTER_API_KEY=sk-... node scripts/generate_ai_mission.js "prompt text"
- *   OPENROUTER_API_KEY=sk-... node scripts/generate_ai_mission.js "prompt" --difficulty hard
- *   OPENROUTER_API_KEY=sk-... node scripts/generate_ai_mission.js "prompt" --dry-run
- *   OPENROUTER_API_KEY=sk-... node scripts/generate_ai_mission.js "prompt" --check
+ *   OLLAMA_API_KEY=ollama_... node scripts/generate_ai_mission.js "prompt text"
+ *   OPENROUTER_API_KEY=sk-... node scripts/generate_ai_mission.js "prompt text" --provider openrouter
+ *   node scripts/generate_ai_mission.js "prompt" --difficulty hard
+ *   node scripts/generate_ai_mission.js "prompt" --dry-run
+ *   node scripts/generate_ai_mission.js "prompt" --check
  *
  * Options:
  *   --difficulty <easy|medium|hard>  Override difficulty in generated spec
  *   --content-mode <biblical|secular>  Override contentMode
- *   --model NAME       OpenRouter model ID (default: anthropic/claude-sonnet-4.5)
+ *   --provider NAME    AI provider: auto|ollama|openrouter (default: auto)
+ *   --model NAME       Model ID (default: glm-5.2 for Ollama, anthropic/claude-sonnet-4.5 for OpenRouter)
+ *   --max-tokens N     Response token budget (default: 4096)
  *   --out <path>       Write compiled mission JSON to this path (default: missions/generated/<id>.json)
  *   --check            Compile + validate only, don't write mission JSON
  *   --dry-run          Show the AI prompt without calling the API
@@ -28,16 +31,21 @@
 
 var fs = require('fs');
 var path = require('path');
+require('dotenv').config({ quiet: true });
 var MissionCompiler = require('../src/shared/MissionCompiler');
 var MissionValidator = require('../src/shared/MissionValidator');
 
 var ROOT = path.join(__dirname, '..');
 var PROMPT_FILE = path.join(ROOT, 'docs', 'plans', 'ai-mission-prompt.md');
+var DEFAULT_OLLAMA_MODEL = 'glm-5.2';
+var DEFAULT_OPENROUTER_MODEL = 'anthropic/claude-sonnet-4.5';
+var DEFAULT_MAX_TOKENS = 4096;
 
 // ---- Args ----
 function parseArgs(argv) {
     var args = {
-        prompt: null, difficulty: null, contentMode: null, model: 'anthropic/claude-sonnet-4.5',
+        prompt: null, difficulty: null, contentMode: null, provider: 'auto', model: null,
+        maxTokens: DEFAULT_MAX_TOKENS,
         outPath: null, check: false, dryRun: false, saveSpec: false, force: false, quiet: false, help: false
     };
     var positional = [];
@@ -46,7 +54,9 @@ function parseArgs(argv) {
         if (a === '--help' || a === '-h') { args.help = true; }
         else if (a === '--difficulty') { args.difficulty = argv[++i]; }
         else if (a === '--content-mode') { args.contentMode = argv[++i]; }
+        else if (a === '--provider') { args.provider = String(argv[++i] || '').toLowerCase(); }
         else if (a === '--model') { args.model = argv[++i]; }
+        else if (a === '--max-tokens') { args.maxTokens = parseInt(argv[++i], 10); }
         else if (a === '--out') { args.outPath = argv[++i]; }
         else if (a === '--check') { args.check = true; }
         else if (a === '--dry-run') { args.dryRun = true; }
@@ -65,12 +75,15 @@ function showHelp() {
         'generate_ai_mission.js — AI-driven mission spec generation',
         '',
         'Usage:',
-        '  OPENROUTER_API_KEY=sk-... node scripts/generate_ai_mission.js "prompt" [options]',
+        '  OLLAMA_API_KEY=ollama_... node scripts/generate_ai_mission.js "prompt" [options]',
+        '  OPENROUTER_API_KEY=sk-... node scripts/generate_ai_mission.js "prompt" --provider openrouter [options]',
         '',
         'Options:',
         '  --difficulty <easy|medium|hard>    Override difficulty in generated spec',
         '  --content-mode <biblical|secular>  Override contentMode',
-        '  --model NAME        OpenRouter model ID (default: anthropic/claude-sonnet-4.5)',
+        '  --provider NAME     AI provider: auto|ollama|openrouter (default: auto)',
+        '  --model NAME        Model ID (default: glm-5.2 for Ollama, anthropic/claude-sonnet-4.5 for OpenRouter)',
+        '  --max-tokens N      Response token budget (default: 4096)',
         '  --out <path>        Write compiled mission JSON to this path',
         '  --check             Compile + validate only, do not write mission JSON',
         '  --dry-run           Show the AI prompt without calling the API',
@@ -80,11 +93,28 @@ function showHelp() {
         '  --help, -h          Show this help',
         '',
         'Examples:',
-        '  OPENROUTER_API_KEY=sk-... node scripts/generate_ai_mission.js "David and Goliath, faith over fear"',
-        '  OPENROUTER_API_KEY=sk-... node scripts/generate_ai_mission.js "desert rescue" --content-mode secular',
-        '  OPENROUTER_API_KEY=sk-... node scripts/generate_ai_mission.js "forgiveness mission" --difficulty easy --check',
+        '  node scripts/generate_ai_mission.js "David and Goliath, faith over fear"',
+        '  node scripts/generate_ai_mission.js "desert rescue" --content-mode secular --provider ollama',
+        '  node scripts/generate_ai_mission.js "forgiveness mission" --difficulty easy --check',
         ''
     ].join('\n'));
+}
+
+function normalizeProvider(provider, explicitModel) {
+    if (!provider || provider === 'auto') {
+        if (process.env.OLLAMA_API_KEY) return 'ollama';
+        if (process.env.OPENROUTER_API_KEY) return 'openrouter';
+        if (explicitModel && explicitModel.indexOf('/') >= 0) return 'openrouter';
+        return 'ollama';
+    }
+    if (provider !== 'ollama' && provider !== 'openrouter') {
+        throw new Error('Unknown provider: ' + provider + ' (expected auto, ollama, or openrouter)');
+    }
+    return provider;
+}
+
+function defaultModelForProvider(provider) {
+    return provider === 'ollama' ? DEFAULT_OLLAMA_MODEL : DEFAULT_OPENROUTER_MODEL;
 }
 
 // ---- Load system prompt from markdown file ----
@@ -102,8 +132,8 @@ function loadSystemPrompt() {
     return md;
 }
 
-// ---- OpenRouter API call ----
-async function callOpenRouter(systemPrompt, userPrompt, model, apiKey) {
+// ---- AI API calls ----
+async function callOpenRouter(systemPrompt, userPrompt, model, apiKey, maxTokens) {
     var OPENROUTER_URL = 'https://openrouter.ai/api/v1/chat/completions';
     var response = await fetch(OPENROUTER_URL, {
         method: 'POST',
@@ -120,7 +150,7 @@ async function callOpenRouter(systemPrompt, userPrompt, model, apiKey) {
                 { role: 'user', content: userPrompt }
             ],
             temperature: 0.8,
-            max_tokens: 4096
+            max_tokens: maxTokens
         })
     });
 
@@ -140,6 +170,53 @@ async function callOpenRouter(systemPrompt, userPrompt, model, apiKey) {
     }
 
     return choice.message.content;
+}
+
+async function callOllamaCloud(systemPrompt, userPrompt, model, apiKey, maxTokens) {
+    var OLLAMA_URL = process.env.OLLAMA_API_BASE || 'https://ollama.com/api/chat';
+    var response = await fetch(OLLAMA_URL, {
+        method: 'POST',
+        headers: {
+            'Authorization': 'Bearer ' + apiKey,
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            model: model,
+            messages: [
+                { role: 'system', content: systemPrompt },
+                { role: 'user', content: userPrompt }
+            ],
+            format: 'json',
+            stream: false,
+            think: false,
+            options: {
+                temperature: 0.8,
+                num_predict: maxTokens
+            }
+        })
+    });
+
+    if (!response.ok) {
+        var body = await response.text();
+        throw new Error('Ollama API error ' + response.status + ': ' + body);
+    }
+
+    var data = await response.json();
+    if (data.error) {
+        throw new Error('Ollama API error: ' + JSON.stringify(data.error));
+    }
+
+    if (!data.message || !data.message.content) {
+        throw new Error('Ollama returned an empty mission response' +
+            (data.done_reason ? ' (done_reason=' + data.done_reason + ')' : ''));
+    }
+
+    return data.message.content;
+}
+
+async function callAI(provider, systemPrompt, userPrompt, model, apiKey, maxTokens) {
+    if (provider === 'ollama') return callOllamaCloud(systemPrompt, userPrompt, model, apiKey, maxTokens);
+    return callOpenRouter(systemPrompt, userPrompt, model, apiKey, maxTokens);
 }
 
 // ---- Extract JSON from AI response (strip markdown fences if present) ----
@@ -167,11 +244,29 @@ async function main() {
     if (args.help) { showHelp(); process.exit(0); }
     if (args.error) { console.error('Error: ' + args.error); process.exit(1); }
     if (!args.prompt) { console.error('Error: No prompt specified. Use --help for usage.'); process.exit(1); }
+    if (!Number.isFinite(args.maxTokens) || args.maxTokens < 256) {
+        console.error('Error: --max-tokens must be a number >= 256');
+        process.exit(1);
+    }
 
-    var apiKey = process.env.OPENROUTER_API_KEY;
+    var provider;
+    try {
+        provider = normalizeProvider(args.provider, args.model);
+    } catch (e) {
+        console.error('Error: ' + e.message);
+        process.exit(1);
+    }
+    var model = args.model || defaultModelForProvider(provider);
+
+    var apiKey = provider === 'ollama' ? process.env.OLLAMA_API_KEY : process.env.OPENROUTER_API_KEY;
     if (!apiKey && !args.dryRun) {
-        console.error('Error: Set OPENROUTER_API_KEY environment variable');
-        console.error('  Get one at https://openrouter.ai/keys');
+        if (provider === 'ollama') {
+            console.error('Error: Set OLLAMA_API_KEY environment variable or add it to .env');
+            console.error('  Get one at https://ollama.com/settings/keys');
+        } else {
+            console.error('Error: Set OPENROUTER_API_KEY environment variable or add it to .env');
+            console.error('  Get one at https://openrouter.ai/keys');
+        }
         process.exit(1);
     }
 
@@ -194,12 +289,12 @@ async function main() {
         process.exit(0);
     }
 
-    if (!args.quiet) console.log('Generating mission spec via ' + args.model + '...');
+    if (!args.quiet) console.log('Generating mission spec via ' + provider + '/' + model + '...');
 
     // ---- Call AI ----
     var aiResponse;
     try {
-        aiResponse = await callOpenRouter(systemPrompt, userPrompt, args.model, apiKey);
+        aiResponse = await callAI(provider, systemPrompt, userPrompt, model, apiKey, args.maxTokens);
     } catch (e) {
         console.error('AI generation failed: ' + e.message);
         process.exit(1);

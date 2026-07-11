@@ -349,6 +349,7 @@
 
         mission.storyPhases = phases;
         mission.npcs = npcs;
+        mission.npcInteractions = buildNpcInteractions(phases);
         mission.specialObjects = specialObjects;
         mission.puzzles = puzzles;
 
@@ -609,6 +610,7 @@
 
         mission.storyPhases = phases;
         mission.npcs = npcs;
+        mission.npcInteractions = buildNpcInteractions(phases);
         mission.specialObjects = specialObjects;
         mission.puzzles = puzzles;
 
@@ -799,17 +801,48 @@
 
         // Synthesize NPC
         if (dialogue.npcId || dialogue.npcName) {
+            var npcPosition = { x: Math.floor(world.width / 2), y: Math.floor(world.height / 2) };
+            if (dialogue.interaction && dialogue.interaction.trigger === 'proximity') {
+                var interactionGeometry = roomGeometry(dialogue.position || 'center', world, prng);
+                npcPosition = { x: interactionGeometry.interiorX, y: interactionGeometry.interiorY };
+            }
             var npc = {
                 id: dialogue.npcId || ('npc-' + id),
                 nameKey: dialogue.npcName || (dialogue.npcId || 'narrator'),
-                position: { x: Math.floor(world.width / 2), y: Math.floor(world.height / 2) }
+                position: npcPosition
             };
             if (dialogue.portrait) npc.portrait = dialogue.portrait;
             phase.npcId = npc.id;
             phase._npc = npc;
         }
 
+        if (dialogue.interaction && dialogue.interaction.trigger === 'proximity') {
+            phase.interaction = {
+                id: dialogue.interaction.id || ('interact-' + id),
+                trigger: 'proximity',
+                radius: typeof dialogue.interaction.radius === 'number' ? dialogue.interaction.radius : 110,
+                once: dialogue.interaction.once !== false
+            };
+        }
+
         return phase;
+    }
+
+    function buildNpcInteractions(phases) {
+        return phases.filter(function (phase) {
+            return phase && phase.interaction && phase.interaction.trigger === 'proximity' && phase._npc;
+        }).map(function (phase) {
+            return {
+                id: phase.interaction.id,
+                npcId: phase.npcId,
+                npcName: phase._npc.nameKey || phase.npcId || 'NPC',
+                portrait: phase._npc.portrait || null,
+                position: phase._npc.position,
+                radius: phase.interaction.radius,
+                once: phase.interaction.once,
+                lines: Array.isArray(phase.i18nLines) ? phase.i18nLines.slice() : []
+            };
+        });
     }
 
     // -----------------------------------------------------------------
@@ -887,10 +920,24 @@
     // -----------------------------------------------------------------
     function addRoomFixedMonster(fixedMonsters, monsterTypes, guard, geo, storyStepId) {
         var count = guard.count || 1;
+        var offsets = [
+            { x: 0, y: 0 },
+            { x: 52, y: 0 },
+            { x: -52, y: 0 },
+            { x: 0, y: 52 },
+            { x: 0, y: -52 },
+            { x: 42, y: 42 },
+            { x: -42, y: 42 },
+            { x: 42, y: -42 },
+            { x: -42, y: -42 }
+        ];
         for (var i = 0; i < count; i++) {
+            var offset = offsets[i % offsets.length];
+            var ring = Math.floor(i / offsets.length);
+            var ringOffset = ring * 26;
             var fixedMonster = {
-                x: geo.guardX,
-                y: geo.guardY,
+                x: clampToInterior(geo.guardX + offset.x + ringOffset, geo.cellX, geo.roomW, MONSTER_W),
+                y: clampToInterior(geo.guardY + offset.y + ringOffset, geo.cellY, geo.roomH, MONSTER_W),
                 demonType: guard.demonType,
                 behavior: {
                     type: guard.behavior || 'guard',

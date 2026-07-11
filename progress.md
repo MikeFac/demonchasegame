@@ -1562,6 +1562,72 @@ Original prompt: Check the implementation of docs/multi-version-songs-implementa
   - request URLs used `generate=false`; missing test reference had `0` VerseSong records after the test
   - existing Romans 10:17 song returned `ready`
   - inspected `output/web-game/verse-song-generation-setting/01-generation-disabled.png`.
+
+2026-07-11:
+- Added first-pass in-maze NPC proximity conversations for generated story missions.
+  - Dialogue specs can now opt into `interaction: { trigger: "proximity", radius, once }`.
+  - Compiler creates persistent `npcInteractions` with deterministic world placement.
+  - Main 2D game loop renders talkable NPCs, shows `Tap NPC or press E` in range, opens dialogue on interaction, and marks one-time conversations complete.
+  - Updated the AI mission prompt and DSL schema with the supported JSON shape and authoring guidance.
+- Added `scripts/test-npc-proximity-interaction.js` and compiler coverage.
+- Verification:
+  - `node test/test-mission-compiler.js` (148 passed)
+  - `node test/test-mission-validator.js` (44 passed)
+  - `node scripts/test-npc-proximity-interaction.js` (Chrome; passed, no page errors)
+  - prescribed Playwright client smoke (only existing module-type warning)
+  - inspected `output/web-game/npc-proximity-interaction/01-nearby-npc.png` and `02-npc-dialogue.png`.
+
+2026-07-11:
+- Strengthened the AI mission generator system prompt to require a compact story arc alongside each playable task:
+  - setup/stakes in the intro, a concrete matching objective/win condition, a meaningful middle beat for suitable 3+ room missions, a consequential climax, and a resolved outro.
+  - added a copyable `narrative` room + proximity-NPC JSON pattern for optional exploration/story texture.
+  - clarified that proximity interactions belong on room dialogue, not automatic intro/outro phases.
+- Verification: `node scripts/generate_ai_mission.js "Create a mission where a frightened village needs help" --dry-run` included the new `Story-Driven Mission Construction` and in-maze story beat guidance in the actual system prompt.
+
+2026-07-11:
+- Added Ollama Cloud support to `scripts/generate_ai_mission.js`.
+  - The script now loads `.env`, accepts `--provider auto|ollama|openrouter`, defaults Ollama missions to `glm-5.2`, and still supports OpenRouter fallback.
+  - Added `--max-tokens` so generation budget is explicit.
+  - `.env.example` now documents `OLLAMA_API_KEY`.
+- Live model check against `https://ollama.com/api/tags` showed `glm-5.2`, `minimax-m2.7`, and newer `minimax-m3` are available.
+- Current blocker for live AI mission generation: local `.env` does not yet contain `OLLAMA_API_KEY`.
+- Verification:
+  - `node --check scripts/generate_ai_mission.js`
+  - `node scripts/generate_ai_mission.js --help`
+  - `node scripts/generate_ai_mission.js "Create a mission where a frightened village needs help" --provider ollama --dry-run`
+  - missing-key path exits cleanly before network call.
+
+2026-07-11:
+- Generated and registered the AI story mission `trials-of-grace`.
+  - Created `missions/specs/trials-of-grace.spec.json` with continuous quest flow, linked prerequisites, learned verse skills, symbolic collectibles, a mid-story setback, and a Despair boss.
+  - Recompiled to `missions/generated/trials-of-grace.json`.
+  - Added `trials-of-grace` to `missions/generated.json` and `missions/chapters.json`.
+  - Added five 96x96 NPC icon assets under `images/npcs/`: Elder Marcus, Sister Ruth, Brother Timothy, Broken Pilgrim, and Sister Miriam.
+  - Adjusted the generated spec so learn/story NPCs compile into six in-maze proximity interactions.
+- Verification:
+  - `node scripts/generate_ai_mission.js ... --provider ollama --model glm-5.2 --save-spec --out missions/generated/trials-of-grace.json`
+  - `node scripts/generate_mission.js missions/specs/trials-of-grace.spec.json --out missions/generated/trials-of-grace.json`
+  - JSON parse checks for spec, generated mission, and generated aggregate.
+  - `node test/test-mission-validator.js` (44 passed)
+  - `node test/test-mission-compiler.js` (148 passed)
+  - browser mission-client check confirmed Generated chapter includes `trials-of-grace` and loads it with 16 phases, 6 NPC interactions, and no page errors.
+  - browser mission-start smoke loaded `currentMission.id = trials-of-grace` with 6 NPC interactions and no page errors.
+  - inspected `output/web-game/trials-of-grace-menu/gameplay-smoke.png`.
+
+2026-07-11:
+- Iterated on AI mission pacing after play feedback that the mission felt too slow and sparse.
+  - Updated `docs/plans/ai-mission-prompt.md` so future generated continuous quests prefer compact/open maps, quick first action, nearby first objectives, and more visible combat density.
+  - Retuned `missions/specs/trials-of-grace.spec.json` from a 4000x4000 labyrinth to a 2200x2200 open map.
+  - Moved the first NPC to the center/spawn area and the first guarded collectible directly north of spawn.
+  - Increased guarded objective counts so the compiled mission now has 13 spread-out fixed demons instead of 5.
+  - Fixed `src/shared/MissionCompiler.js` so `guard.count` spreads fixed monsters inside the room instead of stacking them on one coordinate.
+  - Recompiled `missions/generated/trials-of-grace.json` and refreshed `missions/generated.json`.
+- Verification:
+  - `node scripts/generate_mission.js missions/specs/trials-of-grace.spec.json --out missions/generated/trials-of-grace.json`
+  - `node test/test-mission-compiler.js` (148 passed)
+  - `node test/test-mission-validator.js` (44 passed)
+  - browser mission-start smoke confirmed world `2200x2200`, `mapStyle=open`, 13 fixed monsters, first NPC at `{1100,1100}`, first object at `{1100,400}`, and no page errors.
+  - inspected `output/web-game/trials-of-grace-menu/pacing-smoke.png`.
 - Rollback for this phase:
   - pre-phase file backups: `/tmp/david-goliath-story-phase-14-backup/`
   - targeted phase patch: `/tmp/david-goliath-story-phase-14.patch`

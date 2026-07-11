@@ -210,6 +210,31 @@ function run() {
     var legacyQuestMission = MissionCompiler.compile(legacyQuestSpec);
     ok('quest flow defaults to hub', legacyQuestMission.questFlow && legacyQuestMission.questFlow.mode === 'hub');
 
+    var npcInteractionSpec = {
+        schemaVersion: 1,
+        id: 'npc-interaction-test',
+        name: 'NPC Interaction Test',
+        description: 'Test',
+        objective: 'Talk',
+        difficulty: 'easy',
+        winCondition: { type: 'clearRooms', count: 1 },
+        rooms: [{
+            id: 'teacher-room',
+            type: 'narrative',
+            position: 'ne',
+            dialogue: {
+                npcId: 'teacher', npcName: 'Teacher', position: 'ne',
+                lines: ['Come close and listen.'],
+                interaction: { trigger: 'proximity', radius: 90, once: true }
+            }
+        }]
+    };
+    var npcInteractionMission = MissionCompiler.compile(npcInteractionSpec);
+    ok('proximity NPC interaction compiled', npcInteractionMission.npcInteractions && npcInteractionMission.npcInteractions.length === 1);
+    var compiledInteraction = npcInteractionMission.npcInteractions && npcInteractionMission.npcInteractions[0];
+    ok('proximity NPC preserves configured radius', compiledInteraction && compiledInteraction.radius === 90);
+    ok('proximity NPC has world position', compiledInteraction && compiledInteraction.position && compiledInteraction.position.x > 0 && compiledInteraction.position.y > 0);
+
     // -- Edge cases --
     // Minimal spec (1 room, no intro/outro/boss)
     var minimal = {

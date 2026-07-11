@@ -1,0 +1,453 @@
+{
+  "schemaVersion": 1,
+  "id": "trials-of-grace",
+  "name": "Trials of Grace",
+  "description": "A journey through faith, courage, and hope to overcome the shadows of Despair.",
+  "theme": "overcoming-life-through-grace",
+  "tone": "adventure",
+  "difficulty": "hard",
+  "contentMode": "biblical",
+  "objective": "Learn the verses of grace, collect the symbols of faith, and confront Despair at the heart of the labyrinth.",
+  "winCondition": {
+    "type": "sequence",
+    "steps": [
+      {
+        "type": "solvePuzzles",
+        "count": 4
+      },
+      {
+        "type": "collect",
+        "objectId": "crown-fragment",
+        "count": 1
+      },
+      {
+        "type": "defeatBoss",
+        "bossId": "despair"
+      }
+    ]
+  },
+  "world": {
+    "size": {
+      "width": 2200,
+      "height": 2200
+    },
+    "mapStyle": "open"
+  },
+  "qualities": [
+    "Faith",
+    "Courage",
+    "Hope",
+    "Forgiveness",
+    "Wisdom",
+    "Endurance",
+    "Prayer"
+  ],
+  "xpMultiplier": 1.5,
+  "customBosses": [
+    "Despair"
+  ],
+  "intro": {
+    "npcName": "Elder Marcus",
+    "lines": [
+      "The path ahead is shadowed, child. Each trial will test a different grace.",
+      "Learn the verses, carry the symbols, and let faith be your lamp."
+    ],
+    "portrait": "images/npcs/elder-marcus.png"
+  },
+  "questFlow": {
+    "mode": "continuous"
+  },
+  "questSteps": [
+    {
+      "id": "learn-faith",
+      "type": "learn",
+      "position": "center",
+      "label": "The Lamp of Faith",
+      "npc": {
+        "npcId": "elder-marcus",
+        "npcName": "Elder Marcus",
+        "position": "center",
+        "portrait": "images/npcs/elder-marcus.png",
+        "lines": [
+          "Faith is the assurance of things hoped for. Hold this lamp—it will show the way where sight fails.",
+          "Memorize Hebrews 11:1, and the first path will open."
+        ],
+        "interaction": {
+          "trigger": "proximity",
+          "radius": 120,
+          "once": true
+        }
+      },
+      "grantsSkill": "faith-skill",
+      "puzzle": {
+        "id": "puzzle-faith",
+        "mode": "verseMemorize",
+        "verseRef": "Hebrews 11:1",
+        "prompt": "Fill in the missing words from Hebrews 11:1.",
+        "wordsToHide": 3,
+        "answer": "Now faith is the assurance of things hoped for, the conviction of things not seen."
+      }
+    },
+    {
+      "id": "collect-lantern",
+      "type": "supplyCache",
+      "position": "n",
+      "label": "Lantern of Faith",
+      "requiredSkill": "faith-skill",
+      "collectible": {
+        "id": "lantern",
+        "label": "Lantern of Faith",
+        "count": 1,
+        "required": true
+      },
+      "guard": {
+        "demonType": "Doubt",
+        "behavior": "guard",
+        "count": 2,
+        "stats": {
+          "healthMultiplier": 1.1
+        }
+      },
+      "dialogue": {
+        "npcId": "lantern-keeper",
+        "npcName": "Lantern Keeper",
+        "position": "nw",
+        "lines": [
+          "You carry the verse well. The lantern burns brighter when faith holds it."
+        ],
+        "interaction": {
+          "trigger": "proximity",
+          "radius": 110,
+          "once": true
+        }
+      }
+    },
+    {
+      "id": "learn-courage",
+      "type": "learn",
+      "position": "w",
+      "label": "The Shield of Courage",
+      "prerequisites": [
+        "collect-lantern"
+      ],
+      "npc": {
+        "npcId": "sister-ruth",
+        "npcName": "Sister Ruth",
+        "position": "w",
+        "portrait": "images/npcs/sister-ruth.png",
+        "lines": [
+          "Fear stalks these halls, but courage is not the absence of fear—it is trust in the Lord's command.",
+          "Take Joshua 1:9 to heart, and the shield is yours to claim."
+        ],
+        "interaction": {
+          "trigger": "proximity",
+          "radius": 120,
+          "once": true
+        }
+      },
+      "grantsSkill": "courage-skill",
+      "puzzle": {
+        "id": "puzzle-courage",
+        "mode": "verseMemorize",
+        "verseRef": "Joshua 1:9",
+        "prompt": "Fill in the missing words from Joshua 1:9.",
+        "wordsToHide": 3,
+        "answer": "Have I not commanded you? Be strong and courageous. Do not be frightened, and do not be dismayed, for the Lord your God is with you wherever you go."
+      }
+    },
+    {
+      "id": "collect-shield",
+      "type": "supplyCache",
+      "position": "w",
+      "label": "Shield of Courage",
+      "requiredSkill": "courage-skill",
+      "collectible": {
+        "id": "shield",
+        "label": "Shield of Courage",
+        "count": 1,
+        "required": true
+      },
+      "guard": {
+        "demonType": "Fear",
+        "behavior": "patrol",
+        "patrolRadius": 150,
+        "count": 2,
+        "stats": {
+          "healthMultiplier": 1.2
+        }
+      }
+    },
+    {
+      "id": "learn-hope",
+      "type": "learn",
+      "position": "center",
+      "label": "The Journal of Hope",
+      "prerequisites": [
+        "collect-shield"
+      ],
+      "npc": {
+        "npcId": "brother-timothy",
+        "npcName": "Brother Timothy",
+        "position": "center",
+        "portrait": "images/npcs/brother-timothy.png",
+        "lines": [
+          "When the road grows long, hope sustains the weary heart.",
+          "Romans 15:13 is a promise: God fills us with all joy and peace as we trust in Him."
+        ],
+        "interaction": {
+          "trigger": "proximity",
+          "radius": 120,
+          "once": true
+        }
+      },
+      "grantsSkill": "hope-skill",
+      "puzzle": {
+        "id": "puzzle-hope",
+        "mode": "verseMemorize",
+        "verseRef": "Romans 15:13",
+        "prompt": "Fill in the missing words from Romans 15:13.",
+        "wordsToHide": 3,
+        "answer": "May the God of hope fill you with all joy and peace in believing, so that by the power of the Holy Spirit you may abound in hope."
+      }
+    },
+    {
+      "id": "collect-journal-page",
+      "type": "supplyCache",
+      "position": "e",
+      "label": "Journal Page of Hope",
+      "requiredSkill": "hope-skill",
+      "collectible": {
+        "id": "journal-page",
+        "label": "Journal Page of Hope",
+        "count": 1,
+        "required": true
+      },
+      "guard": {
+        "demonType": "Depression",
+        "behavior": "aggressive",
+        "count": 3,
+        "stats": {
+          "healthMultiplier": 1.3
+        }
+      },
+      "dialogue": {
+        "npcId": "witness-anna",
+        "npcName": "Witness Anna",
+        "position": "e",
+        "lines": [
+          "I saw the shadow take the page. It feeds on lost hope—but your light pushed it back.",
+          "Keep walking. The key lies deeper in, beyond the place where many turn back."
+        ],
+        "interaction": {
+          "trigger": "proximity",
+          "radius": 110,
+          "once": true
+        }
+      }
+    },
+    {
+      "id": "setback-narrative",
+      "type": "narrative",
+      "position": "s",
+      "label": "The Broken Bridge",
+      "prerequisites": [
+        "collect-journal-page"
+      ],
+      "dialogue": {
+        "npcId": "broken-pilgrim",
+        "npcName": "Broken Pilgrim",
+        "position": "s",
+        "portrait": "images/npcs/broken-pilgrim.png",
+        "lines": [
+          "I came this way before. The bridge collapsed behind me—Despair shattered it.",
+          "But I remember an old prayer. If you learn it, the path may yet be restored.",
+          "Philippians 4:6-7. Do not be anxious. The peace of God will guard your heart."
+        ],
+        "interaction": {
+          "trigger": "proximity",
+          "radius": 120,
+          "once": true
+        }
+      }
+    },
+    {
+      "id": "learn-prayer",
+      "type": "learn",
+      "position": "se",
+      "label": "The Key of Prayer",
+      "prerequisites": [
+        "setback-narrative"
+      ],
+      "npc": {
+        "npcId": "sister-miriam",
+        "npcName": "Sister Miriam",
+        "position": "se",
+        "portrait": "images/npcs/sister-miriam.png",
+        "lines": [
+          "The bridge fell, but prayer builds what strength cannot.",
+          "Take Philippians 4:6-7, and the key will turn where the way was broken."
+        ],
+        "interaction": {
+          "trigger": "proximity",
+          "radius": 120,
+          "once": true
+        }
+      },
+      "grantsSkill": "prayer-skill",
+      "puzzle": {
+        "id": "puzzle-prayer",
+        "mode": "verseMemorize",
+        "verseRef": "Philippians 4:6-7",
+        "prompt": "Fill in the missing words from Philippians 4:6-7.",
+        "wordsToHide": 4,
+        "answer": "Do not be anxious about anything, but in everything by prayer and supplication with thanksgiving let your requests be made known to God. And the peace of God, which surpasses all understanding, will guard your hearts and your minds in Christ Jesus."
+      }
+    },
+    {
+      "id": "collect-key",
+      "type": "supplyCache",
+      "position": "se",
+      "label": "Key of Prayer",
+      "requiredSkill": "prayer-skill",
+      "requiredItems": [
+        "lantern",
+        "shield",
+        "journal-page"
+      ],
+      "collectible": {
+        "id": "key",
+        "label": "Key of Prayer",
+        "count": 1,
+        "required": true
+      },
+      "guard": {
+        "demonType": "Confusion",
+        "behavior": "patrol",
+        "patrolRadius": 160,
+        "count": 3,
+        "stats": {
+          "healthMultiplier": 1.4
+        }
+      },
+      "dialogue": {
+        "npcId": "gatekeeper-joel",
+        "npcName": "Gatekeeper Joel",
+        "position": "ne",
+        "lines": [
+          "You carry faith, courage, and hope together. Few make it this far.",
+          "The key responds to prayer. Take it—the crown waits beyond the gate."
+        ],
+        "interaction": {
+          "trigger": "proximity",
+          "radius": 110,
+          "once": true
+        }
+      }
+    },
+    {
+      "id": "learn-endurance",
+      "type": "learn",
+      "position": "n",
+      "label": "The Crown of Endurance",
+      "prerequisites": [
+        "collect-key"
+      ],
+      "npc": {
+        "npcId": "elder-marcus",
+        "npcName": "Elder Marcus",
+        "position": "n",
+        "portrait": "images/npcs/elder-marcus.png",
+        "lines": [
+          "You have come far, but the final trial is the hardest.",
+          "James 1:12: the one who endures temptation will receive the crown of life.",
+          "Hold this verse close. It is your last grace before the shadow."
+        ],
+        "interaction": {
+          "trigger": "proximity",
+          "radius": 120,
+          "once": true
+        }
+      },
+      "grantsSkill": "endurance-skill",
+      "puzzle": {
+        "id": "puzzle-endurance",
+        "mode": "verseMemorize",
+        "verseRef": "James 1:12",
+        "prompt": "Fill in the missing words from James 1:12.",
+        "wordsToHide": 3,
+        "answer": "Blessed is the man who remains steadfast under trial, for when he has stood the test he will receive the crown of life, which God has promised to those who love him."
+      }
+    },
+    {
+      "id": "collect-crown-fragment",
+      "type": "supplyCache",
+      "position": "center",
+      "label": "Crown Fragment of Endurance",
+      "requiredSkill": "endurance-skill",
+      "requiredItems": [
+        "key"
+      ],
+      "collectible": {
+        "id": "crown-fragment",
+        "label": "Crown Fragment of Endurance",
+        "count": 1,
+        "required": true
+      },
+      "guard": {
+        "demonType": "Despair",
+        "behavior": "aggressive",
+        "patrolRadius": 180,
+        "count": 3,
+        "stats": {
+          "healthMultiplier": 1.5
+        }
+      }
+    },
+    {
+      "id": "boss-despair",
+      "type": "bossArena",
+      "position": "se",
+      "label": "The Throne of Despair",
+      "requiredItems": [
+        "crown-fragment",
+        "key",
+        "lantern",
+        "shield"
+      ],
+      "boss": {
+        "demonType": "Despair",
+        "label": "Despair, the Shadow of Surrender",
+        "stats": {
+          "healthMultiplier": 6.5,
+          "damageMultiplier": 3,
+          "sizeMultiplier": 1.5
+        }
+      }
+    }
+  ],
+  "boss": {
+    "demonType": "Despair",
+    "label": "Despair, the Shadow of Surrender",
+    "stats": {
+      "healthMultiplier": 6.5,
+      "damageMultiplier": 3,
+      "sizeMultiplier": 1.5
+    }
+  },
+  "outro": {
+    "lines": [
+      "Despair dissolves. The labyrinth brightens, and the symbols of grace glow in your hands.",
+      "Elder Marcus: 'You have walked through every trial and stood. Remember—grace carries what strength cannot.'"
+    ],
+    "endMission": true
+  },
+  "i18n": {
+    "prefix": "story.trials-of-grace",
+    "strings": {
+      "intro.title": "Trials of Grace",
+      "objective.learn": "Learn the verse",
+      "objective.collect": "Collect the symbol",
+      "objective.defeat": "Confront Despair"
+    }
+  }
+}

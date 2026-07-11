@@ -75,6 +75,9 @@ class Renderer {
         // Draw Players
         this.drawPlayers(gameState.players, player, playerCode, camera, inventoryState);
 
+        // Draw talkable mission NPCs in the world (not phase-only portraits).
+        this.drawMissionNpcs(uiState.npcInteractions, uiState.nearbyNpcInteractionId, camera);
+
         // Draw Monsters
         this.drawMonsters(monsters, camera, uiState.explosionTimer);
 
@@ -151,6 +154,42 @@ class Renderer {
         } else {
             this.drawStoryPauseOverlay(uiState.storyPause);
         }
+    }
+
+    drawMissionNpcs(interactions, nearbyInteractionId, camera) {
+        if (!Array.isArray(interactions)) return;
+        interactions.forEach((interaction) => {
+            if (!interaction || !interaction.position) return;
+            const x = interaction.position.x - camera.x;
+            const y = interaction.position.y - camera.y;
+            if (x < -45 || x > this.canvas.width + 45 || y < -65 || y > this.canvas.height + 45) return;
+
+            const nearby = interaction.id === nearbyInteractionId;
+            this.ctx.save();
+            this.ctx.fillStyle = nearby ? '#ffd76a' : '#6cc8ff';
+            this.ctx.beginPath();
+            this.ctx.arc(x, y - 12, nearby ? 19 : 16, 0, Math.PI * 2);
+            this.ctx.fill();
+            this.ctx.fillStyle = '#20314f';
+            this.ctx.fillRect(x - 13, y + 1, 26, 29);
+            this.ctx.strokeStyle = nearby ? '#fff3a3' : '#d8f3ff';
+            this.ctx.lineWidth = 2;
+            this.ctx.strokeRect(x - 13, y + 1, 26, 29);
+            this.ctx.fillStyle = '#ffffff';
+            this.ctx.font = 'bold 12px Arial';
+            this.ctx.textAlign = 'center';
+            this.ctx.fillText(interaction.npcName || 'NPC', x, y - 38);
+            if (nearby) {
+                this.ctx.fillStyle = 'rgba(9, 19, 35, 0.9)';
+                this.ctx.fillRect(x - 52, y + 38, 104, 23);
+                this.ctx.strokeStyle = '#ffd76a';
+                this.ctx.strokeRect(x - 52, y + 38, 104, 23);
+                this.ctx.fillStyle = '#fff3a3';
+                this.ctx.font = 'bold 11px Arial';
+                this.ctx.fillText('Tap NPC or press E', x, y + 54);
+            }
+            this.ctx.restore();
+        });
     }
 
     drawTopBar(uiState) {

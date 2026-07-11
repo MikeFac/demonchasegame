@@ -119,6 +119,18 @@ For biblical story missions, prefer "verseMemorize" — it tests whether the pla
 
 - **Pacing:** Vary room types. Don't make 5 combat arenas in a row. Mix supply caches,
   puzzles, and combat.
+- **Fast first action:** A player should reach the first meaningful action quickly. For
+  `questFlow.mode: "continuous"` missions, put the first learn/story NPC at `center` or
+  `n`, and put the first guarded collectible or combat objective in an adjacent sector
+  (`n`, `e`, `w`, or `center`). Do not make the first objective start in a far corner.
+- **Playable maze density:** Continuous quest missions should usually use
+  `"world": { "size": "compact", "mapStyle": "open" }` or explicit dimensions around
+  2000-2400 px. Avoid `large`, `labyrinth`, and `narrow` for continuous quests unless
+  the user explicitly asks for a slow exploration maze.
+- **Combat density:** Story missions need visible action. Guarded collectibles should
+  normally have `guard.count` 2-3 for key objects, with the first guard group appearing
+  near the first collectible. Use several guarded objectives rather than long empty
+  walking stretches.
 - **Theme cohesion:** The demon types, puzzle content, and dialogue should all serve the
   mission's theme. E.g. a "faith under fire" mission uses Fear, Doubt, Unbelief as guards.
 - **Difficulty curve:** Place easier rooms first (lower health guards), harder rooms later.
@@ -127,6 +139,54 @@ For biblical story missions, prefer "verseMemorize" — it tests whether the pla
   trivial. A sequence of collect → solve → defeat is more engaging than just "defeat boss".
 - **Story arc:** intro sets the stakes, rooms are the journey, boss is the climax, outro
   delivers the resolution. Even secular missions benefit from this structure.
+
+## Story-Driven Mission Construction
+
+Every generated mission must be both a clear playable task and a small story. Do not
+produce a disconnected checklist of enemies and collectibles. Before writing the JSON,
+silently decide:
+
+1. **Who needs help or what is at stake?** Give the player an immediate situation in the
+   `intro`, usually through a named guide, survivor, mentor, or witness.
+2. **What must the player do?** Express a concrete, player-facing task in `objective` and
+   a matching `winCondition`. The mechanics must actually fulfil the stated task.
+3. **What changes in the middle?** For a standard mission with 3+ rooms, include one
+   meaningful middle beat: a `narrative` room, a revelation, a rescue, a setback, or an
+   optional in-maze NPC conversation. It should reframe or motivate the next challenge.
+4. **Why is the climax meaningful?** The boss, final puzzle, or final collection should
+   resolve the problem introduced at the start—not be an unrelated final fight.
+5. **What has changed by the end?** The `outro` should acknowledge the completed task and
+   leave the player with a concise biblical truth or emotional resolution.
+
+Keep this lightweight: two intro lines, one short middle exchange, and one or two outro
+lines are normally enough. Dialogue must always either give the player context, reveal
+something useful, or deepen the mission's theme.
+
+### In-maze story beat pattern
+
+When the mission benefits from exploration, use a `narrative` room with a talkable NPC:
+
+```json
+{
+  "id": "meet-the-guide",
+  "type": "narrative",
+  "position": "e",
+  "label": "The Watcher's Refuge",
+  "dialogue": {
+    "npcId": "watcher",
+    "npcName": "The Watcher",
+    "position": "e",
+    "lines": [
+      "The darkness is strongest near the old gate.",
+      "Carry the lamp there, and the path will open."
+    ],
+    "interaction": { "trigger": "proximity", "radius": 110, "once": true }
+  }
+}
+```
+
+Use this for optional guidance and story texture, not for every room. Do not put a
+proximity interaction on `intro` or `outro`; those phases still play automatically.
 
 ## Quest Step Framework (for complex multi-stage missions)
 
@@ -165,6 +225,23 @@ confront the final boss."
 }
 ```
 
+### Optional in-maze NPC conversations
+
+Any room `dialogue` can add an `interaction` block to create a talkable NPC in the maze:
+
+```json
+{
+  "npcId": "paul",
+  "npcName": "Paul",
+  "position": "center",
+  "lines": ["Come near. I have a word for you."],
+  "interaction": { "trigger": "proximity", "radius": 110, "once": true }
+}
+```
+
+Use this sparingly for optional guidance and pivotal teaching moments. The player must
+walk within `radius` and tap/click the NPC (or press E) to start the conversation.
+
 ### Step Types
 
 - **`learn`** — NPC dialogue that teaches a skill. Must have `npc` with `lines`.
@@ -198,6 +275,11 @@ confront the final boss."
    desired. Use `{ "mode": "continuous" }` when active objectives should stay in
    one maze; this is especially suitable for sequential learn/collect chains and
    missions where several independent caches may be active together.
+10. For continuous quest missions, keep traversal tight: prefer `compact`/`open`, place
+    the opening learn step at `center`, place the first collectible at `n`/`e`/`w`, and
+    avoid a long chain that sends the player to opposite corners before any combat.
+11. For harder continuous missions, increase challenge by adding more nearby guards
+    (`guard.count`) and stronger later guards, not by making the player walk farther.
 
 ### When to Use `questSteps` vs `rooms`
 
