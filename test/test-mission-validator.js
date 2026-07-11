@@ -15,6 +15,7 @@ var MissionValidator = require('../src/shared/MissionValidator');
 var MissionAssetRegistry = require('../src/shared/MissionAssetRegistry');
 
 var DAVID_SPEC_PATH = path.join(__dirname, '..', 'missions', 'specs', 'david-goliath-01.spec.json');
+var ARMOR_SPEC_PATH = path.join(__dirname, '..', 'missions', 'specs', 'armor-of-god-01.spec.json');
 var MISSIONS_DIR = path.join(__dirname, '..', 'missions');
 
 var passed = 0;

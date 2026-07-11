@@ -90,9 +90,14 @@ function showHelp() {
 // ---- Load system prompt from markdown file ----
 function loadSystemPrompt() {
     var md = fs.readFileSync(PROMPT_FILE, 'utf8');
-    // Extract the content between the first ``` and the closing ```
-    var match = md.match(/^```\n([\s\S]*?)\n```/m);
-    if (match) return match[1];
+    // The system prompt contains JSON examples in nested Markdown fences, so the
+    // first closing fence is not necessarily the end of the prompt. Delimit it by
+    // its document sections instead.
+    var startMarker = '## System Prompt\n\n```\n';
+    var endMarker = '\n```\n\n---\n\n## Few-Shot Example 1';
+    var start = md.indexOf(startMarker);
+    var end = md.indexOf(endMarker, start + startMarker.length);
+    if (start >= 0 && end >= 0) return md.slice(start + startMarker.length, end);
     // Fallback: use the whole file
     return md;
 }

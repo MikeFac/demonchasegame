@@ -17,6 +17,7 @@ const clerkClient = process.env.CLERK_SECRET_KEY
   ? createClerkClient({ secretKey: process.env.CLERK_SECRET_KEY })
   : null;
 const localizedVerseBundleCache = {};
+const STALE_PROCESSING_MS = 30 * 60 * 1000;
 
 function getLocalizedVerseBundle(lang) {
   const code = String(lang || 'en').toLowerCase();
@@ -368,6 +369,7 @@ router.get('/', async (req, res) => {
   try {
     const { ref } = req.query;
     const lang = req.query.lang || 'en';
+    const allowGeneration = req.query.generate !== 'false';
 
     if (!ref) {
       return res.status(400).json({ error: 'Missing ref parameter' });
@@ -402,6 +404,16 @@ router.get('/', async (req, res) => {
       });
     }
 
+    // Players can opt out of automatic generation. Existing completed songs
+    // were handled above; this prevents all creation/retry writes for misses.
+    if (!allowGeneration) {
+      return res.json({
+        verseReference: ref,
+        status: 'unavailable',
+        message: 'No generated song is available for this verse.'
+      });
+    }
+
     // No completed songs found—check if any are processing
     const processingSong = await VerseSong.findOne(combineFilters(
       buildLanguageQuery(lang),
@@ -410,6 +422,23 @@ router.get('/', async (req, res) => {
     ));
 
     if (processingSong) {
+      const processingAge = Date.now() - new Date(processingSong.updatedAt || processingSong.createdAt || 0).getTime();
+      if (Number.isFinite(processingAge) && processingAge > STALE_PROCESSING_MS) {
+        processingSong.generationStatus = 'pending';
+        processingSong.generationAttempts = (processingSong.generationAttempts || 0) + 1;
+        await processingSong.save();
+        setImmediate(() => {
+          generateVerseSong(processingSong._id).catch(err => {
+            console.error(`Error retrying stale song generation for ${ref}:`, err);
+          });
+        });
+        return res.json({
+          verseReference: ref,
+          status: 'pending_generation',
+          message: 'A stale song generation was requeued. Using fallback music.',
+          version: processingSong.version || 1
+        });
+      }
       return res.json({
         verseReference: ref,
         status: 'pending_generation',
@@ -508,8 +537,10 @@ async function createAndQueueVerseSong(verseReference, lang = 'en') {
   const categoryStyle = await CategoryStyle.findOne({ category });
   const style = categoryStyle?.generationStyle || 'pop';
 
+  const language = String(lang || 'en').toLowerCase();
   const verseSong = new VerseSong({
     verseReference: normalizedRef,
+    version: 1,
     verseReferenceFull: verseObj ? (verseObj.Reference || canonicalReference) : canonicalReference,
     book,
     chapter,
@@ -520,10 +551,24 @@ async function createAndQueueVerseSong(verseReference, lang = 'en') {
     generationStyle: style,
     generationStatus: 'pending',
     generationAttempts: 0,
-    language: lang
+    language
   });
 
-  await verseSong.save();
+  try {
+    await verseSong.save();
+  } catch (err) {
+    // Two clients can reach this point together after both miss the initial
+    // lookup. The compound unique index is the authoritative race guard.
+    if (err && err.code === 11000) {
+      const duplicate = await VerseSong.findOne({
+        verseReference: normalizedRef,
+        version: 1,
+        language
+      });
+      if (duplicate) return duplicate;
+    }
+    throw err;
+  }
 
   // Queue generation (asynchronous, non-blocking)
   setImmediate(() => {
@@ -599,8 +644,24 @@ router.post('/record-play', async (req, res) => {
     // Calculate quality score (0-100)
     verseSong.qualityScore = Math.round(verseSong.averageRetention * 100);
 
-    verseSong.lastPlayedAt = new Date();
-    await verseSong.save();
+    // Do not save the hydrated document here. Legacy English records can omit
+    // `language`; Mongoose would apply the schema default (`en`) on save and
+    // collide with a separately stored explicit English version of the same
+    // verse. Analytics updates must never rewrite the compound identity.
+    const lastPlayedAt = new Date();
+    await VerseSong.updateOne(
+      { _id: verseSong._id },
+      {
+        $set: {
+          playCount: verseSong.playCount,
+          learnCount: verseSong.learnCount,
+          averageRetention: verseSong.averageRetention,
+          qualityScore: verseSong.qualityScore,
+          lastPlayedAt
+        }
+      }
+    );
+    verseSong.lastPlayedAt = lastPlayedAt;
 
     res.json({
       verseReference,

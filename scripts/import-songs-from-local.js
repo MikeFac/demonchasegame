@@ -48,24 +48,22 @@ async function importSongs() {
 
     for (const songData of exportData.songs) {
       try {
-        // Check if song already exists (by version + verseReference, or by sunoId)
+        const language = String(songData.language || 'en').toLowerCase();
+        const version = songData.version || 1;
+        // Check if song already exists by the same compound identity enforced by
+        // the database. A verse can legitimately have v1 in several languages.
         let existing;
         
-        if (songData.version) {
-          // Multi-version support: check by verseReference + version
-          existing = await VerseSong.findOne({
-            verseReference: songData.verseReference,
-            version: songData.version
-          });
-        } else if (songData.sunoId) {
-          // Fallback: check by sunoId (unique per generation)
+        existing = await VerseSong.findOne({
+          verseReference: songData.verseReference,
+          version,
+          language
+        });
+        if (!existing && songData.sunoId) {
+          // A matching Suno id is also the same generated song even if an old
+          // export omitted its version or language fields.
           existing = await VerseSong.findOne({
             sunoId: songData.sunoId
-          });
-        } else {
-          // Legacy: check by verseReference only (single version)
-          existing = await VerseSong.findOne({
-            verseReference: songData.verseReference
           });
         }
 
@@ -81,7 +79,8 @@ async function importSongs() {
             verseText: songData.verseText,
             generationStatus: 'completed',
             sunoId: songData.sunoId || existing.sunoId,
-            version: songData.version || existing.version || 1,
+            version: version || existing.version || 1,
+            language,
             qualityScore: songData.qualityScore || existing.qualityScore || 50,
             isActiveVersion: songData.isActiveVersion !== undefined ? songData.isActiveVersion : existing.isActiveVersion
           });
@@ -93,7 +92,8 @@ async function importSongs() {
           const newSong = new VerseSong({
             verseReference: songData.verseReference,
             verseReferenceFull: songData.verseReferenceFull,
-            version: songData.version || 1,
+            version,
+            language,
             sunoId: songData.sunoId,
             book: songData.book,
             chapter: songData.chapter,

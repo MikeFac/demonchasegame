@@ -439,6 +439,14 @@
         var steps = m.questSteps;
         if (!Array.isArray(steps) || steps.length === 0) return;
 
+        if (m.questFlow !== undefined) {
+            if (!m.questFlow || typeof m.questFlow !== 'object') {
+                result.addError('QUEST_FLOW_SCHEMA', 'questFlow must be an object');
+            } else if (m.questFlow.mode !== 'hub' && m.questFlow.mode !== 'continuous') {
+                result.addError('QUEST_FLOW_MODE', 'questFlow.mode must be "hub" or "continuous"');
+            }
+        }
+
         var stepIds = {};
         steps.forEach(function (s, i) {
             if (!s || !s.id) {

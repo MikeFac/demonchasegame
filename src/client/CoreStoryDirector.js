@@ -451,6 +451,12 @@
         return !!mission && Array.isArray(mission.questSteps) && mission.questSteps.length > 0;
     }
 
+    function getQuestFlowMode(mission) {
+        return mission && mission.questFlow && mission.questFlow.mode === 'continuous'
+            ? 'continuous'
+            : 'hub';
+    }
+
     /**
      * Evaluate whether a quest step is unlocked given the current state.
      * state = { completedSteps: {}, learnedSkills: {}, collectedObjects: {} }
@@ -670,6 +676,7 @@
                 type: objConfig.id,
                 storyCollectible: true,
                 storyObjectId: objConfig.id,
+                storyStepId: stepId,
                 label: label,
                 x: Math.round(x + (i * 80 - targetCount * 40)),
                 y: Math.round(y),
@@ -858,6 +865,7 @@
         isIntegratedStoryOverrideEnabled: isIntegratedStoryOverrideEnabled,
         // Quest step framework
         hasQuestSteps: hasQuestSteps,
+        getQuestFlowMode: getQuestFlowMode,
         isStepUnlocked: isStepUnlocked,
         getUnlockedSteps: getUnlockedSteps,
         areAllRequiredStepsComplete: areAllRequiredStepsComplete,

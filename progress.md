@@ -1520,6 +1520,48 @@ Original prompt: Check the implementation of docs/multi-version-songs-implementa
   - `node test/test-guard-behavior.js`
   - `node scripts/test-story-pause-scaffold.js` (first run hit a Chrome launch SIGTRAP/crashpad flake; immediate rerun passed)
   - standard web-game Playwright client mission-menu smoke (only existing skill package module-type warning)
+
+2026-07-11:
+- Added quest-flow navigation policy for generated quest-step missions:
+  - `questFlow.mode: "hub"` remains the default and preserves the choice-screen flow.
+  - `questFlow.mode: "continuous"` keeps unlocked objectives in one running maze.
+- Converted Armor of God to `continuous`:
+  - intro → learnBelt → breastplate/guard active in the maze → learnShoes unlocks after collection, without a hub return.
+  - generated guards and collectibles carry their owning step id; locked guards are no longer spawned until their step unlocks.
+- AI mission generation review/fix:
+  - `generate_ai_mission.js` previously truncated the system prompt at the first nested Markdown fence, omitting later quest-step rules; it now extracts the complete system-prompt section.
+- Added browser regression `scripts/test-quest-continuous-coreloop.js` and updated the hub regression to force its legacy flow only inside the test.
+- Verification:
+  - `node test/test-mission-compiler.js` (145 passed)
+  - `node test/test-mission-validator.js` (44 passed)
+  - `node scripts/generate_mission.js missions/specs/armor-of-god-01.spec.json --check`
+  - `node scripts/test-quest-continuous-coreloop.js` (Chrome; passed, no page errors)
+  - `node scripts/test-quest-hub-coreloop.js` (Chrome legacy hub override; passed, no page errors)
+
+2026-07-11:
+- Added a persisted Options setting: `Shuffle verse order within each category`.
+  - Off by default; saved under `localStorage.randomizeVerseOrder`.
+  - When enabled, QuizManager uses one shuffle bag per category: each verse is shown once in randomized order before repeats, and a new cycle avoids immediately repeating its last verse.
+- Added `scripts/test-random-verse-order.js` browser regression.
+- Verification:
+  - `node --check game.js`
+  - `node --check src/client/QuizManager.js`
+  - prescribed Playwright client game-load smoke
+  - `node scripts/test-random-verse-order.js`: setting persisted and selected 8 distinct Faith verses; no page errors.
+  - inspected `output/web-game/random-verse-order/01-settings-enabled.png` and `02-gameplay-shuffled.png`.
+
+2026-07-11:
+- Added a persisted Options setting: `Automatically generate missing verse songs`.
+  - Enabled by default; saved under `localStorage.autoGenerateVerseSongs`.
+  - When disabled, existing verse songs still load, while missing songs receive a non-mutating `unavailable` response and fall back to normal background music.
+  - Server accepts `generate=false` on `/api/verse-song` and returns before any create, retry, or stale-generation requeue operation.
+- Added `scripts/test-verse-song-generation-setting.js` browser regression.
+- Verification:
+  - `node --check game.js`, `node --check src/client/VerseSongService.js`, and `node --check src/server/routes/verseSong.js`
+  - focused Chrome regression passed with no page errors
+  - request URLs used `generate=false`; missing test reference had `0` VerseSong records after the test
+  - existing Romans 10:17 song returned `ready`
+  - inspected `output/web-game/verse-song-generation-setting/01-generation-disabled.png`.
 - Rollback for this phase:
   - pre-phase file backups: `/tmp/david-goliath-story-phase-14-backup/`
   - targeted phase patch: `/tmp/david-goliath-story-phase-14.patch`

@@ -198,6 +198,18 @@ function run() {
        mission3.collectCombatConfig.fixedMonsters[0].x !== mission.collectCombatConfig.fixedMonsters[0].x ||
        mission3.collectCombatConfig.fixedMonsters[0].y !== mission.collectCombatConfig.fixedMonsters[0].y);
 
+    // -- Continuous quest flow --
+    var armorSpec = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'missions', 'specs', 'armor-of-god-01.spec.json'), 'utf8'));
+    var armorMission = MissionCompiler.compile(armorSpec);
+    ok('continuous quest flow preserved', armorMission.questFlow && armorMission.questFlow.mode === 'continuous');
+    ok('quest guard tagged with owning step', armorMission.collectCombatConfig.fixedMonsters.every(function (monster) {
+        return typeof monster.storyStepId === 'string' && monster.storyStepId.length > 0;
+    }));
+    var legacyQuestSpec = JSON.parse(JSON.stringify(armorSpec));
+    delete legacyQuestSpec.questFlow;
+    var legacyQuestMission = MissionCompiler.compile(legacyQuestSpec);
+    ok('quest flow defaults to hub', legacyQuestMission.questFlow && legacyQuestMission.questFlow.mode === 'hub');
+
     // -- Edge cases --
     // Minimal spec (1 room, no intro/outro/boss)
     var minimal = {

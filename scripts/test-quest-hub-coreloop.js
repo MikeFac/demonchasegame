@@ -30,6 +30,13 @@ async function main() {
         // 1. Load the page
         await page.goto(BASE_URL, { waitUntil: 'networkidle', timeout: 30000 });
         await page.waitForTimeout(2000);
+        // Armor of God now defaults to continuous flow. Override it only inside
+        // this regression so the legacy hub path remains covered.
+        await page.evaluate(() => {
+            window.__storyIntegrationMissionOverrides = {
+                'generated/armor-of-god-01': { questFlow: { mode: 'hub' } }
+            };
+        });
         results.steps.push({ step: 'page-load', ok: true });
 
         // 2. Launch the Armor of God mission via startMission (same as overland map)

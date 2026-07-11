@@ -167,6 +167,12 @@
             if (mission.music && typeof mission.music === 'object') {
                 result.music = mission.music;
             }
+            if (Array.isArray(mission.questSteps)) {
+                result.questSteps = mission.questSteps.slice();
+            }
+            if (mission.questFlow && typeof mission.questFlow === 'object') {
+                result.questFlow = Object.assign({}, mission.questFlow);
+            }
             
             return result;
         }

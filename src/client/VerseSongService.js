@@ -63,6 +63,10 @@
       return trimmed;
     }
 
+    _shouldAutoGenerateMissingSongs() {
+      return typeof window === 'undefined' || window.autoGenerateVerseSongs !== false;
+    }
+
     async getSongForVerse(verseReference) {
       const lookupReference = this._resolveLookupReference(verseReference);
       const cacheKey = `${this._getLang()}::${lookupReference}`;
@@ -73,7 +77,8 @@
 
       try {
         const response = await fetch(
-          `/api/verse-song?ref=${encodeURIComponent(lookupReference)}&lang=${this._getLang()}`
+          `/api/verse-song?ref=${encodeURIComponent(lookupReference)}&lang=${this._getLang()}` +
+          `&generate=${this._shouldAutoGenerateMissingSongs() ? 'true' : 'false'}`
         );
 
         if (!response.ok) {

@@ -350,6 +350,7 @@
 
             monster.behaviorType = behaviorType;
             monster.fixedSpawn = true;
+            monster.storyStepId = fixedMonster.storyStepId || null;
             monster.spawnTrigger = fixedMonster.spawnTrigger || { type: 'immediate', value: 0 };
             monster.label = fixedMonster.label || demonType;
             if (fixedMonster.behavior) {
@@ -508,6 +509,7 @@
                 x: deathX,
                 y: deathY,
                 isBoss: isBoss,
+                storyStepId: monster.storyStepId || null,
                 bossLabel: monster.bossLabel || null,
                 bonusXp: bossBonusXp
             });

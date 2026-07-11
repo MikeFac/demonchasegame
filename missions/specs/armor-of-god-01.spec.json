@@ -11,6 +11,7 @@
   "world": { "size": "standard", "mapStyle": "open" },
   "qualities": ["Faith", "Courage", "Knowledge", "Power"],
   "xpMultiplier": 1.5,
+  "questFlow": { "mode": "continuous" },
   "intro": {
     "npcId": "paul",
     "npcName": "Paul",

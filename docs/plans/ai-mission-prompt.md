@@ -132,8 +132,9 @@ For biblical story missions, prefer "verseMemorize" — it tests whether the pla
 
 For missions with interdependent learning objectives, use `questSteps` instead of
 `rooms`. This creates a branching quest DAG where each step can require prerequisite
-steps, learned skills, or collected items before it unlocks. The player navigates via
-a "quest hub" choice screen between steps.
+steps, learned skills, or collected items before it unlocks. Choose the navigation
+policy with `questFlow`: `hub` presents the existing choice screen between steps;
+`continuous` keeps the player in one maze and activates newly unlocked objectives there.
 
 Use `questSteps` when you want: "Learn A to defeat B and collect object X, learn C
 with X to beat enemy D, multiple preconditions until having all the elements to
@@ -143,6 +144,7 @@ confront the final boss."
 
 ```json
 {
+  "questFlow": { "mode": "hub" | "continuous" },
   "questSteps": [
     {
       "id": "step-id",
@@ -192,6 +194,10 @@ confront the final boss."
 8. The classic pattern: learn → collect → learn → collect → ... → boss.
    Each learn grants a skill needed for the next collect, each collect provides
    an item needed for the final boss.
+9. Omit `questFlow` or use `{ "mode": "hub" }` when a step-selection screen is
+   desired. Use `{ "mode": "continuous" }` when active objectives should stay in
+   one maze; this is especially suitable for sequential learn/collect chains and
+   missions where several independent caches may be active together.
 
 ### When to Use `questSteps` vs `rooms`
 

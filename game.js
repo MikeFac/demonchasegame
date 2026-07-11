@@ -194,6 +194,8 @@ function advanceStoryPause() {
         storyPauseState.endMission === true
         ? storyPauseState
         : null;
+    const completedContinuousQuestIntro = storyPauseState.type === 'dialogue' &&
+        storyPauseState.phaseId === 'intro' && isContinuousQuestMission();
     const lines = storyPauseState.lines || [];
     if (storyPauseState.lineIndex < lines.length - 1) {
         storyPauseState.lineIndex += 1;
@@ -210,6 +212,8 @@ function advanceStoryPause() {
         startIntegratedStoryBossPhase(completedPuzzlePause);
     } else if (completedVictoryPause) {
         finishIntegratedStoryMission();
+    } else if (completedContinuousQuestIntro) {
+        refreshContinuousQuestObjectives();
     }
     return previous;
 }
@@ -621,6 +625,128 @@ function getQuestStepState() {
     };
 }
 
+function isContinuousQuestMission() {
+    return !!(currentMission && window.CoreStoryDirector &&
+        window.CoreStoryDirector.hasQuestSteps(currentMission) &&
+        window.CoreStoryDirector.getQuestFlowMode(currentMission) === 'continuous');
+}
+
+function initializeContinuousQuestState() {
+    if (integratedStoryState) return integratedStoryState;
+    integratedStoryState = {
+        missionId: currentMission.id,
+        phaseId: 'continuousQuest',
+        nextPhase: null,
+        completedSteps: {},
+        learnedSkills: {},
+        collectedObjects: {},
+        activeSteps: {},
+        objectiveProgress: {},
+        collected: 0,
+        collectedIds: [],
+        complete: false,
+        currentStepId: null
+    };
+    syncIntegratedStoryState();
+    return integratedStoryState;
+}
+
+function scheduleContinuousQuestStart(attempt) {
+    const attemptNumber = attempt || 0;
+    const ready = window.gameMode === 'game' && !!player && !!gameState && !!network && !!currentMission;
+    if (!ready) {
+        if (attemptNumber < 40) setTimeout(() => scheduleContinuousQuestStart(attemptNumber + 1), 100);
+        return;
+    }
+
+    initializeContinuousQuestState();
+    const introPause = window.CoreStoryDirector.buildIntroPause(currentMission);
+    if (introPause && !integratedStoryState.introCompleted) {
+        integratedStoryState.introCompleted = true;
+        syncIntegratedStoryState();
+        enterStoryPause(introPause);
+        return;
+    }
+    refreshContinuousQuestObjectives();
+}
+
+function appendContinuousQuestCollectibles(seed) {
+    if (!seed || !Array.isArray(seed.collectibles) || !network || !network.engine || !network.engine.gameState) return false;
+    const engineState = network.engine.gameState;
+    const existing = Array.isArray(engineState.collectibles) ? engineState.collectibles.slice() : [];
+    const additions = seed.collectibles.filter((item) => !existing.some((current) => current.id === item.id)).map((item) => {
+        const resolved = findSafeStoryCollectiblePosition(item, network.engine.wallGrid, network.engine.constants);
+        return resolved ? Object.assign({}, item, { x: Math.round(resolved.x), y: Math.round(resolved.y) }) : item;
+    });
+    engineState.collectibles = existing.concat(additions);
+    gameState.collectibles = engineState.collectibles;
+    collectibles = gameState.collectibles;
+    if (network.engine.emitter && typeof network.engine.emitter.emit === 'function') {
+        network.engine.emitter.emit('gameStateUpdate', engineState);
+    }
+    return true;
+}
+
+function spawnContinuousQuestGuards(stepId) {
+    if (!currentMission || !network || !network.engine || !network.engine.monsterManager) return;
+    const combat = currentMission.collectCombatConfig || {};
+    const guards = (combat.fixedMonsters || []).filter((monster) => monster && monster.storyStepId === stepId);
+    if (guards.length) network.engine.monsterManager.spawnFixedMonsters(guards);
+}
+
+function activateContinuousQuestStep(step) {
+    if (!step || !integratedStoryState || integratedStoryState.activeSteps[step.id]) return false;
+    integratedStoryState.activeSteps[step.id] = true;
+    integratedStoryState.currentStepId = step.id;
+    const stepType = step.type || (step.npc ? 'learn' : 'combatArena');
+
+    if (stepType === 'supplyCache') {
+        const seed = window.CoreStoryDirector.buildStepCollectibleSeed(currentMission, step.id);
+        if (seed) {
+            appendContinuousQuestCollectibles(seed);
+            integratedStoryState.objectiveProgress[step.id] = {
+                targetCount: seed.targetCount,
+                collected: 0,
+                collectedIds: []
+            };
+        }
+        spawnContinuousQuestGuards(step.id);
+    } else if (stepType === 'learn' || stepType === 'narrative') {
+        const pause = window.CoreStoryDirector.buildLearnDialoguePause(currentMission, step.id);
+        if (pause) enterStoryPause(pause);
+    } else if (stepType === 'ruinPuzzle') {
+        const pause = window.CoreStoryDirector.buildStepPuzzlePause(currentMission, step.id);
+        if (pause) enterStoryPause(pause);
+    } else if (stepType === 'bossArena') {
+        startQuestStepBossPhase(step);
+    } else if (stepType === 'combatArena') {
+        integratedStoryState.objectiveProgress[step.id] = {
+            targetCount: (currentMission.collectCombatConfig && currentMission.collectCombatConfig.fixedMonsters || [])
+                .filter((monster) => monster && monster.storyStepId === step.id).length || 1,
+            collected: 0,
+            collectedIds: []
+        };
+        spawnContinuousQuestGuards(step.id);
+    } else if (stepType === 'shrine') {
+        setTimeout(() => completeQuestStep(step.id), 0);
+    }
+    syncIntegratedStoryState();
+    return true;
+}
+
+function refreshContinuousQuestObjectives() {
+    if (!isContinuousQuestMission() || !integratedStoryState || isStoryPaused()) return;
+    const state = getQuestStepState();
+    const unlocked = window.CoreStoryDirector.getUnlockedSteps(currentMission, state);
+    for (let i = 0; i < unlocked.length; i++) {
+        const step = window.CoreStoryDirector.getStepById(currentMission, unlocked[i]);
+        if (!step || integratedStoryState.activeSteps[step.id]) continue;
+        activateContinuousQuestStep(step);
+        // Dialogue/puzzle steps use a modal; let it complete before activating another one.
+        if (isStoryPaused()) break;
+    }
+}
+
 function scheduleQuestHubPause(attempt) {
     const attemptNumber = attempt || 0;
     const ready = window.gameMode === 'game' && !!player && !!gameState && !!network && !!currentMission;
@@ -700,10 +826,14 @@ function completeQuestStep(stepId) {
 
     integratedStoryState.completedSteps[stepId] = true;
     integratedStoryState.currentStepId = null;
+    if (integratedStoryState.activeSteps) delete integratedStoryState.activeSteps[stepId];
     syncIntegratedStoryState();
 
-    // Otherwise, return to quest hub
-    scheduleQuestHubPause();
+    if (isContinuousQuestMission()) {
+        setTimeout(refreshContinuousQuestObjectives, 0);
+    } else {
+        scheduleQuestHubPause();
+    }
 }
 
 function startQuestStepBossPhase(step) {
@@ -838,11 +968,46 @@ function handleQuestStepPuzzleComplete(pauseState) {
     return true;
 }
 
+function handleQuestStepCombatKill(stepId) {
+    if (!stepId || !integratedStoryState) return;
+    const step = window.CoreStoryDirector.getStepById(currentMission, stepId);
+    if (!step || step.type !== 'combatArena') return;
+    if (!integratedStoryState.objectiveProgress) integratedStoryState.objectiveProgress = {};
+    const progress = integratedStoryState.objectiveProgress[stepId] || { targetCount: 1, collected: 0, collectedIds: [] };
+    progress.collected = Math.min(progress.targetCount, progress.collected + 1);
+    integratedStoryState.objectiveProgress[stepId] = progress;
+    syncIntegratedStoryState();
+    if (progress.collected >= progress.targetCount) completeQuestStep(stepId);
+}
+
 // ==================== END QUEST STEP FRAMEWORK ====================
 
 function collectIntegratedStoryItem(item) {
     if (!item || !item.storyCollectible || !integratedStoryState) return false;
     if (integratedStoryState.collectedIds.indexOf(item.id) !== -1) return true;
+
+    if (isContinuousQuestMission() && item.storyStepId) {
+        const progress = integratedStoryState.objectiveProgress[item.storyStepId];
+        if (!progress || progress.collectedIds.indexOf(item.id) !== -1) return true;
+        progress.collectedIds.push(item.id);
+        progress.collected = Math.min(progress.targetCount, progress.collected + 1);
+        network.sendCollectCollectible(item.id);
+        const step = window.CoreStoryDirector.getStepById(currentMission, item.storyStepId);
+        flashMessages.push({
+            text: (item.label || item.storyObjectId || 'Objective') + ': ' + progress.collected + ' / ' + progress.targetCount,
+            color: progress.collected >= progress.targetCount ? '#4CAF50' : '#F6D36B',
+            startTime: Date.now(),
+            duration: progress.collected >= progress.targetCount ? 2400 : 1500
+        });
+        if (progress.collected >= progress.targetCount && step && step.collectible) {
+            integratedStoryState.collectedObjects[step.collectible.id] = (integratedStoryState.collectedObjects[step.collectible.id] || 0) + 1;
+            syncIntegratedStoryState();
+            setTimeout(() => completeQuestStep(item.storyStepId), 300);
+        } else {
+            syncIntegratedStoryState();
+        }
+        return true;
+    }
 
     integratedStoryState.collectedIds.push(item.id);
     integratedStoryState.collected = Math.min(integratedStoryState.targetCount, integratedStoryState.collected + 1);
@@ -2922,6 +3087,8 @@ function _startGameInternal(mode, roomId, missionOpts) {
             if (!_gameLoopRunning) gameLoop();
             if (missionOpts && missionOpts.isQuestHubMission) {
                 scheduleQuestHubPause();
+            } else if (missionOpts && missionOpts.isContinuousQuestMission) {
+                scheduleContinuousQuestStart();
             } else {
                 if (missionOpts && missionOpts.storyIntroPause) {
                     scheduleStoryIntroPause(missionOpts.storyIntroPause);
@@ -3307,6 +3474,32 @@ document.addEventListener('DOMContentLoaded', function () {
         const mainMenuViewModeSelect = document.getElementById('mainMenuViewModeSelect');
         const viewModeSelect = document.getElementById('viewModeSelect');
         const votdMenuToggle = document.getElementById('votdMenuToggle');
+        const randomizeVerseOrderToggle = document.getElementById('randomizeVerseOrderToggle');
+        const autoGenerateVerseSongsToggle = document.getElementById('autoGenerateVerseSongsToggle');
+
+        window.randomizeVerseOrder = localStorage.getItem('randomizeVerseOrder') === 'true';
+        if (randomizeVerseOrderToggle) {
+            randomizeVerseOrderToggle.checked = window.randomizeVerseOrder;
+            randomizeVerseOrderToggle.addEventListener('change', () => {
+                window.randomizeVerseOrder = randomizeVerseOrderToggle.checked;
+                localStorage.setItem('randomizeVerseOrder', String(window.randomizeVerseOrder));
+                if (window.QuizManager && typeof QuizManager.resetShuffledVerseOrder === 'function') {
+                    QuizManager.resetShuffledVerseOrder();
+                }
+            });
+        }
+
+        window.autoGenerateVerseSongs = localStorage.getItem('autoGenerateVerseSongs') !== 'false';
+        if (autoGenerateVerseSongsToggle) {
+            autoGenerateVerseSongsToggle.checked = window.autoGenerateVerseSongs;
+            autoGenerateVerseSongsToggle.addEventListener('change', () => {
+                window.autoGenerateVerseSongs = autoGenerateVerseSongsToggle.checked;
+                localStorage.setItem('autoGenerateVerseSongs', String(window.autoGenerateVerseSongs));
+                if (window.VerseSongService && typeof window.VerseSongService.clearCache === 'function') {
+                    window.VerseSongService.clearCache();
+                }
+            });
+        }
 
         const applyLanguageChange = (newLang) => {
             localStorage.setItem('lang', newLang);
@@ -3621,7 +3814,7 @@ async function init() {
                     console.error('Failed to load player sprite sheet');
                 };
             },
-            onMonsterKilled: ({ monsterId, x, y, isBoss, bossLabel, bonusXp }) => {
+            onMonsterKilled: ({ monsterId, x, y, isBoss, storyStepId, bossLabel, bonusXp }) => {
                 const projectedKills = (gameState.monstersKilled || 0) + 1;
                 const completedIntroMission = isStartHereMission(currentMission) && projectedKills >= (gameState.monstersToKill || 0);
                 if (window.Analytics) {
@@ -3674,6 +3867,10 @@ async function init() {
                 demonDies.play().catch(() => {});
                 SoundEffects.playHeavenlyKill();
                 console.log(`Monster ${monsterId} was killed at (${x}, ${y})`);
+
+                if (storyStepId) {
+                    handleQuestStepCombatKill(storyStepId);
+                }
 
                 if (isBoss) {
                     flashMessages.push({
@@ -5335,20 +5532,26 @@ async function startMission(worldId, missionId) {
             // ===== Quest step mission path =====
             if (window.CoreStoryDirector.hasQuestSteps(currentMission)) {
                 currentMissionConfig = window.CoreStoryDirector.buildCollectCombatConfig(currentMission);
+                const continuousQuest = window.CoreStoryDirector.getQuestFlowMode(currentMission) === 'continuous';
+                if (continuousQuest) {
+                    // Objectives activate their own guards as their prerequisites are met.
+                    currentMissionConfig.fixedMonsters = [];
+                }
                 setIntegratedStoryLaunchState({
                     scheduled: false,
                     entered: false,
                     missionId: currentMission.id,
-                    phaseId: 'questHub'
+                    phaseId: continuousQuest ? 'continuousQuest' : 'questHub'
                 });
                 // Start the game in solo mode, then show quest hub as intro pause
                 startGame('solo', undefined, {
                     config: currentMissionConfig,
                     mapStyle: currentMission.mapStyle || 'open',
                     qualities: currentMission.qualities,
-                    storyIntroPause: null, // quest hub will be shown after game starts
+                    storyIntroPause: null,
                     storyCollectibleSeed: null,
-                    isQuestHubMission: true
+                    isQuestHubMission: !continuousQuest,
+                    isContinuousQuestMission: continuousQuest
                 });
                 return;
             }

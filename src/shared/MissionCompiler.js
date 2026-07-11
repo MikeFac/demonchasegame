@@ -422,7 +422,8 @@
             mapStyle: mapStyle,
             world: { width: world.width, height: world.height },
             xpMultiplier: spec.xpMultiplier || 1.0,
-            questSteps: steps
+            questSteps: steps,
+            questFlow: normalizeQuestFlow(spec.questFlow)
         };
 
         var phases = [];
@@ -481,7 +482,7 @@
                 if (geo) {
                     addSpecialObject(specialObjects, step.collectible, geo, step.guard);
                     if (step.guard) {
-                        addRoomFixedMonster(allFixedMonsters, collectMonsterTypes, step.guard, geo);
+                        addRoomFixedMonster(allFixedMonsters, collectMonsterTypes, step.guard, geo, step.id);
                     }
                 }
 
@@ -504,7 +505,7 @@
                 };
                 var geo2 = stepGeometries[step.id];
                 if (geo2 && step.guard) {
-                    addRoomFixedMonster(allFixedMonsters, collectMonsterTypes, step.guard, geo2);
+                    addRoomFixedMonster(allFixedMonsters, collectMonsterTypes, step.guard, geo2, step.id);
                 }
 
             } else if (stepType === 'bossArena') {
@@ -692,6 +693,13 @@
         return result;
     }
 
+    function normalizeQuestFlow(questFlow) {
+        var flow = questFlow && typeof questFlow === 'object' ? questFlow : {};
+        return {
+            mode: flow.mode === 'continuous' ? 'continuous' : 'hub'
+        };
+    }
+
     // -----------------------------------------------------------------
     // Helper: derive boss spec from a bossArena step
     // -----------------------------------------------------------------
@@ -877,10 +885,10 @@
     // -----------------------------------------------------------------
     // Helper: add a room's guard as a fixedMonster
     // -----------------------------------------------------------------
-    function addRoomFixedMonster(fixedMonsters, monsterTypes, guard, geo) {
+    function addRoomFixedMonster(fixedMonsters, monsterTypes, guard, geo, storyStepId) {
         var count = guard.count || 1;
         for (var i = 0; i < count; i++) {
-            fixedMonsters.push({
+            var fixedMonster = {
                 x: geo.guardX,
                 y: geo.guardY,
                 demonType: guard.demonType,
@@ -890,7 +898,9 @@
                 },
                 stats: { healthMultiplier: (guard.stats && guard.stats.healthMultiplier) || 1.0 },
                 spawnTrigger: { type: 'immediate', value: 0 }
-            });
+            };
+            if (storyStepId) fixedMonster.storyStepId = storyStepId;
+            fixedMonsters.push(fixedMonster);
             if (monsterTypes.indexOf(guard.demonType) < 0) {
                 monsterTypes.push(guard.demonType);
             }

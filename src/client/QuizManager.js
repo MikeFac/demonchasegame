@@ -1194,6 +1194,53 @@
         clearAnswerResultTimeout();
     }
 
+    // Per-category shuffle bags make random order useful for learning: a verse
+    // is not repeated until every verse in its category has been offered once.
+    const shuffledVerseOrders = {};
+
+    function shuffleIndexes(length, lastIndex) {
+        const indexes = [];
+        for (let i = 0; i < length; i++) indexes.push(i);
+        for (let i = indexes.length - 1; i > 0; i--) {
+            const swapIndex = Math.floor(Math.random() * (i + 1));
+            const temp = indexes[i];
+            indexes[i] = indexes[swapIndex];
+            indexes[swapIndex] = temp;
+        }
+        if (indexes.length > 1 && indexes[0] === lastIndex) {
+            const temp = indexes[0];
+            indexes[0] = indexes[1];
+            indexes[1] = temp;
+        }
+        return indexes;
+    }
+
+    function pickShuffledVerseIndex(category, length) {
+        let state = shuffledVerseOrders[category];
+        if (!state || state.length !== length || state.position >= state.order.length) {
+            state = {
+                length,
+                lastIndex: state ? state.lastIndex : null,
+                order: shuffleIndexes(length, state ? state.lastIndex : null),
+                position: 0
+            };
+            shuffledVerseOrders[category] = state;
+        }
+        const index = state.order[state.position++];
+        state.lastIndex = index;
+        return index;
+    }
+
+    function resetShuffledVerseOrder(category) {
+        if (category) {
+            delete shuffledVerseOrders[category];
+        } else {
+            Object.keys(shuffledVerseOrders).forEach(function(key) {
+                delete shuffledVerseOrders[key];
+            });
+        }
+    }
+
     function pickQualityVerse() {
         // Don't rotate verse while verse test is active
         if (typeof VerseTestScreen !== 'undefined' && VerseTestScreen.isActive()) return;
@@ -1209,8 +1256,11 @@
         }
         qualityIndex[vQuality] = qualityIndex[vQuality] % organizedVerses[vQuality].length;
 
-        console.log("Learn:" + vQuality + ", Index: " + qualityIndex[vQuality] + "out of" + organizedVerses[vQuality].length);
-        currentVerseIndex = qualityIndex[vQuality];
+        const randomizeVerseOrder = typeof window !== 'undefined' && window.randomizeVerseOrder === true;
+        currentVerseIndex = randomizeVerseOrder
+            ? pickShuffledVerseIndex(vQuality, organizedVerses[vQuality].length)
+            : qualityIndex[vQuality];
+        console.log("Learn:" + vQuality + ", Index: " + currentVerseIndex + " out of " + organizedVerses[vQuality].length + (randomizeVerseOrder ? ' (shuffled)' : ''));
         const verse = organizedVerses[vQuality][currentVerseIndex];
         currentQuiz = generateQuizForVerse(verse);
         clearAnswerResultTimeout();
@@ -1254,6 +1304,7 @@
         organizeByCategory2,
         pickQualityVerse,
         pickRandomVerse,
+        resetShuffledVerseOrder,
         handleQuizAnswer,
         handleClozeLetterSelect,
         getClozeDisplayText
