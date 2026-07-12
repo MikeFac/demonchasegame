@@ -4,6 +4,14 @@
     // Private state
     let answerResultTimeout = null;
     let vQuality = (typeof window !== 'undefined' && window.vQuality) ? window.vQuality : 'Faith';
+    let missionQuizRuntime = {
+        missionId: null,
+        taskId: null,
+        fightNumber: 0,
+        currentFightNumber: 0,
+        usedFocusVerse: false
+    };
+    let missionFinalFocusTest = null;
     // answerFullVerse is declared in game.js (global scope) so game loop can read it
     // currentQuiz is declared in game.js (global scope) so renderer/input can read it
 
@@ -28,6 +36,55 @@
         { mode: 'true_false', settingKey: 'trueFalse' },
         { mode: 'cloze', settingKey: 'cloze' }
     ];
+
+    function getMissionCombatQuizConfig() {
+        const mission = typeof window !== 'undefined' ? window.currentMission : null;
+        if (!mission || !mission.combatQuiz || typeof mission.combatQuiz !== 'object') return null;
+        const config = Object.assign({}, mission.combatQuiz);
+        const context = typeof window.getMissionQuizTaskContext === 'function'
+            ? window.getMissionQuizTaskContext()
+            : null;
+        if (context && context.focusVerseReference) {
+            config.focusVerseReference = context.focusVerseReference;
+        }
+        return config;
+    }
+
+    function syncMissionQuizRuntime() {
+        const mission = typeof window !== 'undefined' ? window.currentMission : null;
+        const missionId = mission && mission.combatQuiz ? mission.id : null;
+        const context = typeof window !== 'undefined' && typeof window.getMissionQuizTaskContext === 'function'
+            ? window.getMissionQuizTaskContext()
+            : null;
+        const taskId = context ? context.taskId : null;
+        if (missionQuizRuntime.missionId !== missionId || missionQuizRuntime.taskId !== taskId) {
+            missionQuizRuntime = {
+                missionId: missionId,
+                taskId: taskId,
+                fightNumber: 0,
+                currentFightNumber: 0,
+                usedFocusVerse: false
+            };
+        }
+        return getMissionCombatQuizConfig();
+    }
+
+    function beginMissionQuizFight() {
+        const config = syncMissionQuizRuntime();
+        if (!config) return null;
+        missionQuizRuntime.fightNumber += 1;
+        missionQuizRuntime.currentFightNumber = missionQuizRuntime.fightNumber;
+        missionQuizRuntime.usedFocusVerse = false;
+        return config;
+    }
+
+    function getAllowedQuizModes() {
+        const combatQuiz = getMissionCombatQuizConfig();
+        if (combatQuiz && Array.isArray(combatQuiz.allowedModes) && combatQuiz.allowedModes.length > 0) {
+            return combatQuiz.allowedModes.slice();
+        }
+        return QUIZ_MODE_DEFINITIONS.map(function(def) { return def.mode; });
+    }
 
     function getCurrentLanguageCapabilities() {
         if (typeof I18n !== 'undefined' && typeof I18n.getLanguageCapabilities === 'function') {
@@ -149,6 +206,7 @@
         const settings = (typeof quizSettings !== 'undefined') ? quizSettings
             : { firstLetter: 25, missingWord: 25, categoryMatch: 20, trueFalse: 15, cloze: 15 };
         const capabilities = getCurrentLanguageCapabilities();
+        const allowedModes = getAllowedQuizModes();
         const weightedModes = QUIZ_MODE_DEFINITIONS
             .map(function(def) {
                 return {
@@ -157,16 +215,20 @@
                 };
             })
             .filter(function(def) {
-                return def.weight > 0 && isModeSupportedForVerse(def.mode, verse, capabilities);
+                return allowedModes.indexOf(def.mode) !== -1 &&
+                    def.weight > 0 && isModeSupportedForVerse(def.mode, verse, capabilities);
             });
         const availableModes = weightedModes.length > 0
             ? weightedModes
             : QUIZ_MODE_DEFINITIONS
-                .filter(function(def) { return isModeSupportedForVerse(def.mode, verse, capabilities); })
+                .filter(function(def) {
+                    return allowedModes.indexOf(def.mode) !== -1 &&
+                        isModeSupportedForVerse(def.mode, verse, capabilities);
+                })
                 .map(function(def) { return { mode: def.mode, weight: 1 }; });
 
         if (availableModes.length === 0) {
-            return 'category_match';
+            return allowedModes[0] || 'category_match';
         }
 
         const totalWeight = availableModes.reduce(function(sum, def) { return sum + def.weight; }, 0);
@@ -863,9 +925,56 @@
         };
     }
 
-    function generateClozeQuiz(verse) {
+    function autoGenerateProgressiveStartCloze(text, progression, fightNumber) {
+        if (typeof text !== 'string' || !text.trim()) return null;
+        const words = text.trim().split(/\s+/);
+        const initialWords = Math.max(1, Number(progression.initialWords) || 2);
+        const additionalWords = Math.max(1, Number(progression.additionalWordsPerFight) || 1);
+        const requestedWords = initialWords + (Math.max(1, fightNumber || 1) - 1) * additionalWords;
+        const configuredMaximum = Number(progression.maximumWords);
+        const maximumWords = Number.isInteger(configuredMaximum) && configuredMaximum > 0
+            ? configuredMaximum
+            : words.length;
+        const hiddenCount = Math.min(words.length, maximumWords, requestedWords);
+        const answers = [];
+        const questionWords = words.map(function(word, index) {
+            if (index >= hiddenCount) return word;
+            const answer = word.replace(/^[^\p{L}\p{N}]+|[^\p{L}\p{N}]+$/gu, '');
+            if (!answer) return word;
+            answers.push(answer);
+            const trailing = word.match(/[^\p{L}\p{N}]+$/u);
+            return '_____' + (trailing ? trailing[0] : '');
+        });
+
+        if (answers.length === 0) return null;
+        return {
+            question: questionWords.join(' '),
+            answers: answers,
+            hiddenWordCount: answers.length
+        };
+    }
+
+    function generateClozeQuiz(verse, clozeOverride) {
         let qd = verse.quizData && verse.quizData.cloze;
-        
+        const combatQuiz = getMissionCombatQuizConfig();
+        const progression = combatQuiz && combatQuiz.progressiveStartCloze;
+
+        if (clozeOverride && Number.isInteger(clozeOverride.hiddenWords)) {
+            const forcedProgression = autoGenerateProgressiveStartCloze(verse.Text, {
+                initialWords: clozeOverride.hiddenWords,
+                additionalWordsPerFight: 1,
+                maximumWords: clozeOverride.hiddenWords
+            }, 1);
+            if (forcedProgression) qd = forcedProgression;
+        } else if (progression && progression.enabled !== false) {
+            const generatedProgression = autoGenerateProgressiveStartCloze(
+                verse.Text,
+                progression,
+                missionQuizRuntime.currentFightNumber || 1
+            );
+            if (generatedProgression) qd = generatedProgression;
+        }
+
         if (!qd || !qd.question || !qd.answers || qd.answers.length === 0) {
             if (!getCurrentLanguageCapabilities().supportsAutoCloze) {
                 return null;
@@ -894,6 +1003,8 @@
             isComplete: false,
             verseText: verse.Text,
             verseReference: verse.Reference,
+            progressiveHiddenWordCount: qd.hiddenWordCount || null,
+            missionFightNumber: missionQuizRuntime.currentFightNumber || null,
             _koreanSyllablePool: syllablePool
         };
     }
@@ -979,7 +1090,8 @@
     function onClozeComplete(success) {
         if (typeof dbg === 'function') dbg('QUIZ', `onClozeComplete success=${success} pos=(${player.x.toFixed(0)},${player.y.toFixed(0)})`);
         const verseEntry = organizedVerses[vQuality] && organizedVerses[vQuality][currentVerseIndex];
-        const currentReference = verseEntry ? verseEntry.Reference : '';
+        const currentReference = currentQuiz.verseReference || (verseEntry ? verseEntry.Reference : '');
+        const finalFocusTest = currentQuiz.isMissionFinalFocusTest ? missionFinalFocusTest : null;
         const currentQualityEntries = organizedVerses[vQuality] || [];
         if (currentQualityEntries.length === 0) {
             return;
@@ -1017,9 +1129,19 @@
             player.ammo = (player.ammo || 0) + Constants.AMMO_REWARD;
             network.sendQuizCorrect(undefined, "cloze");
 
-            const correctVerse = organizedVerses[vQuality] && organizedVerses[vQuality][currentVerseIndex];
-            answerFullVerse = correctVerse ? correctVerse.Text : '';
-            setAnswerResultTimeout(4500);
+            answerFullVerse = currentQuiz.verseText || (verseEntry ? verseEntry.Text : '');
+            if (finalFocusTest) {
+                const onPassed = finalFocusTest.onPassed;
+                missionFinalFocusTest = null;
+                answerResultTimeout = setTimeout(function() {
+                    answerResultTimeout = null;
+                    isAnswerCorrect = null;
+                    answerFullVerse = null;
+                    if (onPassed) onPassed();
+                }, 1400);
+            } else {
+                setAnswerResultTimeout(4500);
+            }
 
             if (typeof window.MusicManager !== 'undefined' && window.MusicManager.recordVerseLearned) {
                 window.MusicManager.recordVerseLearned(currentReference, true);
@@ -1031,9 +1153,17 @@
         } else {
             isAnswerCorrect = false;
             qualityIndex[vQuality] = (qualityIndex[vQuality] + 1) % currentQualityEntries.length;
-            const wrongVerse = currentQualityEntries[currentVerseIndex];
-            answerFullVerse = wrongVerse ? wrongVerse.Text : '';
-            setAnswerResultTimeout(6000);
+            answerFullVerse = currentQuiz.verseText || (verseEntry ? verseEntry.Text : '');
+            if (finalFocusTest) {
+                answerResultTimeout = setTimeout(function() {
+                    answerResultTimeout = null;
+                    isAnswerCorrect = null;
+                    answerFullVerse = null;
+                    retryMissionFinalFocusTest();
+                }, 3200);
+            } else {
+                setAnswerResultTimeout(6000);
+            }
 
             if (!incorrectAnswerReferences.includes(currentReference)) {
                 incorrectAnswerReferences.push(currentReference);
@@ -1053,8 +1183,8 @@
 
         const mode = selectMode(verse);
         const capabilities = getCurrentLanguageCapabilities();
-        const modePriority = [mode].concat(QUIZ_MODE_DEFINITIONS
-            .map(function(def) { return def.mode; })
+        const allowedModes = getAllowedQuizModes();
+        const modePriority = [mode].concat(allowedModes
             .filter(function(candidate) { return candidate !== mode; }));
         let quiz = null;
 
@@ -1066,6 +1196,16 @@
             quiz = buildQuizForMode(candidateMode, verse);
             if (quiz) {
                 break;
+            }
+        }
+
+        if (quiz && verse) {
+            if (!quiz.verseReference) quiz.verseReference = verse.Reference || verse.EnglishRef || '';
+            if (!quiz.contentCategory) quiz.contentCategory = verse.Category || vQuality;
+            quiz.verseWordCount = typeof verse.Text === 'string' ? verse.Text.trim().split(/\s+/).length : 0;
+            if (missionQuizRuntime.currentFightNumber) {
+                quiz.missionFightNumber = missionQuizRuntime.currentFightNumber;
+                quiz.isMissionFocusVerse = missionQuizRuntime.usedFocusVerse === true;
             }
         }
 
@@ -1184,14 +1324,106 @@
         }
     }
 
+    function normalizeVerseReference(reference) {
+        return String(reference || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+    }
+
+    function findMissionFocusVerse(config) {
+        if (!config || !config.focusVerseReference || !organizedVerses) return null;
+        const target = normalizeVerseReference(config.focusVerseReference);
+        const categories = Object.keys(organizedVerses);
+        for (let categoryIndex = 0; categoryIndex < categories.length; categoryIndex++) {
+            const category = categories[categoryIndex];
+            const categoryVerses = organizedVerses[category] || [];
+            for (let verseIndex = 0; verseIndex < categoryVerses.length; verseIndex++) {
+                const verse = categoryVerses[verseIndex];
+                if (normalizeVerseReference(verse.Reference) === target ||
+                    normalizeVerseReference(verse.EnglishRef) === target) {
+                    return { category: category, index: verseIndex, verse: verse };
+                }
+            }
+        }
+        return null;
+    }
+
+    function selectMissionFocusVerse(config) {
+        const percent = Number(config && config.focusVerseTestPercent);
+        if (!config || !Number.isFinite(percent) || percent <= 0 || Math.random() * 100 >= percent) {
+            return null;
+        }
+        const focus = findMissionFocusVerse(config);
+        if (!focus) return null;
+        vQuality = focus.category;
+        if (typeof window !== 'undefined') window.vQuality = focus.category;
+        currentVerseIndex = focus.index;
+        missionQuizRuntime.usedFocusVerse = true;
+        return focus.verse;
+    }
+
+    function startMissionFinalFocusTest(options, onPassed) {
+        options = options || {};
+        const config = getMissionCombatQuizConfig();
+        const focus = findMissionFocusVerse({
+            focusVerseReference: options.verseReference || (config && config.focusVerseReference)
+        });
+        if (!focus) return false;
+
+        syncMissionQuizRuntime();
+        clearAnswerResultTimeout();
+        const wordCount = typeof focus.verse.Text === 'string'
+            ? focus.verse.Text.trim().split(/\s+/).length
+            : 1;
+        const hiddenWords = options.hideAllWords
+            ? wordCount
+            : Math.min(wordCount, Math.max(2, missionQuizRuntime.fightNumber + 2));
+        missionFinalFocusTest = {
+            options: Object.assign({}, options),
+            onPassed: typeof onPassed === 'function' ? onPassed : null
+        };
+        vQuality = focus.category;
+        if (typeof window !== 'undefined') window.vQuality = focus.category;
+        currentVerseIndex = focus.index;
+        missionQuizRuntime.usedFocusVerse = true;
+        currentQuiz = generateClozeQuiz(focus.verse, { hiddenWords: hiddenWords });
+        if (!currentQuiz) {
+            missionFinalFocusTest = null;
+            return false;
+        }
+        currentQuiz.verseReference = focus.verse.Reference || focus.verse.EnglishRef || '';
+        currentQuiz.contentCategory = focus.verse.Category || focus.category;
+        currentQuiz.verseWordCount = wordCount;
+        currentQuiz.missionFightNumber = missionQuizRuntime.currentFightNumber;
+        currentQuiz.isMissionFocusVerse = true;
+        currentQuiz.isMissionFinalFocusTest = true;
+        currentQuiz.missionTaskId = options.stepId || missionQuizRuntime.taskId;
+        isAnswerCorrect = null;
+        answerFullVerse = null;
+        return true;
+    }
+
+    function retryMissionFinalFocusTest() {
+        if (!missionFinalFocusTest) return;
+        const pending = missionFinalFocusTest;
+        startMissionFinalFocusTest(pending.options, pending.onPassed);
+    }
+
     function pickRandomVerse() {
+        if (missionFinalFocusTest) return false;
+        const combatQuiz = beginMissionQuizFight();
+        const focusVerse = selectMissionFocusVerse(combatQuiz);
+        if (focusVerse) {
+            currentQuiz = generateQuizForVerse(focusVerse);
+            clearAnswerResultTimeout();
+            return true;
+        }
         if (!organizedVerses || !organizedVerses[vQuality] || organizedVerses[vQuality].length === 0) {
-            return;
+            return false;
         }
         currentVerseIndex = Math.floor(Math.random() * organizedVerses[vQuality].length);
         const verse = organizedVerses[vQuality][currentVerseIndex];
         currentQuiz = generateQuizForVerse(verse);
         clearAnswerResultTimeout();
+        return true;
     }
 
     // Per-category shuffle bags make random order useful for learning: a verse
@@ -1242,11 +1474,24 @@
     }
 
     function pickQualityVerse() {
+        // Mandatory final focus tests are exclusive. The global verse timer,
+        // category changes, and gameplay events must not replace them mid-answer.
+        if (missionFinalFocusTest) return false;
         // Don't rotate verse while verse test is active
-        if (typeof VerseTestScreen !== 'undefined' && VerseTestScreen.isActive()) return;
+        if (typeof VerseTestScreen !== 'undefined' && VerseTestScreen.isActive()) return false;
+
+        const combatQuiz = beginMissionQuizFight();
+        const focusVerse = selectMissionFocusVerse(combatQuiz);
+        if (focusVerse) {
+            console.log('Mission focus verse: ' + focusVerse.Reference +
+                ' (fight ' + missionQuizRuntime.currentFightNumber + ')');
+            currentQuiz = generateQuizForVerse(focusVerse);
+            clearAnswerResultTimeout();
+            return true;
+        }
 
         if (!organizedVerses || !organizedVerses[vQuality] || organizedVerses[vQuality].length === 0) {
-            return;
+            return false;
         }
         if (typeof qualityIndex === 'undefined' || !qualityIndex) {
             qualityIndex = {};
@@ -1275,6 +1520,7 @@
                 console.warn('Could not play verse music:', err);
             });
         }
+        return true;
     }
 
     function setAnswerResultTimeout(duration) {
@@ -1304,9 +1550,24 @@
         organizeByCategory2,
         pickQualityVerse,
         pickRandomVerse,
+        startMissionFinalFocusTest,
+        isMissionFinalFocusTestActive: function() { return !!missionFinalFocusTest; },
         resetShuffledVerseOrder,
         handleQuizAnswer,
         handleClozeLetterSelect,
-        getClozeDisplayText
+        getClozeDisplayText,
+        getMissionQuizDebug: function() {
+            return Object.assign({}, missionQuizRuntime, {
+                config: getMissionCombatQuizConfig(),
+                currentMode: currentQuiz ? currentQuiz.mode : null,
+                currentReference: currentQuiz ? currentQuiz.verseReference : null,
+                progressiveHiddenWordCount: currentQuiz ? currentQuiz.progressiveHiddenWordCount : null,
+                verseWordCount: currentQuiz ? currentQuiz.verseWordCount : null,
+                isFinalFocusTest: !!(currentQuiz && currentQuiz.isMissionFinalFocusTest),
+                missionTaskId: currentQuiz ? currentQuiz.missionTaskId || missionQuizRuntime.taskId : missionQuizRuntime.taskId,
+                currentWordIndex: currentQuiz && currentQuiz.mode === 'cloze' ? currentQuiz.currentWordIndex : null,
+                answerCount: currentQuiz && Array.isArray(currentQuiz.answers) ? currentQuiz.answers.length : null
+            });
+        }
     };
 })();

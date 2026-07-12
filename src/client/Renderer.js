@@ -1101,7 +1101,7 @@ class Renderer {
         const h = second ? 98 : 76;
 
         ctx.save();
-        ctx.fillStyle = 'rgba(9, 18, 34, 0.88)';
+        ctx.fillStyle = 'rgba(74, 78, 84, 0.58)';
         ctx.fillRect(x, y, w, h);
         ctx.strokeStyle = '#f6d36b';
         ctx.lineWidth = 2;

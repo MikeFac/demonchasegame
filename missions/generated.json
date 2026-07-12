@@ -1519,6 +1519,45 @@
       "questFlow": {
         "mode": "continuous"
       },
+      "quizSettings": {
+        "firstLetter": 50,
+        "missingWord": 0,
+        "categoryMatch": 0,
+        "trueFalse": 0,
+        "cloze": 50
+      },
+      "combatQuiz": {
+        "allowedModes": [
+          "first_letter",
+          "cloze"
+        ],
+        "focusVerseReference": "Hebrews 11:1",
+        "focusVerseTestPercent": 70,
+        "taskFocusVerseReferences": {
+          "collect-lantern": "Hebrews 11:1",
+          "collect-shield": "Joshua 1:9",
+          "collect-journal-page": "Romans 15:13",
+          "collect-key": "Philippians 4:6-7",
+          "collect-crown-fragment": "James 1:12"
+        },
+        "finalFocusVerseTest": {
+          "enabled": true,
+          "mode": "cloze",
+          "hideAllWords": true,
+          "taskIds": [
+            "collect-lantern",
+            "collect-shield",
+            "collect-journal-page",
+            "collect-key",
+            "collect-crown-fragment"
+          ]
+        },
+        "progressiveStartCloze": {
+          "enabled": true,
+          "initialWords": 2,
+          "additionalWordsPerFight": 1
+        }
+      },
       "storyPhases": [
         {
           "id": "intro",

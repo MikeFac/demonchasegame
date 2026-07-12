@@ -210,6 +210,24 @@ function run() {
     var legacyQuestMission = MissionCompiler.compile(legacyQuestSpec);
     ok('quest flow defaults to hub', legacyQuestMission.questFlow && legacyQuestMission.questFlow.mode === 'hub');
 
+    var trialsSpec = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'missions', 'specs', 'trials-of-grace.spec.json'), 'utf8'));
+    var trialsMission = MissionCompiler.compile(trialsSpec);
+    ok('quest quiz settings preserved', trialsMission.quizSettings &&
+        trialsMission.quizSettings.firstLetter === 50 && trialsMission.quizSettings.cloze === 50);
+    ok('quest combat quiz modes preserved', trialsMission.combatQuiz &&
+        trialsMission.combatQuiz.allowedModes.join(',') === 'first_letter,cloze');
+    ok('quest focus verse percentage preserved', trialsMission.combatQuiz &&
+        trialsMission.combatQuiz.focusVerseReference === 'Hebrews 11:1' &&
+        trialsMission.combatQuiz.focusVerseTestPercent === 70);
+    ok('quest progressive cloze preserved', trialsMission.combatQuiz &&
+        trialsMission.combatQuiz.progressiveStartCloze.initialWords === 2 &&
+        trialsMission.combatQuiz.progressiveStartCloze.additionalWordsPerFight === 1);
+    ok('quest task focus verses preserved', trialsMission.combatQuiz &&
+        trialsMission.combatQuiz.taskFocusVerseReferences['collect-shield'] === 'Joshua 1:9');
+    ok('quest final focus test preserved', trialsMission.combatQuiz &&
+        trialsMission.combatQuiz.finalFocusVerseTest.hideAllWords === true &&
+        trialsMission.combatQuiz.finalFocusVerseTest.taskIds.indexOf('collect-journal-page') >= 0);
+
     var npcInteractionSpec = {
         schemaVersion: 1,
         id: 'npc-interaction-test',

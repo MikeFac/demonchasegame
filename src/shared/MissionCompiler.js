@@ -181,6 +181,15 @@
     // -----------------------------------------------------------------
     function phaseId(prefix, index) { return prefix + '-' + (index + 1); }
 
+    function copyQuizConfiguration(spec, mission) {
+        if (spec.quizSettings && typeof spec.quizSettings === 'object') {
+            mission.quizSettings = Object.assign({}, spec.quizSettings);
+        }
+        if (spec.combatQuiz && typeof spec.combatQuiz === 'object') {
+            mission.combatQuiz = JSON.parse(JSON.stringify(spec.combatQuiz));
+        }
+    }
+
     // -----------------------------------------------------------------
     // Main compile function
     // -----------------------------------------------------------------
@@ -221,6 +230,7 @@
             world: { width: world.width, height: world.height },
             xpMultiplier: spec.xpMultiplier || 1.0
         };
+        copyQuizConfiguration(spec, mission);
 
         // ---- Story phases ----
         var phases = [];
@@ -426,6 +436,7 @@
             questSteps: steps,
             questFlow: normalizeQuestFlow(spec.questFlow)
         };
+        copyQuizConfiguration(spec, mission);
 
         var phases = [];
         var npcs = [];

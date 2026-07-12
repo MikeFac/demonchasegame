@@ -361,7 +361,8 @@ function seedIntegratedStoryCollectibles(seed) {
         completedSteps: integratedStoryState.completedSteps || {},
         learnedSkills: integratedStoryState.learnedSkills || {},
         collectedObjects: integratedStoryState.collectedObjects || {},
-        currentStepId: integratedStoryState.currentStepId || null
+        currentStepId: integratedStoryState.currentStepId || null,
+        finalFocusTests: integratedStoryState.finalFocusTests || {}
     } : null;
 
     integratedStoryState = {
@@ -382,11 +383,13 @@ function seedIntegratedStoryCollectibles(seed) {
         integratedStoryState.learnedSkills = existingQuestState.learnedSkills;
         integratedStoryState.collectedObjects = existingQuestState.collectedObjects;
         integratedStoryState.currentStepId = existingQuestState.currentStepId;
+        integratedStoryState.finalFocusTests = existingQuestState.finalFocusTests;
     } else {
         integratedStoryState.completedSteps = {};
         integratedStoryState.learnedSkills = {};
         integratedStoryState.collectedObjects = {};
         integratedStoryState.currentStepId = null;
+        integratedStoryState.finalFocusTests = {};
     }
     // Track which step this collectible seed belongs to
     if (seed.stepId) {
@@ -631,6 +634,34 @@ function getQuestStepState() {
     };
 }
 
+function getMissionQuizTaskContext() {
+    if (!currentMission || !currentMission.combatQuiz || !integratedStoryState) return null;
+    const combatQuiz = currentMission.combatQuiz;
+    let taskId = integratedStoryState.currentStepId || null;
+    if (!taskId && integratedStoryState.activeSteps) {
+        const activeIds = Object.keys(integratedStoryState.activeSteps).filter((id) =>
+            integratedStoryState.activeSteps[id] &&
+            !(integratedStoryState.completedSteps && integratedStoryState.completedSteps[id]));
+        taskId = activeIds.length ? activeIds[0] : null;
+    }
+    const taskFocusRefs = combatQuiz.taskFocusVerseReferences || {};
+    const step = taskId && window.CoreStoryDirector
+        ? window.CoreStoryDirector.getStepById(currentMission, taskId)
+        : null;
+    const focusVerseReference = (taskId && taskFocusRefs[taskId]) ||
+        (step && step.focusVerseReference) ||
+        (step && step.puzzle && step.puzzle.verseRef) ||
+        combatQuiz.focusVerseReference || null;
+    return {
+        missionId: currentMission.id,
+        taskId: taskId,
+        focusVerseReference: focusVerseReference,
+        taskType: step ? getQuestStepType(step) : null
+    };
+}
+
+window.getMissionQuizTaskContext = getMissionQuizTaskContext;
+
 function getQuestStepType(step) {
     if (!step) return 'unknown';
     if (step.type) return step.type;
@@ -772,7 +803,12 @@ function buildMissionTaskLog() {
             hint: '',
             lockedReason: ''
         };
-        if (entry.active) entry.hint = buildQuestStepHint(step);
+        const finalTest = integratedStoryState.finalFocusTests && integratedStoryState.finalFocusTests[step.id];
+        if (finalTest && finalTest.status === 'pending') {
+            entry.action = 'Final verse test: ' + finalTest.verseReference;
+            entry.hint = 'Complete the cloze test to finish this task';
+        }
+        if (entry.active && !entry.hint) entry.hint = buildQuestStepHint(step);
         if (entry.complete) completed.push(entry);
         else if (entry.active) active.push(entry);
         else {
@@ -902,6 +938,7 @@ function initializeContinuousQuestState() {
         completedSteps: {},
         learnedSkills: {},
         collectedObjects: {},
+        finalFocusTests: {},
         activeSteps: {},
         objectiveProgress: {},
         collected: 0,
@@ -1025,6 +1062,7 @@ function scheduleQuestHubPause(attempt) {
                 completedSteps: {},
                 learnedSkills: {},
                 collectedObjects: {},
+                finalFocusTests: {},
                 currentStepId: null
             };
             syncIntegratedStoryState();
@@ -1082,9 +1120,64 @@ function startQuestStep(stepId) {
     }
 }
 
-function completeQuestStep(stepId) {
+function shouldRunQuestFinalFocusTest(stepId) {
+    if (!currentMission || !currentMission.combatQuiz || !integratedStoryState) return false;
+    const finalConfig = currentMission.combatQuiz.finalFocusVerseTest;
+    if (!finalConfig || finalConfig.enabled === false) return false;
+    if (Array.isArray(finalConfig.taskIds) && finalConfig.taskIds.indexOf(stepId) === -1) return false;
+    const tests = integratedStoryState.finalFocusTests || {};
+    return !tests[stepId] || tests[stepId].status !== 'passed';
+}
+
+function beginQuestFinalFocusTest(stepId) {
+    if (!shouldRunQuestFinalFocusTest(stepId) || !window.QuizManager ||
+        typeof window.QuizManager.startMissionFinalFocusTest !== 'function') return false;
+    const existingTest = integratedStoryState.finalFocusTests && integratedStoryState.finalFocusTests[stepId];
+    if (existingTest && existingTest.status === 'pending') return true;
+    const context = getMissionQuizTaskContext();
+    if (!context || !context.focusVerseReference) return false;
+    const finalConfig = currentMission.combatQuiz.finalFocusVerseTest || {};
+    if (!integratedStoryState.finalFocusTests) integratedStoryState.finalFocusTests = {};
+    integratedStoryState.finalFocusTests[stepId] = {
+        status: 'pending',
+        verseReference: context.focusVerseReference
+    };
+    integratedStoryState.currentStepId = stepId;
+    syncIntegratedStoryState();
+    flashMessages.push({
+        text: 'Final verse test: ' + context.focusVerseReference,
+        color: '#F6D36B',
+        startTime: Date.now(),
+        duration: 2200
+    });
+    verseTestShieldActive = true;
+    const started = window.QuizManager.startMissionFinalFocusTest({
+        stepId: stepId,
+        verseReference: context.focusVerseReference,
+        hideAllWords: finalConfig.hideAllWords !== false
+    }, function () {
+        verseTestShieldActive = false;
+        if (!integratedStoryState || !integratedStoryState.finalFocusTests) return;
+        integratedStoryState.finalFocusTests[stepId] = {
+            status: 'passed',
+            verseReference: context.focusVerseReference
+        };
+        syncIntegratedStoryState();
+        completeQuestStep(stepId, { skipFinalFocusTest: true });
+    });
+    if (!started) {
+        verseTestShieldActive = false;
+        delete integratedStoryState.finalFocusTests[stepId];
+        syncIntegratedStoryState();
+    }
+    return started;
+}
+
+function completeQuestStep(stepId, options) {
     if (!integratedStoryState || !integratedStoryState.completedSteps) return;
     if (integratedStoryState.completedSteps[stepId]) return; // already done
+    options = options || {};
+    if (!options.skipFinalFocusTest && beginQuestFinalFocusTest(stepId)) return;
 
     integratedStoryState.completedSteps[stepId] = true;
     integratedStoryState.currentStepId = null;
@@ -4750,9 +4843,16 @@ async function init() {
         // Set up InputHandler callbacks
         inputHandler.setCallbacks({
             onCategoryIndicatorClick: () => {
+                if (window.QuizManager && typeof QuizManager.isMissionFinalFocusTestActive === 'function' &&
+                    QuizManager.isMissionFinalFocusTestActive()) return;
                 categoryPickerOpen = !categoryPickerOpen;
             },
             onCategorySelect: (category) => {
+                if (window.QuizManager && typeof QuizManager.isMissionFinalFocusTestActive === 'function' &&
+                    QuizManager.isMissionFinalFocusTestActive()) {
+                    categoryPickerOpen = false;
+                    return;
+                }
                 window.vQuality = category;
                 categoryPickerOpen = false;
                 QuizManager.pickQualityVerse();

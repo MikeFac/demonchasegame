@@ -1725,3 +1725,49 @@ Original prompt: Check the implementation of docs/multi-version-songs-implementa
   - `node test/test-mission-validator.js` (44 passed)
   - standard web-game Playwright basic play regression (`output/web-game/basic-play-regression-mission-ui/shot-0.png`)
   - scripted Playwright mission regression for `generated/trials-of-grace`, including opening Goals -> Mission Log with no console errors (`output/web-game/trials-of-grace-menu/mission-log-overlay-regression.png`)
+
+2026-07-12:
+- Created rollback commit `dd5a166` (`Improve mission guidance and NPC interactions`) before changing combat quizzes.
+- Added JSON-driven mission combat quiz policy:
+  - hard mode restriction through `combatQuiz.allowedModes`
+  - `focusVerseReference` plus configurable `focusVerseTestPercent`
+  - progressive leading-word cloze through `progressiveStartCloze.initialWords` and `additionalWordsPerFight`
+  - progression resets when the configured mission changes and is capped naturally by verse length
+- Configured Trials of Grace for only double-letter (`first_letter`) and cloze questions at 50/50, Hebrews 11:1 at a 70% focus rate, and 2 -> 3 -> 4 -> ... starting-word removal.
+- MissionCompiler now preserves `quizSettings` and `combatQuiz` in both room and quest-step missions; MissionValidator rejects invalid percentages, modes, totals, and progression values.
+- Updated the AI mission system prompt so future generated specs can author the same policy.
+- Added `scripts/test-mission-combat-quiz.js` for real browser coverage of allowed modes, focus sampling, focus reference, and per-fight cloze word counts.
+- Verification:
+  - `node --check src/client/QuizManager.js`
+  - `node --check src/shared/MissionCompiler.js`
+  - `node --check src/shared/MissionValidator.js`
+  - `node test/test-mission-compiler.js` (152 passed)
+  - `node test/test-mission-validator.js` (48 passed)
+  - basic Solo Playwright smoke with no new console errors (`output/web-game/mission-combat-quiz-basic/shot-0.png`)
+  - mission combat Playwright regression passed with a 70%-configured focus sample and no page errors (`output/web-game/mission-combat-quiz/progressive-cloze.png`)
+
+2026-07-12:
+- Refined Trials of Grace mission quiz behavior after playtesting:
+  - current-objective card is now neutral grey at 58% opacity so gameplay remains visible behind it
+  - progressive cloze fight count is scoped to the active quest task and resets to 1 when the task changes
+  - collection tasks explicitly map to the verse taught immediately before them
+  - configured collection tasks cannot complete until a guaranteed full cloze of their focus verse is passed
+  - player damage is suppressed while the mandatory final focus test is active
+  - the task log changes to `Final verse test: <reference>` while the completion gate is pending
+- Added Mission JSON/AI prompt fields:
+  - `combatQuiz.taskFocusVerseReferences`
+  - `combatQuiz.finalFocusVerseTest`
+- Browser regression now verifies 1 -> 2 progression within a task, reset to 1 on a new task, task-specific verse selection, pending completion gate, full-verse final cloze, shield protection, and completion after passing.
+- Visual artifacts inspected:
+  - `output/web-game/mission-combat-quiz/progressive-cloze.png`
+  - `output/web-game/mission-combat-quiz/final-focus-test.png`
+
+2026-07-12:
+- Fixed mandatory final focus tests being replaced before the player could finish them.
+- Root cause: the global 20-second verse rotation interval and other calls to `pickQualityVerse()` remained active during the full-verse final cloze.
+- Final focus tests now hold an exclusive quiz lock:
+  - timed and event-driven calls to both quiz-picking methods return without changing the quiz
+  - repeated task-completion events keep the existing pending test instead of restarting it
+  - category picker changes are disabled until the final test ends
+  - wrong answers still show feedback and intentionally retry the same final focus test
+- Playwright regression simulates 24 forced rotation attempts plus repeated completion events after two words have been answered, and asserts the reference, answer count, and current-word position remain unchanged.

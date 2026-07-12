@@ -35,6 +35,15 @@ Output a single JSON object with this structure:
   "world": { "size": "compact"|"standard"|"large", "mapStyle": "open"|"classic"|"narrow"|"labyrinth"|"city" },
   "qualities": ["Faith", "Courage"],
   "xpMultiplier": 1.0,
+  "quizSettings": { "firstLetter": 50, "missingWord": 0, "categoryMatch": 0, "trueFalse": 0, "cloze": 50 },
+  "combatQuiz": {
+    "allowedModes": ["first_letter", "cloze"],
+    "focusVerseReference": "Hebrews 11:1",
+    "focusVerseTestPercent": 70,
+    "taskFocusVerseReferences": { "collect-lantern": "Hebrews 11:1" },
+    "finalFocusVerseTest": { "enabled": true, "mode": "cloze", "hideAllWords": true, "taskIds": ["collect-lantern"] },
+    "progressiveStartCloze": { "enabled": true, "initialWords": 2, "additionalWordsPerFight": 1 }
+  },
   "intro": { "npcName": "...", "lines": ["...", "..."], "portrait": "images/npcs/optional.png" },
   "rooms": [ ... ],
   "boss": { ... },
@@ -100,6 +109,62 @@ Purity, Wisdom
 - "firstLetter"  — first letter of each word. Requires: verseRef
 
 For biblical story missions, prefer "verseMemorize" — it tests whether the player has memorized key words of the verse, with N words hidden (set via wordsToHide). The game shows the verse, blanks out N words, and the player must tap the correct words from a list.
+
+## Combat Quiz Configuration
+
+Use the optional top-level `quizSettings` and `combatQuiz` fields when the user's mission
+request specifies how ordinary combat questions should work. The five `quizSettings`
+percentages must be non-negative integers totalling 100.
+
+- `first_letter` is the hard double-letter question: two words are hidden and the player
+  chooses the pair of first letters. Its `quizSettings` key is `firstLetter`.
+- `cloze` asks for the first letter of each hidden word. Its `quizSettings` key is `cloze`.
+- `allowedModes` is an additional hard restriction. Do not include a mode that has a zero
+  percentage.
+- `focusVerseReference` names the verse the mission should deliberately reinforce.
+- `focusVerseTestPercent` is the integer percentage (0-100) of combat questions that
+  should use that focus verse. The remaining questions come from the mission qualities.
+- `taskFocusVerseReferences` optionally changes the focus verse for individual quest
+  tasks. Changing tasks resets the progressive fight count back to `initialWords`.
+- `finalFocusVerseTest` can require a guaranteed cloze test before selected tasks are
+  marked complete. `taskIds` names the gated tasks; `hideAllWords: true` makes this a
+  full final recall rather than another sampled combat question.
+- `progressiveStartCloze` hides consecutive words from the start of the verse. With
+  `initialWords: 2` and `additionalWordsPerFight: 1`, fight 1 hides 2 words, fight 2 hides
+  3, fight 3 hides 4, and so on. `maximumWords` is optional; omit it when progression may
+  continue to the length of the verse.
+
+When the user requests difficult memory work with no easy questions, use exactly this
+distribution and restriction:
+
+```json
+"quizSettings": {
+  "firstLetter": 50,
+  "missingWord": 0,
+  "categoryMatch": 0,
+  "trueFalse": 0,
+  "cloze": 50
+},
+"combatQuiz": {
+  "allowedModes": ["first_letter", "cloze"],
+  "focusVerseReference": "Hebrews 11:1",
+  "focusVerseTestPercent": 70,
+  "taskFocusVerseReferences": {
+    "collect-lantern": "Hebrews 11:1"
+  },
+  "finalFocusVerseTest": {
+    "enabled": true,
+    "mode": "cloze",
+    "hideAllWords": true,
+    "taskIds": ["collect-lantern"]
+  },
+  "progressiveStartCloze": {
+    "enabled": true,
+    "initialWords": 2,
+    "additionalWordsPerFight": 1
+  }
+}
+```
 
 ## Rules
 

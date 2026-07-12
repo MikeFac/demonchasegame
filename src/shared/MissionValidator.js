@@ -150,6 +150,113 @@
                 }
             });
         }
+
+        checkCombatQuizConfiguration(m, result);
+    }
+
+    function checkCombatQuizConfiguration(m, result) {
+        if (m.quizSettings !== undefined) {
+            var quizKeys = ['firstLetter', 'missingWord', 'categoryMatch', 'trueFalse', 'cloze'];
+            var quizTotal = 0;
+            if (!m.quizSettings || typeof m.quizSettings !== 'object') {
+                result.addError('SCHEMA_QUIZ_SETTINGS', 'quizSettings must be an object');
+            } else {
+                quizKeys.forEach(function (key) {
+                    var value = m.quizSettings[key];
+                    if (!Number.isInteger(value) || value < 0) {
+                        result.addError('SCHEMA_QUIZ_SETTINGS', 'quizSettings.' + key + ' must be a non-negative integer');
+                    } else {
+                        quizTotal += value;
+                    }
+                });
+                if (quizTotal !== 100) {
+                    result.addError('SCHEMA_QUIZ_SETTINGS_TOTAL', 'quizSettings values must total 100 (got ' + quizTotal + ')');
+                }
+            }
+        }
+
+        if (m.combatQuiz === undefined) return;
+        var combatQuiz = m.combatQuiz;
+        if (!combatQuiz || typeof combatQuiz !== 'object' || Array.isArray(combatQuiz)) {
+            result.addError('SCHEMA_COMBAT_QUIZ', 'combatQuiz must be an object');
+            return;
+        }
+
+        if (combatQuiz.focusVerseTestPercent !== undefined &&
+            (!Number.isInteger(combatQuiz.focusVerseTestPercent) ||
+             combatQuiz.focusVerseTestPercent < 0 || combatQuiz.focusVerseTestPercent > 100)) {
+            result.addError('SCHEMA_FOCUS_VERSE_PERCENT', 'combatQuiz.focusVerseTestPercent must be an integer from 0 to 100');
+        }
+        if (combatQuiz.focusVerseReference !== undefined &&
+            (typeof combatQuiz.focusVerseReference !== 'string' || !combatQuiz.focusVerseReference.trim())) {
+            result.addError('SCHEMA_FOCUS_VERSE_REF', 'combatQuiz.focusVerseReference must be a non-empty string');
+        }
+        if (combatQuiz.allowedModes !== undefined) {
+            var allowedModes = { first_letter: 1, cloze: 1, missing_word: 1, category_match: 1, true_false: 1 };
+            if (!Array.isArray(combatQuiz.allowedModes) || combatQuiz.allowedModes.length === 0) {
+                result.addError('SCHEMA_COMBAT_QUIZ_MODES', 'combatQuiz.allowedModes must be a non-empty array');
+            } else {
+                combatQuiz.allowedModes.forEach(function (mode) {
+                    if (!allowedModes[mode]) {
+                        result.addError('SCHEMA_COMBAT_QUIZ_MODE', 'combatQuiz.allowedModes contains unknown mode: ' + mode);
+                    }
+                });
+            }
+        }
+
+        if (combatQuiz.taskFocusVerseReferences !== undefined) {
+            if (!combatQuiz.taskFocusVerseReferences || typeof combatQuiz.taskFocusVerseReferences !== 'object' ||
+                Array.isArray(combatQuiz.taskFocusVerseReferences)) {
+                result.addError('SCHEMA_TASK_FOCUS_VERSES', 'combatQuiz.taskFocusVerseReferences must be an object');
+            } else {
+                Object.keys(combatQuiz.taskFocusVerseReferences).forEach(function (taskId) {
+                    var reference = combatQuiz.taskFocusVerseReferences[taskId];
+                    if (typeof reference !== 'string' || !reference.trim()) {
+                        result.addError('SCHEMA_TASK_FOCUS_VERSE_REF',
+                            'combatQuiz.taskFocusVerseReferences.' + taskId + ' must be a non-empty string');
+                    }
+                });
+            }
+        }
+
+        var finalTest = combatQuiz.finalFocusVerseTest;
+        if (finalTest !== undefined) {
+            if (!finalTest || typeof finalTest !== 'object' || Array.isArray(finalTest)) {
+                result.addError('SCHEMA_FINAL_FOCUS_TEST', 'combatQuiz.finalFocusVerseTest must be an object');
+            } else {
+                if (finalTest.mode !== undefined && finalTest.mode !== 'cloze') {
+                    result.addError('SCHEMA_FINAL_FOCUS_TEST_MODE', 'combatQuiz.finalFocusVerseTest.mode must be cloze');
+                }
+                if (finalTest.taskIds !== undefined) {
+                    if (!Array.isArray(finalTest.taskIds) || finalTest.taskIds.length === 0) {
+                        result.addError('SCHEMA_FINAL_FOCUS_TEST_TASKS', 'combatQuiz.finalFocusVerseTest.taskIds must be a non-empty array');
+                    } else {
+                        var questStepIds = {};
+                        (m.questSteps || []).forEach(function (step) { if (step && step.id) questStepIds[step.id] = true; });
+                        finalTest.taskIds.forEach(function (taskId) {
+                            if (typeof taskId !== 'string' || !questStepIds[taskId]) {
+                                result.addError('SCHEMA_FINAL_FOCUS_TEST_TASK',
+                                    'combatQuiz.finalFocusVerseTest references unknown task: ' + taskId);
+                            }
+                        });
+                    }
+                }
+            }
+        }
+
+        var progressive = combatQuiz.progressiveStartCloze;
+        if (progressive === undefined) return;
+        if (!progressive || typeof progressive !== 'object' || Array.isArray(progressive)) {
+            result.addError('SCHEMA_PROGRESSIVE_CLOZE', 'combatQuiz.progressiveStartCloze must be an object');
+            return;
+        }
+        ['initialWords', 'additionalWordsPerFight', 'maximumWords'].forEach(function (field) {
+            if (progressive[field] !== undefined &&
+                (!Number.isInteger(progressive[field]) || progressive[field] < 1)) {
+                result.addError('SCHEMA_PROGRESSIVE_CLOZE_' + field.toUpperCase(),
+                    'combatQuiz.progressiveStartCloze.' + field + ' must be a positive integer');
+            }
+        });
     }
 
     function requireString(obj, field, result, code) {

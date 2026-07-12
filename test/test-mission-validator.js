@@ -208,6 +208,30 @@ function run() {
     m.mapStyle = 'volcano';
     ok('ASSET_MAP_STYLE', hasError(MissionValidator.validate(m), 'ASSET_MAP_STYLE'));
 
+    m = clone(davidMission);
+    m.quizSettings = { firstLetter: 50, missingWord: 0, categoryMatch: 0, trueFalse: 0, cloze: 40 };
+    ok('SCHEMA_QUIZ_SETTINGS_TOTAL', hasError(MissionValidator.validate(m), 'SCHEMA_QUIZ_SETTINGS_TOTAL'));
+
+    m = clone(davidMission);
+    m.combatQuiz = { focusVerseReference: 'Hebrews 11:1', focusVerseTestPercent: 101 };
+    ok('SCHEMA_FOCUS_VERSE_PERCENT', hasError(MissionValidator.validate(m), 'SCHEMA_FOCUS_VERSE_PERCENT'));
+
+    m = clone(davidMission);
+    m.combatQuiz = { allowedModes: ['first_letter', 'easy_mode'] };
+    ok('SCHEMA_COMBAT_QUIZ_MODE', hasError(MissionValidator.validate(m), 'SCHEMA_COMBAT_QUIZ_MODE'));
+
+    m = clone(davidMission);
+    m.combatQuiz = { progressiveStartCloze: { initialWords: 0, additionalWordsPerFight: 1 } };
+    ok('SCHEMA_PROGRESSIVE_CLOZE_INITIALWORDS', hasError(MissionValidator.validate(m), 'SCHEMA_PROGRESSIVE_CLOZE_INITIALWORDS'));
+
+    m = clone(davidMission);
+    m.combatQuiz = { taskFocusVerseReferences: { 'room-1': '' } };
+    ok('SCHEMA_TASK_FOCUS_VERSE_REF', hasError(MissionValidator.validate(m), 'SCHEMA_TASK_FOCUS_VERSE_REF'));
+
+    m = clone(davidMission);
+    m.combatQuiz = { finalFocusVerseTest: { mode: 'cloze', taskIds: ['missing-task'] } };
+    ok('SCHEMA_FINAL_FOCUS_TEST_TASK', hasError(MissionValidator.validate(m), 'SCHEMA_FINAL_FOCUS_TEST_TASK'));
+
     // ========== 3. Warning rules ==========
     console.log('\n--- Warning rules ---');
 
