@@ -209,6 +209,7 @@ function advanceStoryPause() {
     // Quest step completion paths
     if (isNpcInteractionDialogue && previous.npcInteractionId) {
         completeMissionNpcInteraction(previous.npcInteractionId);
+        if (previous.stepId) handleQuestStepDialogueComplete(previous);
     } else if (isQuestStepDialogue && previous.stepId) {
         handleQuestStepDialogueComplete(previous);
     } else if (isQuestStepPuzzle && previous.stepId) {
@@ -630,6 +631,191 @@ function getQuestStepState() {
     };
 }
 
+function getQuestStepType(step) {
+    if (!step) return 'unknown';
+    if (step.type) return step.type;
+    return step.npc ? 'learn' : 'combatArena';
+}
+
+function getQuestStepLabel(step) {
+    if (!step) return 'Objective';
+    if (step.type === 'bossArena' && step.boss) return step.boss.label || step.label || step.id;
+    if (step.collectible && step.collectible.label) return step.collectible.label;
+    return step.label || (step.npc && step.npc.npcName) || step.id;
+}
+
+function getQuestStepAction(step) {
+    const type = getQuestStepType(step);
+    if (type === 'learn') return 'Talk to ' + ((step.npc && step.npc.npcName) || getQuestStepLabel(step));
+    if (type === 'narrative') return 'Talk to ' + ((step.dialogue && step.dialogue.npcName) || getQuestStepLabel(step));
+    if (type === 'supplyCache') return 'Collect ' + getQuestStepLabel(step);
+    if (type === 'combatArena') return 'Defeat ' + getQuestStepLabel(step);
+    if (type === 'ruinPuzzle') return 'Solve ' + getQuestStepLabel(step);
+    if (type === 'bossArena') return 'Confront ' + getQuestStepLabel(step);
+    if (type === 'shrine') return 'Visit ' + getQuestStepLabel(step);
+    return getQuestStepLabel(step);
+}
+
+function formatRequirementId(id) {
+    return String(id || '')
+        .replace(/^step-/, '')
+        .replace(/[-_]+/g, ' ')
+        .replace(/\b\w/g, (ch) => ch.toUpperCase());
+}
+
+function getQuestStepLockedReason(step, state) {
+    if (!step) return '';
+    state = state || {};
+    const completedSteps = state.completedSteps || {};
+    const learnedSkills = state.learnedSkills || {};
+    const collectedObjects = state.collectedObjects || {};
+    const prereqs = step.prerequisites || [];
+    for (let i = 0; i < prereqs.length; i++) {
+        if (!completedSteps[prereqs[i]]) return 'Requires: ' + formatRequirementId(prereqs[i]);
+    }
+    if (step.requiredSkill && !learnedSkills[step.requiredSkill]) {
+        return 'Requires skill: ' + formatRequirementId(step.requiredSkill);
+    }
+    if (Array.isArray(step.requiredItems)) {
+        for (let j = 0; j < step.requiredItems.length; j++) {
+            if ((collectedObjects[step.requiredItems[j]] || 0) < 1) {
+                return 'Requires item: ' + formatRequirementId(step.requiredItems[j]);
+            }
+        }
+    }
+    return '';
+}
+
+function getQuestStepProgress(step) {
+    if (!step || !integratedStoryState || !integratedStoryState.objectiveProgress) return null;
+    const progress = integratedStoryState.objectiveProgress[step.id];
+    if (!progress || typeof progress.targetCount !== 'number') return null;
+    return {
+        current: Math.min(progress.collected || 0, progress.targetCount),
+        total: progress.targetCount,
+        text: Math.min(progress.collected || 0, progress.targetCount) + ' / ' + progress.targetCount
+    };
+}
+
+function getQuestStepTargetPosition(step) {
+    if (!step || !currentMission) return null;
+    const stepType = getQuestStepType(step);
+    if (stepType === 'learn' || stepType === 'narrative') {
+        const interactions = getMissionNpcInteractions();
+        const phase = Array.isArray(currentMission.storyPhases)
+            ? currentMission.storyPhases.find((entry) => entry && entry.stepId === step.id && entry.interaction)
+            : null;
+        const interactionId = phase && phase.interaction && phase.interaction.id;
+        const interaction = interactions.find((entry) => entry && entry.id === interactionId);
+        return interaction && interaction.position ? interaction.position : null;
+    }
+    if (stepType === 'supplyCache' && step.collectible && Array.isArray(currentMission.specialObjects)) {
+        const object = currentMission.specialObjects.find((entry) => entry && entry.id === step.collectible.id);
+        return object && Array.isArray(object.placements) && object.placements[0] ? object.placements[0] : null;
+    }
+    if (stepType === 'combatArena' && currentMission.collectCombatConfig) {
+        const fixed = currentMission.collectCombatConfig.fixedMonsters || [];
+        const monster = fixed.find((entry) => entry && entry.storyStepId === step.id);
+        return monster || null;
+    }
+    if (stepType === 'bossArena' && currentMission.combatConfig) {
+        const fixed = currentMission.combatConfig.fixedMonsters || [];
+        const boss = fixed.find((entry) => entry && entry.isBoss);
+        return boss || null;
+    }
+    return null;
+}
+
+function buildQuestStepHint(step) {
+    if (!player) return '';
+    const target = getQuestStepTargetPosition(step);
+    if (!target || typeof target.x !== 'number' || typeof target.y !== 'number') return '';
+    const dx = target.x - player.x;
+    const dy = target.y - player.y;
+    const distance = Math.sqrt(dx * dx + dy * dy);
+    const direction = getDirectionLabel(dx, dy);
+    if (direction === 'nearby') return 'Target is nearby';
+    const distanceText = distance < 350 ? 'near' : (distance < 900 ? 'mid' : 'far');
+    return 'Go ' + direction.toUpperCase() + ' (' + distanceText + ')';
+}
+
+function isQuestStepActive(stepId) {
+    return !!(integratedStoryState && integratedStoryState.activeSteps && integratedStoryState.activeSteps[stepId]);
+}
+
+function buildMissionTaskLog() {
+    if (!currentMission || !window.CoreStoryDirector || !window.CoreStoryDirector.hasQuestSteps(currentMission) || !integratedStoryState) {
+        return null;
+    }
+    const steps = Array.isArray(currentMission.questSteps) ? currentMission.questSteps : [];
+    const state = getQuestStepState() || {};
+    const completedSteps = state.completedSteps || {};
+    const unlockedIds = window.CoreStoryDirector.getUnlockedSteps(currentMission, state);
+    const unlockedMap = {};
+    unlockedIds.forEach((id) => { unlockedMap[id] = true; });
+    const active = [];
+    const completed = [];
+    const locked = [];
+
+    steps.forEach((step) => {
+        const complete = !!completedSteps[step.id];
+        const activeNow = isQuestStepActive(step.id) || unlockedMap[step.id];
+        const entry = {
+            stepId: step.id,
+            label: getQuestStepLabel(step),
+            action: getQuestStepAction(step),
+            type: getQuestStepType(step),
+            complete,
+            active: activeNow && !complete,
+            locked: !complete && !activeNow,
+            progress: getQuestStepProgress(step),
+            hint: '',
+            lockedReason: ''
+        };
+        if (entry.active) entry.hint = buildQuestStepHint(step);
+        if (entry.complete) completed.push(entry);
+        else if (entry.active) active.push(entry);
+        else {
+            entry.lockedReason = getQuestStepLockedReason(step, state);
+            locked.push(entry);
+        }
+    });
+
+    return {
+        missionId: currentMission.id,
+        title: currentMission.name || 'Mission',
+        active,
+        completed,
+        locked,
+        completedCount: completed.length,
+        totalSteps: steps.length
+    };
+}
+
+function getMissionTaskLog() {
+    return buildMissionTaskLog();
+}
+
+function getVisibleMissionNpcInteractions() {
+    const interactions = getMissionNpcInteractions();
+    if (!isContinuousQuestMission() || !integratedStoryState || !currentMission || !Array.isArray(currentMission.storyPhases)) {
+        return interactions;
+    }
+    const state = getQuestStepState() || {};
+    const unlockedIds = window.CoreStoryDirector.getUnlockedSteps(currentMission, state);
+    const visibleStepIds = {};
+    unlockedIds.forEach((id) => { visibleStepIds[id] = true; });
+    if (integratedStoryState.activeSteps) {
+        Object.keys(integratedStoryState.activeSteps).forEach((id) => { visibleStepIds[id] = true; });
+    }
+    return interactions.filter((interaction) => {
+        const phase = currentMission.storyPhases.find((entry) => entry && entry.interaction && entry.interaction.id === interaction.id);
+        if (!phase || !phase.stepId) return true;
+        if (integratedStoryState.completedSteps && integratedStoryState.completedSteps[phase.stepId]) return false;
+        return !!visibleStepIds[phase.stepId];
+    });
+}
+
 function getMissionNpcInteractions() {
     return currentMission && Array.isArray(currentMission.npcInteractions)
         ? currentMission.npcInteractions
@@ -638,11 +824,16 @@ function getMissionNpcInteractions() {
 
 function getNearbyMissionNpcInteraction() {
     if (!player || isStoryPaused()) return null;
-    const interactions = getMissionNpcInteractions();
+    const interactions = getVisibleMissionNpcInteractions();
     for (let i = 0; i < interactions.length; i++) {
         const interaction = interactions[i];
         if (!interaction || !interaction.position) continue;
-        if (interaction.once !== false && missionNpcInteractionState.completed[interaction.id]) continue;
+        const phase = currentMission && Array.isArray(currentMission.storyPhases)
+            ? currentMission.storyPhases.find((entry) => entry && entry.interaction && entry.interaction.id === interaction.id)
+            : null;
+        const relatedStepComplete = !!(phase && phase.stepId && integratedStoryState &&
+            integratedStoryState.completedSteps && integratedStoryState.completedSteps[phase.stepId]);
+        if (interaction.once !== false && missionNpcInteractionState.completed[interaction.id] && relatedStepComplete) continue;
         const dx = player.x - interaction.position.x;
         const dy = player.y - interaction.position.y;
         const radius = interaction.radius || 110;
@@ -653,10 +844,15 @@ function getNearbyMissionNpcInteraction() {
 
 function startMissionNpcInteraction(interaction) {
     if (!interaction || isStoryPaused()) return false;
+    const phase = currentMission && Array.isArray(currentMission.storyPhases)
+        ? currentMission.storyPhases.find((entry) => entry && entry.interaction && entry.interaction.id === interaction.id)
+        : null;
     enterStoryPause({
         type: 'dialogue',
         missionId: currentMission && currentMission.id,
-        phaseId: interaction.id,
+        phaseId: phase && phase.id ? phase.id : interaction.id,
+        stepId: phase && phase.stepId ? phase.stepId : null,
+        grantsSkill: phase && phase.grantsSkill ? phase.grantsSkill : null,
         npcInteractionId: interaction.id,
         title: currentMission && currentMission.name ? currentMission.name : 'Conversation',
         speaker: interaction.npcName || interaction.npcId || 'NPC',
@@ -688,6 +884,8 @@ function handleMissionNpcInteractionClick(screenX, screenY) {
 
 window.getNearbyMissionNpcInteraction = getNearbyMissionNpcInteraction;
 window.startMissionNpcInteraction = startMissionNpcInteraction;
+window.getMissionTaskLog = getMissionTaskLog;
+window.getVisibleMissionNpcInteractions = getVisibleMissionNpcInteractions;
 
 function isContinuousQuestMission() {
     return !!(currentMission && window.CoreStoryDirector &&
@@ -5866,6 +6064,7 @@ function gameLoop(generation) {
     if (window.gameMode === 'game') {
             const onboardingGuide = buildStartHereGuide(player, monsters);
         const nearbyNpcInteraction = getNearbyMissionNpcInteraction();
+        const missionTaskLog = getMissionTaskLog();
         const uiState = {
             vQuality: (currentQuiz && currentQuiz.contentCategory) ? currentQuiz.contentCategory : window.vQuality,
             currentCombatCategory: player ? player.currentCombatCategory : null,
@@ -5900,8 +6099,9 @@ function gameLoop(generation) {
                 duration: combatHint.duration,
                 remainingMs: Math.max(0, combatHint.duration - (Date.now() - combatHint.startTime))
             } : null),
-            npcInteractions: getMissionNpcInteractions(),
+            npcInteractions: getVisibleMissionNpcInteractions(),
             nearbyNpcInteractionId: nearbyNpcInteraction ? nearbyNpcInteraction.id : null,
+            missionTaskLog,
             dailyChallengeProgress,
             dailyChallengeGoal,
             dailyChallengeCompleted,

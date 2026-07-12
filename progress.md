@@ -1701,3 +1701,27 @@ Original prompt: Check the implementation of docs/multi-version-songs-implementa
   - `./restart-server.sh`
   - `node scripts/test-david-goliath-integrated.js --enable-integrated-story` (48 assertions, 0 failures, 0 page errors)
   - standard web-game Playwright client mission-menu smoke (only existing skill package module-type warning)
+
+2026-07-12:
+- Completed mission objective/NPC usability improvements for generated continuous quest missions.
+- Gameplay/UI fixes:
+  - active mission objectives now produce a runtime task log with active, completed, and locked sections
+  - the HUD shows a compact current-task card with progress and directional hints
+  - the Goals menu opens a mission-specific log when a mission task log is available
+  - NPC interactions are filtered by unlocked objective state, so future NPCs do not clutter the maze
+  - NPC conversations tied to unfinished steps can repeat until that step is completed
+  - completed-step NPCs are hidden after the objective state changes
+  - mission log rendering now takes priority over the first-run speed prompt
+- AI mission compiler fixes:
+  - generated NPC interactions at the same coordinates are automatically spread apart to avoid icon overwrites
+  - dialogue construction accepts narrative/dialogue quest steps as well as explicit NPC learn steps
+  - regenerated `trials-of-grace` mission output; Brother Timothy is offset from Elder Marcus instead of overlapping
+- Verification completed:
+  - `node --check game.js`
+  - `node --check src/client/Renderer.js`
+  - `node --check src/client/CoreStoryDirector.js`
+  - `node --check src/shared/MissionCompiler.js`
+  - `node test/test-mission-compiler.js` (148 passed)
+  - `node test/test-mission-validator.js` (44 passed)
+  - standard web-game Playwright basic play regression (`output/web-game/basic-play-regression-mission-ui/shot-0.png`)
+  - scripted Playwright mission regression for `generated/trials-of-grace`, including opening Goals -> Mission Log with no console errors (`output/web-game/trials-of-grace-menu/mission-log-overlay-regression.png`)

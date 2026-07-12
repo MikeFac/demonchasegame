@@ -829,7 +829,7 @@
     }
 
     function buildNpcInteractions(phases) {
-        return phases.filter(function (phase) {
+        var interactions = phases.filter(function (phase) {
             return phase && phase.interaction && phase.interaction.trigger === 'proximity' && phase._npc;
         }).map(function (phase) {
             return {
@@ -842,6 +842,43 @@
                 once: phase.interaction.once,
                 lines: Array.isArray(phase.i18nLines) ? phase.i18nLines.slice() : []
             };
+        });
+        spreadOverlappingNpcInteractions(interactions);
+        return interactions;
+    }
+
+    function spreadOverlappingNpcInteractions(interactions) {
+        var groups = {};
+        interactions.forEach(function (interaction) {
+            if (!interaction || !interaction.position) return;
+            var key = Math.round(interaction.position.x) + ',' + Math.round(interaction.position.y);
+            if (!groups[key]) groups[key] = [];
+            groups[key].push(interaction);
+        });
+
+        var offsets = [
+            { x: 0, y: 0 },
+            { x: 58, y: 0 },
+            { x: -58, y: 0 },
+            { x: 0, y: 58 },
+            { x: 0, y: -58 },
+            { x: 42, y: 42 },
+            { x: -42, y: 42 },
+            { x: 42, y: -42 },
+            { x: -42, y: -42 }
+        ];
+
+        Object.keys(groups).forEach(function (key) {
+            var group = groups[key];
+            if (!group || group.length <= 1) return;
+            for (var i = 0; i < group.length; i++) {
+                var offset = offsets[i % offsets.length];
+                var ring = Math.floor(i / offsets.length);
+                group[i].position = {
+                    x: group[i].position.x + offset.x + ring * 28,
+                    y: group[i].position.y + offset.y + ring * 28
+                };
+            }
         });
     }
 

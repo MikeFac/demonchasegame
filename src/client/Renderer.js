@@ -102,6 +102,9 @@ class Renderer {
         // Draw HUD (Health, Level, etc.)
         this.drawHUD(player, gameState);
 
+        // Draw current mission task after the core HUD so story missions have a clear next action.
+        this.drawMissionTaskCard(uiState);
+
         // Draw onboarding guidance for the authored start mission.
         this.drawOnboardingGuide(uiState, player, camera);
 
@@ -145,7 +148,7 @@ class Renderer {
         this.drawCategoryPicker(uiState);
 
         // Draw speed first-launch prompt (topmost overlay)
-        if (uiState.speedPromptVisible && !uiState.storyPause) {
+        if (uiState.speedPromptVisible && !uiState.storyPause && !uiState.goalsOverlayVisible) {
             this.drawSpeedPrompt();
         }
 
@@ -1083,6 +1086,56 @@ class Renderer {
         this.ctx.textAlign = 'left';
 
         this.ctx.restore();
+    }
+
+    drawMissionTaskCard(uiState) {
+        const log = uiState && uiState.missionTaskLog;
+        if (!log || !Array.isArray(log.active) || log.active.length === 0 || uiState.storyPause) return;
+
+        const ctx = this.ctx;
+        const active = log.active[0];
+        const second = log.active[1];
+        const x = 12;
+        const y = this.QUALITY_LINE_HEIGHT + 44;
+        const w = Math.min(340, this.canvas.width - 24);
+        const h = second ? 98 : 76;
+
+        ctx.save();
+        ctx.fillStyle = 'rgba(9, 18, 34, 0.88)';
+        ctx.fillRect(x, y, w, h);
+        ctx.strokeStyle = '#f6d36b';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(x, y, w, h);
+
+        ctx.fillStyle = '#f6d36b';
+        ctx.font = 'bold 13px Arial';
+        ctx.textAlign = 'left';
+        ctx.fillText(log.title || 'Mission', x + 12, y + 19);
+
+        ctx.fillStyle = '#ffffff';
+        ctx.font = 'bold 14px Arial';
+        this._drawWrappedText(active.action || active.label || 'Current objective', x + 12, y + 40, w - 24, 17, 2);
+
+        if (active.hint) {
+            ctx.fillStyle = '#9ecbff';
+            ctx.font = '12px Arial';
+            ctx.fillText(active.hint, x + 12, y + 68);
+        } else if (active.progress && active.progress.text) {
+            ctx.fillStyle = '#9ee6a8';
+            ctx.font = '12px Arial';
+            ctx.fillText('Progress: ' + active.progress.text, x + 12, y + 68);
+        } else {
+            ctx.fillStyle = '#9ecbff';
+            ctx.font = '12px Arial';
+            ctx.fillText('Open Goals for the mission log', x + 12, y + 68);
+        }
+
+        if (second) {
+            ctx.fillStyle = '#cbd6e5';
+            ctx.font = '12px Arial';
+            this._drawWrappedText('Also: ' + (second.action || second.label), x + 12, y + 88, w - 24, 15, 1);
+        }
+        ctx.restore();
     }
 
     drawGuideArrow(fromX, fromY, toX, toY, lineWidth = 3) {
@@ -2878,6 +2931,11 @@ class Renderer {
     }
 
     drawGoalsPanel(uiState) {
+        if (uiState && uiState.missionTaskLog) {
+            this.drawMissionLogPanel(uiState.missionTaskLog);
+            return;
+        }
+
         const ctx = this.ctx;
         const canvas = this.canvas;
 
@@ -2967,6 +3025,86 @@ class Renderer {
 
         // Reset text align
         ctx.textAlign = 'left';
+    }
+
+    drawMissionLogPanel(log) {
+        const ctx = this.ctx;
+        const canvas = this.canvas;
+        const modalWidth = Math.min(440, canvas.width - 36);
+        const modalHeight = Math.min(440, canvas.height - 64);
+        const modalX = (canvas.width - modalWidth) / 2;
+        const modalY = (canvas.height - modalHeight) / 2;
+        const left = modalX + 18;
+        const rightW = modalWidth - 36;
+
+        ctx.save();
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.72)';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        ctx.fillStyle = 'rgba(12, 20, 34, 0.96)';
+        ctx.fillRect(modalX, modalY, modalWidth, modalHeight);
+        ctx.strokeStyle = '#f6d36b';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(modalX, modalY, modalWidth, modalHeight);
+
+        ctx.fillStyle = '#f6d36b';
+        ctx.font = 'bold 18px Arial';
+        ctx.textAlign = 'center';
+        ctx.fillText('Mission Log', canvas.width / 2, modalY + 28);
+
+        ctx.fillStyle = '#ffffff';
+        ctx.font = 'bold 14px Arial';
+        ctx.fillText(log.title || 'Mission', canvas.width / 2, modalY + 49);
+
+        ctx.textAlign = 'left';
+        let y = modalY + 78;
+        y = this._drawMissionLogSection('Active', log.active || [], left, y, rightW, '#9ee6a8', 'No active objectives');
+        y = this._drawMissionLogSection('Completed', (log.completed || []).slice(-4), left, y + 8, rightW, '#a8c4ff', 'Nothing completed yet');
+        this._drawMissionLogSection('Locked', (log.locked || []).slice(0, 5), left, y + 8, rightW, '#9aa4b5', 'No locked objectives');
+
+        ctx.fillStyle = '#8994a8';
+        ctx.font = '11px Arial';
+        ctx.textAlign = 'center';
+        ctx.fillText('Tap anywhere to close', canvas.width / 2, modalY + modalHeight - 12);
+        ctx.restore();
+    }
+
+    _drawMissionLogSection(title, items, x, y, width, color, emptyText) {
+        const ctx = this.ctx;
+        ctx.fillStyle = color;
+        ctx.font = 'bold 13px Arial';
+        ctx.textAlign = 'left';
+        ctx.fillText(title, x, y);
+        y += 18;
+
+        if (!items.length) {
+            ctx.fillStyle = '#7d8798';
+            ctx.font = '12px Arial';
+            ctx.fillText(emptyText, x + 10, y);
+            return y + 20;
+        }
+
+        const maxItems = Math.min(items.length, 5);
+        for (let i = 0; i < maxItems; i++) {
+            const item = items[i];
+            const prefix = item.complete ? '\u2713 ' : (item.locked ? '\u25cb ' : '\u25b8 ');
+            const progress = item.progress && item.progress.text ? ' (' + item.progress.text + ')' : '';
+            ctx.fillStyle = item.locked ? '#8d96a8' : '#ffffff';
+            ctx.font = item.active ? 'bold 12px Arial' : '12px Arial';
+            const line = prefix + (item.action || item.label || 'Objective') + progress;
+            this._drawWrappedText(line, x + 10, y, width - 20, 15, 2);
+            y += 34;
+            if (item.active && item.hint) {
+                ctx.fillStyle = '#9ecbff';
+                ctx.font = '11px Arial';
+                this._drawWrappedText(item.hint, x + 22, y - 12, width - 34, 13, 1);
+            } else if (item.locked && item.lockedReason) {
+                ctx.fillStyle = '#9aa4b5';
+                ctx.font = '11px Arial';
+                this._drawWrappedText(item.lockedReason, x + 22, y - 12, width - 34, 13, 1);
+            }
+        }
+        return y;
     }
 
     drawFlashMessages(flashMessages) {

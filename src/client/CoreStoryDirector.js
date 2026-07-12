@@ -625,9 +625,9 @@
     function buildLearnDialoguePause(mission, stepId) {
         if (!hasQuestSteps(mission)) return null;
         var step = getStepById(mission, stepId);
-        if (!step || !step.npc) return null;
+        if (!step || (!step.npc && !step.dialogue)) return null;
 
-        var npc = step.npc;
+        var npc = step.npc || step.dialogue;
         var speaker = npc.npcName || npc.npcId || 'NPC';
         var lines = Array.isArray(npc.lines) ? npc.lines : [];
 
