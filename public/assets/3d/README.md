@@ -19,3 +19,8 @@ assets should not replace a fallback entry until they pass the triangle,
 texture, animation, silhouette, and phone-performance gates in the technical
 design.
 
+Run `npm run validate:3d` after adding a source. To make a missing authored
+asset fail CI, use `node scripts/validate-low-poly-assets.mjs --require-source
+--key monster.fear`. The validator checks GLB structure, triangle/material and
+texture budgets, a skin, required clip names, and unwanted embedded lights or
+cameras.

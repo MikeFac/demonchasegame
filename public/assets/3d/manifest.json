@@ -14,6 +14,10 @@
       "fallback": "procedural-demon",
       "triangleBudget": 4000,
       "textureBudget": 512,
+      "materialBudget": 1,
+      "height": 70,
+      "scale": 1,
+      "rotationY": 0,
       "clips": ["idle", "walk", "attack", "hit", "death"]
     },
     "monster.doubt": {
@@ -32,4 +36,3 @@
     }
   }
 }
-

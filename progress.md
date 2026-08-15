@@ -1823,3 +1823,215 @@ Original prompt: Check the implementation of docs/multi-version-songs-implementa
   - add camera obstruction handling and projected 2D damage/health feedback
   - verify full answer -> ammo -> fire -> hit -> death -> victory chain
   - profile a 10-minute run on a real mid-range Android device
+
+2026-08-15 — authored low-poly asset pipeline (points 1–7 started):
+- Committed the procedural prototype on `low-poly-3d` as `b2c7e9e` (`Start
+  low-poly 3D prototype`) using an explicit 11-file allowlist; unrelated dirty
+  worktree files were not staged.
+- Added Fear v1 art direction, the exact four-view concept prompt, four Tripo
+  candidate intents, and a 12-point silhouette/topology/riggability scorecard.
+- Added a machine-readable candidate tracker. Generation is waiting for service
+  credentials: `TRIPO_API_KEY`, `MESHY_API_KEY`, and `OPENAI_API_KEY` are unset.
+- Local cleanup/rig tooling is also unavailable (`blender`, `gltfpack`, and
+  `adb` were not found), so no fabricated mesh, rig, or phone result is claimed.
+- Added `scripts/validate-low-poly-assets.mjs` to enforce GLB 2.0 structure,
+  triangle/material/texture budgets, skin presence, canonical animation clips,
+  and no embedded cameras/lights before manifest activation.
+- Added manifest-driven GLB loading, skinned-scene cloning, automatic character
+  height normalization, canonical clip playback, live fallback-to-authored
+  upgrades, and procedural fallback on missing/failed files.
+- Added `scripts/test-low-poly-3d-runtime.mjs` and the real-device checklist in
+  `docs/plans/LOW_POLY_3D_PHONE_PROFILE.md`.
+- Verification:
+  - syntax checks passed for runtime, renderer, and validator
+  - asset manifest validation passed with four intentional procedural fallbacks
+  - headed mission runtime passed with no browser errors or load failures
+  - measured 16 draw calls and 7,284 triangles with one Fear monster
+  - short software-rendered desktop RAF sample was 22.8 FPS and is not treated
+    as the Android result
+  - runtime artifact: `output/web-game/low-poly-3d-runtime-budget/result.json`
+
+2026-08-15 — 3D monster visibility diagnosis:
+- Reproduced the report in a headed browser on `chapter0/intro-01`, with the
+  speed prompt suppressed so the gameplay view could be inspected.
+- Fear is spawned and present in both server/debug state and the Three.js scene:
+  one visible monster, health 10, with 16–17 draw calls and no browser errors.
+- Root cause is camera/UI framing, not spawning or asset loading. At the initial
+  player position Fear's center projects above the viewport (`NDC y=1.067`).
+  After moving 50 units it projects at `y=0.964`, roughly 11 CSS pixels from the
+  top, behind the top HUD/onboarding card; only a purple sliver is visible.
+- Forward movement then stops at the maze wall at x=1550, so repeatedly pressing
+  forward does not bring the monster farther into view.
+- Captures and state: `output/web-game/low-poly-3d-monster-visibility/`.
+- Recommended next fix: widen/reframe the chase camera and reserve a top safe
+  area for projected enemies/onboarding targets, then test navigation around the
+  first wall and a non-tutorial combat mission.
+
+2026-08-15 — 3D monster visibility fix:
+- Reframed the Three.js chase camera from a close 58°/120-unit view to a higher
+  70°/280-unit action-RPG view (380-unit height) with 180 units of look-ahead.
+- Added a restrained 22% focus toward the nearest living monster within 700
+  units, excluding enemies substantially behind the player. This keeps combat
+  targets in view without snapping the camera directly onto them.
+- Added camera target/framing and per-monster projected/on-screen data to
+  `render_game_to_text` for deterministic visibility regression checks.
+- Strengthened `scripts/test-low-poly-3d-runtime.mjs`: it now suppresses the
+  one-time speed prompt and fails when active monsters are outside the viewport
+  or underneath the top HUD safe area.
+- Headed verification:
+  - Fear moved from off-screen `NDC y=1.067` to `y=0.191`, fully visible below
+    the onboarding card in the final screenshot
+  - player remained safely framed at `y=-0.412`
+  - three left turns plus forward movement navigated around the first wall and
+    advanced onboarding from `Move here` to the answer tutorial
+  - runtime budget passed at 21 draw calls / 7,836 triangles
+  - no browser, page, or asset-load errors
+  - default 2D renderer still starts with the WebGL canvas hidden
+- Artifacts: `output/web-game/low-poly-3d-camera-safe-final/`,
+  `output/web-game/low-poly-3d-camera-safe-route/`, and
+  `output/web-game/low-poly-3d-camera-safe-2d/`.
+
+2026-08-15 — intermittent 3D blank-screen recovery:
+- Reproduced alternating blue/blank composites during headed turn captures.
+- Framebuffer instrumentation sampled 277 render frames with active draw calls,
+  scene color, and no persistently blank Three.js frame, isolating the issue
+  from camera/world generation.
+- A retained-drawing-buffer experiment did not eliminate the problem and was
+  removed because it costs mobile memory/bandwidth.
+- Direct stress diagnostics then caught transient WebGL context loss/restoration
+  around compositor pressure. The canvas stayed mounted while its presented
+  world buffer disappeared, leaving only the blue canvas background.
+- Added explicit `webglcontextlost`/`webglcontextrestored` handling:
+  - prevent default so the context can restore
+  - immediately hide the invalid WebGL buffer and paint a sky/ground recovery
+    frame
+  - render the existing software raycast 3D world and HUD on subsequent frames
+    while WebGL is unavailable
+  - reset the mesh camera and return automatically to true Three.js rendering
+    when restoration completes
+  - expose loss/restore counts and recovery status in stats/debug state
+- Forced-loss verification captured the software maze instead of blue at
+  `output/web-game/low-poly-3d-context-recovery/02-recovery-fallback.png`.
+- Restoration state passed: `three -> software-3d-recovery -> three`, with
+  context counters `losses: 1`, `restores: 1` and canvas visibility restored.
+- Turning input remained live during recovery (`viewAngle 0 -> 0.524`) and was
+  preserved when mesh rendering resumed.
+- Post-fix headed runtime remained under budget at 23 draw calls / 7,356
+  triangles, showed Fear and the maze, and had no page or asset errors.
+- Default 2D still starts as `Renderer` with the WebGL canvas hidden.
+
+2026-08-15 — stable-perspective WebGL recovery:
+- User playtesting identified that the previous recovery was visibly switching
+  between the intended third-person 2.5D view and the inherited first-person
+  ray-cast renderer. This confirmed that context recovery was firing, but the
+  fallback itself introduced a second visual glitch.
+- Removed the `super.drawGame(...)` recovery path entirely. The Three.js
+  renderer now refreshes a low-frequency cached copy of its latest successful
+  2.5D world frame on a dedicated canvas beneath the live HUD.
+- During a WebGL interruption the invalid world canvas is hidden and the cached
+  2.5D frame is shown; HUD, quiz, overlays, and controls continue updating. On
+  restoration, the mesh canvas resumes automatically with the same player view
+  angle. No first-person renderer is instantiated or drawn.
+- Forced context-loss verification passed:
+  - state transition `three -> three-snapshot-recovery -> three`
+  - cached frame was fully opaque with substantial scene-color variance
+  - recovery screenshot retained the player, Fear monster, maze, and the same
+    third-person camera composition
+  - turning remained active (`0 -> -0.524` radians) and survived restoration
+  - no browser/page errors
+- Normal 3D regression passed at 23 calls / 7,752 triangles with Fear on screen,
+  no context loss, and no asset failures. Default 2D regression retained the
+  `Renderer` class while both 3D canvases stayed hidden.
+- Inspected artifacts:
+  - `output/web-game/low-poly-3d-snapshot-recovery-forced/02-during-recovery.png`
+  - `output/web-game/low-poly-3d-snapshot-recovery-runtime/runtime.png`
+  - `output/web-game/low-poly-3d-snapshot-recovery-2d/runtime.png`
+
+2026-08-15 — seamless recovery handoff and non-blocking snapshots:
+- Follow-up playtesting reported smaller residual glitches. Two remaining
+  renderer timing hazards were identified:
+  - the restored WebGL canvas was exposed immediately on the context event,
+    before its first complete post-restore mesh frame
+  - the 2.5D recovery snapshot was synchronously copied from the GPU every
+    500ms, which could itself produce a recurring main-thread/GPU hitch
+- WebGL restoration now remains covered by the cached 2.5D layer until a full
+  `webgl.render()` call finishes. Only then are the layers swapped, preventing
+  the invalid/empty restored buffer from appearing for a frame.
+- The initial recovery image is still captured synchronously before active play
+  so a fallback is guaranteed. Periodic refreshes now use asynchronous
+  `ImageBitmap` copies once per second. Browsers without `createImageBitmap`
+  retain the initial valid image instead of performing recurring synchronous
+  copies during play.
+- Three consecutive forced loss/restore cycles passed. Instrumentation verified
+  the recovery layer remained visible before and after every first restored
+  render call; final state was 3 losses / 3 restores, live Three.js visible,
+  cached layer hidden, turn angle preserved, and no browser errors.
+- Normal runtime remained within geometry budgets at 21 calls / 7,776 triangles
+  with Fear visible. Default 2D remained on `Renderer` with both 3D layers
+  hidden and no errors.
+- Inspected artifacts:
+  - `output/web-game/low-poly-3d-seamless-handoff-forced/during-recovery.png`
+  - `output/web-game/low-poly-3d-seamless-handoff-forced/after-recovery.png`
+  - `output/web-game/low-poly-3d-seamless-handoff-runtime/runtime.png`
+  - `output/web-game/low-poly-3d-seamless-handoff-2d/runtime.png`
+
+2026-08-16 — idle glitch isolation and live GPU diagnostics:
+- User reported that smaller glitches still occurred regularly while completely
+  idle. Removed timer-driven recovery updates altogether. The cache now uses a
+  signature of player position, view angle, wall revision, and asset revision;
+  it performs one async refresh only after a changed view settles for 350ms.
+- A 12-second idle audit confirmed zero `createImageBitmap` calls and zero
+  recovery-canvas draws. A turn produced exactly one settled async refresh.
+- Despite zero snapshot work, the local Chromium context reset repeatedly while
+  idle. GPU inspection identified its backend as Vulkan SwiftShader (software).
+  Isolation tests then produced the same resets with an empty Three.js scene
+  and even after replacing every WebGL render call with a no-op. Therefore the
+  local automated browser's reset cadence is independent of this game's scene,
+  geometry, movement, and snapshot logic; it cannot establish whether the
+  user's real browser has the same software-GPU failure.
+- Added opt-in `?debug3d=1` diagnostics on the live HUD showing:
+  - LIVE / LOST / RESTORE FRAME state
+  - hardware vs software GPU classification and renderer name
+  - context loss/restore counts
+  - recovery snapshot count and whether the cached layer is visible
+- Stats and `render_game_to_text` now retain GPU identity and recent context
+  events for evidence-based diagnosis.
+- Diagnostic visual inspected at
+  `output/web-game/low-poly-3d-live-diagnostics/diagnostics.png`; it correctly
+  showed SOFTWARE GPU, two loss/restore cycles, and a stable snapshot count of
+  one. Default 2D guard passed with neither 3D canvas instantiated or visible.
+- Next required evidence: run the user's actual browser at
+  `?viewMode=3d&debug3d=1` and compare the loss count immediately before and
+  after a visible glitch. If it increments, choose a software/unstable-GPU
+  rendering strategy; if it remains fixed, investigate non-WebGL camera or
+  compositor transitions instead.
+
+2026-08-16 — fixed per-frame WebGL context leak (root cause):
+- User's DevTools capture confirmed repeated real Three.js `Context Lost` /
+  `Context Restored` events in normal idle play.
+- Renderer lifecycle tracing found the root cause: `gameLoop()` called
+  `getRendererClassForViewMode()` every animation frame. In 3D mode that called
+  `RendererThreeJS.isSupported()`, which created a new throwaway WebGL context
+  every frame. Chrome eventually exceeded its active-context limit and evicted
+  the game context, producing the regular blank/recovery glitches.
+- Fixed both ownership boundaries:
+  - renderer class selection now occurs only when a renderer must actually be
+    instantiated
+  - `RendererThreeJS.isSupported()` caches its result, creates only one probe,
+    and explicitly releases that probe with `WEBGL_lose_context`
+- Added `supportProbeCount` to runtime diagnostics and a regression assertion
+  requiring exactly one probe.
+- Decisive verification on the same unstable SwiftShader browser:
+  - before fix: 8 game-context losses in 12 seconds while idle
+  - after fix: exactly two WebGL context creations total (one released probe,
+    one game context), with no additional creations and 0 losses / 0 restores
+    across 20 seconds idle
+  - renderer identity and snapshot count stayed unchanged
+  - a screenshot after the idle period also left context counters at zero
+- Intentional forced loss still recovered correctly and retained the player's
+  `-0.524` turn angle; five subsequent seconds had no spontaneous events.
+- Default 2D instantiated `Renderer`, created zero WebGL contexts, kept both 3D
+  layers hidden, and reported no errors.
+- Inspected artifacts:
+  - `output/web-game/low-poly-3d-context-leak-idle/after-20s-idle.png`
+  - `output/web-game/low-poly-3d-context-leak-forced/after-forced-recovery.png`

@@ -6242,9 +6242,10 @@ function gameLoop(generation) {
             terrainTilesImg
         };
 
-        // Instantiate renderer if not already (hack for now, should be in init)
-        const RendererClass = getRendererClassForViewMode(viewMode);
+        // Renderer capability detection can allocate a graphics context, so
+        // only select a class when a renderer actually needs to be created.
         if (!window.renderer || window.renderer.viewMode !== viewMode) {
+            const RendererClass = getRendererClassForViewMode(viewMode);
             window.renderer = new RendererClass(canvas, ctx, assets);
         }
         window.renderer.assets = assets; // Update assets in case they loaded late

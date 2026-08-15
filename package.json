@@ -3,7 +3,9 @@
   "version": "1.0.0",
   "main": "bible-verses.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "validate:3d": "node scripts/validate-low-poly-assets.mjs",
+    "test:3d-runtime": "node scripts/test-low-poly-3d-runtime.mjs"
   },
   "keywords": [],
   "author": "",

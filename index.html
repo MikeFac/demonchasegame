@@ -57,6 +57,7 @@
       line-height: 0;
     }
 
+    #worldCanvasRecovery,
     #worldCanvas3D {
       position: absolute;
       inset: 0;
@@ -67,9 +68,17 @@
       max-width: none;
     }
 
+    #worldCanvasRecovery {
+      display: none;
+    }
+
+    #worldCanvas3D {
+      z-index: 1;
+    }
+
     #gameCanvas {
       position: relative;
-      z-index: 1;
+      z-index: 2;
     }
 
     #menuScreen {
@@ -1690,6 +1699,7 @@
   </div>
 
   <div id="gameCanvasStack">
+    <canvas id="worldCanvasRecovery" width="800" height="600" aria-hidden="true"></canvas>
     <canvas id="worldCanvas3D" width="800" height="600" aria-hidden="true"></canvas>
     <canvas id="gameCanvas" width="800" height="600"></canvas>
   </div>

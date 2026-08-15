@@ -1,0 +1,20 @@
+{
+  "assetKey": "monster.fear",
+  "concept": "Fear turnaround v1",
+  "service": "Tripo image-to-model",
+  "status": "waiting-for-service-credentials",
+  "target": {
+    "triangles": 3500,
+    "maximumTriangles": 4000,
+    "materials": 1,
+    "textureSize": 512,
+    "rigType": "biped",
+    "clips": ["idle", "walk", "attack", "hit", "death"]
+  },
+  "candidates": [
+    { "id": "A-faithful", "status": "pending", "intent": "reference fidelity" },
+    { "id": "B-clean", "status": "pending", "intent": "topology and connected geometry" },
+    { "id": "C-mobile", "status": "pending", "intent": "silhouette at 3000 triangles" },
+    { "id": "D-riggable", "status": "pending", "intent": "clean biped joint regions" }
+  ]
+}
