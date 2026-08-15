@@ -1771,3 +1771,55 @@ Original prompt: Check the implementation of docs/multi-version-songs-implementa
   - category picker changes are disabled until the final test ends
   - wrong answers still show feedback and intentionally retry the same final focus test
 - Playwright regression simulates 24 forced rotation attempts plus repeated completion events after two words have been answered, and asserts the reference, answer count, and current-word position remain unchanged.
+
+2026-08-15 — low-poly 3D prototype:
+- User request: create branch `low-poly-3d`, choose a 3D asset-generation
+  pipeline, and begin a phone-friendly true-mesh implementation rather than
+  billboard monsters.
+- Created and switched to branch `low-poly-3d` while preserving the existing
+  dirty worktree and unrelated user files.
+- Added `docs/plans/LOW_POLY_3D_TECHNICAL_DESIGN.md` with renderer, coordinate,
+  camera, fallback, asset, visual-direction, and mobile performance contracts.
+- Selected Tripo image-to-model -> Smart LowPoly -> rig/retarget as the first
+  character pipeline to test; Meshy 6 remains the all-in-one alternative.
+- Added Three.js 0.185.1 to `package.json`, an ES-module runtime bridge, browser
+  import map, and `RendererThreeJS` selection with fallback to `Renderer3D`.
+- Added procedural true-3D prototype geometry:
+  - third-person chase camera
+  - faceted player, demon families, NPCs, healing crosses, collectibles, bullets
+  - instanced low-poly walls, solid floor, fog, cheap lighting, blob shadows
+  - existing 2D HUD/quiz/menu/mission overlays remain on the transparent canvas
+- Added bullet `vx`/`vy` to client state for 3D projectile orientation.
+- Added `public/assets/3d/manifest.json` and export conventions with procedural
+  fallbacks until generated GLBs pass validation.
+- Performance optimization: horizontally merged 11k-12k wall cells into roughly
+  300-370 instanced wall runs. Browser samples dropped from ~142k visible
+  triangles to ~4k-5.5k, with 28-76 draw calls and 18-19 active monsters.
+- Added `window.render_game_to_text` low-poly debug state including positions,
+  combat state, renderer revision, draw calls, triangles, and wall counts.
+- Verification:
+  - `node --check game.js`
+  - `node --check src/client/RendererThreeJS.js`
+  - `node --check src/shared/entities/BulletManager.js`
+  - `node test/game-integration-test.js` completed; it still reports its known
+    monster-movement diagnostic warning unrelated to this renderer work
+  - Playwright Three.js runs with no page-error file after import-map fix
+  - visually inspected captures through the ground and wall-lighting fixes
+  - headed WebGL capture confirmed the intermittent blank headless screenshots
+    are a capture/compositing artifact; live renderer state remained valid
+  - wrapped WebGL and HUD canvases in one responsive relative stack
+  - added wall-aware camera distance, spawn-correction snapping, and a higher
+    action-RPG camera angle to reduce maze-wall obstruction
+  - verified discrete turning (`0 -> 0.524 -> 1.047` radians) and forward
+    movement state through Playwright/Puppeteer input
+  - default 2D Solo still renders through the new canvas wrapper
+  - latest artifacts: `output/web-game/low-poly-3d-headed/`,
+    `output/web-game/low-poly-3d-controls-final/`, and
+    `output/web-game/low-poly-3d-2d-regression/`
+- Next TODOs:
+  - load the asset manifest and one GLB while retaining procedural fallback
+  - create one Fear concept turnaround, generate 3D candidates, clean/remesh,
+    rig, and integrate idle/walk/hit/death clips
+  - add camera obstruction handling and projected 2D damage/health feedback
+  - verify full answer -> ammo -> fire -> hit -> death -> victory chain
+  - profile a 10-minute run on a real mid-range Android device

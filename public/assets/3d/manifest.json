@@ -1,0 +1,35 @@
+{
+  "version": 1,
+  "unitsPerGamePixel": 1,
+  "assets": {
+    "player.default": {
+      "source": null,
+      "fallback": "procedural-player",
+      "triangleBudget": 6000,
+      "textureBudget": 1024,
+      "clips": ["idle", "walk", "attack", "hit", "death"]
+    },
+    "monster.fear": {
+      "source": null,
+      "fallback": "procedural-demon",
+      "triangleBudget": 4000,
+      "textureBudget": 512,
+      "clips": ["idle", "walk", "attack", "hit", "death"]
+    },
+    "monster.doubt": {
+      "source": null,
+      "fallback": "procedural-demon",
+      "triangleBudget": 4000,
+      "textureBudget": 512,
+      "clips": ["idle", "walk", "attack", "hit", "death"]
+    },
+    "monster.condemnation": {
+      "source": null,
+      "fallback": "procedural-demon",
+      "triangleBudget": 4000,
+      "textureBudget": 512,
+      "clips": ["idle", "walk", "attack", "hit", "death"]
+    }
+  }
+}
+

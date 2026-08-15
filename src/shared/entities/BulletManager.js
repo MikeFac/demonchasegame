@@ -145,6 +145,8 @@
                     id: b.id,
                     x: Math.round(b.x),
                     y: Math.round(b.y),
+                    vx: b.vx,
+                    vy: b.vy,
                     playerCode: b.playerCode
                 };
             });

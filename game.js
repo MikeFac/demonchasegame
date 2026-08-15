@@ -1921,8 +1921,14 @@ function reloadWithViewMode(nextMode) {
 }
 
 function getRendererClassForViewMode(mode) {
-    if (mode === '3d' && typeof Renderer3D === 'function') {
-        return Renderer3D;
+    if (mode === '3d') {
+        if (typeof RendererThreeJS === 'function' && RendererThreeJS.isSupported()) {
+            return RendererThreeJS;
+        }
+        if (typeof Renderer3D === 'function') {
+            console.warn('Three.js/WebGL unavailable; using billboard 3D renderer.');
+            return Renderer3D;
+        }
     }
     return Renderer;
 }
@@ -6061,6 +6067,10 @@ function gameLoop(generation) {
     _gameLoopRunning = true;
     const gen = _gameGeneration; // Capture for requestAnimationFrame callbacks
     const nextFrame = () => requestAnimationFrame(() => gameLoop(gen));
+
+    if (window.gameMode !== 'game' && typeof window.setLowPolyWorldVisible === 'function') {
+        window.setLowPolyWorldVisible(false);
+    }
 
     if (window.gameMode === 'menu') {
         nextFrame();
