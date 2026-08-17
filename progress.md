@@ -2107,3 +2107,32 @@ Original prompt: Check the implementation of docs/multi-version-songs-implementa
 - No runtime code changed in this documentation-only step. Next recommended
   deliverable is Phases 1–4: three-mode selection, profile refactor, eye-level
   camera/crosshair, and honest wall-blocked shooting.
+
+2026-08-17 — three view modes implemented:
+- Added canonical `2d`, `third-person`, and `first-person` modes to both setup
+  selectors and the in-game menu. Legacy `3d` and `2.5d` values migrate to
+  `third-person`; `fps` migrates to `first-person`.
+- Reused `RendererThreeJS` for both mesh modes with chase and first-person
+  profiles. First person now uses a stable eye-level camera, hides only the
+  local player, disables automatic monster framing, draws a centered crosshair,
+  and uses shorter fog for suspense while retaining readable lighting.
+- Added deterministic gameplay-plane ray aiming. First-person shots use the
+  center ray, walls beat monsters, misses and wall impacts still produce
+  feedback, and 2.5D aim assist can no longer select monsters through walls.
+- Added hold-forward/back, simultaneous movement and continuous yaw, mouse and
+  touch drag turning, and comprehensive held-input clearing for FPS. Existing
+  2D input and 2.5D chase behavior remain separate profiles.
+- Made WebGL capability fallback explicit to 2D rather than silently exposing
+  billboard monsters. Recovery snapshots include the canonical mode/profile
+  and remain visible until a complete restored frame from the same view.
+- Added `npm run test:three-views`. It passes selection/migration, 2D isolation,
+  unchanged chase-camera behavior, eye-level FPS behavior, no input drift,
+  visible hits, wall-blocked shots, and forced context loss/restoration with no
+  console or page errors.
+- Final compatibility and budget gates pass: `npm run validate:3d`,
+  `npm run test:3d-runtime`, and `npm run test:three-views`. The headless FPS
+  scene used about 13 draw calls and 7,376 triangles; the 2.5D compatibility
+  run used 17 draw calls and 10,158 triangles, both far below hard budgets.
+- Remaining external gate: run both mesh modes for ten minutes on a target
+  Android phone. Authored positional monster audio remains a later suspense
+  polish item because a suitable licensed cue set is not yet in the project.

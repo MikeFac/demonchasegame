@@ -27,6 +27,74 @@ let socket;
 let playerCode = null;  // code to access player information for the current player
 let viewMode = '2d';
 
+const VIEW_MODE_REGISTRY = Object.freeze({
+    '2d': Object.freeze({
+        id: '2d', labelKey: 'menu.view2d', renderer: 'canvas2d',
+        cameraProfile: 'top-down', inputProfile: 'point'
+    }),
+    'third-person': Object.freeze({
+        id: 'third-person', labelKey: 'menu.view25d', renderer: 'three',
+        cameraProfile: 'chase', inputProfile: 'chase'
+    }),
+    'first-person': Object.freeze({
+        id: 'first-person', labelKey: 'menu.viewFirstPerson', renderer: 'three',
+        cameraProfile: 'first-person', inputProfile: 'first-person'
+    })
+});
+
+function getViewModeConfig(mode) {
+    return VIEW_MODE_REGISTRY[normalizeViewMode(mode)] || VIEW_MODE_REGISTRY['2d'];
+}
+
+function isMeshViewMode(mode) {
+    return getViewModeConfig(mode).renderer === 'three';
+}
+
+function getNextViewMode(mode) {
+    const order = ['2d', 'third-person', 'first-person'];
+    const index = order.indexOf(normalizeViewMode(mode));
+    return order[(index + 1) % order.length];
+}
+
+function clearDirectionalInput(handler) {
+    if (!handler) return;
+    handler.clearTarget();
+    if (typeof handler.clearDirectionalInput === 'function') handler.clearDirectionalInput();
+    else if (typeof handler.stopForwardMovement === 'function') handler.stopForwardMovement();
+}
+
+function renderGameToTextState() {
+    const activePlayer = typeof player !== 'undefined' ? player : null;
+    const activeMonsters = typeof monsters !== 'undefined' && Array.isArray(monsters) ? monsters : [];
+    const activeGameState = typeof gameState !== 'undefined' && gameState ? gameState : {};
+    return JSON.stringify({
+        mode: typeof window.gameMode === 'string' ? window.gameMode : 'loading',
+        viewMode,
+        renderer: window.renderer?.constructor?.name || null,
+        coordinates: 'game origin is top-left; +x points right/east and +y points down/south',
+        player: activePlayer ? {
+            x: Math.round(activePlayer.x || 0),
+            y: Math.round(activePlayer.y || 0),
+            viewAngle: Number((activePlayer.viewAngle || 0).toFixed(3)),
+            health: activePlayer.health,
+            ammo: activePlayer.ammo,
+            moving: !!activePlayer.isMoving
+        } : null,
+        monsters: activeMonsters.slice(0, 20).map((monster) => ({
+            id: monster.id,
+            type: monster.demonType || monster.monsterType,
+            x: Math.round(monster.x || 0),
+            y: Math.round(monster.y || 0),
+            health: monster.health
+        })),
+        monstersKilled: activeGameState.monstersKilled,
+        monstersToKill: activeGameState.monstersToKill,
+        paused: !!activeGameState.pausedForStory
+    });
+}
+
+window.render_game_to_text = renderGameToTextState;
+
 // Declare the canvas variable globally
 let canvas;
 
@@ -136,10 +204,7 @@ function enterStoryPause(options) {
     }
 
     if (inputHandler) {
-        inputHandler.clearTarget();
-        if (inputHandler.viewMode === '3d' && typeof inputHandler.stopForwardMovement === 'function') {
-            inputHandler.stopForwardMovement();
-        }
+        clearDirectionalInput(inputHandler);
     }
 
     if (typeof clearToasts === 'function') {
@@ -1672,14 +1737,106 @@ function normalizeAngleDelta(angle) {
     return angle;
 }
 
-function find3DTargetMonster(monsters, player) {
+function getRayRectangleDistance(originX, originY, directionX, directionY, wall, maxDistance) {
+    const minX = Number(wall.x) || 0;
+    const minY = Number(wall.y) || 0;
+    const maxX = minX + (Number(wall.width) || 25);
+    const maxY = minY + (Number(wall.height) || 25);
+    let near = 0;
+    let far = maxDistance;
+
+    const updateAxis = (origin, direction, min, max) => {
+        if (Math.abs(direction) < 0.000001) return origin >= min && origin <= max;
+        let first = (min - origin) / direction;
+        let second = (max - origin) / direction;
+        if (first > second) [first, second] = [second, first];
+        near = Math.max(near, first);
+        far = Math.min(far, second);
+        return near <= far;
+    };
+
+    if (!updateAxis(originX, directionX, minX, maxX)) return null;
+    if (!updateAxis(originY, directionY, minY, maxY)) return null;
+    return far >= 0 && near <= maxDistance ? Math.max(0, near) : null;
+}
+
+function findNearestWallRayHit(originX, originY, directionX, directionY, maxDistance) {
+    let nearest = null;
+    for (const wall of clientWalls || []) {
+        const distance = getRayRectangleDistance(
+            originX, originY, directionX, directionY, wall, maxDistance
+        );
+        if (distance === null || (nearest && distance >= nearest.distance)) continue;
+        nearest = {
+            type: 'wall',
+            wall,
+            distance,
+            point: {
+                x: originX + directionX * distance,
+                y: originY + directionY * distance
+            }
+        };
+    }
+    return nearest;
+}
+
+function getRayMonsterDistance(originX, originY, directionX, directionY, monster, maxDistance) {
+    const dx = monster.x - originX;
+    const dy = monster.y - originY;
+    const projection = dx * directionX + dy * directionY;
+    if (projection < 0 || projection > maxDistance) return null;
+    const radius = Math.max(18, Math.min(38, Math.max(monster.width || 40, monster.height || 40) * 0.5));
+    const perpendicularSquared = dx * dx + dy * dy - projection * projection;
+    if (perpendicularSquared > radius * radius) return null;
+    const entry = projection - Math.sqrt(Math.max(0, radius * radius - perpendicularSquared));
+    return Math.max(0, entry);
+}
+
+function resolveFirstPersonAim(monsters, player) {
+    const facing = typeof player.viewAngle === 'number' ? player.viewAngle : 0;
+    const directionX = Math.cos(facing);
+    const directionY = Math.sin(facing);
+    const wallHit = findNearestWallRayHit(
+        player.x, player.y, directionX, directionY, THREE_D_FIRE_RANGE
+    );
+    const visibleDistance = wallHit ? wallHit.distance : THREE_D_FIRE_RANGE;
+    let nearestMonster = null;
+
+    for (const monster of monsters || []) {
+        if (!monster || (monster.health !== undefined && monster.health <= 0)) continue;
+        const distance = getRayMonsterDistance(
+            player.x, player.y, directionX, directionY, monster, visibleDistance
+        );
+        if (distance === null || (nearestMonster && distance >= nearestMonster.distance)) continue;
+        nearestMonster = {
+            type: 'monster',
+            monster,
+            distance,
+            point: { x: monster.x, y: monster.y }
+        };
+    }
+
+    if (nearestMonster) return nearestMonster;
+    if (wallHit) return wallHit;
+    return {
+        type: 'miss',
+        distance: THREE_D_FIRE_RANGE,
+        point: {
+            x: player.x + directionX * THREE_D_FIRE_RANGE,
+            y: player.y + directionY * THREE_D_FIRE_RANGE
+        }
+    };
+}
+
+function resolveThirdPersonAim(monsters, player) {
     let bestMonster = null;
     let bestDistance = Infinity;
     const facing = typeof player.viewAngle === 'number' ? player.viewAngle : 0;
     const facingX = Math.cos(facing);
     const facingY = Math.sin(facing);
 
-    for (const monster of monsters) {
+    for (const monster of monsters || []) {
+        if (!monster || (monster.health !== undefined && monster.health <= 0)) continue;
         const dx = monster.x - player.x;
         const dy = monster.y - player.y;
         const distance = Math.sqrt(dx * dx + dy * dy);
@@ -1694,28 +1851,55 @@ function find3DTargetMonster(monsters, player) {
         const angleDelta = Math.abs(normalizeAngleDelta(angleToMonster - facing));
         if (angleDelta > THREE_D_FIRE_CONE) continue;
 
+        const wallHit = findNearestWallRayHit(
+            player.x, player.y, normDx, normDy, Math.max(0, distance - 1)
+        );
+        if (wallHit && wallHit.distance < distance) continue;
+
         if (distance < bestDistance) {
             bestMonster = monster;
             bestDistance = distance;
         }
     }
 
-    return bestMonster;
+    if (bestMonster) {
+        return {
+            type: 'monster',
+            monster: bestMonster,
+            distance: bestDistance,
+            point: { x: bestMonster.x, y: bestMonster.y }
+        };
+    }
+    return resolveFirstPersonAim([], player);
+}
+
+function find3DTargetMonster(monsters, player) {
+    return resolveThirdPersonAim(monsters, player).monster || null;
+}
+
+function resolve3DAim(monsters, player) {
+    return viewMode === 'first-person'
+        ? resolveFirstPersonAim(monsters, player)
+        : resolveThirdPersonAim(monsters, player);
 }
 
 function tryHandle3DFire(monsters, now) {
     if (now - lastAttackTime <= ATTACK_RATE) return false;
-    const monster = find3DTargetMonster(monsters, player);
-    if (!monster) return false;
-
+    const aimResult = resolve3DAim(monsters, player);
+    const monster = aimResult.monster || null;
     lastAttackTime = now;
     lastAttackedMonster = monster;
 
-    if (renderer && typeof renderer.spawnShotTracer === 'function') {
-        renderer.spawnShotTracer(player, monster);
+    if (renderer && typeof renderer.setAimResult === 'function') {
+        renderer.setAimResult(aimResult);
+    }
+    if (renderer && typeof renderer.spawnShotTracer === 'function' && aimResult.point) {
+        renderer.spawnShotTracer(player, monster || aimResult.point, aimResult);
     }
 
     attackSound.play();
+    if (!monster) return true;
+
     monster.isAttacked = true;
     setTimeout(() => {
         monster.isAttacked = false;
@@ -1886,15 +2070,20 @@ let player = {
 let ctx, monsters, healingPoints, chaseTrigger, lastAttackedMonster;
 
 function normalizeViewMode(value) {
-    return value === '3d' ? '3d' : '2d';
+    const normalized = String(value || '').trim().toLowerCase();
+    if (normalized === '3d' || normalized === '2.5d' || normalized === 'third-person') {
+        return 'third-person';
+    }
+    if (normalized === 'fps' || normalized === 'first-person') {
+        return 'first-person';
+    }
+    return '2d';
 }
 
 function resolveInitialViewMode(urlParams) {
-    const urlMode = normalizeViewMode(urlParams.get('viewMode'));
-    if (urlMode === '3d') return urlMode;
-
-    const persistedMode = normalizeViewMode(localStorage.getItem('preferredViewMode'));
-    return persistedMode;
+    const rawUrlMode = urlParams.get('viewMode');
+    if (rawUrlMode !== null) return normalizeViewMode(rawUrlMode);
+    return normalizeViewMode(localStorage.getItem('preferredViewMode'));
 }
 
 function persistViewMode(nextMode) {
@@ -1916,8 +2105,8 @@ function reloadWithViewMode(nextMode) {
     persistViewMode(normalized);
 
     const nextUrl = new URL(window.location.href);
-    if (normalized === '3d') {
-        nextUrl.searchParams.set('viewMode', '3d');
+    if (normalized !== '2d') {
+        nextUrl.searchParams.set('viewMode', normalized);
     } else {
         nextUrl.searchParams.delete('viewMode');
     }
@@ -1925,23 +2114,31 @@ function reloadWithViewMode(nextMode) {
 }
 
 function getRendererClassForViewMode(mode) {
-    if (mode === '3d') {
+    if (isMeshViewMode(mode)) {
         if (typeof RendererThreeJS === 'function' && RendererThreeJS.isSupported()) {
             return RendererThreeJS;
         }
-        if (typeof Renderer3D === 'function') {
-            console.warn('Three.js/WebGL unavailable; using billboard 3D renderer.');
-            return Renderer3D;
-        }
+        console.warn('Three.js/WebGL unavailable; the selected mesh view cannot start.');
     }
     return Renderer;
 }
 
 function getInputHandlerClassForViewMode(mode) {
-    if (mode === '3d' && typeof InputHandler3D === 'function') {
+    if (isMeshViewMode(mode) && typeof InputHandler3D === 'function') {
         return InputHandler3D;
     }
     return InputHandler;
+}
+
+function ensureSupportedViewMode(mode) {
+    const normalized = normalizeViewMode(mode);
+    if (!isMeshViewMode(normalized)) return normalized;
+    if (typeof RendererThreeJS === 'function' && RendererThreeJS.isSupported()) return normalized;
+
+    persistViewMode('2d');
+    updateViewModeControls('2d');
+    showToast(t('toasts.webglUnavailable'), 5000);
+    return '2d';
 }
 let playerImg, otherPlayerImg, healingPointImg, demonImages, explosionImg;
 let buildingTilesImg, terrainTilesImg; // Tile sprite sheets (8x8 grids, 32x32 tiles)
@@ -3134,10 +3331,7 @@ function resetGameState() {
 
     // Input
     if (inputHandler) {
-        inputHandler.clearTarget();
-        if (inputHandler.viewMode === '3d' && typeof inputHandler.stopForwardMovement === 'function') {
-            inputHandler.stopForwardMovement();
-        }
+        clearDirectionalInput(inputHandler);
         inputHandler.setCamera(camera);
     }
     _lastPositionSendTime = 0;
@@ -4474,10 +4668,7 @@ async function init() {
                     player.y = targetY;
                     // Clear any movement target so player doesn't walk back to old position
                     if (inputHandler) {
-                        inputHandler.clearTarget();
-                        if (inputHandler.viewMode === '3d' && typeof inputHandler.stopForwardMovement === 'function') {
-                            inputHandler.stopForwardMovement();
-                        }
+                        clearDirectionalInput(inputHandler);
                     }
                     const spawnCollides = clientWallGrid.collides(player.x, player.y, player.width, player.height);
                     console.log(`[WallSpawn] onWalls: moved player from (${oldX.toFixed(1)}, ${oldY.toFixed(1)}) to spawn (${player.x}, ${player.y}) wallCollides=${spawnCollides} w=${player.width} h=${player.height}`);
@@ -4842,12 +5033,17 @@ async function init() {
         if (inputHandler && typeof inputHandler.destroy === 'function') {
             inputHandler.destroy();
         }
+        viewMode = ensureSupportedViewMode(viewMode);
+        const viewConfig = getViewModeConfig(viewMode);
         const InputHandlerClass = getInputHandlerClassForViewMode(viewMode);
         inputHandler = new InputHandlerClass(canvas, {
             QUALITY_LINE_HEIGHT,
             BUTTON_HEIGHT,
             BUTTON_WIDTH,
-            ANSWER_SECTION_HEIGHT
+            ANSWER_SECTION_HEIGHT,
+            viewMode,
+            cameraProfile: viewConfig.cameraProfile,
+            inputProfile: viewConfig.inputProfile
         });
 
         // Set up InputHandler callbacks
@@ -4943,8 +5139,12 @@ async function init() {
                     if (!opened) {
                         window.location.href = futureFeaturesUrl;
                     }
-                } else if (itemId === 'switchViewMode') {
-                    reloadWithViewMode(viewMode === '3d' ? '2d' : '3d');
+                } else if (itemId === 'viewMode2d') {
+                    if (viewMode !== '2d') reloadWithViewMode('2d');
+                } else if (itemId === 'viewModeThirdPerson') {
+                    if (viewMode !== 'third-person') reloadWithViewMode('third-person');
+                } else if (itemId === 'viewModeFirstPerson') {
+                    if (viewMode !== 'first-person') reloadWithViewMode('first-person');
                 } else if (itemId === 'shareGame') {
                     if (window.ShareManager) {
                         ShareManager.shareInvite().then(result => {
@@ -6249,8 +6449,12 @@ function gameLoop(generation) {
         // Renderer capability detection can allocate a graphics context, so
         // only select a class when a renderer actually needs to be created.
         if (!window.renderer || window.renderer.viewMode !== viewMode) {
+            const viewConfig = getViewModeConfig(viewMode);
             const RendererClass = getRendererClassForViewMode(viewMode);
-            window.renderer = new RendererClass(canvas, ctx, assets);
+            window.renderer = new RendererClass(canvas, ctx, assets, {
+                viewMode,
+                cameraProfile: viewConfig.cameraProfile
+            });
         }
         window.renderer.assets = assets; // Update assets in case they loaded late
 
@@ -6358,10 +6562,7 @@ function gameLoop(generation) {
 
         if (isStoryPaused()) {
             if (inputHandler) {
-                inputHandler.clearTarget();
-                if (inputHandler.viewMode === '3d' && typeof inputHandler.stopForwardMovement === 'function') {
-                    inputHandler.stopForwardMovement();
-                }
+                clearDirectionalInput(inputHandler);
             }
             player.isMoving = false;
             player.currentFrame = 0;
@@ -6474,22 +6675,19 @@ function gameLoop(generation) {
         if (movementFrozen) {
             // Clear any pending movement target so player doesn't auto-move when unfrozen
             if (inputHandler) {
-                inputHandler.clearTarget();
-                if (inputHandler.viewMode === '3d' && typeof inputHandler.stopForwardMovement === 'function') {
-                    inputHandler.stopForwardMovement();
-                }
+                clearDirectionalInput(inputHandler);
             }
             // Reset moving state
             player.isMoving = false;
             player.currentFrame = 0;
             player.frameTimer = 0;
-        } else if (movementIntent && inputHandler && inputHandler.viewMode === '3d') {
+        } else if (movementIntent && inputHandler && inputHandler.isDirectional3D) {
             const turnRadians = movementIntent.turnRadians || 0;
             if (turnRadians) {
-                if (typeof inputHandler.stopForwardMovement === 'function') {
+                if (inputHandler.viewMode !== 'first-person' && typeof inputHandler.stopForwardMovement === 'function') {
                     inputHandler.stopForwardMovement();
+                    movementIntent.forward = 0;
                 }
-                movementIntent.forward = false;
                 player.viewAngle = (player.viewAngle || 0) + turnRadians;
                 if (player.viewAngle > Math.PI) player.viewAngle -= Math.PI * 2;
                 if (player.viewAngle < -Math.PI) player.viewAngle += Math.PI * 2;
@@ -6499,18 +6697,19 @@ function gameLoop(generation) {
             }
 
             const wasMoving = player.isMoving;
-            player.isMoving = !!movementIntent.forward;
+            const movementDirection = Math.max(-1, Math.min(1, Number(movementIntent.forward) || 0));
+            player.isMoving = movementDirection !== 0;
             if (wasMoving && !player.isMoving) {
                 player.currentFrame = 0;
                 player.frameTimer = 0;
             }
 
-            if (movementIntent.forward) {
+            if (movementDirection) {
                 const baseSpeed = activeBuffs.sandals.active ? PLAYER_SPEED * Constants.SANDALS_SPEED_BOOST : PLAYER_SPEED;
                 let moveSpeed = baseSpeed * gameSpeedMultiplier * getFreezeAuraMoveFactor(player, monsters, Date.now());
 
-                const dx = Math.cos(player.viewAngle || 0) * moveSpeed;
-                const dy = Math.sin(player.viewAngle || 0) * moveSpeed;
+                const dx = Math.cos(player.viewAngle || 0) * moveSpeed * movementDirection;
+                const dy = Math.sin(player.viewAngle || 0) * moveSpeed * movementDirection;
                 const newX = player.x + dx;
                 const newY = player.y + dy;
 

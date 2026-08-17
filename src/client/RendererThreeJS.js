@@ -22,13 +22,14 @@ class RendererThreeJS extends Renderer3D {
         return RendererThreeJS._supportResult;
     }
 
-    constructor(canvas, ctx, assets) {
+    constructor(canvas, ctx, assets, options = {}) {
         super(canvas, ctx, assets);
         if (!RendererThreeJS.isSupported()) {
             throw new Error('Three.js/WebGL runtime is unavailable');
         }
 
-        this.viewMode = '3d';
+        this.viewMode = options.viewMode || 'third-person';
+        this.cameraProfile = options.cameraProfile || 'chase';
         this.worldCanvas = document.getElementById('worldCanvas3D');
         this.recoveryCanvas = document.getElementById('worldCanvasRecovery');
         this.recoveryCtx = this.recoveryCanvas.getContext('2d', { alpha: false });
@@ -95,6 +96,8 @@ class RendererThreeJS extends Renderer3D {
         this.assetRevision = 0;
         this.shotTracers = [];
         this.maxShotTracers = 6;
+        this.eyeHeight = 54;
+        this.aimFeedback = { type: 'neutral', until: 0, distance: null, targetId: null, point: null };
 
         this._createEnvironment();
         this._installContextRecovery();
@@ -318,7 +321,7 @@ class RendererThreeJS extends Renderer3D {
             this.worldCanvas.style.visibility = 'hidden';
             this.recoveryCanvas.style.display = 'block';
             this._drawImmediateRecoveryFrame();
-            console.warn('Low-poly WebGL context lost; holding the latest 2.5D frame until restoration');
+            console.warn(`Low-poly WebGL context lost; holding the latest ${this.viewMode} frame until restoration`);
         }, false);
         this.worldCanvas.addEventListener('webglcontextrestored', () => {
             this.webglContextLost = false;
@@ -415,8 +418,10 @@ class RendererThreeJS extends Renderer3D {
     }
 
     _getRecoverySnapshotSignature(player) {
-        if (!player) return `no-player:${this.wallRevision}:${this.assetRevision}`;
+        if (!player) return `${this.viewMode}:${this.cameraProfile}:no-player:${this.wallRevision}:${this.assetRevision}`;
         return [
+            this.viewMode,
+            this.cameraProfile,
             Math.round(player.x),
             Math.round(player.y),
             Number((player.viewAngle || 0).toFixed(3)),
@@ -457,9 +462,9 @@ class RendererThreeJS extends Renderer3D {
         const state = this.webglContextLost ? 'LOST' : (this.contextRestorePending ? 'RESTORE FRAME' : 'LIVE');
         const gpuType = this.gpuInfo.software ? 'SOFTWARE GPU' : 'HARDWARE GPU';
         const lines = [
-            `3D ${state} | ${gpuType}`,
+            `${this.viewMode} ${state} | ${gpuType}`,
             `loss ${this.contextLossCount}  restore ${this.contextRestoreCount}  snapshots ${this.recoverySnapshotCount}`,
-            recoveryActive ? 'cached 2.5D layer visible' : this.gpuInfo.renderer.slice(0, 42)
+            recoveryActive ? `cached ${this.viewMode} layer visible` : this.gpuInfo.renderer.slice(0, 42)
         ];
         const width = Math.min(292, this.canvas.width - 12);
         const height = 47;
@@ -494,6 +499,8 @@ class RendererThreeJS extends Renderer3D {
         window.lowPoly3DStats = {
             ...previousStats,
             renderer: 'three-snapshot-recovery',
+            viewMode: this.viewMode,
+            cameraProfile: this.cameraProfile,
             gpu: this.gpuInfo,
             supportProbeCount: RendererThreeJS._supportProbeCount || 0,
             recoverySnapshots: this.recoverySnapshotCount,
@@ -507,8 +514,10 @@ class RendererThreeJS extends Renderer3D {
         };
         this.debugState = {
             mode: 'low-poly-3d',
+            viewMode: this.viewMode,
+            cameraProfile: this.cameraProfile,
             status: 'webgl-context-recovery',
-            fallback: 'last-2.5d-frame',
+            fallback: `last-${this.viewMode}-frame`,
             player: player ? {
                 x: Math.round(player.x),
                 y: Math.round(player.y),
@@ -626,6 +635,8 @@ class RendererThreeJS extends Renderer3D {
         const selected = themes[theme] || themes.stone;
         this.scene.background.setHex(selected.sky);
         this.scene.fog.color.setHex(selected.fog);
+        this.scene.fog.near = this.cameraProfile === 'first-person' ? 300 : 620;
+        this.scene.fog.far = this.cameraProfile === 'first-person' ? 980 : 1450;
         this.floor.material.color.setHex(selected.floor);
     }
 
@@ -787,19 +798,38 @@ class RendererThreeJS extends Renderer3D {
             });
     }
 
-    spawnShotTracer(player, monster) {
-        if (!player || !monster || this.webglContextLost) return false;
+    setAimResult(result) {
+        const type = result?.type === 'monster' ? 'hit' : (result?.type || 'miss');
+        this.aimFeedback = {
+            type,
+            until: performance.now() + (type === 'hit' ? 240 : 180),
+            distance: Number.isFinite(result?.distance) ? Math.round(result.distance) : null,
+            targetId: result?.monster?.id ?? null,
+            point: result?.point ? {
+                x: Math.round(result.point.x),
+                y: Math.round(result.point.y)
+            } : null
+        };
+    }
+
+    spawnShotTracer(player, target, shotResult = null) {
+        if (!player || !target || this.webglContextLost) return false;
 
         const THREE = this.three;
         const facing = Number.isFinite(player.viewAngle)
             ? player.viewAngle
-            : Math.atan2(monster.y - player.y, monster.x - player.x);
+            : Math.atan2(target.y - player.y, target.x - player.x);
+        const firstPerson = this.cameraProfile === 'first-person';
         const start = new THREE.Vector3(
-            player.x + Math.cos(facing) * 22,
-            34,
-            player.y + Math.sin(facing) * 22
+            player.x + Math.cos(facing) * (firstPerson ? 16 : 22),
+            firstPerson ? this.eyeHeight - 6 : 34,
+            player.y + Math.sin(facing) * (firstPerson ? 16 : 22)
         );
-        const end = new THREE.Vector3(monster.x, 38, monster.y);
+        const end = new THREE.Vector3(
+            target.x,
+            shotResult?.type === 'monster' ? 38 : (firstPerson ? this.eyeHeight - 6 : 28),
+            target.y
+        );
         const direction = end.clone().sub(start);
         const distance = direction.length();
         if (distance < 1) return false;
@@ -845,7 +875,8 @@ class RendererThreeJS extends Renderer3D {
             end,
             startedAt: performance.now(),
             duration: Math.max(650, Math.min(850, distance / 0.6)),
-            progress: 0
+            progress: 0,
+            resultType: shotResult?.type || 'monster'
         };
         this.shotTracers.push(tracer);
 
@@ -978,7 +1009,8 @@ class RendererThreeJS extends Renderer3D {
         group.rotation.y = -angle + Math.PI / 2;
         const stride = player.isMoving ? Math.sin(this.elapsed * 11) * 0.04 : 0;
         group.rotation.z = stride;
-        group.visible = player.state !== 'disconnected';
+        group.visible = player.state !== 'disconnected'
+            && !(isLocal && this.cameraProfile === 'first-person');
         group.scale.setScalar(isLocal ? 1.06 : 0.96);
         const animation = player.health <= 0
             ? 'death'
@@ -1133,6 +1165,27 @@ class RendererThreeJS extends Renderer3D {
             : (player.facingDirection === 'left' ? Math.PI : 0);
         const forwardX = Math.cos(angle);
         const forwardZ = Math.sin(angle);
+        if (this.cameraProfile === 'first-person') {
+            const shakeX = screenShake && screenShake.duration > 0 ? screenShake.x * 0.14 : 0;
+            const shakeY = screenShake && screenShake.duration > 0 ? screenShake.y * 0.1 : 0;
+            const desired = new THREE.Vector3(
+                player.x + shakeX,
+                this.eyeHeight + shakeY,
+                player.y
+            );
+            const target = new THREE.Vector3(
+                player.x + forwardX * 240 + shakeX,
+                this.eyeHeight + shakeY,
+                player.y + forwardZ * 240
+            );
+            this.camera3D.position.copy(desired);
+            this.cameraTarget.copy(target);
+            this.camera3D.lookAt(target);
+            this.cameraInitialized = true;
+            this.lastCameraPlayerPosition = new THREE.Vector2(player.x, player.y);
+            this.cameraFraming = { nearestMonsterId: null, nearestMonsterDistance: null };
+            return;
+        }
         const cameraDistance = 280;
         const cameraHeight = 380;
         const shakeX = screenShake && screenShake.duration > 0 ? screenShake.x * 0.7 : 0;
@@ -1187,12 +1240,24 @@ class RendererThreeJS extends Renderer3D {
         this.drawTopBar(uiState);
         this.drawHUD(player, gameState);
         this.drawMissionTaskCard(uiState);
-        this.drawOnboardingGuide(uiState, player, camera);
+        const onboardingState = this.cameraProfile === 'first-person' && uiState.onboardingGuide?.target === 'move'
+            ? {
+                ...uiState,
+                onboardingGuide: {
+                    ...uiState.onboardingGuide,
+                    text: 'Turn, listen, and move carefully toward the demon.',
+                    worldX: null,
+                    worldY: null
+                }
+            }
+            : uiState;
+        this.drawOnboardingGuide(onboardingState, player, camera);
         this.drawInventoryHUD(inventoryState || { inventory: {}, activeBuffs: {}, inventoryOpen: false });
         this.drawVerseTestButton();
         this.drawMessages(uiState);
         this.drawFrozenIndicator(uiState.movementFrozen);
         this._drawControlsOverlay();
+        this._drawFirstPersonCrosshair();
 
         if (uiState.currentVerse) {
             this.displayBibleVerse(uiState.currentVerse.text, uiState.currentVerse.reference, uiState.quiz);
@@ -1204,6 +1269,39 @@ class RendererThreeJS extends Renderer3D {
         if (uiState.speedPromptVisible && !uiState.storyPause && !uiState.goalsOverlayVisible) this.drawSpeedPrompt();
         if (uiState.storyPause && uiState.storyPause.type === 'questHub') this.drawQuestHubOverlay(uiState.storyPause);
         else this.drawStoryPauseOverlay(uiState.storyPause);
+    }
+
+    _drawFirstPersonCrosshair() {
+        if (this.cameraProfile !== 'first-person') return;
+        const active = performance.now() <= this.aimFeedback.until;
+        const type = active ? this.aimFeedback.type : 'neutral';
+        const color = type === 'hit' ? '#ffe46b' : (type === 'wall' ? '#ff9b6b' : (type === 'miss' ? '#d4e6f4' : '#ffffff'));
+        const centerX = this.canvas.width / 2;
+        const centerY = this.canvas.height / 2;
+        const gap = type === 'hit' ? 4 : 6;
+        const arm = type === 'hit' ? 9 : 7;
+
+        this.ctx.save();
+        this.ctx.strokeStyle = 'rgba(0, 0, 0, 0.72)';
+        this.ctx.lineWidth = 4;
+        this._strokeCrosshair(centerX, centerY, gap, arm);
+        this.ctx.strokeStyle = color;
+        this.ctx.lineWidth = 2;
+        this._strokeCrosshair(centerX, centerY, gap, arm);
+        this.ctx.restore();
+    }
+
+    _strokeCrosshair(x, y, gap, arm) {
+        this.ctx.beginPath();
+        this.ctx.moveTo(x - gap - arm, y);
+        this.ctx.lineTo(x - gap, y);
+        this.ctx.moveTo(x + gap, y);
+        this.ctx.lineTo(x + gap + arm, y);
+        this.ctx.moveTo(x, y - gap - arm);
+        this.ctx.lineTo(x, y - gap);
+        this.ctx.moveTo(x, y + gap);
+        this.ctx.lineTo(x, y + gap + arm);
+        this.ctx.stroke();
     }
 
     _monsterPalette(type) {
@@ -1246,6 +1344,8 @@ class RendererThreeJS extends Renderer3D {
         const info = this.webgl.info.render;
         window.lowPoly3DStats = {
             renderer: 'three',
+            viewMode: this.viewMode,
+            cameraProfile: this.cameraProfile,
             revision: this.three.REVISION,
             calls: info.calls,
             triangles: info.triangles,
@@ -1285,11 +1385,12 @@ class RendererThreeJS extends Renderer3D {
     }
 
     _publishDebugState(gameState, player, monsters, healingPoints) {
-        const projectedPlayer = player
+        const projectedPlayer = player && this.cameraProfile !== 'first-person'
             ? new this.three.Vector3(player.x, 30, player.y).project(this.camera3D)
             : null;
         this.debugState = {
             mode: 'low-poly-3d',
+            viewMode: this.viewMode,
             coordinates: 'top-down game coordinates: +x right/east, +y down/south; rendered as +x and +z',
             player: player ? {
                 x: Math.round(player.x),
@@ -1300,6 +1401,7 @@ class RendererThreeJS extends Renderer3D {
                 moving: !!player.isMoving
             } : null,
             camera: {
+                profile: this.cameraProfile,
                 x: Math.round(this.camera3D.position.x),
                 y: Math.round(this.camera3D.position.y),
                 z: Math.round(this.camera3D.position.z),
@@ -1310,6 +1412,8 @@ class RendererThreeJS extends Renderer3D {
                     z: Math.round(this.cameraTarget.z)
                 },
                 framing: this.cameraFraming,
+                eyeHeight: this.cameraProfile === 'first-person' ? this.eyeHeight : null,
+                localPlayerVisible: this.cameraProfile !== 'first-person',
                 projectedPlayer: projectedPlayer ? {
                     x: Number(projectedPlayer.x.toFixed(3)),
                     y: Number(projectedPlayer.y.toFixed(3)),
@@ -1343,8 +1447,10 @@ class RendererThreeJS extends Renderer3D {
             shotTracers: this.shotTracers.map((tracer) => ({
                 x: Math.round(tracer.group.position.x),
                 y: Math.round(tracer.group.position.z),
-                progress: Number(tracer.progress.toFixed(2))
+                progress: Number(tracer.progress.toFixed(2)),
+                resultType: tracer.resultType
             })),
+            aim: this.aimFeedback,
             monstersKilled: gameState.monstersKilled,
             monstersToKill: gameState.monstersToKill,
             performance: window.lowPoly3DStats

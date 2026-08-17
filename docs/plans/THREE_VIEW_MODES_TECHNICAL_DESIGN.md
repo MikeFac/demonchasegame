@@ -1,6 +1,27 @@
 # Three View Modes Technical Design
 
-Status: proposed implementation design for the `low-poly-3d` branch.
+Status: core implementation complete on the `low-poly-3d` branch; real-phone
+profiling and authored positional monster audio remain validation/polish gates.
+
+## Implementation Checkpoint — 2026-08-17
+
+Phases 1–5 and the automated portion of Phase 7 are implemented. The game now
+has canonical `2d`, `third-person`, and `first-person` modes, legacy preference
+migration, profile-specific Three.js cameras and controls, center-ray FPS
+combat, wall-aware 2.5D aim assist, mode-correct WebGL recovery, and diagnostic
+text state for every mode.
+
+The first suspense pass is also active: first person has shorter fog, real wall
+occlusion, no target-biased camera framing, no through-wall targeting, and no
+local-player mesh obstructing the view. Authored positional monster sounds are
+not yet included because the repository does not contain a suitable licensed
+cue set; that work should be evaluated with real audio assets rather than an
+unrelated placeholder sound.
+
+Automated verification is provided by `npm run test:three-views`, with legacy
+3D/runtime coverage in `npm run test:3d-runtime` and asset-budget validation in
+`npm run validate:3d`. The remaining release gate is the ten-minute profile of
+both mesh modes on a representative Android phone.
 
 ## Outcome
 

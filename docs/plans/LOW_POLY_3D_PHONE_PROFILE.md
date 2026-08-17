@@ -9,8 +9,10 @@ Snapdragon 6xx-class device with Chrome current enough for WebGL2.
 
 1. Serve the branch over HTTPS or expose the local server to the phone on a
    trusted LAN.
-2. Open `/?viewMode=3d`, start `chapter0/intro-01`, dismiss the speed prompt,
-   and play continuously for ten minutes.
+2. Open `/?viewMode=third-person`, start `chapter0/intro-01`, dismiss the speed
+   prompt, and play continuously for ten minutes. Repeat the full run at
+   `/?viewMode=first-person`; the legacy `/?viewMode=3d` alias is not the
+   canonical profile URL.
 3. Record `window.lowPoly3DStats` at minute 1, 5, and 10 from Chrome remote
    debugging. Capture draw calls, triangles, entity counts, authored/fallback
    assets, renderer errors, and internal canvas size.
@@ -32,8 +34,10 @@ Snapdragon 6xx-class device with Chrome current enough for WebGL2.
 
 ## Desktop proxy
 
-With the local server running, `npm run test:3d-runtime` starts the onboarding
-mission and fails on renderer fallback, asset-load errors, browser errors, more
-than 100 draw calls, or more than 150,000 triangles. It also records a short RAF
-sample and a screenshot. Software-rendered desktop FPS is informational and
-must not be reported as the phone result.
+With the local server running, `npm run test:three-views` verifies all three
+mode paths, FPS movement/turning, wall-aware combat, and view-correct WebGL
+recovery. `npm run test:3d-runtime` retains the legacy alias and 2.5D runtime
+budget regression. The tests fail on renderer fallback, asset-load errors,
+browser errors, more than 100 draw calls, or more than 150,000 triangles, and
+record screenshots and diagnostics. Software-rendered desktop FPS is
+informational and must not be reported as the phone result.

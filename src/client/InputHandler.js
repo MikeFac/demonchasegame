@@ -377,7 +377,9 @@ class InputHandler {
                 'songs',
                 'affinityHelp',
                 'futureFeatures',
-                'switchViewMode',
+                'viewMode2d',
+                'viewModeThirdPerson',
+                'viewModeFirstPerson',
                 'shareGame',
                 'leave'
             ];
@@ -399,11 +401,12 @@ class InputHandler {
 
             // Click outside menu items but inside panel - just close menu
             const itemCount = menuItems.length;
+            const panelHeight = padding * 2 + itemCount * itemH + (itemCount - 1) * (padding / 2);
             if (
                 clickedX >= panelX &&
                 clickedX <= panelX + mp.width &&
                 clickedY >= panelY &&
-                clickedY <= panelY + itemH * itemCount + padding * (itemCount + 1)
+                clickedY <= panelY + panelHeight
             ) {
                 if (this.callbacks.onHamburgerClick) {
                     this.callbacks.onHamburgerClick(); // Toggle off

@@ -789,14 +789,15 @@ class Renderer {
         const isPlaying = musicState.isPlaying;
 
         const testShieldOn = menuState.verseTestShielded || false;
-        const itemCount = 13;
+        const itemCount = 15;
+        const panelHeight = padding * 2 + itemCount * itemH + (itemCount - 1) * (padding / 2);
 
         // Panel background
         this.ctx.fillStyle = 'rgba(0, 0, 0, 0.9)';
-        this.ctx.fillRect(panelX, panelY, panelW, itemH * itemCount + padding * (itemCount + 1));
+        this.ctx.fillRect(panelX, panelY, panelW, panelHeight);
         this.ctx.strokeStyle = '#fff';
         this.ctx.lineWidth = 1;
-        this.ctx.strokeRect(panelX, panelY, panelW, itemH * itemCount + padding * (itemCount + 1));
+        this.ctx.strokeRect(panelX, panelY, panelW, panelHeight);
 
         // Menu items
         const items = [
@@ -810,7 +811,9 @@ class Renderer {
             { id: 'songs', label: t('menu.songs') },
             { id: 'affinityHelp', label: t('menu.affinityHelp') },
             { id: 'futureFeatures', label: t('game.futureFeatures', 'Future Features'), color: '#F5C542' },
-            { id: 'switchViewMode', label: menuState.viewMode === '3d' ? t('menu.switchTo2d') : t('menu.switchTo3d') },
+            { id: 'viewMode2d', label: `${menuState.viewMode === '2d' ? '✓' : '○'} ${t('menu.view2d')}` },
+            { id: 'viewModeThirdPerson', label: `${menuState.viewMode === 'third-person' ? '✓' : '○'} ${t('menu.view25d')}` },
+            { id: 'viewModeFirstPerson', label: `${menuState.viewMode === 'first-person' ? '✓' : '○'} ${t('menu.viewFirstPerson')}` },
             { id: 'shareGame', label: t('game.shareGame', '📤 Share Game'), color: '#4CAF50' },
             { id: 'leave', label: t('menu.leaveGame'), color: '#ff4444' }
         ];
@@ -2685,7 +2688,7 @@ class Renderer {
         const columns = Math.min(2, optionCount);
         const rows = Math.ceil(optionCount / columns);
         const leftMargin = 14;
-        const rightMargin = this.viewMode === '3d' ? 108 : 14;
+        const rightMargin = this.viewMode !== '2d' ? 108 : 14;
         const topGap = 8;
         const rowGap = 8;
         const columnGap = 10;

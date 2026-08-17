@@ -5,7 +5,8 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "validate:3d": "node scripts/validate-low-poly-assets.mjs",
-    "test:3d-runtime": "node scripts/test-low-poly-3d-runtime.mjs"
+    "test:3d-runtime": "node scripts/test-low-poly-3d-runtime.mjs",
+    "test:three-views": "node scripts/test-three-view-modes.mjs"
   },
   "keywords": [],
   "author": "",

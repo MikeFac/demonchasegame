@@ -1,7 +1,10 @@
 class InputHandler3D extends InputHandler {
     constructor(canvas, constants) {
         super(canvas, constants);
-        this.viewMode = '3d';
+        this.viewMode = constants.viewMode || 'third-person';
+        this.cameraProfile = constants.cameraProfile || 'chase';
+        this.inputProfile = constants.inputProfile || 'chase';
+        this.isDirectional3D = true;
         this.forwardPressed = false;
         this.fireQueue = 0;
         this.turnSpeed = Math.PI * 2 / 3;
@@ -9,13 +12,23 @@ class InputHandler3D extends InputHandler {
         this.lastTurnSampleAt = this._now();
         this.keyboardTurnLeft = false;
         this.keyboardTurnRight = false;
+        this.keyboardForward = false;
+        this.keyboardBackward = false;
         this.mouseTurnDirection = 0;
+        this.mouseMoveDirection = 0;
+        this.mouseLooking = false;
+        this.mouseLookLastX = null;
         this.touchTurnDirections = new Map();
+        this.touchMoveDirections = new Map();
+        this.touchLookPoints = new Map();
+        this.mouseLookSensitivity = 0.006;
+        this.touchLookSensitivity = 0.007;
         this.controls = null;
 
         this._handleKeyDown3D = this._handleKeyDown3D.bind(this);
         this._handleKeyUp3D = this._handleKeyUp3D.bind(this);
         this._handleMouseDown3D = this._handleMouseDown3D.bind(this);
+        this._handleMouseMove3D = this._handleMouseMove3D.bind(this);
         this._handleMouseUp3D = this._handleMouseUp3D.bind(this);
         this._handleWindowBlur3D = this._handleWindowBlur3D.bind(this);
         this._handleTouchCancel3D = this._handleTouchCancel3D.bind(this);
@@ -25,12 +38,17 @@ class InputHandler3D extends InputHandler {
         window.addEventListener('mouseup', this._handleMouseUp3D);
         window.addEventListener('blur', this._handleWindowBlur3D);
         canvas.addEventListener('mousedown', this._handleMouseDown3D);
+        canvas.addEventListener('mousemove', this._handleMouseMove3D);
         canvas.addEventListener('touchcancel', this._handleTouchCancel3D, { passive: false });
     }
 
     getMovementIntent() {
+        if (this._isDirectionalInputBlocked()) {
+            this.clearDirectionalInput();
+            return { forward: 0, turnRadians: 0, turnDirection: 0, fire: 0 };
+        }
         return {
-            forward: this.forwardPressed,
+            forward: this._getMoveDirection(),
             turnRadians: this._consumeTurnRadians(),
             turnDirection: this._getTurnDirection(),
             fire: this._consumeFireQueue()
@@ -39,6 +57,24 @@ class InputHandler3D extends InputHandler {
 
     stopForwardMovement() {
         this.forwardPressed = false;
+        this.keyboardForward = false;
+        this.keyboardBackward = false;
+        this.mouseMoveDirection = 0;
+        this.touchMoveDirections.clear();
+    }
+
+    clearDirectionalInput() {
+        this._accumulateHeldTurn();
+        this.stopForwardMovement();
+        this.keyboardTurnLeft = false;
+        this.keyboardTurnRight = false;
+        this.mouseTurnDirection = 0;
+        this.touchTurnDirections.clear();
+        this.mouseLooking = false;
+        this.mouseLookLastX = null;
+        this.touchLookPoints.clear();
+        this.pendingTurnRadians = 0;
+        this.fireQueue = 0;
     }
 
     clearTarget() {
@@ -52,6 +88,7 @@ class InputHandler3D extends InputHandler {
         window.removeEventListener('mouseup', this._handleMouseUp3D);
         window.removeEventListener('blur', this._handleWindowBlur3D);
         this.canvas.removeEventListener('mousedown', this._handleMouseDown3D);
+        this.canvas.removeEventListener('mousemove', this._handleMouseMove3D);
         this.canvas.removeEventListener('touchcancel', this._handleTouchCancel3D);
     }
 
@@ -65,10 +102,12 @@ class InputHandler3D extends InputHandler {
             return;
         }
         if (this._pointInRect(clickedX, clickedY, controls.forward)) {
+            if (this.inputProfile === 'first-person') return;
             this.forwardPressed = true;
             return;
         }
         if (this._pointInRect(clickedX, clickedY, controls.stop)) {
+            if (this.inputProfile === 'first-person') return;
             this._stopAndClearTarget();
             return;
         }
@@ -89,21 +128,25 @@ class InputHandler3D extends InputHandler {
             const point = this._getCanvasPoint(touch.clientX, touch.clientY);
             const controls = this._getControlRects();
             if (this._pointInRect(point.x, point.y, controls.left)) {
-                this._stopAndClearTarget();
+                if (this.inputProfile === 'chase') this._stopAndClearTarget();
+                else super.clearTarget();
                 this.touchTurnDirections.set(touch.identifier, -1);
                 continue;
             }
             if (this._pointInRect(point.x, point.y, controls.right)) {
-                this._stopAndClearTarget();
+                if (this.inputProfile === 'chase') this._stopAndClearTarget();
+                else super.clearTarget();
                 this.touchTurnDirections.set(touch.identifier, 1);
                 continue;
             }
             if (this._pointInRect(point.x, point.y, controls.forward)) {
-                this.forwardPressed = true;
+                if (this.inputProfile === 'first-person') this.touchMoveDirections.set(touch.identifier, 1);
+                else this.forwardPressed = true;
                 continue;
             }
             if (this._pointInRect(point.x, point.y, controls.stop)) {
-                this._stopAndClearTarget();
+                if (this.inputProfile === 'first-person') this.touchMoveDirections.set(touch.identifier, -1);
+                else this._stopAndClearTarget();
                 continue;
             }
             if (this._pointInRect(point.x, point.y, controls.fire)) {
@@ -111,6 +154,9 @@ class InputHandler3D extends InputHandler {
                 continue;
             }
             this._handleGameModeTouch(point.x, point.y, false);
+            if (this.inputProfile === 'first-person' && this._isLookZone(point)) {
+                this.touchLookPoints.set(touch.identifier, point);
+            }
         }
     }
 
@@ -118,15 +164,30 @@ class InputHandler3D extends InputHandler {
         event.preventDefault();
         this._accumulateHeldTurn();
         for (const touch of Array.from(event.changedTouches || [])) {
-            if (!this.touchTurnDirections.has(touch.identifier)) continue;
             const point = this._getCanvasPoint(touch.clientX, touch.clientY);
             const controls = this._getControlRects();
-            if (this._pointInRect(point.x, point.y, controls.left)) {
-                this.touchTurnDirections.set(touch.identifier, -1);
-            } else if (this._pointInRect(point.x, point.y, controls.right)) {
-                this.touchTurnDirections.set(touch.identifier, 1);
-            } else {
-                this.touchTurnDirections.delete(touch.identifier);
+            if (this.touchTurnDirections.has(touch.identifier)) {
+                if (this._pointInRect(point.x, point.y, controls.left)) {
+                    this.touchTurnDirections.set(touch.identifier, -1);
+                } else if (this._pointInRect(point.x, point.y, controls.right)) {
+                    this.touchTurnDirections.set(touch.identifier, 1);
+                } else {
+                    this.touchTurnDirections.delete(touch.identifier);
+                }
+            }
+            if (this.touchMoveDirections.has(touch.identifier)) {
+                if (this._pointInRect(point.x, point.y, controls.forward)) {
+                    this.touchMoveDirections.set(touch.identifier, 1);
+                } else if (this._pointInRect(point.x, point.y, controls.stop)) {
+                    this.touchMoveDirections.set(touch.identifier, -1);
+                } else {
+                    this.touchMoveDirections.delete(touch.identifier);
+                }
+            }
+            const previousLook = this.touchLookPoints.get(touch.identifier);
+            if (previousLook) {
+                this.pendingTurnRadians += (point.x - previousLook.x) * this.touchLookSensitivity;
+                this.touchLookPoints.set(touch.identifier, point);
             }
         }
     }
@@ -136,8 +197,10 @@ class InputHandler3D extends InputHandler {
         this._accumulateHeldTurn();
         for (const touch of Array.from(event?.changedTouches || [])) {
             this.touchTurnDirections.delete(touch.identifier);
+            this.touchMoveDirections.delete(touch.identifier);
+            this.touchLookPoints.delete(touch.identifier);
         }
-        // Forward movement is toggle-based in 3D mode, so touch release does not cancel it.
+        // Chase movement remains toggle-based; first-person movement stops on release.
     }
 
     _handleKeyDown3D(event) {
@@ -157,9 +220,11 @@ class InputHandler3D extends InputHandler {
                 this._stopAndClearTarget();
             }
         } else if (event.code === 'ArrowUp' || event.code === 'KeyW') {
-            this.forwardPressed = true;
+            if (this.inputProfile === 'first-person') this.keyboardForward = true;
+            else this.forwardPressed = true;
         } else if (event.code === 'ArrowDown' || event.code === 'KeyS' || event.code === 'Space') {
-            this._stopAndClearTarget();
+            if (this.inputProfile === 'first-person' && event.code !== 'Space') this.keyboardBackward = true;
+            else this._stopAndClearTarget();
         } else if (!event.repeat && (event.code === 'Enter' || event.code === 'KeyF')) {
             this._queueFire();
         }
@@ -172,8 +237,12 @@ class InputHandler3D extends InputHandler {
         } else if (event.code === 'ArrowRight' || event.code === 'KeyD') {
             this._accumulateHeldTurn();
             this.keyboardTurnRight = false;
+        } else if (event.code === 'ArrowUp' || event.code === 'KeyW') {
+            if (this.inputProfile === 'first-person') this.keyboardForward = false;
+        } else if (event.code === 'ArrowDown' || event.code === 'KeyS') {
+            if (this.inputProfile === 'first-person') this.keyboardBackward = false;
         }
-        // Forward movement is toggle-based in 3D mode, so key release does not cancel it.
+        // Chase movement remains toggle-based; first-person movement stops on release.
     }
 
     _handleMouseDown3D(event) {
@@ -183,32 +252,61 @@ class InputHandler3D extends InputHandler {
         const direction = this._pointInRect(point.x, point.y, controls.left)
             ? -1
             : (this._pointInRect(point.x, point.y, controls.right) ? 1 : 0);
+        if (!direction && this.inputProfile === 'first-person') {
+            if (this._pointInRect(point.x, point.y, controls.forward)) {
+                event.preventDefault();
+                this.mouseMoveDirection = 1;
+                return;
+            }
+            if (this._pointInRect(point.x, point.y, controls.stop)) {
+                event.preventDefault();
+                this.mouseMoveDirection = -1;
+                return;
+            }
+            if (this._isLookZone(point)) {
+                event.preventDefault();
+                this.mouseLooking = true;
+                this.mouseLookLastX = point.x;
+            }
+            return;
+        }
         if (!direction) return;
 
         event.preventDefault();
         this._accumulateHeldTurn();
         this.mouseTurnDirection = direction;
-        this._stopAndClearTarget();
+        if (this.inputProfile === 'chase') this._stopAndClearTarget();
+        else super.clearTarget();
+    }
+
+    _handleMouseMove3D(event) {
+        if (!this.mouseLooking || this.inputProfile !== 'first-person') return;
+        const point = this._getCanvasPoint(event.clientX, event.clientY);
+        if (this.mouseLookLastX !== null) {
+            this.pendingTurnRadians += (point.x - this.mouseLookLastX) * this.mouseLookSensitivity;
+        }
+        this.mouseLookLastX = point.x;
     }
 
     _handleMouseUp3D() {
-        if (!this.mouseTurnDirection) return;
-        this._accumulateHeldTurn();
+        if (this.mouseTurnDirection) this._accumulateHeldTurn();
         this.mouseTurnDirection = 0;
+        this.mouseMoveDirection = 0;
+        this.mouseLooking = false;
+        this.mouseLookLastX = null;
     }
 
     _handleTouchCancel3D(event) {
         if (event) event.preventDefault();
         this._accumulateHeldTurn();
         this.touchTurnDirections.clear();
+        this.touchMoveDirections.clear();
+        this.touchLookPoints.clear();
+        this.stopForwardMovement();
     }
 
     _handleWindowBlur3D() {
-        this._accumulateHeldTurn();
-        this.keyboardTurnLeft = false;
-        this.keyboardTurnRight = false;
-        this.mouseTurnDirection = 0;
-        this.touchTurnDirections.clear();
+        this.clearDirectionalInput();
     }
 
     _getTurnDirection() {
@@ -220,6 +318,33 @@ class InputHandler3D extends InputHandler {
             direction += touchDirection;
         }
         return Math.max(-1, Math.min(1, direction));
+    }
+
+    _getMoveDirection() {
+        if (this.inputProfile !== 'first-person') return this.forwardPressed ? 1 : 0;
+        let direction = 0;
+        if (this.keyboardForward) direction += 1;
+        if (this.keyboardBackward) direction -= 1;
+        direction += this.mouseMoveDirection;
+        for (const touchDirection of this.touchMoveDirections.values()) direction += touchDirection;
+        return Math.max(-1, Math.min(1, direction));
+    }
+
+    _isLookZone(point) {
+        const top = this.constants.QUALITY_LINE_HEIGHT + this.constants.BUTTON_HEIGHT;
+        const bottom = this.canvas.height - this.constants.ANSWER_SECTION_HEIGHT;
+        return point.x >= this.canvas.width * 0.32 && point.y >= top && point.y <= bottom;
+    }
+
+    _isDirectionalInputBlocked() {
+        if (typeof gameMode !== 'undefined' && gameMode !== 'game') return true;
+        if (typeof menuOpen !== 'undefined' && menuOpen) return true;
+        if (typeof categoryPickerOpen !== 'undefined' && categoryPickerOpen) return true;
+        if (typeof goalsOverlayVisible !== 'undefined' && goalsOverlayVisible) return true;
+        if (typeof inventoryOpen !== 'undefined' && inventoryOpen) return true;
+        if (typeof window !== 'undefined' && typeof window.isStoryPaused === 'function' && window.isStoryPaused()) return true;
+        if (typeof VerseTestScreen !== 'undefined' && VerseTestScreen.isActive()) return true;
+        return false;
     }
 
     _accumulateHeldTurn(now = this._now()) {

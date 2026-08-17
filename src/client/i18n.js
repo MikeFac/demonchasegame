@@ -112,9 +112,11 @@ const I18n = (function () {
             languageCompact: "Language",
             viewMode: "View",
             view2d: "2D Classic",
-            view3d: "3D Experimental",
+            view25d: "2.5D Adventure",
+            viewFirstPerson: "3D First Person",
             switchTo2d: "🧭 Switch to 2D",
-            switchTo3d: "🧭 Switch to 3D"
+            switchTo25d: "🧭 Switch to 2.5D",
+            switchToFirstPerson: "🧭 Switch to First Person"
         },
         quiz: {
             firstLetters: "First letters of missing words:",
@@ -132,6 +134,7 @@ const I18n = (function () {
             goToMenuLearn: "Go to menu to learn verses first",
             settingsDifficultyHint: "Monster speed and difficulty can be adjusted in Options.",
             healingCrosses: "Collect crosses to heal!",
+            webglUnavailable: "3D graphics are unavailable on this device. Switched to 2D Classic.",
             multiplayerRequiresInternet: "Multiplayer requires internet",
             thanksForSharing: "Thanks for sharing!",
             shareCopied: "Share link copied!"

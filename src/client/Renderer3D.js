@@ -371,8 +371,9 @@ class Renderer3D extends Renderer {
 
         this._drawControlButton(leftX, bottom, size, size, { type: 'turn-left' });
         this._drawControlButton(rightX, bottom, size, size, { type: 'turn-right' });
-        this._drawControlButton(stopX, stopY, size, size, { type: 'stop' });
-        this._drawControlButton(forwardX, forwardY, size, size + 14, { type: 'forward' });
+        const firstPerson = this.viewMode === 'first-person';
+        this._drawControlButton(stopX, stopY, size, size, { type: firstPerson ? 'back' : 'stop' });
+        this._drawControlButton(forwardX, forwardY, size, size + 14, { type: 'forward', hold: firstPerson });
         this._drawControlButton(fireX, fireY, size, size, { type: 'fire' });
     }
 
@@ -417,6 +418,9 @@ class Renderer3D extends Renderer {
         } else if (spec.type === 'stop') {
             const s = Math.min(width, height) * 0.22;
             this.ctx.fillRect(-s, -s, s * 2, s * 2);
+        } else if (spec.type === 'back') {
+            this.ctx.rotate(Math.PI);
+            this._drawForwardGlyph(Math.min(width, height) * 0.26);
         } else if (spec.type === 'fire') {
             this._drawFireGlyph(Math.min(width, height) * 0.24);
         }
@@ -430,7 +434,11 @@ class Renderer3D extends Renderer {
             ? 'FIRE'
             : (spec.type === 'stop'
                 ? 'STOP'
-                : ((spec.type === 'turn-left' || spec.type === 'turn-right') ? 'HOLD' : ''));
+                : (spec.type === 'back'
+                    ? 'BACK'
+                    : (spec.type === 'forward' && spec.hold
+                        ? 'HOLD'
+                        : ((spec.type === 'turn-left' || spec.type === 'turn-right') ? 'HOLD' : ''))));
         if (label) {
             this.ctx.fillText(label, x + width / 2, labelY);
         }

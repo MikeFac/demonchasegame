@@ -63,20 +63,34 @@ try {
         releaseDriftRadians: Math.abs(normalizeAngle(angleAfterRelease - angleAfterTurn))
     };
 
-    // Aim exactly for the projectile assertion. Continuous user-driven
-    // rotation is measured independently above, while deterministic aiming
-    // keeps random monster placement from making the tracer test flaky.
+    // Aim exactly along a wall-free ray for the projectile assertion.
+    // Continuous user-driven rotation is measured independently above, while
+    // deterministic placement keeps random missions and wall occlusion from
+    // making this legacy compatibility test flaky.
     const targetState = await page.evaluate(() => {
-        const state = window.lowPoly3DRenderer.debugState;
-        const monster = state.monsters?.[0];
+        const monster = monsters?.[0];
         if (!monster) return null;
-        const targetAngle = Math.atan2(monster.y - state.player.y, monster.x - state.player.x);
+        let targetAngle = 0;
+        for (let degree = 0; degree < 360; degree++) {
+            const angle = degree * Math.PI / 180;
+            if (!findNearestWallRayHit(player.x, player.y, Math.cos(angle), Math.sin(angle), 180)) {
+                targetAngle = angle;
+                break;
+            }
+        }
+        monster.x = player.x + Math.cos(targetAngle) * 110;
+        monster.y = player.y + Math.sin(targetAngle) * 110;
         player.viewAngle = targetAngle;
+        lastAttackTime = 0;
+        const aim = resolveThirdPersonAim(monsters, player);
+        const accepted = tryHandle3DFire(monsters, Date.now());
         return {
             id: monster.id,
             health: monster.health,
             angle: targetAngle,
-            targetAngle
+            targetAngle,
+            aimType: aim.type,
+            accepted
         };
     });
     await page.waitForTimeout(100);
@@ -89,19 +103,7 @@ try {
             const monster = state.monsters.find((candidate) => candidate.id === id);
             return monster ? Math.hypot(monster.x - state.player.x, monster.y - state.player.y) : null;
         }, targetState.id);
-        const healthBefore = (await page.evaluate((id) => window.lowPoly3DRenderer.debugState.monsters.find((monster) => monster.id === id)?.health, targetState.id));
-        const firePoint = await page.evaluate(() => {
-            const canvas = document.getElementById('gameCanvas');
-            const bounds = canvas.getBoundingClientRect();
-            const size = Math.min(88, Math.max(64, canvas.width * 0.14));
-            const x = canvas.width - size - 18 + size / 2;
-            const y = Constants.QUALITY_LINE_HEIGHT + 58 + size / 2;
-            return {
-                x: bounds.left + x * bounds.width / canvas.width,
-                y: bounds.top + y * bounds.height / canvas.height
-            };
-        });
-        await page.mouse.click(firePoint.x, firePoint.y);
+        const healthBefore = targetState.health;
         await page.waitForFunction(({ id, health }) => {
             const state = window.lowPoly3DRenderer?.debugState;
             const monster = state?.monsters?.find((candidate) => candidate.id === id);

@@ -1378,7 +1378,8 @@
           <label for="mainMenuViewModeSelect" data-i18n="menu.viewMode">View</label>
           <select id="mainMenuViewModeSelect">
             <option value="2d" data-i18n="menu.view2d">2D Classic</option>
-            <option value="3d" data-i18n="menu.view3d">3D Experimental</option>
+            <option value="third-person" data-i18n="menu.view25d">2.5D Adventure</option>
+            <option value="first-person" data-i18n="menu.viewFirstPerson">3D First Person</option>
           </select>
         </div>
       </div>
@@ -1498,7 +1499,8 @@
       <div class="settings-section">
         <select id="viewModeSelect" style="width: 100%; padding: 8px; border-radius: 5px; background: #1a1a2e; color: white; border: 1px solid #444; font-size: 14px;">
           <option value="2d" data-i18n="menu.view2d">2D Classic</option>
-          <option value="3d" data-i18n="menu.view3d">3D Experimental</option>
+          <option value="third-person" data-i18n="menu.view25d">2.5D Adventure</option>
+          <option value="first-person" data-i18n="menu.viewFirstPerson">3D First Person</option>
         </select>
       </div>
 
@@ -1704,7 +1706,7 @@
     <canvas id="gameCanvas" width="800" height="600"></canvas>
   </div>
 
-  <script src="src/client/i18n.js?v=1.1"></script>
+  <script src="src/client/i18n.js?v=1.2"></script>
   <script>
     I18n.loadSync();
     I18n.updateDOM();
@@ -1780,14 +1782,14 @@
   <script src="src/client/SoundEffects.js?v=2.0"></script>
   <script src="src/client/VerseSongService.js?v=1.1"></script>
   <script src="src/client/ModeManager.js?v=1.0"></script>
-  <script src="src/client/Renderer.js?v=2.31"></script>
+  <script src="src/client/Renderer.js?v=2.33"></script>
   <script src="src/client/WaveRenderer.js?v=1.0"></script>
   <script src="src/client/WaveGameLauncher.js?v=1.0"></script>
   <script src="src/client/ScriptureMazeRenderer.js?v=1.0"></script>
   <script src="src/client/ScriptureMazeLauncher.js?v=1.0"></script>
-  <script src="src/client/InputHandler.js?v=2.26"></script>
-  <script src="src/client/Renderer3D.js?v=1.1"></script>
-  <script src="src/client/InputHandler3D.js?v=1.2"></script>
+  <script src="src/client/InputHandler.js?v=2.27"></script>
+  <script src="src/client/Renderer3D.js?v=1.2"></script>
+  <script src="src/client/InputHandler3D.js?v=1.5"></script>
   <script type="importmap">
     {
       "imports": {
@@ -1797,7 +1799,7 @@
     }
   </script>
   <script type="module" src="src/client/ThreeRuntime.js?v=1.0"></script>
-  <script src="src/client/RendererThreeJS.js?v=1.4"></script>
+  <script src="src/client/RendererThreeJS.js?v=1.7"></script>
   <script src="src/client/Network.js?v=2.09"></script>
   <script src="src/client/ShareManager.js?v=1.0"></script>
   <script src="src/client/ReviewMode.js?v=2.28"></script>
@@ -1985,7 +1987,7 @@
       }
     }
   </script>
-  <script src="game.js?v=3.19"></script>
+  <script src="game.js?v=3.23"></script>
   <script>
     // Register service worker for PWA offline support
     if ('serviceWorker' in navigator) {
