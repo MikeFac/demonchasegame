@@ -2136,3 +2136,17 @@ Original prompt: Check the implementation of docs/multi-version-songs-implementa
 - Remaining external gate: run both mesh modes for ten minutes on a target
   Android phone. Authored positional monster audio remains a later suspense
   polish item because a suitable licensed cue set is not yet in the project.
+
+2026-08-17 — compact mesh-mode navigation controls:
+- Committed the completed three-view implementation as `cd8d136` before the
+  control-layout change.
+- Centralized the drawn and tappable 3D control geometry in
+  `get3DControlLayout()` so rendering and input always use identical bounds.
+- Reduced 2.5D controls from the previous 64 px minimum to a 48–66 px compact
+  range. First-person controls use a separate 58–76 px range because they are
+  hold-to-move/turn targets and need more touch area.
+- Bumped the affected client cache versions and restarted the local server.
+- The standard web-game client ran both mesh modes, and the full three-view
+  regression passed after exercising the resized 2.5D turn control and the
+  first-person forward press/release path. Visual captures confirm more of the
+  verse remains unobstructed with readable button glyphs and labels.

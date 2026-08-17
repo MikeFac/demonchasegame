@@ -1,3 +1,31 @@
+function get3DControlLayout(canvas, qualityLineHeight, viewMode = 'third-person') {
+    const firstPerson = viewMode === 'first-person';
+    // Chase controls are taps, so they can be more compact. First-person
+    // controls are held while moving/turning and retain a larger touch target.
+    const size = firstPerson
+        ? Math.min(76, Math.max(58, canvas.width * 0.12))
+        : Math.min(66, Math.max(48, canvas.width * 0.105));
+    const forwardExtra = firstPerson ? 14 : 10;
+    const bottom = canvas.height - size - 22;
+    const leftX = 18;
+    const rightX = leftX + size + 10;
+    const forwardX = canvas.width - size - 18;
+    const forwardY = bottom - 18;
+    const stopX = forwardX;
+    const stopY = forwardY - size - 12;
+    const fireX = canvas.width - size - 18;
+    const fireY = qualityLineHeight + 58;
+
+    return {
+        size,
+        left: { x: leftX, y: bottom, width: size, height: size },
+        right: { x: rightX, y: bottom, width: size, height: size },
+        forward: { x: forwardX, y: forwardY, width: size, height: size + forwardExtra },
+        stop: { x: stopX, y: stopY, width: size, height: size },
+        fire: { x: fireX, y: fireY, width: size, height: size }
+    };
+}
+
 class Renderer3D extends Renderer {
     constructor(canvas, ctx, assets) {
         super(canvas, ctx, assets);
@@ -358,27 +386,17 @@ class Renderer3D extends Renderer {
     }
 
     _drawControlsOverlay() {
-        const size = Math.min(88, Math.max(64, this.canvas.width * 0.14));
-        const bottom = this.canvas.height - size - 22;
-        const leftX = 18;
-        const rightX = leftX + size + 10;
-        const forwardX = this.canvas.width - size - 18;
-        const forwardY = bottom - 18;
-        const stopX = forwardX;
-        const stopY = forwardY - size - 12;
-        const fireX = this.canvas.width - size - 18;
-        const fireY = this.QUALITY_LINE_HEIGHT + 58;
-
-        this._drawControlButton(leftX, bottom, size, size, { type: 'turn-left' });
-        this._drawControlButton(rightX, bottom, size, size, { type: 'turn-right' });
+        const controls = get3DControlLayout(this.canvas, this.QUALITY_LINE_HEIGHT, this.viewMode);
         const firstPerson = this.viewMode === 'first-person';
-        this._drawControlButton(stopX, stopY, size, size, { type: firstPerson ? 'back' : 'stop' });
-        this._drawControlButton(forwardX, forwardY, size, size + 14, { type: 'forward', hold: firstPerson });
-        this._drawControlButton(fireX, fireY, size, size, { type: 'fire' });
+        this._drawControlButton(controls.left.x, controls.left.y, controls.left.width, controls.left.height, { type: 'turn-left' });
+        this._drawControlButton(controls.right.x, controls.right.y, controls.right.width, controls.right.height, { type: 'turn-right' });
+        this._drawControlButton(controls.stop.x, controls.stop.y, controls.stop.width, controls.stop.height, { type: firstPerson ? 'back' : 'stop' });
+        this._drawControlButton(controls.forward.x, controls.forward.y, controls.forward.width, controls.forward.height, { type: 'forward', hold: firstPerson });
+        this._drawControlButton(controls.fire.x, controls.fire.y, controls.fire.width, controls.fire.height, { type: 'fire' });
     }
 
     _drawControlButton(x, y, width, height, spec) {
-        const radius = 18;
+        const radius = Math.min(18, Math.min(width, height) * 0.28);
         const gradient = this.ctx.createLinearGradient(x, y, x, y + height);
         const warm = spec.type === 'fire';
         gradient.addColorStop(0, warm ? 'rgba(193, 102, 55, 0.84)' : 'rgba(204, 224, 242, 0.84)');

@@ -386,24 +386,11 @@ class InputHandler3D extends InputHandler {
     }
 
     _getControlRects() {
-        const size = Math.min(88, Math.max(64, this.canvas.width * 0.14));
-        const gap = 14;
-        const bottom = this.canvas.height - size - 22;
-        const leftX = 18;
-        const rightX = leftX + size + 10;
-        const forwardX = this.canvas.width - size - 18;
-        const forwardY = bottom - 18;
-        const stopX = forwardX;
-        const stopY = forwardY - size - 12;
-        const fireX = this.canvas.width - size - 18;
-        const fireY = this.constants.QUALITY_LINE_HEIGHT + 58;
-        this.controls = {
-            left: { x: leftX, y: bottom, width: size, height: size },
-            right: { x: rightX, y: bottom, width: size, height: size },
-            forward: { x: forwardX, y: forwardY, width: size, height: size + gap },
-            stop: { x: stopX, y: stopY, width: size, height: size },
-            fire: { x: fireX, y: fireY, width: size, height: size }
-        };
+        this.controls = get3DControlLayout(
+            this.canvas,
+            this.constants.QUALITY_LINE_HEIGHT,
+            this.viewMode
+        );
         return this.controls;
     }
 }

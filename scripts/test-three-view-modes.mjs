@@ -44,6 +44,17 @@ async function captureComposited(page, name) {
     });
 }
 
+async function getControlPoint(page, rect) {
+    const canvas = page.locator('#gameCanvas');
+    const box = await canvas.boundingBox();
+    const internal = await canvas.evaluate((element) => ({ width: element.width, height: element.height }));
+    if (!box || !internal.width || !internal.height) throw new Error('game canvas has no control coordinate space');
+    return {
+        x: box.x + (rect.x + rect.width / 2) * box.width / internal.width,
+        y: box.y + (rect.y + rect.height / 2) * box.height / internal.height
+    };
+}
+
 async function testMenuAndLegacyMigration() {
     const { context, page, errors } = await createPage('3d');
     const result = await page.evaluate(() => ({
@@ -108,10 +119,19 @@ async function testThirdPerson() {
             viewMode: state.viewMode,
             renderer: window.renderer?.constructor?.name,
             camera: state.camera,
+            controls: get3DControlLayout(gameCanvas, Constants.QUALITY_LINE_HEIGHT, window.viewMode),
             supportProbeCount: state.performance?.supportProbeCount,
             context: state.context
         };
     });
+    const angleBeforeControl = await page.evaluate(() => player.viewAngle);
+    const rightControl = await getControlPoint(page, result.controls.right);
+    await page.mouse.move(rightControl.x, rightControl.y);
+    await page.mouse.down();
+    await page.waitForTimeout(160);
+    await page.mouse.up();
+    await page.waitForTimeout(100);
+    result.controlTurnRadians = await page.evaluate((before) => player.viewAngle - before, angleBeforeControl);
     results['third-person'] = { ...result, errors };
     await page.evaluate(() => { speedPromptVisible = false; currentMission = null; });
     await page.waitForTimeout(50);
@@ -121,6 +141,10 @@ async function testThirdPerson() {
         failures.push(`third-person selected ${JSON.stringify(result)}`);
     }
     if (result.camera?.localPlayerVisible !== true) failures.push('third-person local player is hidden');
+    if (result.controls?.size < 48 || result.controls?.size > 66) {
+        failures.push(`third-person controls are outside the compact range: ${result.controls?.size}`);
+    }
+    if (Math.abs(result.controlTurnRadians) < 0.02) failures.push('third-person compact turn control did not respond');
     if (result.supportProbeCount !== 1) failures.push(`third-person support probes: ${result.supportProbeCount}`);
     if (result.context?.losses !== 0) failures.push(`third-person context losses: ${result.context.losses}`);
     if (errors.length) failures.push(`third-person browser errors: ${errors.join(' | ')}`);
@@ -133,6 +157,19 @@ async function testFirstPerson() {
     await page.waitForFunction(() => window.lowPoly3DStats?.cameraProfile === 'first-person' && window.lowPoly3DStats.entities?.monsters > 0, null, { timeout: 30000 });
 
     const initial = await page.evaluate(() => JSON.parse(window.render_game_to_text()));
+    const firstPersonControls = await page.evaluate(() => get3DControlLayout(
+        gameCanvas,
+        Constants.QUALITY_LINE_HEIGHT,
+        window.viewMode
+    ));
+    const forwardControl = await getControlPoint(page, firstPersonControls.forward);
+    await page.mouse.move(forwardControl.x, forwardControl.y);
+    await page.mouse.down();
+    await page.waitForFunction(() => inputHandler.mouseMoveDirection === 1);
+    const mouseForwardPressed = await page.evaluate(() => inputHandler.mouseMoveDirection);
+    await page.mouse.up();
+    await page.waitForFunction(() => inputHandler.mouseMoveDirection === 0);
+    const mouseForwardReleased = await page.evaluate(() => inputHandler.mouseMoveDirection);
     const beforeMovement = await page.evaluate(() => ({ x: player.x, y: player.y, angle: player.viewAngle }));
     await page.keyboard.down('KeyW');
     await page.keyboard.down('KeyD');
@@ -248,10 +285,12 @@ async function testFirstPerson() {
         initial: {
             viewMode: initial.viewMode,
             camera: initial.camera,
+            controls: firstPersonControls,
             performance: initial.performance,
             context: initial.context
         },
         movement: { before: beforeMovement, released, settled },
+        controlInput: { mouseForwardPressed, mouseForwardReleased },
         hit: { setup: hitSetup, result: hitResult },
         blocked: { setup: blockedSetup, result: blockedResult },
         recovery: { lost: recoveryLost, restored: recoveryRestored },
@@ -266,6 +305,12 @@ async function testFirstPerson() {
         failures.push('first-person local player is visible');
     }
     if (initial.camera?.framing?.nearestMonsterId !== null) failures.push('first-person camera auto-framed a monster');
+    if (firstPersonControls.size < 58 || firstPersonControls.size > 76) {
+        failures.push(`first-person controls are outside the hold-friendly range: ${firstPersonControls.size}`);
+    }
+    if (mouseForwardPressed !== 1 || mouseForwardReleased !== 0) {
+        failures.push(`first-person hold control did not press/release cleanly: ${mouseForwardPressed}/${mouseForwardReleased}`);
+    }
     if (Math.hypot(released.x - beforeMovement.x, released.y - beforeMovement.y) < 1) failures.push('first-person held movement did not move');
     if (Math.abs(released.angle - beforeMovement.angle) < 0.05) failures.push('first-person held turn did not turn');
     if (Math.hypot(settled.x - released.x, settled.y - released.y) > 0.01 || Math.abs(settled.angle - released.angle) > 0.001) {
