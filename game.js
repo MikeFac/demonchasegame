@@ -1711,6 +1711,10 @@ function tryHandle3DFire(monsters, now) {
     lastAttackTime = now;
     lastAttackedMonster = monster;
 
+    if (renderer && typeof renderer.spawnShotTracer === 'function') {
+        renderer.spawnShotTracer(player, monster);
+    }
+
     attackSound.play();
     monster.isAttacked = true;
     setTimeout(() => {
@@ -6480,13 +6484,13 @@ function gameLoop(generation) {
             player.currentFrame = 0;
             player.frameTimer = 0;
         } else if (movementIntent && inputHandler && inputHandler.viewMode === '3d') {
-            const turnSteps = movementIntent.turnSteps || 0;
-            if (turnSteps) {
+            const turnRadians = movementIntent.turnRadians || 0;
+            if (turnRadians) {
                 if (typeof inputHandler.stopForwardMovement === 'function') {
                     inputHandler.stopForwardMovement();
                 }
                 movementIntent.forward = false;
-                player.viewAngle = (player.viewAngle || 0) + turnSteps * (Math.PI / 6);
+                player.viewAngle = (player.viewAngle || 0) + turnRadians;
                 if (player.viewAngle > Math.PI) player.viewAngle -= Math.PI * 2;
                 if (player.viewAngle < -Math.PI) player.viewAngle += Math.PI * 2;
             }

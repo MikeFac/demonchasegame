@@ -426,7 +426,11 @@ class Renderer3D extends Renderer {
         this.ctx.font = 'bold 11px Arial';
         this.ctx.textAlign = 'center';
         const labelY = y + height - 10;
-        const label = spec.type === 'fire' ? 'FIRE' : (spec.type === 'stop' ? 'STOP' : '');
+        const label = spec.type === 'fire'
+            ? 'FIRE'
+            : (spec.type === 'stop'
+                ? 'STOP'
+                : ((spec.type === 'turn-left' || spec.type === 'turn-right') ? 'HOLD' : ''));
         if (label) {
             this.ctx.fillText(label, x + width / 2, labelY);
         }

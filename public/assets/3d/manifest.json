@@ -10,7 +10,7 @@
       "clips": ["idle", "walk", "attack", "hit", "death"]
     },
     "monster.fear": {
-      "source": null,
+      "source": "models/quaternius-ghost-skull.glb",
       "fallback": "procedural-demon",
       "triangleBudget": 4000,
       "textureBudget": 512,

@@ -4,6 +4,10 @@ Runtime assets are GLB/glTF 2.0 files referenced by `manifest.json`. Keep source
 art and Blender working files outside `public`; only optimized runtime files
 belong here.
 
+The first authored monster is Quaternius's CC0 `Ghost_Skull.gltf`, converted
+into a single self-contained GLB. Its original file, license, and source notes are in
+`resources/3d-source/quaternius-ultimate-monsters`.
+
 ## Character export contract
 
 - Y-up, character feet at Y=0, facing +Z in the source file
@@ -24,3 +28,11 @@ asset fail CI, use `node scripts/validate-low-poly-assets.mjs --require-source
 --key monster.fear`. The validator checks GLB structure, triangle/material and
 texture budgets, a skin, required clip names, and unwanted embedded lights or
 cameras.
+
+Rebuild the current Fear runtime asset with:
+
+```sh
+node scripts/convert-embedded-gltf-to-glb.mjs \
+  resources/3d-source/quaternius-ultimate-monsters/Ghost_Skull.gltf \
+  public/assets/3d/models/quaternius-ghost-skull.glb
+```

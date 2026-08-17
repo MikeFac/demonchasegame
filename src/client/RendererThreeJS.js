@@ -93,6 +93,8 @@ class RendererThreeJS extends Renderer3D {
         this.assetLoadFailures = new Map();
         this.animationMixers = new Set();
         this.assetRevision = 0;
+        this.shotTracers = [];
+        this.maxShotTracers = 6;
 
         this._createEnvironment();
         this._installContextRecovery();
@@ -135,6 +137,7 @@ class RendererThreeJS extends Renderer3D {
             uiState: uiState || {},
             screenShake: screenShake || { x: 0, y: 0 }
         });
+        this._updateShotTracers(now);
         this.animationMixers.forEach((mixer) => mixer.update(dt));
         this.webgl.render(this.scene, this.camera3D);
         this._captureRecoverySnapshot(now, player);
@@ -158,7 +161,37 @@ class RendererThreeJS extends Renderer3D {
         }
 
         this._drawInterface(gameState, player, monsters, camera, uiState, inventoryState, mouseX, mouseY);
+        this._drawShotTracerOverlay();
         this._drawRendererDiagnostics();
+    }
+
+    _drawShotTracerOverlay() {
+        if (!this.shotTracers.length || !this.camera3D) return;
+        this.ctx.save();
+        this.ctx.globalCompositeOperation = 'lighter';
+        for (const tracer of this.shotTracers) {
+            const projected = tracer.group.position.clone().project(this.camera3D);
+            if (projected.z < -1 || projected.z > 1) continue;
+            const x = (projected.x * 0.5 + 0.5) * this.canvas.width;
+            const y = (-projected.y * 0.5 + 0.5) * this.canvas.height;
+            if (x < -20 || x > this.canvas.width + 20 || y < -20 || y > this.canvas.height + 20) continue;
+            const pulse = 1 + Math.sin((tracer.progress || 0) * Math.PI * 6) * 0.12;
+            const radius = 11 * pulse;
+            const glow = this.ctx.createRadialGradient(x, y, 0, x, y, radius * 2.1);
+            glow.addColorStop(0, 'rgba(255, 255, 240, 1)');
+            glow.addColorStop(0.28, 'rgba(255, 231, 92, 0.98)');
+            glow.addColorStop(0.62, 'rgba(255, 151, 24, 0.62)');
+            glow.addColorStop(1, 'rgba(255, 116, 12, 0)');
+            this.ctx.fillStyle = glow;
+            this.ctx.beginPath();
+            this.ctx.arc(x, y, radius * 2.1, 0, Math.PI * 2);
+            this.ctx.fill();
+            this.ctx.fillStyle = '#fffce5';
+            this.ctx.beginPath();
+            this.ctx.arc(x, y, radius * 0.52, 0, Math.PI * 2);
+            this.ctx.fill();
+        }
+        this.ctx.restore();
     }
 
     async _loadAssetManifest() {
@@ -754,6 +787,91 @@ class RendererThreeJS extends Renderer3D {
             });
     }
 
+    spawnShotTracer(player, monster) {
+        if (!player || !monster || this.webglContextLost) return false;
+
+        const THREE = this.three;
+        const facing = Number.isFinite(player.viewAngle)
+            ? player.viewAngle
+            : Math.atan2(monster.y - player.y, monster.x - player.x);
+        const start = new THREE.Vector3(
+            player.x + Math.cos(facing) * 22,
+            34,
+            player.y + Math.sin(facing) * 22
+        );
+        const end = new THREE.Vector3(monster.x, 38, monster.y);
+        const direction = end.clone().sub(start);
+        const distance = direction.length();
+        if (distance < 1) return false;
+
+        const group = new THREE.Group();
+        const core = new THREE.Mesh(
+            this._geometry('shot-tracer-core', () => new THREE.CylinderGeometry(4.2, 4.2, 34, 6, 1)),
+            this._material('shot-tracer-core', () => new THREE.MeshBasicMaterial({
+                color: 0xfff08a,
+                depthTest: false,
+                depthWrite: false
+            }))
+        );
+        const glow = new THREE.Mesh(
+            this._geometry('shot-tracer-glow', () => new THREE.CylinderGeometry(8, 8, 44, 6, 1)),
+            this._material('shot-tracer-glow', () => new THREE.MeshBasicMaterial({
+                color: 0xffa928,
+                transparent: true,
+                opacity: 0.4,
+                depthTest: false,
+                depthWrite: false,
+                blending: THREE.AdditiveBlending
+            }))
+        );
+        const tip = new THREE.Mesh(
+            this._geometry('shot-tracer-tip', () => new THREE.OctahedronGeometry(7.5, 0)),
+            this._material('shot-tracer-tip', () => new THREE.MeshBasicMaterial({
+                color: 0xffffff,
+                depthTest: false,
+                depthWrite: false
+            }))
+        );
+        tip.position.y = 20;
+        group.add(glow, core, tip);
+        group.traverse((object) => { object.renderOrder = 50; });
+        group.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), direction.normalize());
+        group.position.copy(start);
+        this.scene.add(group);
+
+        const tracer = {
+            group,
+            start,
+            end,
+            startedAt: performance.now(),
+            duration: Math.max(650, Math.min(850, distance / 0.6)),
+            progress: 0
+        };
+        this.shotTracers.push(tracer);
+
+        while (this.shotTracers.length > this.maxShotTracers) {
+            const oldest = this.shotTracers.shift();
+            this.scene.remove(oldest.group);
+        }
+        return true;
+    }
+
+    _updateShotTracers(now) {
+        for (let index = this.shotTracers.length - 1; index >= 0; index--) {
+            const tracer = this.shotTracers[index];
+            const progress = Math.max(0, Math.min(1, (now - tracer.startedAt) / tracer.duration));
+            tracer.progress = progress;
+            tracer.group.position.lerpVectors(tracer.start, tracer.end, progress);
+            const pulse = 0.92 + Math.sin(progress * Math.PI * 5) * 0.08;
+            tracer.group.scale.setScalar(pulse);
+
+            if (progress >= 1) {
+                this.scene.remove(tracer.group);
+                this.shotTracers.splice(index, 1);
+            }
+        }
+    }
+
     _syncHealing(points) {
         this._syncEntityMap(this.entityMaps.healing, points, (point, index) => point.id ?? `heal-${index}`,
             () => this._createHealingMesh(),
@@ -1141,6 +1259,7 @@ class RendererThreeJS extends Renderer3D {
                 players: this.entityMaps.players.size,
                 monsters: this.entityMaps.monsters.size,
                 bullets: this.entityMaps.bullets.size,
+                shotTracers: this.shotTracers.length,
                 healing: this.entityMaps.healing.size,
                 collectibles: this.entityMaps.collectibles.size,
                 npcs: this.entityMaps.npcs.size
@@ -1221,6 +1340,11 @@ class RendererThreeJS extends Renderer3D {
             }),
             healingPoints: (healingPoints || []).length,
             bullets: (gameState.bullets || []).length,
+            shotTracers: this.shotTracers.map((tracer) => ({
+                x: Math.round(tracer.group.position.x),
+                y: Math.round(tracer.group.position.z),
+                progress: Number(tracer.progress.toFixed(2))
+            })),
             monstersKilled: gameState.monstersKilled,
             monstersToKill: gameState.monstersToKill,
             performance: window.lowPoly3DStats

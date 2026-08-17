@@ -14,8 +14,13 @@ const browser = await chromium.launch({
 });
 const page = await browser.newPage({ viewport: { width: 1280, height: 720 }, deviceScaleFactor: 1 });
 const errors = [];
+const normalizeAngle = (angle) => {
+    while (angle > Math.PI) angle -= Math.PI * 2;
+    while (angle < -Math.PI) angle += Math.PI * 2;
+    return angle;
+};
 page.on('console', (message) => {
-    if (message.type() === 'error') errors.push({ type: 'console', text: message.text() });
+    if (message.type() === 'error') errors.push({ type: 'console', text: message.text(), url: message.location().url || null });
 });
 page.on('pageerror', (error) => errors.push({ type: 'pageerror', text: error.message }));
 
@@ -23,9 +28,99 @@ try {
     await page.addInitScript(() => localStorage.setItem('dcgame_speedPromptShown', 'true'));
     await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 30000 });
     await page.waitForFunction(() => typeof window.startMission === 'function', null, { timeout: 30000 });
+    await page.waitForFunction(() => {
+        const splash = document.getElementById('splashScreen');
+        return !splash || getComputedStyle(splash).display === 'none';
+    }, null, { timeout: 6000 });
     await page.evaluate(() => window.startMission('chapter0', 'intro-01'));
     await page.waitForFunction(() => window.lowPoly3DStats?.renderer === 'three' && window.lowPoly3DStats.entities?.players > 0, null, { timeout: 30000 });
     await page.waitForTimeout(1200);
+
+    const angleBeforeTurn = await page.evaluate(() => player.viewAngle);
+    await page.keyboard.down('ArrowRight');
+    await page.waitForTimeout(250);
+    await page.keyboard.up('ArrowRight');
+    // Wait for the post-release game frame that consumes rotation accumulated
+    // while the key was held. Initial shader compilation can delay that frame
+    // substantially on the headless software GPU.
+    await page.waitForFunction((before) => {
+        const current = player?.viewAngle;
+        const pending = typeof inputHandler === 'undefined' ? null : inputHandler?.pendingTurnRadians;
+        return Number.isFinite(current)
+            && Math.abs(current - before) > 0.001
+            && Number.isFinite(pending)
+            && Math.abs(pending) < 0.000001;
+    }, angleBeforeTurn, { timeout: 2500 });
+    await page.waitForTimeout(100);
+    const angleAfterTurn = await page.evaluate(() => player.viewAngle);
+    await page.waitForTimeout(350);
+    const angleAfterRelease = await page.evaluate(() => player.viewAngle);
+    const controlSample = {
+        angleBeforeTurn,
+        angleAfterTurn,
+        angleAfterRelease,
+        turnRadians: normalizeAngle(angleAfterTurn - angleBeforeTurn),
+        releaseDriftRadians: Math.abs(normalizeAngle(angleAfterRelease - angleAfterTurn))
+    };
+
+    // Aim exactly for the projectile assertion. Continuous user-driven
+    // rotation is measured independently above, while deterministic aiming
+    // keeps random monster placement from making the tracer test flaky.
+    const targetState = await page.evaluate(() => {
+        const state = window.lowPoly3DRenderer.debugState;
+        const monster = state.monsters?.[0];
+        if (!monster) return null;
+        const targetAngle = Math.atan2(monster.y - state.player.y, monster.x - state.player.x);
+        player.viewAngle = targetAngle;
+        return {
+            id: monster.id,
+            health: monster.health,
+            angle: targetAngle,
+            targetAngle
+        };
+    });
+    await page.waitForTimeout(100);
+
+    let projectileSample = null;
+    if (targetState) {
+        targetState.delta = normalizeAngle(targetState.targetAngle - targetState.angle);
+        targetState.distance = await page.evaluate((id) => {
+            const state = window.lowPoly3DRenderer.debugState;
+            const monster = state.monsters.find((candidate) => candidate.id === id);
+            return monster ? Math.hypot(monster.x - state.player.x, monster.y - state.player.y) : null;
+        }, targetState.id);
+        const healthBefore = (await page.evaluate((id) => window.lowPoly3DRenderer.debugState.monsters.find((monster) => monster.id === id)?.health, targetState.id));
+        const firePoint = await page.evaluate(() => {
+            const canvas = document.getElementById('gameCanvas');
+            const bounds = canvas.getBoundingClientRect();
+            const size = Math.min(88, Math.max(64, canvas.width * 0.14));
+            const x = canvas.width - size - 18 + size / 2;
+            const y = Constants.QUALITY_LINE_HEIGHT + 58 + size / 2;
+            return {
+                x: bounds.left + x * bounds.width / canvas.width,
+                y: bounds.top + y * bounds.height / canvas.height
+            };
+        });
+        await page.mouse.click(firePoint.x, firePoint.y);
+        await page.waitForFunction(({ id, health }) => {
+            const state = window.lowPoly3DRenderer?.debugState;
+            const monster = state?.monsters?.find((candidate) => candidate.id === id);
+            return state?.performance?.entities?.shotTracers > 0 && monster?.health < health;
+        }, { id: targetState.id, health: healthBefore }, { timeout: 2000 });
+        projectileSample = await page.evaluate((id) => {
+            const state = window.lowPoly3DRenderer.debugState;
+            return {
+                targetId: id,
+                health: state.monsters.find((monster) => monster.id === id)?.health,
+                shotTracers: state.performance.entities.shotTracers,
+                tracerDebug: state.shotTracers
+            };
+        }, targetState.id);
+        projectileSample.healthBefore = healthBefore;
+        await page.screenshot({ path: path.join(outputDirectory, 'projectile.png'), fullPage: true });
+        await page.waitForTimeout(1000);
+        projectileSample.shotTracersAfterCleanup = await page.evaluate(() => window.lowPoly3DStats.entities.shotTracers);
+    }
 
     const frameSample = await page.evaluate(() => new Promise((resolve) => {
         const started = performance.now();
@@ -43,6 +138,8 @@ try {
         rendererClass: window.lowPoly3DRenderer?.constructor?.name || null
     }));
     result.frameSample = frameSample;
+    result.controlSample = controlSample;
+    result.projectileSample = projectileSample;
     result.errors = errors;
     fs.writeFileSync(path.join(outputDirectory, 'result.json'), JSON.stringify(result, null, 2));
     await page.screenshot({ path: path.join(outputDirectory, 'runtime.png'), fullPage: true });
@@ -52,7 +149,13 @@ try {
     if (result.stats.supportProbeCount !== 1) failures.push(`WebGL support probe ran ${result.stats.supportProbeCount} times instead of once`);
     if (result.stats.calls > 100) failures.push(`${result.stats.calls} draw calls exceed 100`);
     if (result.stats.triangles > 150000) failures.push(`${result.stats.triangles} triangles exceed 150000`);
+    if (!result.stats.assets?.authoredLoaded?.includes('monster.fear')) failures.push('authored monster.fear did not load');
     if (result.stats.context?.lost) failures.push('WebGL context remained lost at the end of the runtime sample');
+    if (controlSample.turnRadians < 0.08) failures.push(`held right turn only moved ${controlSample.turnRadians.toFixed(3)} radians`);
+    if (controlSample.releaseDriftRadians > 0.02) failures.push(`turn drifted ${controlSample.releaseDriftRadians.toFixed(3)} radians after release`);
+    if (!projectileSample || projectileSample.shotTracers < 1) failures.push('visible shot tracer was not observed');
+    if (projectileSample && projectileSample.health >= projectileSample.healthBefore) failures.push('shot tracer did not preserve hitscan damage');
+    if (projectileSample?.shotTracersAfterCleanup !== 0) failures.push('shot tracer did not clean itself up');
     const projectedMonsters = result.debug?.monsters || [];
     if (result.stats.entities?.monsters > 0 && !projectedMonsters.some((monster) => monster.projected?.onScreen)) {
         failures.push('active monsters exist but none project inside the camera viewport');

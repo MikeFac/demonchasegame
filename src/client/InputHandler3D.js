@@ -3,22 +3,36 @@ class InputHandler3D extends InputHandler {
         super(canvas, constants);
         this.viewMode = '3d';
         this.forwardPressed = false;
-        this.turnQueue = 0;
         this.fireQueue = 0;
-        this.turnStep = Math.PI / 6;
+        this.turnSpeed = Math.PI * 2 / 3;
+        this.pendingTurnRadians = 0;
+        this.lastTurnSampleAt = this._now();
+        this.keyboardTurnLeft = false;
+        this.keyboardTurnRight = false;
+        this.mouseTurnDirection = 0;
+        this.touchTurnDirections = new Map();
         this.controls = null;
 
         this._handleKeyDown3D = this._handleKeyDown3D.bind(this);
         this._handleKeyUp3D = this._handleKeyUp3D.bind(this);
+        this._handleMouseDown3D = this._handleMouseDown3D.bind(this);
+        this._handleMouseUp3D = this._handleMouseUp3D.bind(this);
+        this._handleWindowBlur3D = this._handleWindowBlur3D.bind(this);
+        this._handleTouchCancel3D = this._handleTouchCancel3D.bind(this);
 
         window.addEventListener('keydown', this._handleKeyDown3D);
         window.addEventListener('keyup', this._handleKeyUp3D);
+        window.addEventListener('mouseup', this._handleMouseUp3D);
+        window.addEventListener('blur', this._handleWindowBlur3D);
+        canvas.addEventListener('mousedown', this._handleMouseDown3D);
+        canvas.addEventListener('touchcancel', this._handleTouchCancel3D, { passive: false });
     }
 
     getMovementIntent() {
         return {
             forward: this.forwardPressed,
-            turnSteps: this._consumeTurnQueue(),
+            turnRadians: this._consumeTurnRadians(),
+            turnDirection: this._getTurnDirection(),
             fire: this._consumeFireQueue()
         };
     }
@@ -35,19 +49,19 @@ class InputHandler3D extends InputHandler {
         super.destroy();
         window.removeEventListener('keydown', this._handleKeyDown3D);
         window.removeEventListener('keyup', this._handleKeyUp3D);
+        window.removeEventListener('mouseup', this._handleMouseUp3D);
+        window.removeEventListener('blur', this._handleWindowBlur3D);
+        this.canvas.removeEventListener('mousedown', this._handleMouseDown3D);
+        this.canvas.removeEventListener('touchcancel', this._handleTouchCancel3D);
     }
 
     _handlePlayableAreaClick(clickedX, clickedY, qualityLineHeight, buttonHeight, answerSectionHeight) {
         const controls = this._getControlRects();
 
         if (this._pointInRect(clickedX, clickedY, controls.left)) {
-            this._stopAndClearTarget();
-            this._queueTurn(-1);
             return;
         }
         if (this._pointInRect(clickedX, clickedY, controls.right)) {
-            this._stopAndClearTarget();
-            this._queueTurn(1);
             return;
         }
         if (this._pointInRect(clickedX, clickedY, controls.forward)) {
@@ -70,17 +84,18 @@ class InputHandler3D extends InputHandler {
     _handleTouchStart(event) {
         if (!event.changedTouches || event.changedTouches.length === 0) return;
         event.preventDefault();
+        this._accumulateHeldTurn();
         for (const touch of Array.from(event.changedTouches)) {
             const point = this._getCanvasPoint(touch.clientX, touch.clientY);
             const controls = this._getControlRects();
             if (this._pointInRect(point.x, point.y, controls.left)) {
                 this._stopAndClearTarget();
-                this._queueTurn(-1);
+                this.touchTurnDirections.set(touch.identifier, -1);
                 continue;
             }
             if (this._pointInRect(point.x, point.y, controls.right)) {
                 this._stopAndClearTarget();
-                this._queueTurn(1);
+                this.touchTurnDirections.set(touch.identifier, 1);
                 continue;
             }
             if (this._pointInRect(point.x, point.y, controls.forward)) {
@@ -101,46 +116,129 @@ class InputHandler3D extends InputHandler {
 
     _handleTouchMove(event) {
         event.preventDefault();
-        // Forward movement is toggle-based in 3D mode, so drag motion should not cancel it.
+        this._accumulateHeldTurn();
+        for (const touch of Array.from(event.changedTouches || [])) {
+            if (!this.touchTurnDirections.has(touch.identifier)) continue;
+            const point = this._getCanvasPoint(touch.clientX, touch.clientY);
+            const controls = this._getControlRects();
+            if (this._pointInRect(point.x, point.y, controls.left)) {
+                this.touchTurnDirections.set(touch.identifier, -1);
+            } else if (this._pointInRect(point.x, point.y, controls.right)) {
+                this.touchTurnDirections.set(touch.identifier, 1);
+            } else {
+                this.touchTurnDirections.delete(touch.identifier);
+            }
+        }
     }
 
     _handleTouchEnd(event) {
         if (event) event.preventDefault();
-        // Forward movement is toggle-based in 3D mode, so touch release should not cancel it.
+        this._accumulateHeldTurn();
+        for (const touch of Array.from(event?.changedTouches || [])) {
+            this.touchTurnDirections.delete(touch.identifier);
+        }
+        // Forward movement is toggle-based in 3D mode, so touch release does not cancel it.
     }
 
     _handleKeyDown3D(event) {
         if (typeof gameMode !== 'undefined' && (gameMode === 'review' || gameMode === 'votd' || gameMode === 'overland')) {
             return;
         }
-        if (event.repeat) return;
         if (event.code === 'ArrowLeft' || event.code === 'KeyA') {
-            this._stopAndClearTarget();
-            this._queueTurn(-1);
+            if (!this.keyboardTurnLeft) {
+                this._accumulateHeldTurn();
+                this.keyboardTurnLeft = true;
+                this._stopAndClearTarget();
+            }
         } else if (event.code === 'ArrowRight' || event.code === 'KeyD') {
-            this._stopAndClearTarget();
-            this._queueTurn(1);
+            if (!this.keyboardTurnRight) {
+                this._accumulateHeldTurn();
+                this.keyboardTurnRight = true;
+                this._stopAndClearTarget();
+            }
         } else if (event.code === 'ArrowUp' || event.code === 'KeyW') {
             this.forwardPressed = true;
         } else if (event.code === 'ArrowDown' || event.code === 'KeyS' || event.code === 'Space') {
             this._stopAndClearTarget();
-        } else if (event.code === 'Enter' || event.code === 'KeyF') {
+        } else if (!event.repeat && (event.code === 'Enter' || event.code === 'KeyF')) {
             this._queueFire();
         }
     }
 
     _handleKeyUp3D(event) {
+        if (event.code === 'ArrowLeft' || event.code === 'KeyA') {
+            this._accumulateHeldTurn();
+            this.keyboardTurnLeft = false;
+        } else if (event.code === 'ArrowRight' || event.code === 'KeyD') {
+            this._accumulateHeldTurn();
+            this.keyboardTurnRight = false;
+        }
         // Forward movement is toggle-based in 3D mode, so key release does not cancel it.
     }
 
-    _queueTurn(direction) {
-        this.turnQueue += direction;
+    _handleMouseDown3D(event) {
+        if (event.button !== 0) return;
+        const point = this._getCanvasPoint(event.clientX, event.clientY);
+        const controls = this._getControlRects();
+        const direction = this._pointInRect(point.x, point.y, controls.left)
+            ? -1
+            : (this._pointInRect(point.x, point.y, controls.right) ? 1 : 0);
+        if (!direction) return;
+
+        event.preventDefault();
+        this._accumulateHeldTurn();
+        this.mouseTurnDirection = direction;
+        this._stopAndClearTarget();
     }
 
-    _consumeTurnQueue() {
-        const steps = this.turnQueue;
-        this.turnQueue = 0;
-        return steps;
+    _handleMouseUp3D() {
+        if (!this.mouseTurnDirection) return;
+        this._accumulateHeldTurn();
+        this.mouseTurnDirection = 0;
+    }
+
+    _handleTouchCancel3D(event) {
+        if (event) event.preventDefault();
+        this._accumulateHeldTurn();
+        this.touchTurnDirections.clear();
+    }
+
+    _handleWindowBlur3D() {
+        this._accumulateHeldTurn();
+        this.keyboardTurnLeft = false;
+        this.keyboardTurnRight = false;
+        this.mouseTurnDirection = 0;
+        this.touchTurnDirections.clear();
+    }
+
+    _getTurnDirection() {
+        let direction = 0;
+        if (this.keyboardTurnLeft) direction -= 1;
+        if (this.keyboardTurnRight) direction += 1;
+        direction += this.mouseTurnDirection;
+        for (const touchDirection of this.touchTurnDirections.values()) {
+            direction += touchDirection;
+        }
+        return Math.max(-1, Math.min(1, direction));
+    }
+
+    _accumulateHeldTurn(now = this._now()) {
+        const elapsedSeconds = Math.min(0.05, Math.max(0, now - this.lastTurnSampleAt) / 1000);
+        this.pendingTurnRadians += this._getTurnDirection() * this.turnSpeed * elapsedSeconds;
+        this.lastTurnSampleAt = now;
+    }
+
+    _consumeTurnRadians() {
+        this._accumulateHeldTurn();
+        const radians = this.pendingTurnRadians;
+        this.pendingTurnRadians = 0;
+        return radians;
+    }
+
+    _now() {
+        return typeof performance !== 'undefined' && typeof performance.now === 'function'
+            ? performance.now()
+            : Date.now();
     }
 
     _queueFire() {

@@ -2035,3 +2035,75 @@ Original prompt: Check the implementation of docs/multi-version-songs-implementa
 - Inspected artifacts:
   - `output/web-game/low-poly-3d-context-leak-idle/after-20s-idle.png`
   - `output/web-game/low-poly-3d-context-leak-forced/after-forced-recovery.png`
+
+2026-08-16 — visible 3D shots and finer turning:
+- Identified why aligned shots caused damage without a visible projectile: the
+  3D combat path is intentionally target-based/hitscan and bypasses the shared
+  `BulletManager`, so `RendererThreeJS._syncBullets()` had nothing to draw.
+- Added a visual-only low-poly energy bolt for accepted 3D shots. It travels
+  from the player to the selected monster while preserving the existing damage
+  timing, uses unlit shared geometry/materials, automatically expires, and is
+  capped at six simultaneous tracers for mobile safety.
+- Changed discrete left/right turns from 30 degrees to 15 degrees and made the
+  movement code consume `InputHandler3D.turnStep` instead of duplicating a
+  hard-coded angle.
+- Browser verification confirmed:
+  - one right input changed heading from `0` to `0.262` radians
+  - an aligned Enter/fire input created one tracer and still reduced monster
+    health by 2
+  - the tracer automatically returned to zero active objects after travel
+  - no console errors and 0 WebGL losses / 0 restores
+- The standard web-game client completed gameplay captures for both the turn
+  and aligned-fire paths. The older all-in-one low-poly runtime script later
+  stalled in its browser harness and was terminated; syntax checks and the
+  focused browser regressions passed.
+
+2026-08-16 — continuous turning and first authored CC0 monster:
+- Replaced discrete 15-degree turns with frame-rate-independent press-and-hold
+  rotation at 120 degrees per second. Keyboard, mouse, and touch all accumulate
+  held time; release, cancel, and window blur clear their states. Opposing held
+  directions cancel each other.
+- Added the zero-cost validation plan at
+  `docs/plans/FREE_LOW_POLY_3D_VALIDATION_PLAN.md`, including the 20–30-player
+  cohort, fixed activation/mission/D7/control gates, and a $0 pre-validation
+  asset and advertising budget.
+- Selected Quaternius's CC0 `Ghost_Skull.gltf` as the Fear pipeline proof after
+  comparing it with larger demon models. Retained the original source and
+  license under `resources/3d-source/quaternius-ultimate-monsters` and added a
+  reproducible embedded-glTF-to-GLB converter.
+- The authored asset passes its strict gate: 357,116-byte GLB, 3,146 triangles,
+  one primitive, one material, one skin, 32x32 texture, canonical idle/walk/
+  attack/hit/death clips, and no validator violations.
+- Made accepted shots readable above wall depth with a longer-lived unlit 3D
+  bolt plus a small projected glow on the interface canvas. Hitscan damage is
+  unchanged and tracers remain capped at six and self-clean after travel.
+- Final integrated browser regression passed:
+  - authored `monster.fear` loaded with no fallback or asset failure
+  - 19 or fewer draw calls and roughly 11,000 visible triangles
+  - a held turn produced `0.105` radians with exactly `0` release drift
+  - one visible tracer accompanied a 2-point hit and cleaned back to zero
+  - one cached WebGL support probe, 0 losses / 0 restores, and no browser errors
+- Default 2D regression retained `viewMode: 2d`, hid the WebGL canvas, rendered
+  normal top-down gameplay, and produced no browser errors.
+- Inspected artifacts:
+  - `output/web-game/low-poly-3d-authored-ghost-skull-final/runtime.png`
+  - `output/web-game/low-poly-3d-authored-ghost-skull-final/projectile.png`
+  - `output/web-game/low-poly-3d-2d-regression-current/runtime.png`
+- Remaining technical gate: profile on a real phone. Headless Chromium used a
+  software SwiftShader GPU and reported about 23 FPS, so it is useful for
+  correctness and budget checks but not a representative phone frame-rate
+  measurement.
+
+2026-08-17 — three view modes technical design:
+- Added `docs/plans/THREE_VIEW_MODES_TECHNICAL_DESIGN.md` for three distinct
+  experiences: 2D Classic, the current elevated low-poly 2.5D Adventure mode,
+  and a genuine eye-level low-poly 3D First Person mode.
+- The design keeps one game state and one Three.js world renderer for both mesh
+  modes, with separate camera/input profiles rather than duplicated engines.
+- Specified legacy `viewMode=3d` migration to `third-person`, centered
+  wall-respecting first-person aiming, local-player mesh hiding, mode-correct
+  WebGL recovery, suspense features, mobile performance budgets, diagnostics,
+  a seven-phase implementation sequence, and an explicit regression matrix.
+- No runtime code changed in this documentation-only step. Next recommended
+  deliverable is Phases 1–4: three-mode selection, profile refactor, eye-level
+  camera/crosshair, and honest wall-blocked shooting.
