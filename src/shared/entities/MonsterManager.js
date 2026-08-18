@@ -133,6 +133,11 @@
             if (validPositions.length === 0) {
                 validPositions = this._findSpawnPositions(playerCodes, 200, Infinity);
             }
+            // City blocks can temporarily make the distance bands sparse;
+            // always prefer an open road cell over silently spawning nothing.
+            if (validPositions.length === 0) {
+                validPositions = this._findAnyOpenSpawnPositions();
+            }
             if (validPositions.length === 0) return;
 
             var chosen = validPositions[Math.floor(Math.random() * validPositions.length)];
@@ -200,6 +205,19 @@
                         }
                     }
                     if (inRange) {
+                        validPositions.push({ x: testX, y: testY });
+                    }
+                }
+            }
+            return validPositions;
+        }
+
+        _findAnyOpenSpawnPositions() {
+            var validPositions = [];
+            var wallGrid = this.wallGrid;
+            for (var testX = 50; testX < Constants.WORLD_WIDTH - 50; testX += 25) {
+                for (var testY = 50; testY < Constants.WORLD_HEIGHT - 50; testY += 25) {
+                    if (!Physics.isOverlapping(testX, testY, Constants.MONSTER_WIDTH, Constants.MONSTER_HEIGHT, this.gameState, null, wallGrid)) {
                         validPositions.push({ x: testX, y: testY });
                     }
                 }

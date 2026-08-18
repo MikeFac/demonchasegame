@@ -2319,3 +2319,8 @@ Original prompt: Check the implementation of docs/multi-version-songs-implementa
 - Added three deterministic house styles with different body heights, roof overhangs, door proportions, and window elevations.
 - Kept the same instanced geometry budget and collision model for mobile performance.
 - Browser verification confirms visible variation in both 2.5D and first-person city views.
+## 2026-08-18 — Harden monster spawning on city maps
+
+- Added an open-cell fallback scan to `MonsterManager` when normal distance-band spawn searches find no valid positions.
+- This prevents city house density or player placement from silently producing an empty encounter.
+- Restarted the server and verified the city three-view regression still includes live monsters.
