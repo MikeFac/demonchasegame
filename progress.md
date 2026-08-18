@@ -2276,3 +2276,8 @@ Original prompt: Check the implementation of docs/multi-version-songs-implementa
   regression passed again.
 - This batch consumed 375 credits total. Tripo balance is 115 credits; pause
   further generation until phone profiling or a credit top-up.
+## 2026-08-18 — Correct authored demon facing axes
+
+- Applied the same +90° local Y-axis correction used for Fear to the remaining authored demon meshes (Doubt, Condemnation, Confusion, Deception, and Ignorance).
+- This keeps each generated model's front-facing side aligned with the renderer's player-facing convention while preserving gameplay rotation and animation behavior.
+- Low-poly asset validation and the full three-view browser regression both pass.
