@@ -2329,3 +2329,9 @@ Original prompt: Check the implementation of docs/multi-version-songs-implementa
 - Replaced the brown-biased city palette with blue, cream, brick red, sage, teal, and neutral siding variants.
 - Added deterministic asphalt road strips between GridCity blocks while retaining lighter ground around house footprints.
 - Kept house and roof materials mobile-friendly and preserved collision/occlusion geometry.
+## 2026-08-19 — Guarantee visible house color variation
+
+- Verified the prior instance-tint path was flattening most house bodies to gray in the live renderer.
+- Added explicit per-color façade batches so residential colors render reliably: blue, cream, brick red, green, teal, and white.
+- Retained asphalt road strips and mobile-friendly instancing.
+- Independent screenshots confirm the color variety in both 2.5D and first-person views.

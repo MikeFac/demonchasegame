@@ -57,6 +57,7 @@ class RendererThreeJS extends Renderer3D {
         this.cityWindowMesh = null;
         this.cityDoorMesh = null;
         this.cityRoadMesh = null;
+        this.cityFacadeBatches = [];
         this.wallSource = null;
         this.wallTheme = null;
         this.wallRevision = 0;
@@ -683,6 +684,12 @@ class RendererThreeJS extends Renderer3D {
             this.cityRoadMesh.material.dispose();
             this.cityRoadMesh = null;
         }
+        for (const batch of this.cityFacadeBatches) {
+            this.scene.remove(batch);
+            batch.geometry.dispose();
+            batch.material.dispose();
+        }
+        this.cityFacadeBatches = [];
         if (!walls.length) return;
 
         const colors = {
@@ -825,6 +832,39 @@ class RendererThreeJS extends Renderer3D {
             this.cityWindowMesh = windows;
             this.cityDoorMesh = doors;
             this.scene.add(windows, doors);
+
+            const facadeGeometry = new THREE.BoxGeometry(1, 1, 1);
+            cityWallPalette.forEach((facadeColor, colorIndex) => {
+                const matching = visualWalls.filter((wall) => {
+                    return Math.abs(Math.floor(wall.x / 25) * 7 + Math.floor(wall.y / 25) * 11) % cityWallPalette.length === colorIndex;
+                });
+                if (!matching.length) return;
+                const facadeMaterial = new THREE.MeshBasicMaterial({ color: facadeColor });
+                const facadeBatch = new THREE.InstancedMesh(facadeGeometry, facadeMaterial, matching.length * 4);
+                matching.forEach((wall, matchingIndex) => {
+                    const width = wall.width || 25;
+                    const depth = wall.height || 25;
+                    const style = wall.cityStyle || 0;
+                    const buildingHeight = [42, 52, 62][style];
+                    const faces = [
+                        [wall.x + width / 2, wall.y - 0.7, width, buildingHeight],
+                        [wall.x + width / 2, wall.y + depth + 0.7, width, buildingHeight],
+                        [wall.x - 0.7, wall.y + depth / 2, depth, buildingHeight],
+                        [wall.x + width + 0.7, wall.y + depth / 2, depth, buildingHeight]
+                    ];
+                    faces.forEach((face, faceIndex) => {
+                        const [x, z, span, height] = face;
+                        position.set(x, height / 2, z);
+                        scale.set(faceIndex < 2 ? span : 1.4, height - 4, faceIndex < 2 ? 1.4 : span);
+                        matrix.compose(position, quaternion, scale);
+                        facadeBatch.setMatrixAt(matchingIndex * 4 + faceIndex, matrix);
+                    });
+                });
+                facadeBatch.instanceMatrix.needsUpdate = true;
+                facadeBatch.frustumCulled = true;
+                this.cityFacadeBatches.push(facadeBatch);
+                this.scene.add(facadeBatch);
+            });
 
             const roadGeometry = new THREE.BoxGeometry(1, 1, 1);
             const roadMaterial = new THREE.MeshBasicMaterial({ color: 0x4d5961 });
