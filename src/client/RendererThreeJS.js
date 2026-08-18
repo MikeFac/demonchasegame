@@ -719,8 +719,10 @@ class RendererThreeJS extends Renderer3D {
         visualWalls.forEach((wall, index) => {
             const width = wall.width || 25;
             const depth = wall.height || 25;
-            position.set(wall.x + width / 2, wallHeight / 2, wall.y + depth / 2);
-            scale.set(width, wallHeight, depth);
+            const style = wall.cityStyle || 0;
+            const buildingHeight = theme === 'city' ? [42, 52, 62][style] : wallHeight;
+            position.set(wall.x + width / 2, buildingHeight / 2, wall.y + depth / 2);
+            scale.set(width, buildingHeight, depth);
             matrix.compose(position, quaternion, scale);
             mesh.setMatrixAt(index, matrix);
 
@@ -749,8 +751,10 @@ class RendererThreeJS extends Renderer3D {
             visualWalls.forEach((wall, index) => {
                 const width = wall.width || 25;
                 const depth = wall.height || 25;
-                position.set(wall.x + width / 2, wallHeight + 3, wall.y + depth / 2);
-                scale.set(width + 8, 6, depth + 8);
+                const style = wall.cityStyle || 0;
+                const buildingHeight = [42, 52, 62][style];
+                position.set(wall.x + width / 2, buildingHeight + 3, wall.y + depth / 2);
+                scale.set(width + (style === 1 ? 4 : 8), style === 2 ? 8 : 6, depth + 8);
                 matrix.compose(position, quaternion, scale);
                 roofs.setMatrixAt(index, matrix);
                 const roofTint = (((wall.x * 5 + wall.y * 11 + index * 7) % 13) - 6) / 100;
@@ -788,7 +792,8 @@ class RendererThreeJS extends Renderer3D {
                 const depth = wall.height || 25;
                 const windowWidth = Math.min(12, Math.max(6, width * 0.24));
                 const windowHeight = 12;
-                const windowY = 38;
+                const style = wall.cityStyle || 0;
+                const windowY = [28, 36, 44][style];
                 for (const z of [wall.y - 0.8, wall.y + depth + 0.8]) {
                     position.set(wall.x + width / 2, windowY, z);
                     scale.set(windowWidth, windowHeight, 1.4);
@@ -799,7 +804,7 @@ class RendererThreeJS extends Renderer3D {
                     windowIndex += 1;
                 }
                 position.set(wall.x + width / 2, 19, wall.y - 1.1);
-                scale.set(Math.min(14, Math.max(8, width * 0.28)), 30, 1.8);
+                scale.set(Math.min(14, Math.max(8, width * (style === 2 ? 0.34 : 0.28))), style === 0 ? 25 : 30, 1.8);
                 matrix.compose(position, quaternion, scale);
                 doors.setMatrixAt(visualWalls.indexOf(wall), matrix);
             });
@@ -842,7 +847,8 @@ class RendererThreeJS extends Renderer3D {
                     x: wall.x + column * segmentWidth,
                     y: wall.y,
                     width: segmentWidth,
-                    height: depth
+                    height: depth,
+                    cityStyle: Math.abs(Math.floor(wall.x / 25) * 7 + Math.floor(wall.y / 25) * 11 + column * 13) % 3
                 });
             }
         });

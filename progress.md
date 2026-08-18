@@ -2314,3 +2314,8 @@ Original prompt: Check the implementation of docs/multi-version-songs-implementa
 - Preserved the surrounding road network and solid collision walls.
 - Added deterministic wall and roof color palettes so neighboring houses vary in brick, siding, concrete, and roof tones.
 - Browser verification confirms the varied 2.5D neighborhood layout and first-person street spacing.
+## 2026-08-18 — Add modular house style variation
+
+- Added three deterministic house styles with different body heights, roof overhangs, door proportions, and window elevations.
+- Kept the same instanced geometry budget and collision model for mobile performance.
+- Browser verification confirms visible variation in both 2.5D and first-person city views.
