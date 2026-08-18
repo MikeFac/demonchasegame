@@ -2302,3 +2302,9 @@ Original prompt: Check the implementation of docs/multi-version-songs-implementa
 - Ran an independent city-theme browser test in both 2.5D and first-person.
 - Added warm window and door façade markers plus brighter city wall materials.
 - Confirmed the city theme is active and regression-safe; the remaining visual gap is proper modular house geometry, not theme activation.
+## 2026-08-18 — Activate real city map generation
+
+- Wired Level 1 to use the existing deterministic `GridCity` generator instead of the classic maze.
+- Set Level 1's terrain theme to `city`; 2D Classic remains visually unchanged because it falls back to its existing stone palette.
+- Added shorter city building bodies, grouped house footprints, roof slabs, doors, and windows for both 2.5D and first-person.
+- Independently verified the default game with screenshots showing streets, separate houses, façades, and occlusion.

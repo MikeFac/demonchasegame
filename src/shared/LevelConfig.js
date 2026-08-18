@@ -98,7 +98,8 @@ const LevelConfig = {
             maxMonsters: 45, // 50% more concurrent monsters than the previous 30
             monstersToKill: 12, // Keep level 1 short while the overall spawn pressure stays higher
             maxHealingPoints: 2, // Level 1 should feel tighter and less forgiving
-            terrainTheme: 'stone'
+            terrainTheme: 'city',
+            mapStyle: 'city'
         },
         2: {
             qualities: ['Love', 'Wisdom', 'Healing'],

@@ -58,7 +58,7 @@
             this.levelData = this.gameConfig.levelData;
 
             // Generate dungeon maze
-            this._generateMaze(this.gameConfig.mapStyle || 'classic');
+            this._generateMaze(this.levelData[1]?.mapStyle || this.gameConfig.mapStyle || 'classic');
 
             // Initial Game State
             this.gameState = {

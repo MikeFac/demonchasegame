@@ -129,7 +129,7 @@
         engine.gameState.terrainTheme = engine.levelData[level].terrainTheme || 'stone';
 
         // Regenerate maze
-        var mapStyle = engine.gameConfig.mapStyle || 'classic';
+        var mapStyle = engine.levelData[level].mapStyle || engine.gameConfig.mapStyle || 'classic';
         var mazeResult = MapGeneratorFactory.generateMap(mapStyle, engine.constants.WORLD_WIDTH, engine.constants.WORLD_HEIGHT, engine.constants.CELL_SIZE);
         engine.walls = mazeResult.walls;
         engine.wallGrid = new WallGrid(mazeResult.grid, mazeResult.rows, mazeResult.cols, engine.constants.CELL_SIZE);

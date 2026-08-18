@@ -712,7 +712,7 @@ class RendererThreeJS extends Renderer3D {
         const quaternion = new THREE.Quaternion();
         const scale = new THREE.Vector3();
         const tint = new THREE.Color();
-        const wallHeight = 72;
+        const wallHeight = theme === 'city' ? 52 : 72;
 
         visualWalls.forEach((wall, index) => {
             const width = wall.width || 25;
@@ -826,7 +826,7 @@ class RendererThreeJS extends Renderer3D {
     }
 
     _splitCityBuildingFootprints(walls) {
-        const maxWidth = 82;
+        const maxWidth = 60;
         const footprints = [];
         walls.forEach((wall) => {
             const width = wall.width || 25;
