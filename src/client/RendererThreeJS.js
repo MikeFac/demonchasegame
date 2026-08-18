@@ -814,7 +814,7 @@ class RendererThreeJS extends Renderer3D {
                     for (const side of [-1, 1]) {
                         position.set(wall.x + width / 2 + side * width * 0.18, buildingHeight + 10, wall.y + depth / 2);
                         scale.set(width * 0.55, 2.6, depth + 10);
-                        roofQuaternion.setFromAxisAngle(roofAxis, side * 0.55);
+                        roofQuaternion.setFromAxisAngle(roofAxis, side * -0.55);
                         matrix.compose(position, roofQuaternion, scale);
                         const meshIndex = wallIndex * 2 + (side === 1 ? 1 : 0);
                         gables.setMatrixAt(meshIndex, matrix);

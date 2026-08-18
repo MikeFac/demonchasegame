@@ -2340,3 +2340,7 @@ Original prompt: Check the implementation of docs/multi-version-songs-implementa
 - Added a lightweight two-plane gable roof construction for the townhouse style.
 - Flat roofs remain on other house styles, creating visible roof silhouette variety without new collision geometry.
 - Verified mixed roofs in both 2.5D and first-person city views.
+## 2026-08-19 — Correct inverted gable roofs
+
+- Reversed the two-plane roof slope rotation so gabled houses rise to a proper central ridge.
+- Verified the corrected silhouette in first-person and 2.5D city views.
