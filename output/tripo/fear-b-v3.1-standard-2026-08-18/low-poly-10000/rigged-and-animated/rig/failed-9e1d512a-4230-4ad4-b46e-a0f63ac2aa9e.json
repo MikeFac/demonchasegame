@@ -1,0 +1,33 @@
+{
+  "request": {
+    "api": "v3",
+    "endpoint": "/animations/rig",
+    "sourceTaskId": "1298ec1d-6037-4a2f-9d73-869eabd89150",
+    "taskId": "9e1d512a-4230-4ad4-b46e-a0f63ac2aa9e",
+    "creditCap": 30,
+    "payload": {
+      "input": "1298ec1d-6037-4a2f-9d73-869eabd89150",
+      "model": "v1.0-20240301",
+      "rig_type": "biped",
+      "spec": "mixamo",
+      "out_format": "glb"
+    }
+  },
+  "task": {
+    "type": "animate_rig",
+    "status": "failed",
+    "progress": 100,
+    "input": {
+      "spec": "mixamo",
+      "topology": "biped",
+      "out_format": "glb",
+      "original_model_id": "1298ec1d-6037-4a2f-9d73-869eabd89150"
+    },
+    "output": {},
+    "task_id": "9e1d512a-4230-4ad4-b46e-a0f63ac2aa9e",
+    "created_at": "2026-08-17T23:30:36.874763Z",
+    "completed_at": "2026-08-17T23:50:36.942693Z",
+    "error_code": 2018,
+    "error_message": "Task processing timeout"
+  }
+}

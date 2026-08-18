@@ -1,0 +1,19 @@
+{
+  "type": "animate_rig",
+  "status": "success",
+  "progress": 100,
+  "input": {
+    "spec": "tripo",
+    "topology": "biped",
+    "out_format": "glb",
+    "original_model_id": "9407d571-98f5-4fd3-8790-223e9d9d2889"
+  },
+  "output": {
+    "model_url": "https://tripo-data.rg1.data.tripo3d.com/tcli_a5567d48a6854bbcac1a6512ac2254cb/20260818/ae8ac0e9-3da8-46d2-921c-09de558ee1e3/tripo_rigging_ae8ac0e9-3da8-46d2-921c-09de558ee1e3.glb?Policy=eyJTdGF0ZW1lbnQiOlt7IlJlc291cmNlIjoiaHR0cHM6Ly90cmlwby1kYXRhLnJnMS5kYXRhLnRyaXBvM2QuY29tL3RjbGlfYTU1NjdkNDhhNjg1NGJiY2FjMWE2NTEyYWMyMjU0Y2IvMjAyNjA4MTgvYWU4YWMwZTktM2RhOC00NmQyLTkyMWMtMDlkZTU1OGVlMWUzL3RyaXBvX3JpZ2dpbmdfYWU4YWMwZTktM2RhOC00NmQyLTkyMWMtMDlkZTU1OGVlMWUzLmdsYiIsIkNvbmRpdGlvbiI6eyJEYXRlTGVzc1RoYW4iOnsiQVdTOkVwb2NoVGltZSI6MTc4NzEwMTY3OH19fV19&Signature=vJjj8h0NHc0hJGkDhksMaGTV5SwyNSFYKQ2orsYdnXxyruKpcL6yYCSQlzou5mMVmtNl1eGzBU0SQVZ2XuCI5H6YRLDNHXlHfY7fe1TcQS477dgi5g-sH5R3KL7V-DyIZK9U5k2bF5k~P2gCofD40I1Q3r-XfwN3G8-1-vWZGaKu8gkoqeBn7Xt-PcXtg~xWJGihPUM8SXUmv5ZMRhXv4plX28CDZa2u56tcAANQvcp9fe4RreBJKYcgN24MuKrTvaQ2b8lYEHxnhueHT~WN7fQrmQpl~olIOdCZC53nCqrWjaBc9xvCiziP3jbPM76pdIbEwTMEXYrZ575ykCFIJQ__&Key-Pair-Id=K1676C64NMVM2J",
+    "rendered_image_url": "https://tripo-data.rg1.data.tripo3d.com/tcli_a5567d48a6854bbcac1a6512ac2254cb/20260818/ae8ac0e9-3da8-46d2-921c-09de558ee1e3/legacy_mesh.webp?Policy=eyJTdGF0ZW1lbnQiOlt7IlJlc291cmNlIjoiaHR0cHM6Ly90cmlwby1kYXRhLnJnMS5kYXRhLnRyaXBvM2QuY29tL3RjbGlfYTU1NjdkNDhhNjg1NGJiY2FjMWE2NTEyYWMyMjU0Y2IvMjAyNjA4MTgvYWU4YWMwZTktM2RhOC00NmQyLTkyMWMtMDlkZTU1OGVlMWUzL2xlZ2FjeV9tZXNoLndlYnAiLCJDb25kaXRpb24iOnsiRGF0ZUxlc3NUaGFuIjp7IkFXUzpFcG9jaFRpbWUiOjE3ODcxMDE2Nzh9fX1dfQ__&Signature=JKIuRiRSkNgxm8189XK-X7CkbFZh4o4820-X0lgALhig42F8cqId~P6lRGSoycYjMZGH1nfmPyUNBy-8rdjsyzVoLulaT-PN7VAddCAPMqOjyQqbdex2g1y3FICh3wO1trnqyDZ7hSAPmOuPItStjbnyMlS2Rbya1Eyc3QdGjtoROW9GKLMmSq84Cd2VOdDP-5nWwzbrepRPKB2163G252ztbqoctiFy8jhFJTPpzOSj7VHcClmi~soLjOCci78sHvnVu3yVLb4OduhoxtM~pfnRhU9CFHFDYeAbEREZ2LK~VZ1b~4vWLfFQwN0CXa7BviZQfRaUNfL9snaUnLuUpA__&Key-Pair-Id=K1676C64NMVM2J"
+  },
+  "task_id": "ae8ac0e9-3da8-46d2-921c-09de558ee1e3",
+  "created_at": "2026-08-18T00:36:47.656874Z",
+  "completed_at": "2026-08-18T00:56:41.349611Z",
+  "credits_consumed": 25
+}

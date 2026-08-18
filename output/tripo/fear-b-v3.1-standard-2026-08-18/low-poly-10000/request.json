@@ -1,0 +1,15 @@
+{
+  "api": "v3",
+  "endpoint": "/mesh/decimate",
+  "sourceTaskId": "1a89f28f-1481-41c8-9f1c-6082eaf82379",
+  "sourceRigType": "biped",
+  "maxRetopoCredits": 30,
+  "payload": {
+    "input": "1a89f28f-1481-41c8-9f1c-6082eaf82379",
+    "model": "v2.0",
+    "face_limit": 10000,
+    "quad": false,
+    "bake": true
+  },
+  "taskId": "1298ec1d-6037-4a2f-9d73-869eabd89150"
+}

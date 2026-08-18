@@ -1,0 +1,19 @@
+{
+  "type": "highpoly_to_lowpoly",
+  "status": "success",
+  "progress": 100,
+  "input": {
+    "bake": true,
+    "quad": false,
+    "face_limit": 10000,
+    "original_model_id": "1a89f28f-1481-41c8-9f1c-6082eaf82379"
+  },
+  "output": {
+    "model_url": "https://tripo-data.rg1.data.tripo3d.com/tcli_a5567d48a6854bbcac1a6512ac2254cb/20260817/1298ec1d-6037-4a2f-9d73-869eabd89150/tripo_poly_1298ec1d-6037-4a2f-9d73-869eabd89150.glb?Policy=eyJTdGF0ZW1lbnQiOlt7IlJlc291cmNlIjoiaHR0cHM6Ly90cmlwby1kYXRhLnJnMS5kYXRhLnRyaXBvM2QuY29tL3RjbGlfYTU1NjdkNDhhNjg1NGJiY2FjMWE2NTEyYWMyMjU0Y2IvMjAyNjA4MTcvMTI5OGVjMWQtNjAzNy00YTJmLTlkNzMtODY5ZWFiZDg5MTUwL3RyaXBvX3BvbHlfMTI5OGVjMWQtNjAzNy00YTJmLTlkNzMtODY5ZWFiZDg5MTUwLmdsYiIsIkNvbmRpdGlvbiI6eyJEYXRlTGVzc1RoYW4iOnsiQVdTOkVwb2NoVGltZSI6MTc4NzA5NTU1OX19fV19&Signature=dU-yyibL~s4EPGhKtUTWuKDIZhgRQyzey3OfiUBE8W24MilhxM6aBsqG~soL~DsdGHPZGNjFoGnIvhFTqNxTqv7U2ajHk4MXNkrqot0yF8cBi8sSwBwkxcFENOjZxLKyYr2krsdhtmo3m~EG8TkmtGc2ScVL3SyAusvywRbeJ9GLszGWO5hkSAGl-uXS3fSOf2rQsieindy32ER-w7zCN6R5ZEEWq9Dfo0zhNKqZFXFFCa5PW56A4qGp9nFOVnGmzn8EuVPl4vRRejkjGhZYE0qGBYJ~w5~GFLpHlqVdzenxuVsM8y18Fd61PsGg2fVR70EjmpgwbYzTdIp6qiMTDA__&Key-Pair-Id=K1676C64NMVM2J",
+    "rendered_image_url": "https://tripo-data.rg1.data.tripo3d.com/tcli_a5567d48a6854bbcac1a6512ac2254cb/20260817/1298ec1d-6037-4a2f-9d73-869eabd89150/legacy_mesh.webp?Policy=eyJTdGF0ZW1lbnQiOlt7IlJlc291cmNlIjoiaHR0cHM6Ly90cmlwby1kYXRhLnJnMS5kYXRhLnRyaXBvM2QuY29tL3RjbGlfYTU1NjdkNDhhNjg1NGJiY2FjMWE2NTEyYWMyMjU0Y2IvMjAyNjA4MTcvMTI5OGVjMWQtNjAzNy00YTJmLTlkNzMtODY5ZWFiZDg5MTUwL2xlZ2FjeV9tZXNoLndlYnAiLCJDb25kaXRpb24iOnsiRGF0ZUxlc3NUaGFuIjp7IkFXUzpFcG9jaFRpbWUiOjE3ODcwOTU1NTl9fX1dfQ__&Signature=vnetWQ0ADuMDcRpI7q-hdqMRJZSGbLImjCm5UFhY96G3X9EZaIfRrFpr4zMKFM64pwAIrrw4rSDgfb4wjG84JWucUQOYUOa4fDY~2V42tcCxC6T1Gxq39vmJOGYXROcF1DOMIIl6Gkm98d0I3Umlv9DQ~IOXSEdmL~Qmny3fkjRGAmm0wSkJ~KAcDELUcsoC5l-KGAU8c28tGyDFS0MgH~~hJG9I-Fgkz6~aPQA8srXjN4zdvfx9n--Ef-GQZwXBGerXHDbr~2I7GSuyzSlePeGbQ5dYVKWQ3HVU5W8t73z9McO4zpRMMquls5NggJH4An-P~Hg7iN1U394OUQ1u9g__&Key-Pair-Id=K1676C64NMVM2J"
+  },
+  "task_id": "1298ec1d-6037-4a2f-9d73-869eabd89150",
+  "created_at": "2026-08-17T23:20:14.138440Z",
+  "completed_at": "2026-08-17T23:25:59.485078Z",
+  "credits_consumed": 30
+}

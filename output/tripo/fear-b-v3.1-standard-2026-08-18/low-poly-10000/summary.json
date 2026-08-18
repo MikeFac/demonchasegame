@@ -1,0 +1,24 @@
+{
+  "sourceTaskId": "1a89f28f-1481-41c8-9f1c-6082eaf82379",
+  "sourceRiggable": true,
+  "sourceRigType": "biped",
+  "retopoTaskId": "1298ec1d-6037-4a2f-9d73-869eabd89150",
+  "targetFaces": 10000,
+  "retopoModel": "v2.0",
+  "bake": true,
+  "creditsConsumed": 30,
+  "balanceBefore": 970,
+  "balanceAfter": 940,
+  "lowPolyRiggable": true,
+  "lowPolyRigType": "biped",
+  "downloaded": [
+    {
+      "filename": "model_url.glb",
+      "bytes": 3133132
+    },
+    {
+      "filename": "rendered_image_url.webp",
+      "bytes": 31796
+    }
+  ]
+}

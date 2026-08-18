@@ -1,0 +1,7 @@
+{
+  "inheritedFromSummary": true,
+  "output": {
+    "riggable": true,
+    "rig_type": "biped"
+  }
+}

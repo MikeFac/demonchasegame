@@ -1,0 +1,19 @@
+{
+  "api": "v3",
+  "endpoint": "/generation/image-to-model",
+  "sourceImage": "output/imagegen/player-rig-ready/player-default-a-pose.png",
+  "fileToken": "file_bc88fdad-9280-4410-bbbd-1fd99709b2a7",
+  "taskId": "b9a6cc4c-1da0-40d7-9fee-261f0ec9fe33",
+  "maxCredits": 50,
+  "payload": {
+    "input": "file_bc88fdad-9280-4410-bbbd-1fd99709b2a7",
+    "model": "P1-20260311",
+    "texture": true,
+    "pbr": true,
+    "texture_alignment": "original_image",
+    "orientation": "align_image",
+    "enable_image_autofix": false,
+    "export_uv": true,
+    "face_limit": 5000
+  }
+}

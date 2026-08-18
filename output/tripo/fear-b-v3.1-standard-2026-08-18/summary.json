@@ -1,0 +1,20 @@
+{
+  "taskId": "1a89f28f-1481-41c8-9f1c-6082eaf82379",
+  "status": "success",
+  "model": "v3.1-20260211",
+  "sourceImage": "output/imagegen/demon-reference-candidates-gpt-image-2/fear-b.png",
+  "outputDir": "output/tripo/fear-b-v3.1-standard-2026-08-18",
+  "creditsConsumed": 30,
+  "balanceBefore": 1000,
+  "balanceAfter": 970,
+  "downloaded": [
+    {
+      "filename": "model_url.glb",
+      "bytes": 42294160
+    },
+    {
+      "filename": "rendered_image_url.webp",
+      "bytes": 34972
+    }
+  ]
+}

@@ -1,0 +1,71 @@
+{
+  "generatedAt": "2026-08-18T01:08:09.604Z",
+  "directory": "output/tripo/fear-b-v3.1-standard-2026-08-18/low-poly-10000/rigged-and-animated",
+  "files": [
+    {
+      "filename": "animations/model_url.glb",
+      "bytes": 7291236,
+      "megabytes": 6.95,
+      "scenes": 1,
+      "nodes": 90,
+      "meshes": 1,
+      "primitives": 1,
+      "triangles": 14468,
+      "materials": 1,
+      "textures": 3,
+      "images": 3,
+      "skins": 1,
+      "joints": 88,
+      "animationTargetNodes": 89,
+      "animations": [
+        {
+          "name": "preset:idle",
+          "durationSeconds": 15.375,
+          "channels": 267,
+          "samplers": 267
+        },
+        {
+          "name": "preset:walk",
+          "durationSeconds": 2.375,
+          "channels": 267,
+          "samplers": 267
+        },
+        {
+          "name": "preset:slash",
+          "durationSeconds": 6.625,
+          "channels": 267,
+          "samplers": 267
+        },
+        {
+          "name": "preset:hurt",
+          "durationSeconds": 13.875,
+          "channels": 267,
+          "samplers": 267
+        },
+        {
+          "name": "preset:fall",
+          "durationSeconds": 3.0417,
+          "channels": 267,
+          "samplers": 267
+        }
+      ]
+    },
+    {
+      "filename": "rig/model_url.glb",
+      "bytes": 3457220,
+      "megabytes": 3.3,
+      "scenes": 1,
+      "nodes": 90,
+      "meshes": 1,
+      "primitives": 1,
+      "triangles": 14468,
+      "materials": 1,
+      "textures": 3,
+      "images": 3,
+      "skins": 1,
+      "joints": 88,
+      "animationTargetNodes": 0,
+      "animations": []
+    }
+  ]
+}

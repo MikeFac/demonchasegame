@@ -1,0 +1,14 @@
+{
+  "api": "v3",
+  "endpoint": "/animations/rig",
+  "sourceTaskId": "b9a6cc4c-1da0-40d7-9fee-261f0ec9fe33",
+  "taskId": "2618eade-da14-463f-a4a0-60ead940087f",
+  "creditCap": 30,
+  "payload": {
+    "input": "b9a6cc4c-1da0-40d7-9fee-261f0ec9fe33",
+    "model": "v2.5-20260210",
+    "rig_type": "biped",
+    "spec": "tripo",
+    "out_format": "glb"
+  }
+}

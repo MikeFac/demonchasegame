@@ -1,0 +1,10 @@
+{
+  "fileToken": "file_ec178bde-8fc1-48f9-affd-2021115d3ee6",
+  "filename": "/home/michael/proj/dcgame/output/tripo/fear-b-v3.1-standard-2026-08-18/low-poly-10000/rig-source-cleaned.glb",
+  "bytes": 3133132,
+  "rigCheckTaskId": "36705f4b-4e4c-42c5-b0db-272eeb1bba96",
+  "rigCheck": {
+    "riggable": true,
+    "rig_type": "biped"
+  }
+}

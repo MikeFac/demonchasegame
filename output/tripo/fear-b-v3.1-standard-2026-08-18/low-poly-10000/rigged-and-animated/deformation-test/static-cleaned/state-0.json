@@ -1,0 +1,1 @@
+{"coordinateSystem":"right-handed; Y up; model feet normalized to y=0","status":"ready","role":"idle","source":"../rig-source-cleaned.glb","normalizedTime":0.25,"animation":null,"scene":{"meshes":1,"skinnedMeshes":0,"bones":0,"uniqueJoints":0,"materials":1},"bounds":{"min":[-0.622,0,-1.219],"max":[0.622,2.8,1.219],"size":[1.244,2.8,2.438],"center":[0,1.4,0]},"error":null}

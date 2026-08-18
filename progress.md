@@ -2150,3 +2150,76 @@ Original prompt: Check the implementation of docs/multi-version-songs-implementa
   regression passed after exercising the resized 2.5D turn control and the
   first-person forward press/release path. Visual captures confirm more of the
   verse remains unobstructed with readable button glyphs and labels.
+
+2026-08-18 — GPT-Image-2 references and first Tripo character pipeline:
+- Generated two persistent GPT-Image-2 reference candidates for all 18 enemy
+  types under `output/imagegen/demon-reference-candidates-gpt-image-2`, with
+  contact sheets, the exact prompts, and a shortlist. Selected `fear-b.png` for
+  the first end-to-end asset proof.
+- Tripo H3.1 image-to-model produced a visually strong 40.33 MB Fear demon
+  source for 30 credits. Smart retopology cost another 30 credits and produced
+  a 2.99 MB textured GLB with 14,914 triangles; both source and retopologized
+  outputs were downloaded immediately under `output/tripo`.
+- Both high- and low-poly outputs passed Tripo's free riggability check as
+  `biped`. Added resumable V3 generation, retopology, rigging, animation,
+  topology-diagnostic, and GLB-analysis scripts under `scripts/`.
+- Four rig attempts are recorded with task IDs in the output folder. The first
+  three reached 99% and failed at Tripo's 20-minute service limit with error
+  2018, consuming zero credits. This included both the legacy biped rigger and
+  v2.5, so the failure was not a local polling or download problem.
+- Local topology diagnostics found the retopologized GLB had 31 disconnected
+  components, 131 boundary edges, and 22 non-manifold edges, though it had no
+  invalid values, bad indices, degenerates, or duplicates. Created and visually
+  checked a cleaned derivative with one component, zero non-manifold edges, and
+  14,468 triangles; the full wings, horns, claws, texture, and silhouette remain
+  intact in `rigged-and-animated/deformation-test/static-cleaned/shot-0.png`.
+- Uploaded the cleaned GLB directly to bypass task-to-task resolution; it passed
+  another free biped rig-check. Its v2.5 rig task remains a saved cloud task and
+  can be queried without keeping a local poller open.
+- Research conclusion: Tripo officially defines error 2018 as model complexity,
+  not export compression. Tripo's game-ready recipe recommends P1 at a 5,000
+  face limit. Adobe's Mixamo requirements specifically warn that large wings,
+  tails, and other extra appendages can defeat a humanoid auto-rigger and call
+  for a clean connected A/T-pose with clearly separated limbs.
+- If the cleaned task also fails, do not retry the same asset again. Generate a
+  wingless/tail-light A-pose body using Tripo P1 at about 5,000 faces, rig and
+  animate the body, and attach simplified wings afterward as separate rigid or
+  lightly skinned accessories. Then run the deterministic Three.js deformation
+  viewer at quarter-cycle poses for idle, walk, attack, hit, and death.
+
+2026-08-18 — proven P1 human player rig and Luna handoff:
+- Used the built-in OpenAI image-generation tool to create a clean default-player
+  A-pose reference matching the existing blue/gold palette. The permanent image
+  and exact prompt are under `output/imagegen/player-rig-ready`.
+- Tripo P1 generated the textured player at the strict 5,000-face ceiling in
+  about ninety seconds: 4,976 triangles, one mesh/primitive/material, three
+  texture images, 0.91 MB, and 50 credits. No separate retopology was required.
+- The free check returned biped. Tripo v2.5 rigging succeeded for 25 credits and
+  produced a 1.05 MB GLB with one skin and 28 joints.
+- Five in-place animations succeeded for 50 credits and arrived in one 2.24 MB
+  GLB: idle, walk, slash, hurt, and fall. Each clip targets 29 nodes through 87
+  channels. `scripts/analyze-tripo-animation-glbs.mjs` records exact durations.
+- Ran the standard web-game Playwright client through 20 deterministic poses
+  (five clips at 0/25/50/75%). Every pose passed structural/browser checks with
+  no console errors. Visual contact-sheet inspection found no detached limbs,
+  collapsing, tearing, or exploding vertices.
+- Gameplay caveat: `preset:hurt` is a dramatic airborne 13.875-second sequence,
+  and `preset:slash` is 6.625 seconds. Deformation passes, but integration should
+  trim or speed these rather than playing the full clips for routine events.
+- Corrected rig-script accounting to sum each task's own `credits_consumed`
+  instead of using the shared account balance delta, which is invalid when
+  concurrent demon/player tasks freeze or consume credits. Recovery now reuses
+  already-downloaded outputs and writes a final summary without resubmission.
+- The cleaned/direct-upload Fear demon rig also succeeded in the background.
+  Its five-clip animation task remains recorded for immediate download/testing;
+  wing deformation needs an especially strict visual review.
+- Added `docs/plans/LUNA_3D_ASSET_PIPELINE_RUNBOOK.md` with exact commands, paths,
+  task IDs, credit guards, recovery rules, deformation gates, demon lessons,
+  and the integration boundary. Luna can handle the repeatable pipeline; novel
+  failures and final subtle visual judgment should be escalated to Terra/Sol.
+- Recovered the completed Fear animation task with the corrected accounting:
+  6.95 MB, 14,468 triangles, one skin, 88 joints, five clips, and 267 channels
+  per clip. All 20 browser poses passed. Contact-sheet review shows coherent
+  wing folding and sweeping without detached geometry or explosive stretching.
+  Treat this as a featured/boss asset pending real-phone profiling, not the
+  baseline for many simultaneous ordinary monsters.

@@ -1,6 +1,7 @@
 # Dependencies
 node_modules/
 package-lock.json
+tools/imagegen-venv/
 
 # Logs
 *.log

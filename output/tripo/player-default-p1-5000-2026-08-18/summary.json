@@ -1,0 +1,20 @@
+{
+  "taskId": "b9a6cc4c-1da0-40d7-9fee-261f0ec9fe33",
+  "status": "success",
+  "model": "P1-20260311",
+  "sourceImage": "output/imagegen/player-rig-ready/player-default-a-pose.png",
+  "outputDir": "output/tripo/player-default-p1-5000-2026-08-18",
+  "creditsConsumed": 50,
+  "balanceBefore": 915,
+  "balanceAfter": 865,
+  "downloaded": [
+    {
+      "filename": "model_url.glb",
+      "bytes": 955108
+    },
+    {
+      "filename": "rendered_image_url.webp",
+      "bytes": 17190
+    }
+  ]
+}

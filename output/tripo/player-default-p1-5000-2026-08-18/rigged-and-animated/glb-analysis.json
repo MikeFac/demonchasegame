@@ -1,0 +1,71 @@
+{
+  "generatedAt": "2026-08-18T01:03:32.312Z",
+  "directory": "output/tripo/player-default-p1-5000-2026-08-18/rigged-and-animated",
+  "files": [
+    {
+      "filename": "animations/model_url.glb",
+      "bytes": 2353892,
+      "megabytes": 2.24,
+      "scenes": 1,
+      "nodes": 30,
+      "meshes": 1,
+      "primitives": 1,
+      "triangles": 4976,
+      "materials": 1,
+      "textures": 3,
+      "images": 3,
+      "skins": 1,
+      "joints": 28,
+      "animationTargetNodes": 29,
+      "animations": [
+        {
+          "name": "preset:idle",
+          "durationSeconds": 15.375,
+          "channels": 87,
+          "samplers": 87
+        },
+        {
+          "name": "preset:walk",
+          "durationSeconds": 2.375,
+          "channels": 87,
+          "samplers": 87
+        },
+        {
+          "name": "preset:slash",
+          "durationSeconds": 6.625,
+          "channels": 87,
+          "samplers": 87
+        },
+        {
+          "name": "preset:hurt",
+          "durationSeconds": 13.875,
+          "channels": 87,
+          "samplers": 87
+        },
+        {
+          "name": "preset:fall",
+          "durationSeconds": 3.0417,
+          "channels": 87,
+          "samplers": 87
+        }
+      ]
+    },
+    {
+      "filename": "rig/model_url.glb",
+      "bytes": 1102260,
+      "megabytes": 1.05,
+      "scenes": 1,
+      "nodes": 30,
+      "meshes": 1,
+      "primitives": 1,
+      "triangles": 4976,
+      "materials": 1,
+      "textures": 3,
+      "images": 3,
+      "skins": 1,
+      "joints": 28,
+      "animationTargetNodes": 0,
+      "animations": []
+    }
+  ]
+}

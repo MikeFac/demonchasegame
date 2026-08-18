@@ -1,0 +1,34 @@
+{
+  "api": "v3",
+  "endpoint": "/animations/rig",
+  "sourceTaskId": "1298ec1d-6037-4a2f-9d73-869eabd89150",
+  "taskId": "ae8ac0e9-3da8-46d2-921c-09de558ee1e3",
+  "creditCap": 30,
+  "payload": {
+    "input": "file_ec178bde-8fc1-48f9-affd-2021115d3ee6",
+    "model": "v2.5-20260210",
+    "rig_type": "biped",
+    "spec": "tripo",
+    "out_format": "glb"
+  },
+  "attempts": [
+    {
+      "taskId": "9e1d512a-4230-4ad4-b46e-a0f63ac2aa9e",
+      "status": "failed",
+      "errorCode": 2018,
+      "errorMessage": "Task processing timeout"
+    },
+    {
+      "taskId": "33aee589-f217-49c4-9426-e30e70a3adac",
+      "status": "failed",
+      "errorCode": 2018,
+      "errorMessage": "Task processing timeout"
+    },
+    {
+      "taskId": "78208ea3-f6f7-4a04-b1a0-35e55549019a",
+      "status": "failed",
+      "errorCode": 2018,
+      "errorMessage": "Task processing timeout"
+    }
+  ]
+}
