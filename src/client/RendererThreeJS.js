@@ -97,7 +97,7 @@ class RendererThreeJS extends Renderer3D {
         this.shotTracers = [];
         this.maxShotTracers = 6;
         this.eyeHeight = 54;
-        this.aimFeedback = { type: 'neutral', until: 0, distance: null, targetId: null, point: null };
+        this.aimFeedback = { type: 'neutral', until: 0, distance: null, targetId: null, targetType: null, point: null };
 
         this._createEnvironment();
         this._installContextRecovery();
@@ -802,9 +802,12 @@ class RendererThreeJS extends Renderer3D {
         const type = result?.type === 'monster' ? 'hit' : (result?.type || 'miss');
         this.aimFeedback = {
             type,
-            until: performance.now() + (type === 'hit' ? 240 : 180),
+            until: performance.now() + (type === 'hit' ? 1400 : 500),
             distance: Number.isFinite(result?.distance) ? Math.round(result.distance) : null,
             targetId: result?.monster?.id ?? null,
+            targetType: result?.monster
+                ? String(result.monster.demonType || result.monster.monsterType || 'Demon')
+                : null,
             point: result?.point ? {
                 x: Math.round(result.point.x),
                 y: Math.round(result.point.y)
@@ -1269,6 +1272,7 @@ class RendererThreeJS extends Renderer3D {
         if (uiState.speedPromptVisible && !uiState.storyPause && !uiState.goalsOverlayVisible) this.drawSpeedPrompt();
         if (uiState.storyPause && uiState.storyPause.type === 'questHub') this.drawQuestHubOverlay(uiState.storyPause);
         else this.drawStoryPauseOverlay(uiState.storyPause);
+        this._drawFirstPersonTargetLabel(monsters, player);
     }
 
     _drawFirstPersonCrosshair() {
@@ -1288,6 +1292,50 @@ class RendererThreeJS extends Renderer3D {
         this.ctx.strokeStyle = color;
         this.ctx.lineWidth = 2;
         this._strokeCrosshair(centerX, centerY, gap, arm);
+        this.ctx.restore();
+    }
+
+    _drawFirstPersonTargetLabel(monsters, player) {
+        if (this.cameraProfile !== 'first-person' || !player) return;
+        const resolveAim = window.resolveFirstPersonAim;
+        if (typeof resolveAim !== 'function') return;
+        const result = resolveAim(monsters || [], player);
+        const feedbackActive = performance.now() <= this.aimFeedback.until;
+        const feedbackTarget = feedbackActive && this.aimFeedback.targetId
+            ? (monsters || []).find((monster) => monster?.id === this.aimFeedback.targetId)
+            : null;
+        const feedbackLabelTarget = feedbackActive && this.aimFeedback.targetType
+            ? { demonType: this.aimFeedback.targetType, health: null, maxHealth: null }
+            : null;
+        const target = result?.type === 'monster' ? result.monster : (feedbackTarget || feedbackLabelTarget);
+        if (!target || (Number.isFinite(target.health) && target.health <= 0)) return;
+
+        const type = String(target.demonType || target.monsterType || 'Demon');
+        const health = Number.isFinite(target.health) ? Math.max(0, target.health) : null;
+        const maxHealth = Number.isFinite(target.maxHealth) && target.maxHealth > 0
+            ? target.maxHealth
+            : health;
+        const label = health === null ? `DEMON: ${type}` : `DEMON: ${type}  ${health}/${maxHealth}`;
+        const centerX = this.canvas.width / 2;
+        const centerY = this.canvas.height / 2;
+        this.ctx.save();
+        this.ctx.font = 'bold 15px Arial, sans-serif';
+        this.ctx.textAlign = 'center';
+        this.ctx.textBaseline = 'middle';
+        const textWidth = this.ctx.measureText(label).width;
+        const boxWidth = Math.min(this.canvas.width - 24, textWidth + 26);
+        const boxHeight = 30;
+        const boxX = centerX - boxWidth / 2;
+        const boxY = centerY + 26;
+        this.ctx.fillStyle = 'rgba(8, 16, 27, 0.86)';
+        this.ctx.strokeStyle = 'rgba(255, 228, 107, 0.92)';
+        this.ctx.lineWidth = 2;
+        this.ctx.beginPath();
+        this.ctx.roundRect(boxX, boxY, boxWidth, boxHeight, 7);
+        this.ctx.fill();
+        this.ctx.stroke();
+        this.ctx.fillStyle = '#ffe46b';
+        this.ctx.fillText(label, centerX, boxY + boxHeight / 2);
         this.ctx.restore();
     }
 

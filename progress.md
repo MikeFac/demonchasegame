@@ -2251,3 +2251,13 @@ Original prompt: Check the implementation of docs/multi-version-songs-implementa
 - Other simple-looking demons are the remaining demon types without authored
   GLBs; they still use the documented procedural fallback until their own
   reference-to-P1-to-rig pipeline is completed.
+
+2026-08-18 — first-person demon identification cue:
+- Added a compact first-person target label below the crosshair, showing the
+  demon type and current health when the line-of-sight aim resolver identifies
+  a visible target (for example, `DEMON: Fear 10/10`).
+- The identified type is retained briefly after a successful hit so it remains
+  readable even if the target shifts behind cover on the next frame. The cue is
+  first-person-only and does not alter 2.5D HUD layout or combat behavior.
+- Bumped the RendererThreeJS cache version to `1.13`; syntax and the full
+  three-view regression passed with no browser errors.
