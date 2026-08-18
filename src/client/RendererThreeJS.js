@@ -672,7 +672,7 @@ class RendererThreeJS extends Renderer3D {
             stone: 0x8e9bac,
             earth: 0x76543e,
             crystal: 0x6e5a94,
-            city: 0x8b6f63
+            city: 0xa9826f
         };
         const emissiveColors = {
             stone: 0x3b434b,
@@ -681,6 +681,11 @@ class RendererThreeJS extends Renderer3D {
             city: 0x2c2725
         };
         const mergedWalls = this._mergeWallRects(walls);
+        // Group contiguous cells into building-sized visual footprints; the
+        // original `walls` array remains authoritative for collision/occlusion.
+        const visualWalls = theme === 'city'
+            ? this._splitCityBuildingFootprints(mergedWalls)
+            : mergedWalls;
         const geometry = new THREE.BoxGeometry(1, 1, 1);
         const material = new THREE.MeshStandardMaterial({
             color: 0xffffff,
@@ -691,7 +696,7 @@ class RendererThreeJS extends Renderer3D {
             flatShading: true,
             vertexColors: true
         });
-        const mesh = new THREE.InstancedMesh(geometry, material, mergedWalls.length);
+        const mesh = new THREE.InstancedMesh(geometry, material, visualWalls.length);
         const matrix = new THREE.Matrix4();
         const position = new THREE.Vector3();
         const quaternion = new THREE.Quaternion();
@@ -699,7 +704,7 @@ class RendererThreeJS extends Renderer3D {
         const tint = new THREE.Color();
         const wallHeight = 72;
 
-        mergedWalls.forEach((wall, index) => {
+        visualWalls.forEach((wall, index) => {
             const width = wall.width || 25;
             const depth = wall.height || 25;
             position.set(wall.x + width / 2, wallHeight / 2, wall.y + depth / 2);
@@ -715,35 +720,35 @@ class RendererThreeJS extends Renderer3D {
         if (mesh.instanceColor) mesh.instanceColor.needsUpdate = true;
         mesh.frustumCulled = true;
         mesh.userData.sourceWallCount = walls.length;
-        mesh.userData.mergedWallCount = mergedWalls.length;
+        mesh.userData.mergedWallCount = visualWalls.length;
         this.wallMesh = mesh;
         this.scene.add(mesh);
 
         if (theme === 'city') {
             const roofGeometry = new THREE.BoxGeometry(1, 1, 1);
             const roofMaterial = new THREE.MeshStandardMaterial({
-                color: 0x4b5058,
+                color: 0x68727d,
                 roughness: 0.95,
                 flatShading: true,
                 vertexColors: true
             });
-            const roofs = new THREE.InstancedMesh(roofGeometry, roofMaterial, mergedWalls.length);
-            mergedWalls.forEach((wall, index) => {
+            const roofs = new THREE.InstancedMesh(roofGeometry, roofMaterial, visualWalls.length);
+            visualWalls.forEach((wall, index) => {
                 const width = wall.width || 25;
                 const depth = wall.height || 25;
-                position.set(wall.x + width / 2, wallHeight + 2, wall.y + depth / 2);
-                scale.set(width + 6, 4, depth + 6);
+                position.set(wall.x + width / 2, wallHeight + 3, wall.y + depth / 2);
+                scale.set(width + 8, 6, depth + 8);
                 matrix.compose(position, quaternion, scale);
                 roofs.setMatrixAt(index, matrix);
                 const roofTint = (((wall.x * 5 + wall.y * 11 + index * 7) % 13) - 6) / 100;
-                tint.setHex(0x4b5058).offsetHSL(0, 0, roofTint);
+                tint.setHex(0x68727d).offsetHSL(0, 0, roofTint);
                 roofs.setColorAt(index, tint);
             });
             roofs.instanceMatrix.needsUpdate = true;
             if (roofs.instanceColor) roofs.instanceColor.needsUpdate = true;
             roofs.frustumCulled = true;
             roofs.userData.sourceWallCount = walls.length;
-            roofs.userData.mergedWallCount = mergedWalls.length;
+            roofs.userData.mergedWallCount = visualWalls.length;
             this.wallRoofMesh = roofs;
             this.scene.add(roofs);
         }
@@ -762,6 +767,26 @@ class RendererThreeJS extends Renderer3D {
             }
         });
         this.cameraWallCells = cells;
+    }
+
+    _splitCityBuildingFootprints(walls) {
+        const maxWidth = 82;
+        const footprints = [];
+        walls.forEach((wall) => {
+            const width = wall.width || 25;
+            const depth = wall.height || 25;
+            const columns = Math.max(1, Math.ceil(width / maxWidth));
+            const segmentWidth = width / columns;
+            for (let column = 0; column < columns; column += 1) {
+                footprints.push({
+                    x: wall.x + column * segmentWidth,
+                    y: wall.y,
+                    width: segmentWidth,
+                    height: depth
+                });
+            }
+        });
+        return footprints;
     }
 
     _cameraPointBlocked(x, z) {

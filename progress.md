@@ -2291,3 +2291,9 @@ Original prompt: Check the implementation of docs/multi-version-songs-implementa
 - Added a renderer-only `city` theme for Three.js with neighborhood colors and lightweight roof caps over existing collision rectangles.
 - Added `?theme=city` as a visual test switch; dungeon generation, collision, combat, and 2D Classic remain unchanged.
 - The city theme passed the full three-view browser regression and was visually checked in 2.5D.
+## 2026-08-18 — Make city prototype read as separate buildings
+
+- Split long city façades into separate visual building footprints with individual roof slabs.
+- Kept the original wall rectangles authoritative for collision, camera occlusion, and combat.
+- Avoided per-cell roof geometry that created an unreadable jagged silhouette.
+- City-theme three-view smoke test passes.
