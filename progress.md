@@ -2285,3 +2285,9 @@ Original prompt: Check the implementation of docs/multi-version-songs-implementa
 ## 2026-08-18 — Correct Doubt front/back orientation
 
 - Doubt uses the opposite local front axis from the other generated demons, so its manifest correction is `-90°` on Y rather than `+90°`.
+## 2026-08-18 — Start modular city environment kit
+
+- Committed the dual-view city asset plan in `docs/plans/MODULAR_CITY_ASSET_KIT_PLAN.md`.
+- Added a renderer-only `city` theme for Three.js with neighborhood colors and lightweight roof caps over existing collision rectangles.
+- Added `?theme=city` as a visual test switch; dungeon generation, collision, combat, and 2D Classic remain unchanged.
+- The city theme passed the full three-view browser regression and was visually checked in 2.5D.

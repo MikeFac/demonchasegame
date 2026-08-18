@@ -53,6 +53,7 @@ class RendererThreeJS extends Renderer3D {
         this.diagnosticsEnabled = new URLSearchParams(window.location.search).get('debug3d') === '1';
 
         this.wallMesh = null;
+        this.wallRoofMesh = null;
         this.wallSource = null;
         this.wallTheme = null;
         this.wallRevision = 0;
@@ -615,8 +616,12 @@ class RendererThreeJS extends Renderer3D {
     }
 
     _syncWorld(snapshot) {
-        this._syncTheme(snapshot.gameState.terrainTheme || 'stone');
-        this._syncWalls(snapshot.walls, snapshot.gameState.terrainTheme || 'stone');
+        const requestedTheme = new URLSearchParams(window.location.search).get('theme');
+        const theme = ['stone', 'earth', 'crystal', 'city'].includes(requestedTheme)
+            ? requestedTheme
+            : (snapshot.gameState.terrainTheme || 'stone');
+        this._syncTheme(theme);
+        this._syncWalls(snapshot.walls, theme);
         this._syncPlayers(snapshot.gameState.players || {}, snapshot.player, snapshot.playerCode);
         this._syncMonsters(snapshot.monsters, snapshot.player);
         this._syncBullets(snapshot.gameState.bullets || []);
@@ -630,7 +635,8 @@ class RendererThreeJS extends Renderer3D {
         const themes = {
             stone: { sky: 0x91cce8, fog: 0x91cce8, floor: 0x8c805f },
             earth: { sky: 0xe8bd82, fog: 0xd6a76d, floor: 0x72513b },
-            crystal: { sky: 0xa8a2df, fog: 0x8179bf, floor: 0x544a75 }
+            crystal: { sky: 0xa8a2df, fog: 0x8179bf, floor: 0x544a75 },
+            city: { sky: 0x9bc9dc, fog: 0x9bc9dc, floor: 0x687b68 }
         };
         const selected = themes[theme] || themes.stone;
         this.scene.background.setHex(selected.sky);
@@ -654,17 +660,25 @@ class RendererThreeJS extends Renderer3D {
             this.wallMesh.material.dispose();
             this.wallMesh = null;
         }
+        if (this.wallRoofMesh) {
+            this.scene.remove(this.wallRoofMesh);
+            this.wallRoofMesh.geometry.dispose();
+            this.wallRoofMesh.material.dispose();
+            this.wallRoofMesh = null;
+        }
         if (!walls.length) return;
 
         const colors = {
             stone: 0x8e9bac,
             earth: 0x76543e,
-            crystal: 0x6e5a94
+            crystal: 0x6e5a94,
+            city: 0x8b6f63
         };
         const emissiveColors = {
             stone: 0x3b434b,
             earth: 0x342318,
-            crystal: 0x2c2240
+            crystal: 0x2c2240,
+            city: 0x2c2725
         };
         const mergedWalls = this._mergeWallRects(walls);
         const geometry = new THREE.BoxGeometry(1, 1, 1);
@@ -704,6 +718,35 @@ class RendererThreeJS extends Renderer3D {
         mesh.userData.mergedWallCount = mergedWalls.length;
         this.wallMesh = mesh;
         this.scene.add(mesh);
+
+        if (theme === 'city') {
+            const roofGeometry = new THREE.BoxGeometry(1, 1, 1);
+            const roofMaterial = new THREE.MeshStandardMaterial({
+                color: 0x4b5058,
+                roughness: 0.95,
+                flatShading: true,
+                vertexColors: true
+            });
+            const roofs = new THREE.InstancedMesh(roofGeometry, roofMaterial, mergedWalls.length);
+            mergedWalls.forEach((wall, index) => {
+                const width = wall.width || 25;
+                const depth = wall.height || 25;
+                position.set(wall.x + width / 2, wallHeight + 2, wall.y + depth / 2);
+                scale.set(width + 6, 4, depth + 6);
+                matrix.compose(position, quaternion, scale);
+                roofs.setMatrixAt(index, matrix);
+                const roofTint = (((wall.x * 5 + wall.y * 11 + index * 7) % 13) - 6) / 100;
+                tint.setHex(0x4b5058).offsetHSL(0, 0, roofTint);
+                roofs.setColorAt(index, tint);
+            });
+            roofs.instanceMatrix.needsUpdate = true;
+            if (roofs.instanceColor) roofs.instanceColor.needsUpdate = true;
+            roofs.frustumCulled = true;
+            roofs.userData.sourceWallCount = walls.length;
+            roofs.userData.mergedWallCount = mergedWalls.length;
+            this.wallRoofMesh = roofs;
+            this.scene.add(roofs);
+        }
     }
 
     _rebuildCameraWallGrid(walls) {
