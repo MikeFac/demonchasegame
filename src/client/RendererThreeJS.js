@@ -58,6 +58,7 @@ class RendererThreeJS extends Renderer3D {
         this.cityDoorMesh = null;
         this.cityRoadMesh = null;
         this.cityFacadeBatches = [];
+        this.cityGableRoofMesh = null;
         this.wallSource = null;
         this.wallTheme = null;
         this.wallRevision = 0;
@@ -690,6 +691,12 @@ class RendererThreeJS extends Renderer3D {
             batch.material.dispose();
         }
         this.cityFacadeBatches = [];
+        if (this.cityGableRoofMesh) {
+            this.scene.remove(this.cityGableRoofMesh);
+            this.cityGableRoofMesh.geometry.dispose();
+            this.cityGableRoofMesh.material.dispose();
+            this.cityGableRoofMesh = null;
+        }
         if (!walls.length) return;
 
         const colors = {
@@ -770,7 +777,7 @@ class RendererThreeJS extends Renderer3D {
                 const style = wall.cityStyle || 0;
                 const buildingHeight = [42, 52, 62][style];
                 position.set(wall.x + width / 2, buildingHeight + 3, wall.y + depth / 2);
-                scale.set(width + (style === 1 ? 4 : 8), style === 2 ? 8 : 6, depth + 8);
+                scale.set(width + (style === 1 ? 4 : 8), style === 2 ? 8 : (style === 1 ? 3 : 6), depth + 8);
                 matrix.compose(position, quaternion, scale);
                 roofs.setMatrixAt(index, matrix);
                 const roofTint = (((wall.x * 5 + wall.y * 11 + index * 7) % 13) - 6) / 100;
@@ -785,6 +792,42 @@ class RendererThreeJS extends Renderer3D {
             roofs.userData.mergedWallCount = visualWalls.length;
             this.wallRoofMesh = roofs;
             this.scene.add(roofs);
+
+            const gableWalls = visualWalls.filter((wall) => (wall.cityStyle || 0) === 1);
+            if (gableWalls.length) {
+                const gableGeometry = new THREE.BoxGeometry(1, 1, 1);
+                const gableMaterial = new THREE.MeshStandardMaterial({
+                    color: 0x6f5d58,
+                    emissive: 0xffffff,
+                    emissiveIntensity: 0.06,
+                    roughness: 0.9,
+                    flatShading: true,
+                    vertexColors: true
+                });
+                const gables = new THREE.InstancedMesh(gableGeometry, gableMaterial, gableWalls.length * 2);
+                const roofQuaternion = new THREE.Quaternion();
+                const roofAxis = new THREE.Vector3(0, 0, 1);
+                gableWalls.forEach((wall, wallIndex) => {
+                    const width = wall.width || 25;
+                    const depth = wall.height || 25;
+                    const buildingHeight = 52;
+                    for (const side of [-1, 1]) {
+                        position.set(wall.x + width / 2 + side * width * 0.18, buildingHeight + 10, wall.y + depth / 2);
+                        scale.set(width * 0.55, 2.6, depth + 10);
+                        roofQuaternion.setFromAxisAngle(roofAxis, side * 0.55);
+                        matrix.compose(position, roofQuaternion, scale);
+                        const meshIndex = wallIndex * 2 + (side === 1 ? 1 : 0);
+                        gables.setMatrixAt(meshIndex, matrix);
+                        tint.setHex(cityRoofPalette[(wallIndex + 2) % cityRoofPalette.length]);
+                        gables.setColorAt(meshIndex, tint);
+                    }
+                });
+                gables.instanceMatrix.needsUpdate = true;
+                if (gables.instanceColor) gables.instanceColor.needsUpdate = true;
+                gables.frustumCulled = true;
+                this.cityGableRoofMesh = gables;
+                this.scene.add(gables);
+            }
 
             const windowGeometry = new THREE.BoxGeometry(1, 1, 1);
             const windowMaterial = new THREE.MeshStandardMaterial({

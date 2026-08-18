@@ -2335,3 +2335,8 @@ Original prompt: Check the implementation of docs/multi-version-songs-implementa
 - Added explicit per-color façade batches so residential colors render reliably: blue, cream, brick red, green, teal, and white.
 - Retained asphalt road strips and mobile-friendly instancing.
 - Independent screenshots confirm the color variety in both 2.5D and first-person views.
+## 2026-08-19 — Add mixed flat and gabled roofs
+
+- Added a lightweight two-plane gable roof construction for the townhouse style.
+- Flat roofs remain on other house styles, creating visible roof silhouette variety without new collision geometry.
+- Verified mixed roofs in both 2.5D and first-person city views.
