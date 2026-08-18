@@ -1,0 +1,43 @@
+{
+  "api": "v3",
+  "endpoint": "/animations/retarget",
+  "rigTaskId": "cdd66115-7025-47d8-bc72-e5004b849ece",
+  "taskId": "f1ca0ecc-1865-4991-94aa-91c2658e459e",
+  "creditCap": 50,
+  "roles": [
+    {
+      "role": "idle",
+      "preset": "preset:idle"
+    },
+    {
+      "role": "walk",
+      "preset": "preset:walk"
+    },
+    {
+      "role": "attack",
+      "preset": "preset:slash"
+    },
+    {
+      "role": "hit",
+      "preset": "preset:hurt"
+    },
+    {
+      "role": "death",
+      "preset": "preset:fall"
+    }
+  ],
+  "payload": {
+    "input": "cdd66115-7025-47d8-bc72-e5004b849ece",
+    "animations": [
+      "preset:idle",
+      "preset:walk",
+      "preset:slash",
+      "preset:hurt",
+      "preset:fall"
+    ],
+    "out_format": "glb",
+    "bake_animation": true,
+    "export_with_geometry": true,
+    "animate_in_place": true
+  }
+}

@@ -1,0 +1,23 @@
+{
+  "generatedAt": "2026-08-18T05:30:31.725Z",
+  "directory": "output/tripo/deception-b-p1-5000-2026-08-18",
+  "files": [
+    {
+      "filename": "model_url.glb",
+      "bytes": 1406312,
+      "megabytes": 1.34,
+      "scenes": 1,
+      "nodes": 1,
+      "meshes": 1,
+      "primitives": 1,
+      "triangles": 5044,
+      "materials": 1,
+      "textures": 3,
+      "images": 3,
+      "skins": 0,
+      "joints": 0,
+      "animationTargetNodes": 0,
+      "animations": []
+    }
+  ]
+}

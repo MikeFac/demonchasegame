@@ -1,0 +1,826 @@
+{
+  "assetDir": "output/tripo/deception-b-p1-5000-2026-08-18/rigged-and-animated",
+  "poses": [
+    {
+      "role": "idle",
+      "normalizedTime": 0,
+      "passed": true,
+      "animation": {
+        "name": "preset:idle",
+        "duration": 15.375,
+        "tracks": 96
+      },
+      "scene": {
+        "meshes": 1,
+        "skinnedMeshes": 1,
+        "bones": 31,
+        "uniqueJoints": 31,
+        "materials": 1
+      },
+      "bounds": {
+        "min": [
+          -1.598,
+          -0.309,
+          -1.445
+        ],
+        "max": [
+          1.708,
+          1.941,
+          1.168
+        ],
+        "size": [
+          3.306,
+          2.251,
+          2.613
+        ],
+        "center": [
+          0.055,
+          0.816,
+          -0.139
+        ]
+      },
+      "errors": [],
+      "screenshot": "output/tripo/deception-b-p1-5000-2026-08-18/rigged-and-animated/deformation-test/animated/idle-00/shot-0.png"
+    },
+    {
+      "role": "idle",
+      "normalizedTime": 0.25,
+      "passed": true,
+      "animation": {
+        "name": "preset:idle",
+        "duration": 15.375,
+        "tracks": 96
+      },
+      "scene": {
+        "meshes": 1,
+        "skinnedMeshes": 1,
+        "bones": 31,
+        "uniqueJoints": 31,
+        "materials": 1
+      },
+      "bounds": {
+        "min": [
+          -1.607,
+          -0.314,
+          -1.424
+        ],
+        "max": [
+          1.704,
+          1.939,
+          1.168
+        ],
+        "size": [
+          3.31,
+          2.253,
+          2.592
+        ],
+        "center": [
+          0.049,
+          0.813,
+          -0.128
+        ]
+      },
+      "errors": [],
+      "screenshot": "output/tripo/deception-b-p1-5000-2026-08-18/rigged-and-animated/deformation-test/animated/idle-25/shot-0.png"
+    },
+    {
+      "role": "idle",
+      "normalizedTime": 0.5,
+      "passed": true,
+      "animation": {
+        "name": "preset:idle",
+        "duration": 15.375,
+        "tracks": 96
+      },
+      "scene": {
+        "meshes": 1,
+        "skinnedMeshes": 1,
+        "bones": 31,
+        "uniqueJoints": 31,
+        "materials": 1
+      },
+      "bounds": {
+        "min": [
+          -1.622,
+          -0.324,
+          -1.37
+        ],
+        "max": [
+          1.689,
+          1.977,
+          1.16
+        ],
+        "size": [
+          3.312,
+          2.301,
+          2.529
+        ],
+        "center": [
+          0.033,
+          0.826,
+          -0.105
+        ]
+      },
+      "errors": [],
+      "screenshot": "output/tripo/deception-b-p1-5000-2026-08-18/rigged-and-animated/deformation-test/animated/idle-50/shot-0.png"
+    },
+    {
+      "role": "idle",
+      "normalizedTime": 0.75,
+      "passed": true,
+      "animation": {
+        "name": "preset:idle",
+        "duration": 15.375,
+        "tracks": 96
+      },
+      "scene": {
+        "meshes": 1,
+        "skinnedMeshes": 1,
+        "bones": 31,
+        "uniqueJoints": 31,
+        "materials": 1
+      },
+      "bounds": {
+        "min": [
+          -1.609,
+          -0.327,
+          -1.408
+        ],
+        "max": [
+          1.697,
+          1.956,
+          1.146
+        ],
+        "size": [
+          3.306,
+          2.283,
+          2.554
+        ],
+        "center": [
+          0.044,
+          0.815,
+          -0.131
+        ]
+      },
+      "errors": [],
+      "screenshot": "output/tripo/deception-b-p1-5000-2026-08-18/rigged-and-animated/deformation-test/animated/idle-75/shot-0.png"
+    },
+    {
+      "role": "walk",
+      "normalizedTime": 0,
+      "passed": true,
+      "animation": {
+        "name": "preset:walk",
+        "duration": 2.375,
+        "tracks": 96
+      },
+      "scene": {
+        "meshes": 1,
+        "skinnedMeshes": 1,
+        "bones": 31,
+        "uniqueJoints": 31,
+        "materials": 1
+      },
+      "bounds": {
+        "min": [
+          -1.625,
+          -0.445,
+          -1.473
+        ],
+        "max": [
+          1.642,
+          1.955,
+          1.185
+        ],
+        "size": [
+          3.267,
+          2.4,
+          2.658
+        ],
+        "center": [
+          0.009,
+          0.755,
+          -0.144
+        ]
+      },
+      "errors": [],
+      "screenshot": "output/tripo/deception-b-p1-5000-2026-08-18/rigged-and-animated/deformation-test/animated/walk-00/shot-0.png"
+    },
+    {
+      "role": "walk",
+      "normalizedTime": 0.25,
+      "passed": true,
+      "animation": {
+        "name": "preset:walk",
+        "duration": 2.375,
+        "tracks": 96
+      },
+      "scene": {
+        "meshes": 1,
+        "skinnedMeshes": 1,
+        "bones": 31,
+        "uniqueJoints": 31,
+        "materials": 1
+      },
+      "bounds": {
+        "min": [
+          -1.565,
+          -0.496,
+          -1.524
+        ],
+        "max": [
+          1.604,
+          1.919,
+          1.213
+        ],
+        "size": [
+          3.17,
+          2.415,
+          2.737
+        ],
+        "center": [
+          0.02,
+          0.711,
+          -0.155
+        ]
+      },
+      "errors": [],
+      "screenshot": "output/tripo/deception-b-p1-5000-2026-08-18/rigged-and-animated/deformation-test/animated/walk-25/shot-0.png"
+    },
+    {
+      "role": "walk",
+      "normalizedTime": 0.5,
+      "passed": true,
+      "animation": {
+        "name": "preset:walk",
+        "duration": 2.375,
+        "tracks": 96
+      },
+      "scene": {
+        "meshes": 1,
+        "skinnedMeshes": 1,
+        "bones": 31,
+        "uniqueJoints": 31,
+        "materials": 1
+      },
+      "bounds": {
+        "min": [
+          -1.603,
+          -0.469,
+          -1.491
+        ],
+        "max": [
+          1.633,
+          1.95,
+          1.202
+        ],
+        "size": [
+          3.235,
+          2.419,
+          2.693
+        ],
+        "center": [
+          0.015,
+          0.74,
+          -0.145
+        ]
+      },
+      "errors": [],
+      "screenshot": "output/tripo/deception-b-p1-5000-2026-08-18/rigged-and-animated/deformation-test/animated/walk-50/shot-0.png"
+    },
+    {
+      "role": "walk",
+      "normalizedTime": 0.75,
+      "passed": true,
+      "animation": {
+        "name": "preset:walk",
+        "duration": 2.375,
+        "tracks": 96
+      },
+      "scene": {
+        "meshes": 1,
+        "skinnedMeshes": 1,
+        "bones": 31,
+        "uniqueJoints": 31,
+        "materials": 1
+      },
+      "bounds": {
+        "min": [
+          -1.561,
+          -0.485,
+          -1.495
+        ],
+        "max": [
+          1.577,
+          1.914,
+          1.2
+        ],
+        "size": [
+          3.139,
+          2.399,
+          2.695
+        ],
+        "center": [
+          0.008,
+          0.715,
+          -0.147
+        ]
+      },
+      "errors": [],
+      "screenshot": "output/tripo/deception-b-p1-5000-2026-08-18/rigged-and-animated/deformation-test/animated/walk-75/shot-0.png"
+    },
+    {
+      "role": "attack",
+      "normalizedTime": 0,
+      "passed": true,
+      "animation": {
+        "name": "preset:slash",
+        "duration": 6.625,
+        "tracks": 96
+      },
+      "scene": {
+        "meshes": 1,
+        "skinnedMeshes": 1,
+        "bones": 31,
+        "uniqueJoints": 31,
+        "materials": 1
+      },
+      "bounds": {
+        "min": [
+          -0.722,
+          -0.546,
+          -1.488
+        ],
+        "max": [
+          1.563,
+          1.942,
+          1.732
+        ],
+        "size": [
+          2.285,
+          2.488,
+          3.22
+        ],
+        "center": [
+          0.42,
+          0.698,
+          0.122
+        ]
+      },
+      "errors": [],
+      "screenshot": "output/tripo/deception-b-p1-5000-2026-08-18/rigged-and-animated/deformation-test/animated/attack-00/shot-0.png"
+    },
+    {
+      "role": "attack",
+      "normalizedTime": 0.25,
+      "passed": true,
+      "animation": {
+        "name": "preset:slash",
+        "duration": 6.625,
+        "tracks": 96
+      },
+      "scene": {
+        "meshes": 1,
+        "skinnedMeshes": 1,
+        "bones": 31,
+        "uniqueJoints": 31,
+        "materials": 1
+      },
+      "bounds": {
+        "min": [
+          -0.94,
+          -0.23,
+          -1.861
+        ],
+        "max": [
+          1.677,
+          2.22,
+          1.767
+        ],
+        "size": [
+          2.616,
+          2.451,
+          3.628
+        ],
+        "center": [
+          0.368,
+          0.995,
+          -0.047
+        ]
+      },
+      "errors": [],
+      "screenshot": "output/tripo/deception-b-p1-5000-2026-08-18/rigged-and-animated/deformation-test/animated/attack-25/shot-0.png"
+    },
+    {
+      "role": "attack",
+      "normalizedTime": 0.5,
+      "passed": true,
+      "animation": {
+        "name": "preset:slash",
+        "duration": 6.625,
+        "tracks": 96
+      },
+      "scene": {
+        "meshes": 1,
+        "skinnedMeshes": 1,
+        "bones": 31,
+        "uniqueJoints": 31,
+        "materials": 1
+      },
+      "bounds": {
+        "min": [
+          -1.398,
+          -0.266,
+          -0.705
+        ],
+        "max": [
+          1.761,
+          2.205,
+          1.744
+        ],
+        "size": [
+          3.158,
+          2.471,
+          2.448
+        ],
+        "center": [
+          0.182,
+          0.97,
+          0.519
+        ]
+      },
+      "errors": [],
+      "screenshot": "output/tripo/deception-b-p1-5000-2026-08-18/rigged-and-animated/deformation-test/animated/attack-50/shot-0.png"
+    },
+    {
+      "role": "attack",
+      "normalizedTime": 0.75,
+      "passed": true,
+      "animation": {
+        "name": "preset:slash",
+        "duration": 6.625,
+        "tracks": 96
+      },
+      "scene": {
+        "meshes": 1,
+        "skinnedMeshes": 1,
+        "bones": 31,
+        "uniqueJoints": 31,
+        "materials": 1
+      },
+      "bounds": {
+        "min": [
+          -0.771,
+          -0.55,
+          -1.496
+        ],
+        "max": [
+          1.412,
+          1.907,
+          1.81
+        ],
+        "size": [
+          2.184,
+          2.456,
+          3.306
+        ],
+        "center": [
+          0.32,
+          0.678,
+          0.157
+        ]
+      },
+      "errors": [],
+      "screenshot": "output/tripo/deception-b-p1-5000-2026-08-18/rigged-and-animated/deformation-test/animated/attack-75/shot-0.png"
+    },
+    {
+      "role": "hit",
+      "normalizedTime": 0,
+      "passed": true,
+      "animation": {
+        "name": "preset:hurt",
+        "duration": 13.875,
+        "tracks": 96
+      },
+      "scene": {
+        "meshes": 1,
+        "skinnedMeshes": 1,
+        "bones": 31,
+        "uniqueJoints": 31,
+        "materials": 1
+      },
+      "bounds": {
+        "min": [
+          -1.171,
+          -0.377,
+          -1.461
+        ],
+        "max": [
+          1.662,
+          2.607,
+          1.76
+        ],
+        "size": [
+          2.833,
+          2.983,
+          3.221
+        ],
+        "center": [
+          0.246,
+          1.115,
+          0.149
+        ]
+      },
+      "errors": [],
+      "screenshot": "output/tripo/deception-b-p1-5000-2026-08-18/rigged-and-animated/deformation-test/animated/hit-00/shot-0.png"
+    },
+    {
+      "role": "hit",
+      "normalizedTime": 0.25,
+      "passed": true,
+      "animation": {
+        "name": "preset:hurt",
+        "duration": 13.875,
+        "tracks": 96
+      },
+      "scene": {
+        "meshes": 1,
+        "skinnedMeshes": 1,
+        "bones": 31,
+        "uniqueJoints": 31,
+        "materials": 1
+      },
+      "bounds": {
+        "min": [
+          -0.941,
+          -0.374,
+          -1.419
+        ],
+        "max": [
+          1.825,
+          2.799,
+          1.665
+        ],
+        "size": [
+          2.765,
+          3.174,
+          3.084
+        ],
+        "center": [
+          0.442,
+          1.212,
+          0.123
+        ]
+      },
+      "errors": [],
+      "screenshot": "output/tripo/deception-b-p1-5000-2026-08-18/rigged-and-animated/deformation-test/animated/hit-25/shot-0.png"
+    },
+    {
+      "role": "hit",
+      "normalizedTime": 0.5,
+      "passed": true,
+      "animation": {
+        "name": "preset:hurt",
+        "duration": 13.875,
+        "tracks": 96
+      },
+      "scene": {
+        "meshes": 1,
+        "skinnedMeshes": 1,
+        "bones": 31,
+        "uniqueJoints": 31,
+        "materials": 1
+      },
+      "bounds": {
+        "min": [
+          -0.804,
+          -0.317,
+          -0.912
+        ],
+        "max": [
+          1.721,
+          2.955,
+          1.695
+        ],
+        "size": [
+          2.525,
+          3.272,
+          2.607
+        ],
+        "center": [
+          0.459,
+          1.319,
+          0.391
+        ]
+      },
+      "errors": [],
+      "screenshot": "output/tripo/deception-b-p1-5000-2026-08-18/rigged-and-animated/deformation-test/animated/hit-50/shot-0.png"
+    },
+    {
+      "role": "hit",
+      "normalizedTime": 0.75,
+      "passed": true,
+      "animation": {
+        "name": "preset:hurt",
+        "duration": 13.875,
+        "tracks": 96
+      },
+      "scene": {
+        "meshes": 1,
+        "skinnedMeshes": 1,
+        "bones": 31,
+        "uniqueJoints": 31,
+        "materials": 1
+      },
+      "bounds": {
+        "min": [
+          -1.046,
+          -0.329,
+          -1.496
+        ],
+        "max": [
+          1.645,
+          2.685,
+          1.749
+        ],
+        "size": [
+          2.691,
+          3.014,
+          3.245
+        ],
+        "center": [
+          0.3,
+          1.178,
+          0.127
+        ]
+      },
+      "errors": [],
+      "screenshot": "output/tripo/deception-b-p1-5000-2026-08-18/rigged-and-animated/deformation-test/animated/hit-75/shot-0.png"
+    },
+    {
+      "role": "death",
+      "normalizedTime": 0,
+      "passed": true,
+      "animation": {
+        "name": "preset:fall",
+        "duration": 3.0417,
+        "tracks": 96
+      },
+      "scene": {
+        "meshes": 1,
+        "skinnedMeshes": 1,
+        "bones": 31,
+        "uniqueJoints": 31,
+        "materials": 1
+      },
+      "bounds": {
+        "min": [
+          -0.629,
+          -0.397,
+          -1.596
+        ],
+        "max": [
+          1.83,
+          2.617,
+          1.281
+        ],
+        "size": [
+          2.459,
+          3.013,
+          2.877
+        ],
+        "center": [
+          0.601,
+          1.11,
+          -0.158
+        ]
+      },
+      "errors": [],
+      "screenshot": "output/tripo/deception-b-p1-5000-2026-08-18/rigged-and-animated/deformation-test/animated/death-00/shot-0.png"
+    },
+    {
+      "role": "death",
+      "normalizedTime": 0.25,
+      "passed": true,
+      "animation": {
+        "name": "preset:fall",
+        "duration": 3.0417,
+        "tracks": 96
+      },
+      "scene": {
+        "meshes": 1,
+        "skinnedMeshes": 1,
+        "bones": 31,
+        "uniqueJoints": 31,
+        "materials": 1
+      },
+      "bounds": {
+        "min": [
+          -1.218,
+          -0.44,
+          -1.057
+        ],
+        "max": [
+          1.958,
+          2.377,
+          1.776
+        ],
+        "size": [
+          3.176,
+          2.818,
+          2.833
+        ],
+        "center": [
+          0.37,
+          0.969,
+          0.359
+        ]
+      },
+      "errors": [],
+      "screenshot": "output/tripo/deception-b-p1-5000-2026-08-18/rigged-and-animated/deformation-test/animated/death-25/shot-0.png"
+    },
+    {
+      "role": "death",
+      "normalizedTime": 0.5,
+      "passed": true,
+      "animation": {
+        "name": "preset:fall",
+        "duration": 3.0417,
+        "tracks": 96
+      },
+      "scene": {
+        "meshes": 1,
+        "skinnedMeshes": 1,
+        "bones": 31,
+        "uniqueJoints": 31,
+        "materials": 1
+      },
+      "bounds": {
+        "min": [
+          -1.596,
+          0.247,
+          -1.58
+        ],
+        "max": [
+          1.704,
+          2.881,
+          1.443
+        ],
+        "size": [
+          3.3,
+          2.634,
+          3.023
+        ],
+        "center": [
+          0.054,
+          1.564,
+          -0.069
+        ]
+      },
+      "errors": [],
+      "screenshot": "output/tripo/deception-b-p1-5000-2026-08-18/rigged-and-animated/deformation-test/animated/death-50/shot-0.png"
+    },
+    {
+      "role": "death",
+      "normalizedTime": 0.75,
+      "passed": true,
+      "animation": {
+        "name": "preset:fall",
+        "duration": 3.0417,
+        "tracks": 96
+      },
+      "scene": {
+        "meshes": 1,
+        "skinnedMeshes": 1,
+        "bones": 31,
+        "uniqueJoints": 31,
+        "materials": 1
+      },
+      "bounds": {
+        "min": [
+          -0.881,
+          -0.127,
+          -1.639
+        ],
+        "max": [
+          1.813,
+          1.951,
+          1.193
+        ],
+        "size": [
+          2.694,
+          2.078,
+          2.832
+        ],
+        "center": [
+          0.466,
+          0.912,
+          -0.223
+        ]
+      },
+      "errors": [],
+      "screenshot": "output/tripo/deception-b-p1-5000-2026-08-18/rigged-and-animated/deformation-test/animated/death-75/shot-0.png"
+    }
+  ],
+  "passed": true
+}

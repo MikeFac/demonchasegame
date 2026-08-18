@@ -4,8 +4,9 @@ Runtime assets are GLB/glTF 2.0 files referenced by `manifest.json`. Keep source
 art and Blender working files outside `public`; only optimized runtime files
 belong here.
 
-The runtime now includes four authored, self-contained animated GLBs under
-`models/`: the default player plus Fear, Doubt, and Condemnation. Their source
+The runtime now includes seven authored, self-contained animated GLBs under
+`models/`: the default player plus Fear, Doubt, Condemnation, Confusion,
+Deception, and Ignorance. Their source
 images, Tripo task records, rigging evidence, and deformation contact sheets
 remain under `output/tripo` and `output/imagegen`.
 

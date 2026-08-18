@@ -1,0 +1,826 @@
+{
+  "assetDir": "output/tripo/ignorance-b-p1-5000-2026-08-18/rigged-and-animated",
+  "poses": [
+    {
+      "role": "idle",
+      "normalizedTime": 0,
+      "passed": true,
+      "animation": {
+        "name": "preset:idle",
+        "duration": 15.375,
+        "tracks": 138
+      },
+      "scene": {
+        "meshes": 1,
+        "skinnedMeshes": 1,
+        "bones": 45,
+        "uniqueJoints": 45,
+        "materials": 1
+      },
+      "bounds": {
+        "min": [
+          -0.87,
+          0,
+          -1.419
+        ],
+        "max": [
+          0.873,
+          2.8,
+          0.84
+        ],
+        "size": [
+          1.742,
+          2.8,
+          2.259
+        ],
+        "center": [
+          0.001,
+          1.4,
+          -0.289
+        ]
+      },
+      "errors": [],
+      "screenshot": "output/tripo/ignorance-b-p1-5000-2026-08-18/rigged-and-animated/deformation-test/animated/idle-00/shot-0.png"
+    },
+    {
+      "role": "idle",
+      "normalizedTime": 0.25,
+      "passed": true,
+      "animation": {
+        "name": "preset:idle",
+        "duration": 15.375,
+        "tracks": 138
+      },
+      "scene": {
+        "meshes": 1,
+        "skinnedMeshes": 1,
+        "bones": 45,
+        "uniqueJoints": 45,
+        "materials": 1
+      },
+      "bounds": {
+        "min": [
+          -0.88,
+          -0.009,
+          -1.334
+        ],
+        "max": [
+          0.859,
+          2.797,
+          0.839
+        ],
+        "size": [
+          1.739,
+          2.806,
+          2.173
+        ],
+        "center": [
+          -0.011,
+          1.394,
+          -0.248
+        ]
+      },
+      "errors": [],
+      "screenshot": "output/tripo/ignorance-b-p1-5000-2026-08-18/rigged-and-animated/deformation-test/animated/idle-25/shot-0.png"
+    },
+    {
+      "role": "idle",
+      "normalizedTime": 0.5,
+      "passed": true,
+      "animation": {
+        "name": "preset:idle",
+        "duration": 15.375,
+        "tracks": 138
+      },
+      "scene": {
+        "meshes": 1,
+        "skinnedMeshes": 1,
+        "bones": 45,
+        "uniqueJoints": 45,
+        "materials": 1
+      },
+      "bounds": {
+        "min": [
+          -0.911,
+          -0.044,
+          -1.424
+        ],
+        "max": [
+          0.859,
+          2.802,
+          0.78
+        ],
+        "size": [
+          1.77,
+          2.846,
+          2.204
+        ],
+        "center": [
+          -0.026,
+          1.379,
+          -0.322
+        ]
+      },
+      "errors": [],
+      "screenshot": "output/tripo/ignorance-b-p1-5000-2026-08-18/rigged-and-animated/deformation-test/animated/idle-50/shot-0.png"
+    },
+    {
+      "role": "idle",
+      "normalizedTime": 0.75,
+      "passed": true,
+      "animation": {
+        "name": "preset:idle",
+        "duration": 15.375,
+        "tracks": 138
+      },
+      "scene": {
+        "meshes": 1,
+        "skinnedMeshes": 1,
+        "bones": 45,
+        "uniqueJoints": 45,
+        "materials": 1
+      },
+      "bounds": {
+        "min": [
+          -0.864,
+          -0.046,
+          -1.432
+        ],
+        "max": [
+          0.875,
+          2.803,
+          0.78
+        ],
+        "size": [
+          1.739,
+          2.849,
+          2.212
+        ],
+        "center": [
+          0.005,
+          1.379,
+          -0.326
+        ]
+      },
+      "errors": [],
+      "screenshot": "output/tripo/ignorance-b-p1-5000-2026-08-18/rigged-and-animated/deformation-test/animated/idle-75/shot-0.png"
+    },
+    {
+      "role": "walk",
+      "normalizedTime": 0,
+      "passed": true,
+      "animation": {
+        "name": "preset:walk",
+        "duration": 2.375,
+        "tracks": 138
+      },
+      "scene": {
+        "meshes": 1,
+        "skinnedMeshes": 1,
+        "bones": 45,
+        "uniqueJoints": 45,
+        "materials": 1
+      },
+      "bounds": {
+        "min": [
+          -0.871,
+          -0.086,
+          -1.241
+        ],
+        "max": [
+          0.88,
+          2.8,
+          0.825
+        ],
+        "size": [
+          1.751,
+          2.886,
+          2.066
+        ],
+        "center": [
+          0.004,
+          1.357,
+          -0.208
+        ]
+      },
+      "errors": [],
+      "screenshot": "output/tripo/ignorance-b-p1-5000-2026-08-18/rigged-and-animated/deformation-test/animated/walk-00/shot-0.png"
+    },
+    {
+      "role": "walk",
+      "normalizedTime": 0.25,
+      "passed": true,
+      "animation": {
+        "name": "preset:walk",
+        "duration": 2.375,
+        "tracks": 138
+      },
+      "scene": {
+        "meshes": 1,
+        "skinnedMeshes": 1,
+        "bones": 45,
+        "uniqueJoints": 45,
+        "materials": 1
+      },
+      "bounds": {
+        "min": [
+          -0.869,
+          -0.056,
+          -1.348
+        ],
+        "max": [
+          0.89,
+          2.801,
+          0.943
+        ],
+        "size": [
+          1.758,
+          2.856,
+          2.291
+        ],
+        "center": [
+          0.01,
+          1.373,
+          -0.202
+        ]
+      },
+      "errors": [],
+      "screenshot": "output/tripo/ignorance-b-p1-5000-2026-08-18/rigged-and-animated/deformation-test/animated/walk-25/shot-0.png"
+    },
+    {
+      "role": "walk",
+      "normalizedTime": 0.5,
+      "passed": true,
+      "animation": {
+        "name": "preset:walk",
+        "duration": 2.375,
+        "tracks": 138
+      },
+      "scene": {
+        "meshes": 1,
+        "skinnedMeshes": 1,
+        "bones": 45,
+        "uniqueJoints": 45,
+        "materials": 1
+      },
+      "bounds": {
+        "min": [
+          -0.866,
+          -0.069,
+          -1.295
+        ],
+        "max": [
+          0.889,
+          2.801,
+          0.806
+        ],
+        "size": [
+          1.755,
+          2.87,
+          2.1
+        ],
+        "center": [
+          0.012,
+          1.366,
+          -0.245
+        ]
+      },
+      "errors": [],
+      "screenshot": "output/tripo/ignorance-b-p1-5000-2026-08-18/rigged-and-animated/deformation-test/animated/walk-50/shot-0.png"
+    },
+    {
+      "role": "walk",
+      "normalizedTime": 0.75,
+      "passed": true,
+      "animation": {
+        "name": "preset:walk",
+        "duration": 2.375,
+        "tracks": 138
+      },
+      "scene": {
+        "meshes": 1,
+        "skinnedMeshes": 1,
+        "bones": 45,
+        "uniqueJoints": 45,
+        "materials": 1
+      },
+      "bounds": {
+        "min": [
+          -0.862,
+          -0.081,
+          -1.439
+        ],
+        "max": [
+          0.898,
+          2.803,
+          0.866
+        ],
+        "size": [
+          1.76,
+          2.884,
+          2.305
+        ],
+        "center": [
+          0.018,
+          1.361,
+          -0.287
+        ]
+      },
+      "errors": [],
+      "screenshot": "output/tripo/ignorance-b-p1-5000-2026-08-18/rigged-and-animated/deformation-test/animated/walk-75/shot-0.png"
+    },
+    {
+      "role": "attack",
+      "normalizedTime": 0,
+      "passed": true,
+      "animation": {
+        "name": "preset:slash",
+        "duration": 6.625,
+        "tracks": 138
+      },
+      "scene": {
+        "meshes": 1,
+        "skinnedMeshes": 1,
+        "bones": 45,
+        "uniqueJoints": 45,
+        "materials": 1
+      },
+      "bounds": {
+        "min": [
+          -0.938,
+          -0.181,
+          -1.002
+        ],
+        "max": [
+          0.831,
+          2.461,
+          1.327
+        ],
+        "size": [
+          1.769,
+          2.642,
+          2.329
+        ],
+        "center": [
+          -0.054,
+          1.14,
+          0.162
+        ]
+      },
+      "errors": [],
+      "screenshot": "output/tripo/ignorance-b-p1-5000-2026-08-18/rigged-and-animated/deformation-test/animated/attack-00/shot-0.png"
+    },
+    {
+      "role": "attack",
+      "normalizedTime": 0.25,
+      "passed": true,
+      "animation": {
+        "name": "preset:slash",
+        "duration": 6.625,
+        "tracks": 138
+      },
+      "scene": {
+        "meshes": 1,
+        "skinnedMeshes": 1,
+        "bones": 45,
+        "uniqueJoints": 45,
+        "materials": 1
+      },
+      "bounds": {
+        "min": [
+          -1.282,
+          -0.264,
+          -0.987
+        ],
+        "max": [
+          1.143,
+          3.141,
+          1.309
+        ],
+        "size": [
+          2.425,
+          3.405,
+          2.295
+        ],
+        "center": [
+          -0.07,
+          1.438,
+          0.161
+        ]
+      },
+      "errors": [],
+      "screenshot": "output/tripo/ignorance-b-p1-5000-2026-08-18/rigged-and-animated/deformation-test/animated/attack-25/shot-0.png"
+    },
+    {
+      "role": "attack",
+      "normalizedTime": 0.5,
+      "passed": true,
+      "animation": {
+        "name": "preset:slash",
+        "duration": 6.625,
+        "tracks": 138
+      },
+      "scene": {
+        "meshes": 1,
+        "skinnedMeshes": 1,
+        "bones": 45,
+        "uniqueJoints": 45,
+        "materials": 1
+      },
+      "bounds": {
+        "min": [
+          -0.945,
+          0.141,
+          -0.915
+        ],
+        "max": [
+          1.062,
+          2.648,
+          1.075
+        ],
+        "size": [
+          2.007,
+          2.507,
+          1.99
+        ],
+        "center": [
+          0.059,
+          1.394,
+          0.08
+        ]
+      },
+      "errors": [],
+      "screenshot": "output/tripo/ignorance-b-p1-5000-2026-08-18/rigged-and-animated/deformation-test/animated/attack-50/shot-0.png"
+    },
+    {
+      "role": "attack",
+      "normalizedTime": 0.75,
+      "passed": true,
+      "animation": {
+        "name": "preset:slash",
+        "duration": 6.625,
+        "tracks": 138
+      },
+      "scene": {
+        "meshes": 1,
+        "skinnedMeshes": 1,
+        "bones": 45,
+        "uniqueJoints": 45,
+        "materials": 1
+      },
+      "bounds": {
+        "min": [
+          -0.929,
+          -0.169,
+          -0.7
+        ],
+        "max": [
+          0.848,
+          2.463,
+          1.298
+        ],
+        "size": [
+          1.778,
+          2.632,
+          1.998
+        ],
+        "center": [
+          -0.04,
+          1.147,
+          0.299
+        ]
+      },
+      "errors": [],
+      "screenshot": "output/tripo/ignorance-b-p1-5000-2026-08-18/rigged-and-animated/deformation-test/animated/attack-75/shot-0.png"
+    },
+    {
+      "role": "hit",
+      "normalizedTime": 0,
+      "passed": true,
+      "animation": {
+        "name": "preset:hurt",
+        "duration": 13.875,
+        "tracks": 138
+      },
+      "scene": {
+        "meshes": 1,
+        "skinnedMeshes": 1,
+        "bones": 45,
+        "uniqueJoints": 45,
+        "materials": 1
+      },
+      "bounds": {
+        "min": [
+          -0.586,
+          -0.269,
+          -0.769
+        ],
+        "max": [
+          1.582,
+          2.806,
+          0.927
+        ],
+        "size": [
+          2.167,
+          3.075,
+          1.696
+        ],
+        "center": [
+          0.498,
+          1.269,
+          0.079
+        ]
+      },
+      "errors": [],
+      "screenshot": "output/tripo/ignorance-b-p1-5000-2026-08-18/rigged-and-animated/deformation-test/animated/hit-00/shot-0.png"
+    },
+    {
+      "role": "hit",
+      "normalizedTime": 0.25,
+      "passed": true,
+      "animation": {
+        "name": "preset:hurt",
+        "duration": 13.875,
+        "tracks": 138
+      },
+      "scene": {
+        "meshes": 1,
+        "skinnedMeshes": 1,
+        "bones": 45,
+        "uniqueJoints": 45,
+        "materials": 1
+      },
+      "bounds": {
+        "min": [
+          -0.591,
+          -0.298,
+          -1.949
+        ],
+        "max": [
+          0.977,
+          2.81,
+          0.777
+        ],
+        "size": [
+          1.568,
+          3.108,
+          2.726
+        ],
+        "center": [
+          0.193,
+          1.256,
+          -0.586
+        ]
+      },
+      "errors": [],
+      "screenshot": "output/tripo/ignorance-b-p1-5000-2026-08-18/rigged-and-animated/deformation-test/animated/hit-25/shot-0.png"
+    },
+    {
+      "role": "hit",
+      "normalizedTime": 0.5,
+      "passed": true,
+      "animation": {
+        "name": "preset:hurt",
+        "duration": 13.875,
+        "tracks": 138
+      },
+      "scene": {
+        "meshes": 1,
+        "skinnedMeshes": 1,
+        "bones": 45,
+        "uniqueJoints": 45,
+        "materials": 1
+      },
+      "bounds": {
+        "min": [
+          -0.75,
+          0.065,
+          -2.01
+        ],
+        "max": [
+          0.92,
+          2.794,
+          0.774
+        ],
+        "size": [
+          1.67,
+          2.729,
+          2.784
+        ],
+        "center": [
+          0.085,
+          1.43,
+          -0.618
+        ]
+      },
+      "errors": [],
+      "screenshot": "output/tripo/ignorance-b-p1-5000-2026-08-18/rigged-and-animated/deformation-test/animated/hit-50/shot-0.png"
+    },
+    {
+      "role": "hit",
+      "normalizedTime": 0.75,
+      "passed": true,
+      "animation": {
+        "name": "preset:hurt",
+        "duration": 13.875,
+        "tracks": 138
+      },
+      "scene": {
+        "meshes": 1,
+        "skinnedMeshes": 1,
+        "bones": 45,
+        "uniqueJoints": 45,
+        "materials": 1
+      },
+      "bounds": {
+        "min": [
+          -0.617,
+          -0.308,
+          -1.986
+        ],
+        "max": [
+          1.045,
+          2.837,
+          0.736
+        ],
+        "size": [
+          1.662,
+          3.145,
+          2.722
+        ],
+        "center": [
+          0.214,
+          1.265,
+          -0.625
+        ]
+      },
+      "errors": [],
+      "screenshot": "output/tripo/ignorance-b-p1-5000-2026-08-18/rigged-and-animated/deformation-test/animated/hit-75/shot-0.png"
+    },
+    {
+      "role": "death",
+      "normalizedTime": 0,
+      "passed": true,
+      "animation": {
+        "name": "preset:fall",
+        "duration": 3.0417,
+        "tracks": 138
+      },
+      "scene": {
+        "meshes": 1,
+        "skinnedMeshes": 1,
+        "bones": 45,
+        "uniqueJoints": 45,
+        "materials": 1
+      },
+      "bounds": {
+        "min": [
+          -1.202,
+          -0.479,
+          -0.995
+        ],
+        "max": [
+          1.734,
+          2.283,
+          1.284
+        ],
+        "size": [
+          2.936,
+          2.762,
+          2.279
+        ],
+        "center": [
+          0.266,
+          0.902,
+          0.144
+        ]
+      },
+      "errors": [],
+      "screenshot": "output/tripo/ignorance-b-p1-5000-2026-08-18/rigged-and-animated/deformation-test/animated/death-00/shot-0.png"
+    },
+    {
+      "role": "death",
+      "normalizedTime": 0.25,
+      "passed": true,
+      "animation": {
+        "name": "preset:fall",
+        "duration": 3.0417,
+        "tracks": 138
+      },
+      "scene": {
+        "meshes": 1,
+        "skinnedMeshes": 1,
+        "bones": 45,
+        "uniqueJoints": 45,
+        "materials": 1
+      },
+      "bounds": {
+        "min": [
+          -0.816,
+          -0.043,
+          -1.153
+        ],
+        "max": [
+          2.87,
+          2.112,
+          1.364
+        ],
+        "size": [
+          3.687,
+          2.155,
+          2.517
+        ],
+        "center": [
+          1.027,
+          1.034,
+          0.105
+        ]
+      },
+      "errors": [],
+      "screenshot": "output/tripo/ignorance-b-p1-5000-2026-08-18/rigged-and-animated/deformation-test/animated/death-25/shot-0.png"
+    },
+    {
+      "role": "death",
+      "normalizedTime": 0.5,
+      "passed": true,
+      "animation": {
+        "name": "preset:fall",
+        "duration": 3.0417,
+        "tracks": 138
+      },
+      "scene": {
+        "meshes": 1,
+        "skinnedMeshes": 1,
+        "bones": 45,
+        "uniqueJoints": 45,
+        "materials": 1
+      },
+      "bounds": {
+        "min": [
+          -1.226,
+          0.199,
+          -1.69
+        ],
+        "max": [
+          1.78,
+          3.132,
+          1.166
+        ],
+        "size": [
+          3.005,
+          2.932,
+          2.856
+        ],
+        "center": [
+          0.277,
+          1.666,
+          -0.262
+        ]
+      },
+      "errors": [],
+      "screenshot": "output/tripo/ignorance-b-p1-5000-2026-08-18/rigged-and-animated/deformation-test/animated/death-50/shot-0.png"
+    },
+    {
+      "role": "death",
+      "normalizedTime": 0.75,
+      "passed": true,
+      "animation": {
+        "name": "preset:fall",
+        "duration": 3.0417,
+        "tracks": 138
+      },
+      "scene": {
+        "meshes": 1,
+        "skinnedMeshes": 1,
+        "bones": 45,
+        "uniqueJoints": 45,
+        "materials": 1
+      },
+      "bounds": {
+        "min": [
+          -0.864,
+          0.074,
+          -1.976
+        ],
+        "max": [
+          0.927,
+          2.801,
+          0.8
+        ],
+        "size": [
+          1.791,
+          2.727,
+          2.776
+        ],
+        "center": [
+          0.031,
+          1.437,
+          -0.588
+        ]
+      },
+      "errors": [],
+      "screenshot": "output/tripo/ignorance-b-p1-5000-2026-08-18/rigged-and-animated/deformation-test/animated/death-75/shot-0.png"
+    }
+  ],
+  "passed": true
+}

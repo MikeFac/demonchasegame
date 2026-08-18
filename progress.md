@@ -2261,3 +2261,18 @@ Original prompt: Check the implementation of docs/multi-version-songs-implementa
   first-person-only and does not alter 2.5D HUD layout or combat behavior.
 - Bumped the RendererThreeJS cache version to `1.13`; syntax and the full
   three-view regression passed with no browser errors.
+
+2026-08-18 — Confusion, Deception, and priority Ignorance batch:
+- Generated all three from the prepared GPT-Image-2 candidates with Tripo P1
+  at the 5,000-face limit. Their source meshes are 5,149, 5,044, and 4,633
+  triangles respectively.
+- All three passed biped rig checks, v2.5 rigging, five-clip animation
+  retargeting, and 20/20 deterministic deformation poses. Contact sheets are
+  saved in each character's `rigged-and-animated/deformation-test/animated`
+  folder and show distinct silhouettes and coherent motion.
+- Enabled `monster.confusion`, `monster.deception`, and `monster.ignorance` in
+  the runtime manifest. Browser smoke tests confirmed each authored key loads
+  with no asset failures; the three-view, firing, wall-blocking, and recovery
+  regression passed again.
+- This batch consumed 375 credits total. Tripo balance is 115 credits; pause
+  further generation until phone profiling or a credit top-up.

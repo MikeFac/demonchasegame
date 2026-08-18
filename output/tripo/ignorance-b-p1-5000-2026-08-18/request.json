@@ -1,0 +1,19 @@
+{
+  "api": "v3",
+  "endpoint": "/generation/image-to-model",
+  "sourceImage": "output/imagegen/demon-reference-candidates-gpt-image-2/ignorance-b.png",
+  "fileToken": "file_830dd431-c580-4c4a-9050-7ff7662f6361",
+  "taskId": "05393d5d-0adb-4df6-ac2a-4f02c29c15f8",
+  "maxCredits": 50,
+  "payload": {
+    "input": "file_830dd431-c580-4c4a-9050-7ff7662f6361",
+    "model": "P1-20260311",
+    "texture": true,
+    "pbr": true,
+    "texture_alignment": "original_image",
+    "orientation": "align_image",
+    "enable_image_autofix": false,
+    "export_uv": true,
+    "face_limit": 5000
+  }
+}

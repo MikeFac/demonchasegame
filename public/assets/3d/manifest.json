@@ -35,6 +35,30 @@
       "textureBudget": 2048,
       "materialBudget": 1,
       "clips": ["idle", "walk", "attack", "hit", "death"]
+    },
+    "monster.confusion": {
+      "source": "models/confusion-v25-animated.glb",
+      "fallback": "procedural-demon",
+      "triangleBudget": 6000,
+      "textureBudget": 2048,
+      "materialBudget": 1,
+      "clips": ["idle", "walk", "attack", "hit", "death"]
+    },
+    "monster.deception": {
+      "source": "models/deception-v25-animated.glb",
+      "fallback": "procedural-demon",
+      "triangleBudget": 6000,
+      "textureBudget": 2048,
+      "materialBudget": 1,
+      "clips": ["idle", "walk", "attack", "hit", "death"]
+    },
+    "monster.ignorance": {
+      "source": "models/ignorance-v25-animated.glb",
+      "fallback": "procedural-demon",
+      "triangleBudget": 6000,
+      "textureBudget": 2048,
+      "materialBudget": 1,
+      "clips": ["idle", "walk", "attack", "hit", "death"]
     }
   }
 }
