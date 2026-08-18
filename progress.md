@@ -2344,3 +2344,8 @@ Original prompt: Check the implementation of docs/multi-version-songs-implementa
 
 - Reversed the two-plane roof slope rotation so gabled houses rise to a proper central ridge.
 - Verified the corrected silhouette in first-person and 2.5D city views.
+## 2026-08-19 — Close gable roof ends
+
+- Added triangular front and rear gable-end panels to the sloped roof style.
+- Gabled houses now read as enclosed roofs instead of two open planes.
+- Verified the corrected roof volume in first-person and 2.5D views.

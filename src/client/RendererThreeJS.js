@@ -59,6 +59,7 @@ class RendererThreeJS extends Renderer3D {
         this.cityRoadMesh = null;
         this.cityFacadeBatches = [];
         this.cityGableRoofMesh = null;
+        this.cityGableEndMesh = null;
         this.wallSource = null;
         this.wallTheme = null;
         this.wallRevision = 0;
@@ -697,6 +698,12 @@ class RendererThreeJS extends Renderer3D {
             this.cityGableRoofMesh.material.dispose();
             this.cityGableRoofMesh = null;
         }
+        if (this.cityGableEndMesh) {
+            this.scene.remove(this.cityGableEndMesh);
+            this.cityGableEndMesh.geometry.dispose();
+            this.cityGableEndMesh.material.dispose();
+            this.cityGableEndMesh = null;
+        }
         if (!walls.length) return;
 
         const colors = {
@@ -827,6 +834,41 @@ class RendererThreeJS extends Renderer3D {
                 gables.frustumCulled = true;
                 this.cityGableRoofMesh = gables;
                 this.scene.add(gables);
+
+                const endGeometry = new THREE.BufferGeometry();
+                endGeometry.setAttribute('position', new THREE.Float32BufferAttribute([
+                    -1, 0, 0, 1, 0, 0, 0, 1, 0
+                ], 3));
+                endGeometry.computeVertexNormals();
+                const endMaterial = new THREE.MeshStandardMaterial({
+                    color: 0x8e746b,
+                    emissive: 0xffffff,
+                    emissiveIntensity: 0.05,
+                    roughness: 0.9,
+                    flatShading: true,
+                    side: THREE.DoubleSide,
+                    vertexColors: true
+                });
+                const ends = new THREE.InstancedMesh(endGeometry, endMaterial, gableWalls.length * 2);
+                gableWalls.forEach((wall, wallIndex) => {
+                    const width = wall.width || 25;
+                    const depth = wall.height || 25;
+                    const buildingHeight = 52;
+                    for (const side of [-1, 1]) {
+                        position.set(wall.x + width / 2, buildingHeight, wall.y + depth / 2 + side * (depth / 2 + 5));
+                        scale.set(width / 2 + 4, 18, 1);
+                        matrix.compose(position, quaternion, scale);
+                        const endIndex = wallIndex * 2 + (side === 1 ? 1 : 0);
+                        ends.setMatrixAt(endIndex, matrix);
+                        tint.setHex(cityWallPalette[(wallIndex + 1) % cityWallPalette.length]);
+                        ends.setColorAt(endIndex, tint);
+                    }
+                });
+                ends.instanceMatrix.needsUpdate = true;
+                if (ends.instanceColor) ends.instanceColor.needsUpdate = true;
+                ends.frustumCulled = true;
+                this.cityGableEndMesh = ends;
+                this.scene.add(ends);
             }
 
             const windowGeometry = new THREE.BoxGeometry(1, 1, 1);
