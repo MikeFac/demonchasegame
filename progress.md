@@ -2324,3 +2324,8 @@ Original prompt: Check the implementation of docs/multi-version-songs-implementa
 - Added an open-cell fallback scan to `MonsterManager` when normal distance-band spawn searches find no valid positions.
 - This prevents city house density or player placement from silently producing an empty encounter.
 - Restarted the server and verified the city three-view regression still includes live monsters.
+## 2026-08-18 — Add residential color palette and asphalt roads
+
+- Replaced the brown-biased city palette with blue, cream, brick red, sage, teal, and neutral siding variants.
+- Added deterministic asphalt road strips between GridCity blocks while retaining lighter ground around house footprints.
+- Kept house and roof materials mobile-friendly and preserved collision/occlusion geometry.

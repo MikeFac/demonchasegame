@@ -56,6 +56,7 @@ class RendererThreeJS extends Renderer3D {
         this.wallRoofMesh = null;
         this.cityWindowMesh = null;
         this.cityDoorMesh = null;
+        this.cityRoadMesh = null;
         this.wallSource = null;
         this.wallTheme = null;
         this.wallRevision = 0;
@@ -676,6 +677,12 @@ class RendererThreeJS extends Renderer3D {
                 this[field] = null;
             }
         }
+        if (this.cityRoadMesh) {
+            this.scene.remove(this.cityRoadMesh);
+            this.cityRoadMesh.geometry.dispose();
+            this.cityRoadMesh.material.dispose();
+            this.cityRoadMesh = null;
+        }
         if (!walls.length) return;
 
         const colors = {
@@ -684,13 +691,13 @@ class RendererThreeJS extends Renderer3D {
             crystal: 0x6e5a94,
             city: 0xa9826f
         };
-        const cityWallPalette = [0xa9826f, 0x8c6e63, 0x6f8190, 0xb08a62, 0x7d7767];
-        const cityRoofPalette = [0x343a40, 0x4a4542, 0x5d4e48, 0x3f5054, 0x66534a];
+        const cityWallPalette = [0x4f9bd1, 0xe0b66d, 0xc85b52, 0x78b985, 0x62b4b0, 0xd3d0c4];
+        const cityRoofPalette = [0x687783, 0x7c6f63, 0x78666a, 0x5d727b, 0x8a7968, 0x76677d];
         const emissiveColors = {
             stone: 0x3b434b,
             earth: 0x342318,
             crystal: 0x2c2240,
-            city: 0x5a382b
+            city: 0x30343a
         };
         const mergedWalls = this._mergeWallRects(walls);
         // Group contiguous cells into building-sized visual footprints; the
@@ -700,14 +707,14 @@ class RendererThreeJS extends Renderer3D {
             : mergedWalls;
         const geometry = new THREE.BoxGeometry(1, 1, 1);
         const material = new THREE.MeshStandardMaterial({
-            color: 0xffffff,
-            emissive: emissiveColors[theme] || emissiveColors.stone,
-            emissiveIntensity: 0.65,
-            roughness: 0.9,
-            metalness: theme === 'crystal' ? 0.12 : 0,
-            flatShading: true,
-            vertexColors: true
-        });
+                color: 0xffffff,
+                emissive: theme === 'city' ? 0xffffff : (emissiveColors[theme] || emissiveColors.stone),
+                emissiveIntensity: theme === 'city' ? 0.08 : 0.65,
+                roughness: 0.9,
+                metalness: theme === 'crystal' ? 0.12 : 0,
+                flatShading: true,
+                vertexColors: true
+            });
         const mesh = new THREE.InstancedMesh(geometry, material, visualWalls.length);
         const matrix = new THREE.Matrix4();
         const position = new THREE.Vector3();
@@ -743,6 +750,8 @@ class RendererThreeJS extends Renderer3D {
             const roofGeometry = new THREE.BoxGeometry(1, 1, 1);
             const roofMaterial = new THREE.MeshStandardMaterial({
                 color: 0x68727d,
+                emissive: theme === 'city' ? 0xffffff : 0x000000,
+                emissiveIntensity: theme === 'city' ? 0.06 : 0,
                 roughness: 0.95,
                 flatShading: true,
                 vertexColors: true
@@ -816,6 +825,28 @@ class RendererThreeJS extends Renderer3D {
             this.cityWindowMesh = windows;
             this.cityDoorMesh = doors;
             this.scene.add(windows, doors);
+
+            const roadGeometry = new THREE.BoxGeometry(1, 1, 1);
+            const roadMaterial = new THREE.MeshBasicMaterial({ color: 0x4d5961 });
+            const roads = new THREE.InstancedMesh(roadGeometry, roadMaterial, 16);
+            const roadMatrix = new THREE.Matrix4();
+            const roadPosition = new THREE.Vector3();
+            const roadScale = new THREE.Vector3();
+            for (let roadIndex = 0; roadIndex < 8; roadIndex += 1) {
+                const center = 250 + roadIndex * 250;
+                roadPosition.set(center, 0.5, 1000);
+                roadScale.set(100, 1, 2000);
+                roadMatrix.compose(roadPosition, quaternion, roadScale);
+                roads.setMatrixAt(roadIndex * 2, roadMatrix);
+                roadPosition.set(1000, 0.5, center);
+                roadScale.set(2000, 1, 100);
+                roadMatrix.compose(roadPosition, quaternion, roadScale);
+                roads.setMatrixAt(roadIndex * 2 + 1, roadMatrix);
+            }
+            roads.instanceMatrix.needsUpdate = true;
+            roads.frustumCulled = true;
+            this.cityRoadMesh = roads;
+            this.scene.add(roads);
         }
     }
 
