@@ -684,6 +684,8 @@ class RendererThreeJS extends Renderer3D {
             crystal: 0x6e5a94,
             city: 0xa9826f
         };
+        const cityWallPalette = [0xa9826f, 0x8c6e63, 0x6f8190, 0xb08a62, 0x7d7767];
+        const cityRoofPalette = [0x343a40, 0x4a4542, 0x5d4e48, 0x3f5054, 0x66534a];
         const emissiveColors = {
             stone: 0x3b434b,
             earth: 0x342318,
@@ -723,7 +725,8 @@ class RendererThreeJS extends Renderer3D {
             mesh.setMatrixAt(index, matrix);
 
             const variation = (((wall.x * 13 + wall.y * 7 + index * 3) % 17) - 8) / 100;
-            tint.setHex(colors[theme] || colors.stone).offsetHSL(0, 0, variation);
+            const cityColor = cityWallPalette[Math.abs(Math.floor(wall.x / 25) * 7 + Math.floor(wall.y / 25) * 11) % cityWallPalette.length];
+            tint.setHex(theme === 'city' ? cityColor : (colors[theme] || colors.stone)).offsetHSL(0, 0, variation);
             mesh.setColorAt(index, tint);
         });
         mesh.instanceMatrix.needsUpdate = true;
@@ -751,7 +754,8 @@ class RendererThreeJS extends Renderer3D {
                 matrix.compose(position, quaternion, scale);
                 roofs.setMatrixAt(index, matrix);
                 const roofTint = (((wall.x * 5 + wall.y * 11 + index * 7) % 13) - 6) / 100;
-                tint.setHex(0x68727d).offsetHSL(0, 0, roofTint);
+                const roofColor = cityRoofPalette[Math.abs(Math.floor(wall.x / 25) * 5 + Math.floor(wall.y / 25) * 3) % cityRoofPalette.length];
+                tint.setHex(roofColor).offsetHSL(0, 0, roofTint);
                 roofs.setColorAt(index, tint);
             });
             roofs.instanceMatrix.needsUpdate = true;

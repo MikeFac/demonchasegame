@@ -47,11 +47,19 @@ function generateMaze(width, height, cellSize) {
             const rStart = BORDER + br * STRIDE;
             const cStart = BORDER + bc * STRIDE;
 
-            // Fill block
-            for (let r = 0; r < BLOCK_SIZE; r++) {
-                for (let c = 0; c < BLOCK_SIZE; c++) {
-                    if (rStart + r < rows && cStart + c < cols) {
-                        grid[rStart + r][cStart + c] = true;
+            // Subdivide each city block into four house footprints. The
+            // one-cell gaps become driveways/courtyards while the outer
+            // street grid remains continuous and collision-safe.
+            const houseSize = 2;
+            const houseOffsets = [0, 3];
+            for (const houseRow of houseOffsets) {
+                for (const houseCol of houseOffsets) {
+                    for (let r = 0; r < houseSize; r++) {
+                        for (let c = 0; c < houseSize; c++) {
+                            if (rStart + houseRow + r < rows && cStart + houseCol + c < cols) {
+                                grid[rStart + houseRow + r][cStart + houseCol + c] = true;
+                            }
+                        }
                     }
                 }
             }

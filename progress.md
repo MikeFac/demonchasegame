@@ -2308,3 +2308,9 @@ Original prompt: Check the implementation of docs/multi-version-songs-implementa
 - Set Level 1's terrain theme to `city`; 2D Classic remains visually unchanged because it falls back to its existing stone palette.
 - Added shorter city building bodies, grouped house footprints, roof slabs, doors, and windows for both 2.5D and first-person.
 - Independently verified the default game with screenshots showing streets, separate houses, façades, and occlusion.
+## 2026-08-18 — Add city house variety and open spaces
+
+- Subdivided each GridCity block into four house footprints with one-cell driveways/courtyards between them.
+- Preserved the surrounding road network and solid collision walls.
+- Added deterministic wall and roof color palettes so neighboring houses vary in brick, siding, concrete, and roof tones.
+- Browser verification confirms the varied 2.5D neighborhood layout and first-person street spacing.
