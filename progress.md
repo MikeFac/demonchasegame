@@ -2281,3 +2281,7 @@ Original prompt: Check the implementation of docs/multi-version-songs-implementa
 - Applied the same +90° local Y-axis correction used for Fear to the remaining authored demon meshes (Doubt, Condemnation, Confusion, Deception, and Ignorance).
 - This keeps each generated model's front-facing side aligned with the renderer's player-facing convention while preserving gameplay rotation and animation behavior.
 - Low-poly asset validation and the full three-view browser regression both pass.
+
+## 2026-08-18 — Correct Doubt front/back orientation
+
+- Doubt uses the opposite local front axis from the other generated demons, so its manifest correction is `-90°` on Y rather than `+90°`.

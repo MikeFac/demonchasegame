@@ -26,7 +26,7 @@
       "triangleBudget": 6000,
       "textureBudget": 2048,
       "materialBudget": 1,
-      "rotationY": 1.5708,
+      "rotationY": -1.5708,
       "clips": ["idle", "walk", "attack", "hit", "death"]
     },
     "monster.condemnation": {
