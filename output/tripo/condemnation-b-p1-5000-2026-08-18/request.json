@@ -1,0 +1,19 @@
+{
+  "api": "v3",
+  "endpoint": "/generation/image-to-model",
+  "sourceImage": "output/imagegen/demon-reference-candidates-gpt-image-2/condemnation-b.png",
+  "fileToken": "file_e760d261-0ed7-4eba-92d3-dd260bd9a84f",
+  "taskId": "da71c082-9316-45ff-a36c-ce75cb759a3a",
+  "maxCredits": 50,
+  "payload": {
+    "input": "file_e760d261-0ed7-4eba-92d3-dd260bd9a84f",
+    "model": "P1-20260311",
+    "texture": true,
+    "pbr": true,
+    "texture_alignment": "original_image",
+    "orientation": "align_image",
+    "enable_image_autofix": false,
+    "export_uv": true,
+    "face_limit": 5000
+  }
+}

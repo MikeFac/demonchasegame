@@ -1,0 +1,826 @@
+{
+  "assetDir": "output/tripo/condemnation-b-p1-5000-2026-08-18/rigged-and-animated",
+  "poses": [
+    {
+      "role": "idle",
+      "normalizedTime": 0,
+      "passed": true,
+      "animation": {
+        "name": "preset:idle",
+        "duration": 15.375,
+        "tracks": 69
+      },
+      "scene": {
+        "meshes": 1,
+        "skinnedMeshes": 1,
+        "bones": 22,
+        "uniqueJoints": 22,
+        "materials": 1
+      },
+      "bounds": {
+        "min": [
+          -1.589,
+          -0.716,
+          -0.657
+        ],
+        "max": [
+          0.766,
+          1.47,
+          2.012
+        ],
+        "size": [
+          2.355,
+          2.186,
+          2.669
+        ],
+        "center": [
+          -0.411,
+          0.377,
+          0.677
+        ]
+      },
+      "errors": [],
+      "screenshot": "output/tripo/condemnation-b-p1-5000-2026-08-18/rigged-and-animated/deformation-test/animated/idle-00/shot-0.png"
+    },
+    {
+      "role": "idle",
+      "normalizedTime": 0.25,
+      "passed": true,
+      "animation": {
+        "name": "preset:idle",
+        "duration": 15.375,
+        "tracks": 69
+      },
+      "scene": {
+        "meshes": 1,
+        "skinnedMeshes": 1,
+        "bones": 22,
+        "uniqueJoints": 22,
+        "materials": 1
+      },
+      "bounds": {
+        "min": [
+          -1.576,
+          -0.722,
+          -0.659
+        ],
+        "max": [
+          0.703,
+          1.473,
+          2.009
+        ],
+        "size": [
+          2.28,
+          2.194,
+          2.668
+        ],
+        "center": [
+          -0.437,
+          0.376,
+          0.675
+        ]
+      },
+      "errors": [],
+      "screenshot": "output/tripo/condemnation-b-p1-5000-2026-08-18/rigged-and-animated/deformation-test/animated/idle-25/shot-0.png"
+    },
+    {
+      "role": "idle",
+      "normalizedTime": 0.5,
+      "passed": true,
+      "animation": {
+        "name": "preset:idle",
+        "duration": 15.375,
+        "tracks": 69
+      },
+      "scene": {
+        "meshes": 1,
+        "skinnedMeshes": 1,
+        "bones": 22,
+        "uniqueJoints": 22,
+        "materials": 1
+      },
+      "bounds": {
+        "min": [
+          -1.555,
+          -0.745,
+          -0.761
+        ],
+        "max": [
+          0.695,
+          1.425,
+          1.905
+        ],
+        "size": [
+          2.25,
+          2.17,
+          2.666
+        ],
+        "center": [
+          -0.43,
+          0.34,
+          0.572
+        ]
+      },
+      "errors": [],
+      "screenshot": "output/tripo/condemnation-b-p1-5000-2026-08-18/rigged-and-animated/deformation-test/animated/idle-50/shot-0.png"
+    },
+    {
+      "role": "idle",
+      "normalizedTime": 0.75,
+      "passed": true,
+      "animation": {
+        "name": "preset:idle",
+        "duration": 15.375,
+        "tracks": 69
+      },
+      "scene": {
+        "meshes": 1,
+        "skinnedMeshes": 1,
+        "bones": 22,
+        "uniqueJoints": 22,
+        "materials": 1
+      },
+      "bounds": {
+        "min": [
+          -1.638,
+          -0.744,
+          -0.734
+        ],
+        "max": [
+          0.648,
+          1.469,
+          1.953
+        ],
+        "size": [
+          2.286,
+          2.212,
+          2.687
+        ],
+        "center": [
+          -0.495,
+          0.363,
+          0.61
+        ]
+      },
+      "errors": [],
+      "screenshot": "output/tripo/condemnation-b-p1-5000-2026-08-18/rigged-and-animated/deformation-test/animated/idle-75/shot-0.png"
+    },
+    {
+      "role": "walk",
+      "normalizedTime": 0,
+      "passed": true,
+      "animation": {
+        "name": "preset:walk",
+        "duration": 2.375,
+        "tracks": 69
+      },
+      "scene": {
+        "meshes": 1,
+        "skinnedMeshes": 1,
+        "bones": 22,
+        "uniqueJoints": 22,
+        "materials": 1
+      },
+      "bounds": {
+        "min": [
+          -1.674,
+          -0.677,
+          -0.833
+        ],
+        "max": [
+          0.656,
+          1.424,
+          2.021
+        ],
+        "size": [
+          2.331,
+          2.1,
+          2.854
+        ],
+        "center": [
+          -0.509,
+          0.374,
+          0.594
+        ]
+      },
+      "errors": [],
+      "screenshot": "output/tripo/condemnation-b-p1-5000-2026-08-18/rigged-and-animated/deformation-test/animated/walk-00/shot-0.png"
+    },
+    {
+      "role": "walk",
+      "normalizedTime": 0.25,
+      "passed": true,
+      "animation": {
+        "name": "preset:walk",
+        "duration": 2.375,
+        "tracks": 69
+      },
+      "scene": {
+        "meshes": 1,
+        "skinnedMeshes": 1,
+        "bones": 22,
+        "uniqueJoints": 22,
+        "materials": 1
+      },
+      "bounds": {
+        "min": [
+          -2.022,
+          -0.632,
+          -0.839
+        ],
+        "max": [
+          0.698,
+          1.545,
+          1.915
+        ],
+        "size": [
+          2.719,
+          2.177,
+          2.755
+        ],
+        "center": [
+          -0.662,
+          0.457,
+          0.538
+        ]
+      },
+      "errors": [],
+      "screenshot": "output/tripo/condemnation-b-p1-5000-2026-08-18/rigged-and-animated/deformation-test/animated/walk-25/shot-0.png"
+    },
+    {
+      "role": "walk",
+      "normalizedTime": 0.5,
+      "passed": true,
+      "animation": {
+        "name": "preset:walk",
+        "duration": 2.375,
+        "tracks": 69
+      },
+      "scene": {
+        "meshes": 1,
+        "skinnedMeshes": 1,
+        "bones": 22,
+        "uniqueJoints": 22,
+        "materials": 1
+      },
+      "bounds": {
+        "min": [
+          -1.629,
+          -0.664,
+          -0.829
+        ],
+        "max": [
+          0.687,
+          1.424,
+          2.056
+        ],
+        "size": [
+          2.316,
+          2.088,
+          2.885
+        ],
+        "center": [
+          -0.471,
+          0.38,
+          0.613
+        ]
+      },
+      "errors": [],
+      "screenshot": "output/tripo/condemnation-b-p1-5000-2026-08-18/rigged-and-animated/deformation-test/animated/walk-50/shot-0.png"
+    },
+    {
+      "role": "walk",
+      "normalizedTime": 0.75,
+      "passed": true,
+      "animation": {
+        "name": "preset:walk",
+        "duration": 2.375,
+        "tracks": 69
+      },
+      "scene": {
+        "meshes": 1,
+        "skinnedMeshes": 1,
+        "bones": 22,
+        "uniqueJoints": 22,
+        "materials": 1
+      },
+      "bounds": {
+        "min": [
+          -1.974,
+          -0.69,
+          -0.845
+        ],
+        "max": [
+          0.817,
+          1.534,
+          1.859
+        ],
+        "size": [
+          2.791,
+          2.225,
+          2.704
+        ],
+        "center": [
+          -0.579,
+          0.422,
+          0.507
+        ]
+      },
+      "errors": [],
+      "screenshot": "output/tripo/condemnation-b-p1-5000-2026-08-18/rigged-and-animated/deformation-test/animated/walk-75/shot-0.png"
+    },
+    {
+      "role": "attack",
+      "normalizedTime": 0,
+      "passed": true,
+      "animation": {
+        "name": "preset:slash",
+        "duration": 6.625,
+        "tracks": 69
+      },
+      "scene": {
+        "meshes": 1,
+        "skinnedMeshes": 1,
+        "bones": 22,
+        "uniqueJoints": 22,
+        "materials": 1
+      },
+      "bounds": {
+        "min": [
+          -1.569,
+          -0.618,
+          -0.627
+        ],
+        "max": [
+          0.793,
+          1.442,
+          1.867
+        ],
+        "size": [
+          2.362,
+          2.059,
+          2.494
+        ],
+        "center": [
+          -0.388,
+          0.412,
+          0.62
+        ]
+      },
+      "errors": [],
+      "screenshot": "output/tripo/condemnation-b-p1-5000-2026-08-18/rigged-and-animated/deformation-test/animated/attack-00/shot-0.png"
+    },
+    {
+      "role": "attack",
+      "normalizedTime": 0.25,
+      "passed": true,
+      "animation": {
+        "name": "preset:slash",
+        "duration": 6.625,
+        "tracks": 69
+      },
+      "scene": {
+        "meshes": 1,
+        "skinnedMeshes": 1,
+        "bones": 22,
+        "uniqueJoints": 22,
+        "materials": 1
+      },
+      "bounds": {
+        "min": [
+          -1.634,
+          -0.165,
+          -1.572
+        ],
+        "max": [
+          0.752,
+          2.05,
+          1.932
+        ],
+        "size": [
+          2.386,
+          2.215,
+          3.505
+        ],
+        "center": [
+          -0.441,
+          0.943,
+          0.18
+        ]
+      },
+      "errors": [],
+      "screenshot": "output/tripo/condemnation-b-p1-5000-2026-08-18/rigged-and-animated/deformation-test/animated/attack-25/shot-0.png"
+    },
+    {
+      "role": "attack",
+      "normalizedTime": 0.5,
+      "passed": true,
+      "animation": {
+        "name": "preset:slash",
+        "duration": 6.625,
+        "tracks": 69
+      },
+      "scene": {
+        "meshes": 1,
+        "skinnedMeshes": 1,
+        "bones": 22,
+        "uniqueJoints": 22,
+        "materials": 1
+      },
+      "bounds": {
+        "min": [
+          -1.501,
+          -0.513,
+          -0.582
+        ],
+        "max": [
+          0.855,
+          1.423,
+          1.847
+        ],
+        "size": [
+          2.356,
+          1.935,
+          2.429
+        ],
+        "center": [
+          -0.323,
+          0.455,
+          0.633
+        ]
+      },
+      "errors": [],
+      "screenshot": "output/tripo/condemnation-b-p1-5000-2026-08-18/rigged-and-animated/deformation-test/animated/attack-50/shot-0.png"
+    },
+    {
+      "role": "attack",
+      "normalizedTime": 0.75,
+      "passed": true,
+      "animation": {
+        "name": "preset:slash",
+        "duration": 6.625,
+        "tracks": 69
+      },
+      "scene": {
+        "meshes": 1,
+        "skinnedMeshes": 1,
+        "bones": 22,
+        "uniqueJoints": 22,
+        "materials": 1
+      },
+      "bounds": {
+        "min": [
+          -1.572,
+          -0.69,
+          -0.748
+        ],
+        "max": [
+          0.783,
+          1.439,
+          1.892
+        ],
+        "size": [
+          2.355,
+          2.129,
+          2.64
+        ],
+        "center": [
+          -0.395,
+          0.375,
+          0.572
+        ]
+      },
+      "errors": [],
+      "screenshot": "output/tripo/condemnation-b-p1-5000-2026-08-18/rigged-and-animated/deformation-test/animated/attack-75/shot-0.png"
+    },
+    {
+      "role": "hit",
+      "normalizedTime": 0,
+      "passed": true,
+      "animation": {
+        "name": "preset:hurt",
+        "duration": 13.875,
+        "tracks": 69
+      },
+      "scene": {
+        "meshes": 1,
+        "skinnedMeshes": 1,
+        "bones": 22,
+        "uniqueJoints": 22,
+        "materials": 1
+      },
+      "bounds": {
+        "min": [
+          -1.619,
+          -0.257,
+          -1.123
+        ],
+        "max": [
+          0.986,
+          1.871,
+          0.89
+        ],
+        "size": [
+          2.605,
+          2.128,
+          2.013
+        ],
+        "center": [
+          -0.316,
+          0.807,
+          -0.117
+        ]
+      },
+      "errors": [],
+      "screenshot": "output/tripo/condemnation-b-p1-5000-2026-08-18/rigged-and-animated/deformation-test/animated/hit-00/shot-0.png"
+    },
+    {
+      "role": "hit",
+      "normalizedTime": 0.25,
+      "passed": true,
+      "animation": {
+        "name": "preset:hurt",
+        "duration": 13.875,
+        "tracks": 69
+      },
+      "scene": {
+        "meshes": 1,
+        "skinnedMeshes": 1,
+        "bones": 22,
+        "uniqueJoints": 22,
+        "materials": 1
+      },
+      "bounds": {
+        "min": [
+          -1.566,
+          0.253,
+          -1.052
+        ],
+        "max": [
+          1.267,
+          1.864,
+          0.931
+        ],
+        "size": [
+          2.833,
+          1.612,
+          1.983
+        ],
+        "center": [
+          -0.149,
+          1.058,
+          -0.061
+        ]
+      },
+      "errors": [],
+      "screenshot": "output/tripo/condemnation-b-p1-5000-2026-08-18/rigged-and-animated/deformation-test/animated/hit-25/shot-0.png"
+    },
+    {
+      "role": "hit",
+      "normalizedTime": 0.5,
+      "passed": true,
+      "animation": {
+        "name": "preset:hurt",
+        "duration": 13.875,
+        "tracks": 69
+      },
+      "scene": {
+        "meshes": 1,
+        "skinnedMeshes": 1,
+        "bones": 22,
+        "uniqueJoints": 22,
+        "materials": 1
+      },
+      "bounds": {
+        "min": [
+          -1.59,
+          0.261,
+          -1.064
+        ],
+        "max": [
+          1.341,
+          1.877,
+          0.917
+        ],
+        "size": [
+          2.931,
+          1.616,
+          1.981
+        ],
+        "center": [
+          -0.125,
+          1.069,
+          -0.073
+        ]
+      },
+      "errors": [],
+      "screenshot": "output/tripo/condemnation-b-p1-5000-2026-08-18/rigged-and-animated/deformation-test/animated/hit-50/shot-0.png"
+    },
+    {
+      "role": "hit",
+      "normalizedTime": 0.75,
+      "passed": true,
+      "animation": {
+        "name": "preset:hurt",
+        "duration": 13.875,
+        "tracks": 69
+      },
+      "scene": {
+        "meshes": 1,
+        "skinnedMeshes": 1,
+        "bones": 22,
+        "uniqueJoints": 22,
+        "materials": 1
+      },
+      "bounds": {
+        "min": [
+          -1.593,
+          0.365,
+          -1.069
+        ],
+        "max": [
+          1.247,
+          1.867,
+          0.91
+        ],
+        "size": [
+          2.841,
+          1.502,
+          1.978
+        ],
+        "center": [
+          -0.173,
+          1.116,
+          -0.079
+        ]
+      },
+      "errors": [],
+      "screenshot": "output/tripo/condemnation-b-p1-5000-2026-08-18/rigged-and-animated/deformation-test/animated/hit-75/shot-0.png"
+    },
+    {
+      "role": "death",
+      "normalizedTime": 0,
+      "passed": true,
+      "animation": {
+        "name": "preset:fall",
+        "duration": 3.0417,
+        "tracks": 69
+      },
+      "scene": {
+        "meshes": 1,
+        "skinnedMeshes": 1,
+        "bones": 22,
+        "uniqueJoints": 22,
+        "materials": 1
+      },
+      "bounds": {
+        "min": [
+          -1.122,
+          -0.665,
+          -1.744
+        ],
+        "max": [
+          1.108,
+          2.323,
+          0.648
+        ],
+        "size": [
+          2.231,
+          2.988,
+          2.391
+        ],
+        "center": [
+          -0.007,
+          0.829,
+          -0.548
+        ]
+      },
+      "errors": [],
+      "screenshot": "output/tripo/condemnation-b-p1-5000-2026-08-18/rigged-and-animated/deformation-test/animated/death-00/shot-0.png"
+    },
+    {
+      "role": "death",
+      "normalizedTime": 0.25,
+      "passed": true,
+      "animation": {
+        "name": "preset:fall",
+        "duration": 3.0417,
+        "tracks": 69
+      },
+      "scene": {
+        "meshes": 1,
+        "skinnedMeshes": 1,
+        "bones": 22,
+        "uniqueJoints": 22,
+        "materials": 1
+      },
+      "bounds": {
+        "min": [
+          -1.189,
+          -0.225,
+          -1.608
+        ],
+        "max": [
+          0.785,
+          2.278,
+          1.442
+        ],
+        "size": [
+          1.974,
+          2.503,
+          3.05
+        ],
+        "center": [
+          -0.202,
+          1.026,
+          -0.083
+        ]
+      },
+      "errors": [],
+      "screenshot": "output/tripo/condemnation-b-p1-5000-2026-08-18/rigged-and-animated/deformation-test/animated/death-25/shot-0.png"
+    },
+    {
+      "role": "death",
+      "normalizedTime": 0.5,
+      "passed": true,
+      "animation": {
+        "name": "preset:fall",
+        "duration": 3.0417,
+        "tracks": 69
+      },
+      "scene": {
+        "meshes": 1,
+        "skinnedMeshes": 1,
+        "bones": 22,
+        "uniqueJoints": 22,
+        "materials": 1
+      },
+      "bounds": {
+        "min": [
+          -0.908,
+          -0.627,
+          -1.026
+        ],
+        "max": [
+          1.173,
+          2.641,
+          1.077
+        ],
+        "size": [
+          2.081,
+          3.267,
+          2.103
+        ],
+        "center": [
+          0.132,
+          1.007,
+          0.025
+        ]
+      },
+      "errors": [],
+      "screenshot": "output/tripo/condemnation-b-p1-5000-2026-08-18/rigged-and-animated/deformation-test/animated/death-50/shot-0.png"
+    },
+    {
+      "role": "death",
+      "normalizedTime": 0.75,
+      "passed": true,
+      "animation": {
+        "name": "preset:fall",
+        "duration": 3.0417,
+        "tracks": 69
+      },
+      "scene": {
+        "meshes": 1,
+        "skinnedMeshes": 1,
+        "bones": 22,
+        "uniqueJoints": 22,
+        "materials": 1
+      },
+      "bounds": {
+        "min": [
+          -1.111,
+          -0.504,
+          -1.338
+        ],
+        "max": [
+          1.519,
+          1.96,
+          0.925
+        ],
+        "size": [
+          2.63,
+          2.464,
+          2.263
+        ],
+        "center": [
+          0.204,
+          0.728,
+          -0.206
+        ]
+      },
+      "errors": [],
+      "screenshot": "output/tripo/condemnation-b-p1-5000-2026-08-18/rigged-and-animated/deformation-test/animated/death-75/shot-0.png"
+    }
+  ],
+  "passed": true
+}

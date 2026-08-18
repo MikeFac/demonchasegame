@@ -1,19 +1,19 @@
 {
-  "version": 1,
+  "version": 2,
   "unitsPerGamePixel": 1,
   "assets": {
     "player.default": {
-      "source": null,
+      "source": "models/player-default-v25-animated.glb",
       "fallback": "procedural-player",
       "triangleBudget": 6000,
-      "textureBudget": 1024,
+      "textureBudget": 2048,
       "clips": ["idle", "walk", "attack", "hit", "death"]
     },
     "monster.fear": {
-      "source": "models/quaternius-ghost-skull.glb",
+      "source": "models/fear-v25-animated.glb",
       "fallback": "procedural-demon",
-      "triangleBudget": 4000,
-      "textureBudget": 512,
+      "triangleBudget": 15000,
+      "textureBudget": 2048,
       "materialBudget": 1,
       "height": 70,
       "scale": 1,
@@ -21,17 +21,19 @@
       "clips": ["idle", "walk", "attack", "hit", "death"]
     },
     "monster.doubt": {
-      "source": null,
+      "source": "models/doubt-v25-animated.glb",
       "fallback": "procedural-demon",
-      "triangleBudget": 4000,
-      "textureBudget": 512,
+      "triangleBudget": 6000,
+      "textureBudget": 2048,
+      "materialBudget": 1,
       "clips": ["idle", "walk", "attack", "hit", "death"]
     },
     "monster.condemnation": {
-      "source": null,
+      "source": "models/condemnation-v25-animated.glb",
       "fallback": "procedural-demon",
-      "triangleBudget": 4000,
-      "textureBudget": 512,
+      "triangleBudget": 6000,
+      "textureBudget": 2048,
+      "materialBudget": 1,
       "clips": ["idle", "walk", "attack", "hit", "death"]
     }
   }

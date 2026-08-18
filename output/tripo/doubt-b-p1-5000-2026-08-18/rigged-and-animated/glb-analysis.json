@@ -1,0 +1,71 @@
+{
+  "generatedAt": "2026-08-18T03:09:07.176Z",
+  "directory": "output/tripo/doubt-b-p1-5000-2026-08-18/rigged-and-animated",
+  "files": [
+    {
+      "filename": "animations/model_url.glb",
+      "bytes": 2260368,
+      "megabytes": 2.16,
+      "scenes": 1,
+      "nodes": 24,
+      "meshes": 1,
+      "primitives": 1,
+      "triangles": 5126,
+      "materials": 1,
+      "textures": 3,
+      "images": 3,
+      "skins": 1,
+      "joints": 22,
+      "animationTargetNodes": 23,
+      "animations": [
+        {
+          "name": "preset:idle",
+          "durationSeconds": 15.375,
+          "channels": 69,
+          "samplers": 69
+        },
+        {
+          "name": "preset:walk",
+          "durationSeconds": 2.375,
+          "channels": 69,
+          "samplers": 69
+        },
+        {
+          "name": "preset:slash",
+          "durationSeconds": 6.625,
+          "channels": 69,
+          "samplers": 69
+        },
+        {
+          "name": "preset:hurt",
+          "durationSeconds": 13.875,
+          "channels": 69,
+          "samplers": 69
+        },
+        {
+          "name": "preset:fall",
+          "durationSeconds": 3.0417,
+          "channels": 69,
+          "samplers": 69
+        }
+      ]
+    },
+    {
+      "filename": "rig/model_url.glb",
+      "bytes": 1267092,
+      "megabytes": 1.21,
+      "scenes": 1,
+      "nodes": 24,
+      "meshes": 1,
+      "primitives": 1,
+      "triangles": 5126,
+      "materials": 1,
+      "textures": 3,
+      "images": 3,
+      "skins": 1,
+      "joints": 22,
+      "animationTargetNodes": 0,
+      "animations": []
+    }
+  ]
+}

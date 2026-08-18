@@ -1,0 +1,19 @@
+{
+  "api": "v3",
+  "endpoint": "/generation/image-to-model",
+  "sourceImage": "output/imagegen/demon-reference-candidates-gpt-image-2/doubt-b.png",
+  "fileToken": "file_9ffff254-258a-4e8d-a1a6-905783d63e2d",
+  "taskId": "ccd1e36a-0bf5-4370-bb4c-f952ce33755b",
+  "maxCredits": 50,
+  "payload": {
+    "input": "file_9ffff254-258a-4e8d-a1a6-905783d63e2d",
+    "model": "P1-20260311",
+    "texture": true,
+    "pbr": true,
+    "texture_alignment": "original_image",
+    "orientation": "align_image",
+    "enable_image_autofix": false,
+    "export_uv": true,
+    "face_limit": 5000
+  }
+}

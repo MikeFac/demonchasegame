@@ -1,0 +1,322 @@
+{
+  "passed": true,
+  "failures": [],
+  "results": {
+    "menu": {
+      "selected": "third-person",
+      "options": [
+        {
+          "value": "2d",
+          "label": "2D Classic"
+        },
+        {
+          "value": "third-person",
+          "label": "2.5D Adventure"
+        },
+        {
+          "value": "first-person",
+          "label": "3D First Person"
+        }
+      ],
+      "persisted": "third-person",
+      "globalMode": "third-person",
+      "errors": []
+    },
+    "2d": {
+      "viewMode": "2d",
+      "renderer": "Renderer",
+      "rendererViewMode": "2d",
+      "stateViewMode": "2d",
+      "stateRenderer": "Renderer",
+      "worldCanvasDisplay": "none",
+      "recoveryCanvasDisplay": "none",
+      "errors": []
+    },
+    "third-person": {
+      "viewMode": "third-person",
+      "renderer": "RendererThreeJS",
+      "camera": {
+        "profile": "chase",
+        "x": 1220,
+        "y": 380,
+        "z": 1500,
+        "fov": 70,
+        "target": {
+          "x": 1725,
+          "y": 24,
+          "z": 1491
+        },
+        "framing": {
+          "nearestMonsterId": "4c837930",
+          "nearestMonsterDistance": 387
+        },
+        "eyeHeight": null,
+        "localPlayerVisible": true,
+        "projectedPlayer": {
+          "x": 0.024,
+          "y": -0.414,
+          "z": 0.985
+        }
+      },
+      "controls": {
+        "size": 48,
+        "left": {
+          "x": 18,
+          "y": 530,
+          "width": 48,
+          "height": 48
+        },
+        "right": {
+          "x": 76,
+          "y": 530,
+          "width": 48,
+          "height": 48
+        },
+        "forward": {
+          "x": 334,
+          "y": 512,
+          "width": 48,
+          "height": 58
+        },
+        "stop": {
+          "x": 334,
+          "y": 452,
+          "width": 48,
+          "height": 48
+        },
+        "fire": {
+          "x": 334,
+          "y": 103,
+          "width": 48,
+          "height": 48
+        }
+      },
+      "supportProbeCount": 1,
+      "context": {
+        "lost": false,
+        "restorePending": false,
+        "losses": 0,
+        "restores": 0
+      },
+      "controlTurnRadians": 0.32525955939542145,
+      "errors": []
+    },
+    "first-person": {
+      "initial": {
+        "viewMode": "first-person",
+        "camera": {
+          "profile": "first-person",
+          "x": 1500,
+          "y": 54,
+          "z": 1500,
+          "fov": 70,
+          "target": {
+            "x": 1740,
+            "y": 54,
+            "z": 1500
+          },
+          "framing": {
+            "nearestMonsterId": null,
+            "nearestMonsterDistance": null
+          },
+          "eyeHeight": 54,
+          "localPlayerVisible": false,
+          "projectedPlayer": null
+        },
+        "controls": {
+          "size": 58,
+          "left": {
+            "x": 18,
+            "y": 520,
+            "width": 58,
+            "height": 58
+          },
+          "right": {
+            "x": 86,
+            "y": 520,
+            "width": 58,
+            "height": 58
+          },
+          "forward": {
+            "x": 324,
+            "y": 502,
+            "width": 58,
+            "height": 72
+          },
+          "stop": {
+            "x": 324,
+            "y": 432,
+            "width": 58,
+            "height": 58
+          },
+          "fire": {
+            "x": 324,
+            "y": 103,
+            "width": 58,
+            "height": 58
+          }
+        },
+        "performance": {
+          "renderer": "three",
+          "viewMode": "first-person",
+          "cameraProfile": "first-person",
+          "revision": "185",
+          "calls": 13,
+          "triangles": 7760,
+          "points": 0,
+          "lines": 122,
+          "walls": {
+            "source": 1246,
+            "merged": 630
+          },
+          "entities": {
+            "players": 1,
+            "monsters": 1,
+            "bullets": 0,
+            "shotTracers": 0,
+            "healing": 2,
+            "collectibles": 0,
+            "npcs": 0
+          },
+          "assets": {
+            "authoredLoaded": [],
+            "fallbacksActive": [],
+            "failures": {}
+          },
+          "gpu": {
+            "vendor": "Google Inc. (Google)",
+            "renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+            "software": true
+          },
+          "supportProbeCount": 1,
+          "recoverySnapshots": 1,
+          "context": {
+            "lost": false,
+            "restorePending": false,
+            "losses": 0,
+            "restores": 0
+          },
+          "contextEvents": []
+        },
+        "context": {
+          "lost": false,
+          "restorePending": false,
+          "losses": 0,
+          "restores": 0
+        }
+      },
+      "movement": {
+        "before": {
+          "x": 1507.5,
+          "y": 1500,
+          "angle": 0
+        },
+        "released": {
+          "x": 1514.9852841499853,
+          "y": 1500.2801171826368,
+          "angle": 0.2749940769379848
+        },
+        "settled": {
+          "x": 1514.9852841499853,
+          "y": 1500.2801171826368,
+          "angle": 0.2749940769379848
+        }
+      },
+      "controlInput": {
+        "mouseForwardPressed": 1,
+        "mouseForwardReleased": 0
+      },
+      "hit": {
+        "setup": {
+          "id": "609ced1b",
+          "before": 10,
+          "aimType": "monster",
+          "accepted": true
+        },
+        "result": {
+          "health": 8,
+          "aim": {
+            "type": "hit",
+            "until": 7422.699999988079,
+            "distance": 86,
+            "targetId": "609ced1b",
+            "point": {
+              "x": 1536,
+              "y": 1608
+            }
+          }
+        }
+      },
+      "blocked": {
+        "setup": {
+          "id": "609ced1b",
+          "before": 8,
+          "wallDistance": 60.01471585001468
+        },
+        "result": {
+          "health": 8,
+          "aim": {
+            "type": "wall",
+            "until": 8492.699999988079,
+            "distance": 60,
+            "targetId": null,
+            "point": {
+              "x": 1575,
+              "y": 1500
+            }
+          }
+        }
+      },
+      "recovery": {
+        "lost": {
+          "viewMode": "first-person",
+          "cameraProfile": "first-person",
+          "signature": "first-person:first-person:1683:1473:0:1:4",
+          "recoveryVisible": "block",
+          "state": {
+            "mode": "low-poly-3d",
+            "viewMode": "first-person",
+            "cameraProfile": "first-person",
+            "status": "webgl-context-recovery",
+            "fallback": "last-first-person-frame",
+            "player": {
+              "x": 1683,
+              "y": 1473,
+              "viewAngle": 0,
+              "health": 100,
+              "ammo": 0
+            },
+            "monsters": [
+              {
+                "id": "609ced1b",
+                "type": "Fear",
+                "x": 1897,
+                "y": 1462,
+                "health": 8
+              }
+            ],
+            "healingPoints": 2,
+            "monstersKilled": 0,
+            "context": {
+              "lost": true,
+              "restorePending": false,
+              "losses": 1,
+              "restores": 0
+            }
+          }
+        },
+        "restored": {
+          "context": {
+            "lost": false,
+            "restorePending": false,
+            "losses": 1,
+            "restores": 1
+          },
+          "worldVisible": "visible",
+          "recoveryDisplay": "none"
+        }
+      },
+      "errors": []
+    }
+  }
+}

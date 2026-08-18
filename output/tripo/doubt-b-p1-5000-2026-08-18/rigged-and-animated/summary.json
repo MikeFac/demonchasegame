@@ -1,0 +1,53 @@
+{
+  "sourceTaskId": "ccd1e36a-0bf5-4370-bb4c-f952ce33755b",
+  "rigTaskId": "c28edeb7-012d-4d7c-a7d6-80ce775b2aa2",
+  "animationTaskId": "81c6cd3e-5f46-43cd-bf6a-9d490a469fe4",
+  "rigModel": "v2.5-20260210",
+  "rigType": "biped",
+  "rigSpec": "tripo",
+  "animations": [
+    {
+      "role": "idle",
+      "preset": "preset:idle"
+    },
+    {
+      "role": "walk",
+      "preset": "preset:walk"
+    },
+    {
+      "role": "attack",
+      "preset": "preset:slash"
+    },
+    {
+      "role": "hit",
+      "preset": "preset:hurt"
+    },
+    {
+      "role": "death",
+      "preset": "preset:fall"
+    }
+  ],
+  "animateInPlace": true,
+  "rigCredits": 25,
+  "animationCredits": 50,
+  "totalCredits": 75,
+  "balanceBefore": 640,
+  "balanceAfter": 565,
+  "observedSharedBalanceDelta": 75,
+  "rigDownloads": [
+    {
+      "filename": "model_url.glb",
+      "bytes": 1267092
+    },
+    {
+      "filename": "rendered_image_url.webp",
+      "bytes": 21244
+    }
+  ],
+  "animationDownloads": [
+    {
+      "filename": "model_url.glb",
+      "bytes": 2260368
+    }
+  ]
+}

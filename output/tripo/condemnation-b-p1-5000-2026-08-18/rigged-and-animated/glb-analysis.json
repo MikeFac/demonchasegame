@@ -1,0 +1,71 @@
+{
+  "generatedAt": "2026-08-18T03:09:07.221Z",
+  "directory": "output/tripo/condemnation-b-p1-5000-2026-08-18/rigged-and-animated",
+  "files": [
+    {
+      "filename": "animations/model_url.glb",
+      "bytes": 2776552,
+      "megabytes": 2.65,
+      "scenes": 1,
+      "nodes": 24,
+      "meshes": 1,
+      "primitives": 1,
+      "triangles": 4914,
+      "materials": 1,
+      "textures": 3,
+      "images": 3,
+      "skins": 1,
+      "joints": 22,
+      "animationTargetNodes": 23,
+      "animations": [
+        {
+          "name": "preset:idle",
+          "durationSeconds": 15.375,
+          "channels": 69,
+          "samplers": 69
+        },
+        {
+          "name": "preset:walk",
+          "durationSeconds": 2.375,
+          "channels": 69,
+          "samplers": 69
+        },
+        {
+          "name": "preset:slash",
+          "durationSeconds": 6.625,
+          "channels": 69,
+          "samplers": 69
+        },
+        {
+          "name": "preset:hurt",
+          "durationSeconds": 13.875,
+          "channels": 69,
+          "samplers": 69
+        },
+        {
+          "name": "preset:fall",
+          "durationSeconds": 3.0417,
+          "channels": 69,
+          "samplers": 69
+        }
+      ]
+    },
+    {
+      "filename": "rig/model_url.glb",
+      "bytes": 1782928,
+      "megabytes": 1.7,
+      "scenes": 1,
+      "nodes": 24,
+      "meshes": 1,
+      "primitives": 1,
+      "triangles": 4914,
+      "materials": 1,
+      "textures": 3,
+      "images": 3,
+      "skins": 1,
+      "joints": 22,
+      "animationTargetNodes": 0,
+      "animations": []
+    }
+  ]
+}

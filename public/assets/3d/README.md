@@ -4,9 +4,10 @@ Runtime assets are GLB/glTF 2.0 files referenced by `manifest.json`. Keep source
 art and Blender working files outside `public`; only optimized runtime files
 belong here.
 
-The first authored monster is Quaternius's CC0 `Ghost_Skull.gltf`, converted
-into a single self-contained GLB. Its original file, license, and source notes are in
-`resources/3d-source/quaternius-ultimate-monsters`.
+The runtime now includes four authored, self-contained animated GLBs under
+`models/`: the default player plus Fear, Doubt, and Condemnation. Their source
+images, Tripo task records, rigging evidence, and deformation contact sheets
+remain under `output/tripo` and `output/imagegen`.
 
 ## Character export contract
 
@@ -18,10 +19,11 @@ into a single self-contained GLB. Its original file, license, and source notes a
 - apply transforms and remove hidden geometry before export
 - use mesh compression only after verifying the browser loader and offline cache
 
-`source: null` means the renderer must use its procedural fallback. Generated
-assets should not replace a fallback entry until they pass the triangle,
-texture, animation, silhouette, and phone-performance gates in the technical
-design.
+`source: null` means the renderer must use its procedural fallback. Authored
+assets are only enabled after passing the triangle, texture, animation,
+silhouette, and browser deformation gates. The Fear asset is a featured/boss
+tier model at 14,468 triangles; profile it on a real phone before displaying
+several copies simultaneously.
 
 Run `npm run validate:3d` after adding a source. To make a missing authored
 asset fail CI, use `node scripts/validate-low-poly-assets.mjs --require-source
@@ -29,10 +31,9 @@ asset fail CI, use `node scripts/validate-low-poly-assets.mjs --require-source
 texture budgets, a skin, required clip names, and unwanted embedded lights or
 cameras.
 
-Rebuild the current Fear runtime asset with:
+The runtime files are copied from the accepted animated outputs after the
+deformation gate. To add another character, follow:
 
 ```sh
-node scripts/convert-embedded-gltf-to-glb.mjs \
-  resources/3d-source/quaternius-ultimate-monsters/Ghost_Skull.gltf \
-  public/assets/3d/models/quaternius-ghost-skull.glb
+docs/plans/LUNA_3D_ASSET_PIPELINE_RUNBOOK.md
 ```

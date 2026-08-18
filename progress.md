@@ -2223,3 +2223,21 @@ Original prompt: Check the implementation of docs/multi-version-songs-implementa
   wing folding and sweeping without detached geometry or explosive stretching.
   Treat this as a featured/boss asset pending real-phone profiling, not the
   baseline for many simultaneous ordinary monsters.
+
+2026-08-18 — authored runtime integration and two additional demons:
+- Copied the validated animated player and Fear GLBs into
+  `public/assets/3d/models/` and enabled them through the runtime manifest.
+- Generated Doubt from `doubt-b.png` and Condemnation from
+  `condemnation-b.png` with Tripo P1 at the 5,000-face limit. Doubt is 5,126
+  triangles / 2.16 MB animated; Condemnation is 4,914 triangles / 2.65 MB.
+- Both passed the free biped check, v2.5 rigging, five-clip animation retarget,
+  and all 20 deterministic deformation poses with no browser errors. Contact
+  sheets are saved under each character's `deformation-test/animated` folder.
+- Enabled `monster.doubt` and `monster.condemnation` in the manifest alongside
+  `monster.fear`; Tripo's `preset:*` clips are normalized by the validator to
+  the game's canonical idle/walk/attack/hit/death roles.
+- Runtime browser verification confirmed all four authored assets load with no
+  asset failures in third-person and first-person modes. The existing three
+  view-mode, firing, wall-blocking, and WebGL recovery regression passed.
+- Tripo balance after the two new characters: 490 credits. Next gate is
+  real-phone profiling and then integrating more enemy types in batches.

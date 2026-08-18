@@ -1,0 +1,826 @@
+{
+  "assetDir": "output/tripo/doubt-b-p1-5000-2026-08-18/rigged-and-animated",
+  "poses": [
+    {
+      "role": "idle",
+      "normalizedTime": 0,
+      "passed": true,
+      "animation": {
+        "name": "preset:idle",
+        "duration": 15.375,
+        "tracks": 69
+      },
+      "scene": {
+        "meshes": 1,
+        "skinnedMeshes": 1,
+        "bones": 22,
+        "uniqueJoints": 22,
+        "materials": 1
+      },
+      "bounds": {
+        "min": [
+          -0.689,
+          -0.047,
+          -0.733
+        ],
+        "max": [
+          0.331,
+          2.8,
+          0.553
+        ],
+        "size": [
+          1.02,
+          2.847,
+          1.287
+        ],
+        "center": [
+          -0.179,
+          1.376,
+          -0.09
+        ]
+      },
+      "errors": [],
+      "screenshot": "output/tripo/doubt-b-p1-5000-2026-08-18/rigged-and-animated/deformation-test/animated/idle-00/shot-0.png"
+    },
+    {
+      "role": "idle",
+      "normalizedTime": 0.25,
+      "passed": true,
+      "animation": {
+        "name": "preset:idle",
+        "duration": 15.375,
+        "tracks": 69
+      },
+      "scene": {
+        "meshes": 1,
+        "skinnedMeshes": 1,
+        "bones": 22,
+        "uniqueJoints": 22,
+        "materials": 1
+      },
+      "bounds": {
+        "min": [
+          -0.707,
+          -0.048,
+          -0.734
+        ],
+        "max": [
+          0.342,
+          2.8,
+          0.553
+        ],
+        "size": [
+          1.049,
+          2.848,
+          1.287
+        ],
+        "center": [
+          -0.183,
+          1.376,
+          -0.09
+        ]
+      },
+      "errors": [],
+      "screenshot": "output/tripo/doubt-b-p1-5000-2026-08-18/rigged-and-animated/deformation-test/animated/idle-25/shot-0.png"
+    },
+    {
+      "role": "idle",
+      "normalizedTime": 0.5,
+      "passed": true,
+      "animation": {
+        "name": "preset:idle",
+        "duration": 15.375,
+        "tracks": 69
+      },
+      "scene": {
+        "meshes": 1,
+        "skinnedMeshes": 1,
+        "bones": 22,
+        "uniqueJoints": 22,
+        "materials": 1
+      },
+      "bounds": {
+        "min": [
+          -0.764,
+          0.088,
+          -0.753
+        ],
+        "max": [
+          0.383,
+          2.8,
+          0.657
+        ],
+        "size": [
+          1.147,
+          2.712,
+          1.41
+        ],
+        "center": [
+          -0.19,
+          1.444,
+          -0.048
+        ]
+      },
+      "errors": [],
+      "screenshot": "output/tripo/doubt-b-p1-5000-2026-08-18/rigged-and-animated/deformation-test/animated/idle-50/shot-0.png"
+    },
+    {
+      "role": "idle",
+      "normalizedTime": 0.75,
+      "passed": true,
+      "animation": {
+        "name": "preset:idle",
+        "duration": 15.375,
+        "tracks": 69
+      },
+      "scene": {
+        "meshes": 1,
+        "skinnedMeshes": 1,
+        "bones": 22,
+        "uniqueJoints": 22,
+        "materials": 1
+      },
+      "bounds": {
+        "min": [
+          -0.736,
+          0.004,
+          -0.721
+        ],
+        "max": [
+          0.367,
+          2.8,
+          0.586
+        ],
+        "size": [
+          1.103,
+          2.796,
+          1.307
+        ],
+        "center": [
+          -0.184,
+          1.402,
+          -0.067
+        ]
+      },
+      "errors": [],
+      "screenshot": "output/tripo/doubt-b-p1-5000-2026-08-18/rigged-and-animated/deformation-test/animated/idle-75/shot-0.png"
+    },
+    {
+      "role": "walk",
+      "normalizedTime": 0,
+      "passed": true,
+      "animation": {
+        "name": "preset:walk",
+        "duration": 2.375,
+        "tracks": 69
+      },
+      "scene": {
+        "meshes": 1,
+        "skinnedMeshes": 1,
+        "bones": 22,
+        "uniqueJoints": 22,
+        "materials": 1
+      },
+      "bounds": {
+        "min": [
+          -0.7,
+          0.078,
+          -0.69
+        ],
+        "max": [
+          0.336,
+          2.8,
+          0.556
+        ],
+        "size": [
+          1.036,
+          2.722,
+          1.246
+        ],
+        "center": [
+          -0.182,
+          1.439,
+          -0.067
+        ]
+      },
+      "errors": [],
+      "screenshot": "output/tripo/doubt-b-p1-5000-2026-08-18/rigged-and-animated/deformation-test/animated/walk-00/shot-0.png"
+    },
+    {
+      "role": "walk",
+      "normalizedTime": 0.25,
+      "passed": true,
+      "animation": {
+        "name": "preset:walk",
+        "duration": 2.375,
+        "tracks": 69
+      },
+      "scene": {
+        "meshes": 1,
+        "skinnedMeshes": 1,
+        "bones": 22,
+        "uniqueJoints": 22,
+        "materials": 1
+      },
+      "bounds": {
+        "min": [
+          -0.514,
+          0.008,
+          -0.724
+        ],
+        "max": [
+          0.451,
+          2.8,
+          0.563
+        ],
+        "size": [
+          0.965,
+          2.792,
+          1.287
+        ],
+        "center": [
+          -0.031,
+          1.404,
+          -0.08
+        ]
+      },
+      "errors": [],
+      "screenshot": "output/tripo/doubt-b-p1-5000-2026-08-18/rigged-and-animated/deformation-test/animated/walk-25/shot-0.png"
+    },
+    {
+      "role": "walk",
+      "normalizedTime": 0.5,
+      "passed": true,
+      "animation": {
+        "name": "preset:walk",
+        "duration": 2.375,
+        "tracks": 69
+      },
+      "scene": {
+        "meshes": 1,
+        "skinnedMeshes": 1,
+        "bones": 22,
+        "uniqueJoints": 22,
+        "materials": 1
+      },
+      "bounds": {
+        "min": [
+          -0.722,
+          0.074,
+          -0.666
+        ],
+        "max": [
+          0.381,
+          2.8,
+          0.588
+        ],
+        "size": [
+          1.102,
+          2.726,
+          1.254
+        ],
+        "center": [
+          -0.171,
+          1.437,
+          -0.039
+        ]
+      },
+      "errors": [],
+      "screenshot": "output/tripo/doubt-b-p1-5000-2026-08-18/rigged-and-animated/deformation-test/animated/walk-50/shot-0.png"
+    },
+    {
+      "role": "walk",
+      "normalizedTime": 0.75,
+      "passed": true,
+      "animation": {
+        "name": "preset:walk",
+        "duration": 2.375,
+        "tracks": 69
+      },
+      "scene": {
+        "meshes": 1,
+        "skinnedMeshes": 1,
+        "bones": 22,
+        "uniqueJoints": 22,
+        "materials": 1
+      },
+      "bounds": {
+        "min": [
+          -0.5,
+          -0.031,
+          -0.75
+        ],
+        "max": [
+          0.372,
+          2.8,
+          0.578
+        ],
+        "size": [
+          0.872,
+          2.831,
+          1.328
+        ],
+        "center": [
+          -0.064,
+          1.385,
+          -0.086
+        ]
+      },
+      "errors": [],
+      "screenshot": "output/tripo/doubt-b-p1-5000-2026-08-18/rigged-and-animated/deformation-test/animated/walk-75/shot-0.png"
+    },
+    {
+      "role": "attack",
+      "normalizedTime": 0,
+      "passed": true,
+      "animation": {
+        "name": "preset:slash",
+        "duration": 6.625,
+        "tracks": 69
+      },
+      "scene": {
+        "meshes": 1,
+        "skinnedMeshes": 1,
+        "bones": 22,
+        "uniqueJoints": 22,
+        "materials": 1
+      },
+      "bounds": {
+        "min": [
+          -0.921,
+          -0.016,
+          -0.78
+        ],
+        "max": [
+          0.545,
+          2.8,
+          0.467
+        ],
+        "size": [
+          1.466,
+          2.816,
+          1.247
+        ],
+        "center": [
+          -0.188,
+          1.392,
+          -0.157
+        ]
+      },
+      "errors": [],
+      "screenshot": "output/tripo/doubt-b-p1-5000-2026-08-18/rigged-and-animated/deformation-test/animated/attack-00/shot-0.png"
+    },
+    {
+      "role": "attack",
+      "normalizedTime": 0.25,
+      "passed": true,
+      "animation": {
+        "name": "preset:slash",
+        "duration": 6.625,
+        "tracks": 69
+      },
+      "scene": {
+        "meshes": 1,
+        "skinnedMeshes": 1,
+        "bones": 22,
+        "uniqueJoints": 22,
+        "materials": 1
+      },
+      "bounds": {
+        "min": [
+          -0.871,
+          -0.19,
+          -0.778
+        ],
+        "max": [
+          0.5,
+          2.8,
+          0.917
+        ],
+        "size": [
+          1.37,
+          2.99,
+          1.694
+        ],
+        "center": [
+          -0.185,
+          1.305,
+          0.069
+        ]
+      },
+      "errors": [],
+      "screenshot": "output/tripo/doubt-b-p1-5000-2026-08-18/rigged-and-animated/deformation-test/animated/attack-25/shot-0.png"
+    },
+    {
+      "role": "attack",
+      "normalizedTime": 0.5,
+      "passed": true,
+      "animation": {
+        "name": "preset:slash",
+        "duration": 6.625,
+        "tracks": 69
+      },
+      "scene": {
+        "meshes": 1,
+        "skinnedMeshes": 1,
+        "bones": 22,
+        "uniqueJoints": 22,
+        "materials": 1
+      },
+      "bounds": {
+        "min": [
+          -1.069,
+          -0.039,
+          -0.812
+        ],
+        "max": [
+          0.541,
+          2.8,
+          0.331
+        ],
+        "size": [
+          1.61,
+          2.839,
+          1.144
+        ],
+        "center": [
+          -0.264,
+          1.38,
+          -0.24
+        ]
+      },
+      "errors": [],
+      "screenshot": "output/tripo/doubt-b-p1-5000-2026-08-18/rigged-and-animated/deformation-test/animated/attack-50/shot-0.png"
+    },
+    {
+      "role": "attack",
+      "normalizedTime": 0.75,
+      "passed": true,
+      "animation": {
+        "name": "preset:slash",
+        "duration": 6.625,
+        "tracks": 69
+      },
+      "scene": {
+        "meshes": 1,
+        "skinnedMeshes": 1,
+        "bones": 22,
+        "uniqueJoints": 22,
+        "materials": 1
+      },
+      "bounds": {
+        "min": [
+          -0.907,
+          -0.029,
+          -0.844
+        ],
+        "max": [
+          0.513,
+          2.8,
+          0.581
+        ],
+        "size": [
+          1.419,
+          2.829,
+          1.425
+        ],
+        "center": [
+          -0.197,
+          1.385,
+          -0.132
+        ]
+      },
+      "errors": [],
+      "screenshot": "output/tripo/doubt-b-p1-5000-2026-08-18/rigged-and-animated/deformation-test/animated/attack-75/shot-0.png"
+    },
+    {
+      "role": "hit",
+      "normalizedTime": 0,
+      "passed": true,
+      "animation": {
+        "name": "preset:hurt",
+        "duration": 13.875,
+        "tracks": 69
+      },
+      "scene": {
+        "meshes": 1,
+        "skinnedMeshes": 1,
+        "bones": 22,
+        "uniqueJoints": 22,
+        "materials": 1
+      },
+      "bounds": {
+        "min": [
+          -0.855,
+          1.016,
+          -1.308
+        ],
+        "max": [
+          0.448,
+          2.8,
+          0.64
+        ],
+        "size": [
+          1.303,
+          1.784,
+          1.947
+        ],
+        "center": [
+          -0.203,
+          1.908,
+          -0.334
+        ]
+      },
+      "errors": [],
+      "screenshot": "output/tripo/doubt-b-p1-5000-2026-08-18/rigged-and-animated/deformation-test/animated/hit-00/shot-0.png"
+    },
+    {
+      "role": "hit",
+      "normalizedTime": 0.25,
+      "passed": true,
+      "animation": {
+        "name": "preset:hurt",
+        "duration": 13.875,
+        "tracks": 69
+      },
+      "scene": {
+        "meshes": 1,
+        "skinnedMeshes": 1,
+        "bones": 22,
+        "uniqueJoints": 22,
+        "materials": 1
+      },
+      "bounds": {
+        "min": [
+          -0.823,
+          1.075,
+          -1.319
+        ],
+        "max": [
+          0.446,
+          2.8,
+          0.617
+        ],
+        "size": [
+          1.27,
+          1.725,
+          1.936
+        ],
+        "center": [
+          -0.188,
+          1.937,
+          -0.351
+        ]
+      },
+      "errors": [],
+      "screenshot": "output/tripo/doubt-b-p1-5000-2026-08-18/rigged-and-animated/deformation-test/animated/hit-25/shot-0.png"
+    },
+    {
+      "role": "hit",
+      "normalizedTime": 0.5,
+      "passed": true,
+      "animation": {
+        "name": "preset:hurt",
+        "duration": 13.875,
+        "tracks": 69
+      },
+      "scene": {
+        "meshes": 1,
+        "skinnedMeshes": 1,
+        "bones": 22,
+        "uniqueJoints": 22,
+        "materials": 1
+      },
+      "bounds": {
+        "min": [
+          -0.828,
+          1.068,
+          -1.319
+        ],
+        "max": [
+          0.524,
+          2.8,
+          0.331
+        ],
+        "size": [
+          1.352,
+          1.732,
+          1.649
+        ],
+        "center": [
+          -0.152,
+          1.934,
+          -0.494
+        ]
+      },
+      "errors": [],
+      "screenshot": "output/tripo/doubt-b-p1-5000-2026-08-18/rigged-and-animated/deformation-test/animated/hit-50/shot-0.png"
+    },
+    {
+      "role": "hit",
+      "normalizedTime": 0.75,
+      "passed": true,
+      "animation": {
+        "name": "preset:hurt",
+        "duration": 13.875,
+        "tracks": 69
+      },
+      "scene": {
+        "meshes": 1,
+        "skinnedMeshes": 1,
+        "bones": 22,
+        "uniqueJoints": 22,
+        "materials": 1
+      },
+      "bounds": {
+        "min": [
+          -0.811,
+          1.064,
+          -1.312
+        ],
+        "max": [
+          0.451,
+          2.8,
+          0.679
+        ],
+        "size": [
+          1.262,
+          1.736,
+          1.99
+        ],
+        "center": [
+          -0.18,
+          1.932,
+          -0.316
+        ]
+      },
+      "errors": [],
+      "screenshot": "output/tripo/doubt-b-p1-5000-2026-08-18/rigged-and-animated/deformation-test/animated/hit-75/shot-0.png"
+    },
+    {
+      "role": "death",
+      "normalizedTime": 0,
+      "passed": true,
+      "animation": {
+        "name": "preset:fall",
+        "duration": 3.0417,
+        "tracks": 69
+      },
+      "scene": {
+        "meshes": 1,
+        "skinnedMeshes": 1,
+        "bones": 22,
+        "uniqueJoints": 22,
+        "materials": 1
+      },
+      "bounds": {
+        "min": [
+          -0.999,
+          0.073,
+          -0.585
+        ],
+        "max": [
+          0.766,
+          2.8,
+          0.489
+        ],
+        "size": [
+          1.764,
+          2.727,
+          1.074
+        ],
+        "center": [
+          -0.116,
+          1.437,
+          -0.048
+        ]
+      },
+      "errors": [],
+      "screenshot": "output/tripo/doubt-b-p1-5000-2026-08-18/rigged-and-animated/deformation-test/animated/death-00/shot-0.png"
+    },
+    {
+      "role": "death",
+      "normalizedTime": 0.25,
+      "passed": true,
+      "animation": {
+        "name": "preset:fall",
+        "duration": 3.0417,
+        "tracks": 69
+      },
+      "scene": {
+        "meshes": 1,
+        "skinnedMeshes": 1,
+        "bones": 22,
+        "uniqueJoints": 22,
+        "materials": 1
+      },
+      "bounds": {
+        "min": [
+          -0.863,
+          0.015,
+          -1.004
+        ],
+        "max": [
+          0.869,
+          2.8,
+          0.299
+        ],
+        "size": [
+          1.732,
+          2.785,
+          1.303
+        ],
+        "center": [
+          0.003,
+          1.408,
+          -0.353
+        ]
+      },
+      "errors": [],
+      "screenshot": "output/tripo/doubt-b-p1-5000-2026-08-18/rigged-and-animated/deformation-test/animated/death-25/shot-0.png"
+    },
+    {
+      "role": "death",
+      "normalizedTime": 0.5,
+      "passed": true,
+      "animation": {
+        "name": "preset:fall",
+        "duration": 3.0417,
+        "tracks": 69
+      },
+      "scene": {
+        "meshes": 1,
+        "skinnedMeshes": 1,
+        "bones": 22,
+        "uniqueJoints": 22,
+        "materials": 1
+      },
+      "bounds": {
+        "min": [
+          -0.743,
+          0.839,
+          -1.448
+        ],
+        "max": [
+          0.569,
+          2.8,
+          0.427
+        ],
+        "size": [
+          1.312,
+          1.961,
+          1.875
+        ],
+        "center": [
+          -0.087,
+          1.82,
+          -0.511
+        ]
+      },
+      "errors": [],
+      "screenshot": "output/tripo/doubt-b-p1-5000-2026-08-18/rigged-and-animated/deformation-test/animated/death-50/shot-0.png"
+    },
+    {
+      "role": "death",
+      "normalizedTime": 0.75,
+      "passed": true,
+      "animation": {
+        "name": "preset:fall",
+        "duration": 3.0417,
+        "tracks": 69
+      },
+      "scene": {
+        "meshes": 1,
+        "skinnedMeshes": 1,
+        "bones": 22,
+        "uniqueJoints": 22,
+        "materials": 1
+      },
+      "bounds": {
+        "min": [
+          -1.139,
+          0.95,
+          -1.695
+        ],
+        "max": [
+          0.395,
+          2.8,
+          0.654
+        ],
+        "size": [
+          1.534,
+          1.85,
+          2.35
+        ],
+        "center": [
+          -0.372,
+          1.875,
+          -0.521
+        ]
+      },
+      "errors": [],
+      "screenshot": "output/tripo/doubt-b-p1-5000-2026-08-18/rigged-and-animated/deformation-test/animated/death-75/shot-0.png"
+    }
+  ],
+  "passed": true
+}

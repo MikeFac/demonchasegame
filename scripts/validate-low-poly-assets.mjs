@@ -91,7 +91,13 @@ function imageDimensions(bytes) {
 }
 
 function normalizeClipName(name) {
-    return String(name || '').trim().toLowerCase().replace(/[ ._-]+/g, '');
+    let normalized = String(name || '').trim().toLowerCase().replace(/[ ._:-]+/g, '');
+    normalized = normalized.replace(/^preset/, '').replace(/^biped/, '');
+    return {
+        slash: 'attack',
+        hurt: 'hit',
+        fall: 'death'
+    }[normalized] || normalized;
 }
 
 function inspectAsset(assetKey, config, manifestDirectory) {
