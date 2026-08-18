@@ -2297,3 +2297,8 @@ Original prompt: Check the implementation of docs/multi-version-songs-implementa
 - Kept the original wall rectangles authoritative for collision, camera occlusion, and combat.
 - Avoided per-cell roof geometry that created an unreadable jagged silhouette.
 - City-theme three-view smoke test passes.
+## 2026-08-18 — Verify city theme and add façade cues
+
+- Ran an independent city-theme browser test in both 2.5D and first-person.
+- Added warm window and door façade markers plus brighter city wall materials.
+- Confirmed the city theme is active and regression-safe; the remaining visual gap is proper modular house geometry, not theme activation.

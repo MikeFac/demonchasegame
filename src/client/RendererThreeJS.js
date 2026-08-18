@@ -54,6 +54,8 @@ class RendererThreeJS extends Renderer3D {
 
         this.wallMesh = null;
         this.wallRoofMesh = null;
+        this.cityWindowMesh = null;
+        this.cityDoorMesh = null;
         this.wallSource = null;
         this.wallTheme = null;
         this.wallRevision = 0;
@@ -666,6 +668,14 @@ class RendererThreeJS extends Renderer3D {
             this.wallRoofMesh.material.dispose();
             this.wallRoofMesh = null;
         }
+        for (const field of ['cityWindowMesh', 'cityDoorMesh']) {
+            if (this[field]) {
+                this.scene.remove(this[field]);
+                this[field].geometry.dispose();
+                this[field].material.dispose();
+                this[field] = null;
+            }
+        }
         if (!walls.length) return;
 
         const colors = {
@@ -678,7 +688,7 @@ class RendererThreeJS extends Renderer3D {
             stone: 0x3b434b,
             earth: 0x342318,
             crystal: 0x2c2240,
-            city: 0x2c2725
+            city: 0x5a382b
         };
         const mergedWalls = this._mergeWallRects(walls);
         // Group contiguous cells into building-sized visual footprints; the
@@ -751,6 +761,52 @@ class RendererThreeJS extends Renderer3D {
             roofs.userData.mergedWallCount = visualWalls.length;
             this.wallRoofMesh = roofs;
             this.scene.add(roofs);
+
+            const windowGeometry = new THREE.BoxGeometry(1, 1, 1);
+            const windowMaterial = new THREE.MeshStandardMaterial({
+                color: 0xf4d88c,
+                emissive: 0x6f4c1d,
+                emissiveIntensity: 0.8,
+                roughness: 0.5,
+                flatShading: true,
+                vertexColors: true
+            });
+            const doorMaterial = new THREE.MeshStandardMaterial({
+                color: 0x4a2d23,
+                roughness: 0.9,
+                flatShading: true
+            });
+            const windows = new THREE.InstancedMesh(windowGeometry, windowMaterial, visualWalls.length * 2);
+            const doors = new THREE.InstancedMesh(new THREE.BoxGeometry(1, 1, 1), doorMaterial, visualWalls.length);
+            let windowIndex = 0;
+            visualWalls.forEach((wall) => {
+                const width = wall.width || 25;
+                const depth = wall.height || 25;
+                const windowWidth = Math.min(12, Math.max(6, width * 0.24));
+                const windowHeight = 12;
+                const windowY = 38;
+                for (const z of [wall.y - 0.8, wall.y + depth + 0.8]) {
+                    position.set(wall.x + width / 2, windowY, z);
+                    scale.set(windowWidth, windowHeight, 1.4);
+                    matrix.compose(position, quaternion, scale);
+                    windows.setMatrixAt(windowIndex, matrix);
+                    tint.setHex(0xf4d88c).offsetHSL(0, 0, ((wall.x + wall.y + windowIndex) % 5) / 40 - 0.05);
+                    windows.setColorAt(windowIndex, tint);
+                    windowIndex += 1;
+                }
+                position.set(wall.x + width / 2, 19, wall.y - 1.1);
+                scale.set(Math.min(14, Math.max(8, width * 0.28)), 30, 1.8);
+                matrix.compose(position, quaternion, scale);
+                doors.setMatrixAt(visualWalls.indexOf(wall), matrix);
+            });
+            windows.instanceMatrix.needsUpdate = true;
+            if (windows.instanceColor) windows.instanceColor.needsUpdate = true;
+            windows.frustumCulled = true;
+            doors.instanceMatrix.needsUpdate = true;
+            doors.frustumCulled = true;
+            this.cityWindowMesh = windows;
+            this.cityDoorMesh = doors;
+            this.scene.add(windows, doors);
         }
     }
 
