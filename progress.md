@@ -2241,3 +2241,13 @@ Original prompt: Check the implementation of docs/multi-version-songs-implementa
   view-mode, firing, wall-blocking, and WebGL recovery regression passed.
 - Tripo balance after the two new characters: 490 credits. Next gate is
   real-phone profiling and then integrating more enemy types in batches.
+
+2026-08-18 — Fear facing correction:
+- In the live 2.5D view, the authored Fear mesh was presenting its side because
+  its local forward axis differed from the renderer's +Z contract. Added a
+  Fear-only `rotationY` correction of 1.5708 radians in the runtime manifest.
+- A controlled browser close-up now shows Fear presenting its front toward the
+  player. The full three-view regression passed again with no browser errors.
+- Other simple-looking demons are the remaining demon types without authored
+  GLBs; they still use the documented procedural fallback until their own
+  reference-to-P1-to-rig pipeline is completed.

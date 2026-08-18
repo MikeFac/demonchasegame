@@ -17,7 +17,7 @@
       "materialBudget": 1,
       "height": 70,
       "scale": 1,
-      "rotationY": 0,
+      "rotationY": 1.5708,
       "clips": ["idle", "walk", "attack", "hit", "death"]
     },
     "monster.doubt": {
