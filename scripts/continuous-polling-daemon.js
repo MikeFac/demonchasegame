@@ -5,6 +5,7 @@ const path = require('path');
 require('dotenv').config();
 
 const VerseSong = require('../src/server/models/VerseSong');
+const { assertKieAiEnabled } = require('../src/server/services/KieAiGate');
 
 const KIE_API_BASE = 'https://api.kie.ai/api/v1';
 const KIE_API_KEY = process.env.KIE_API_KEY;
@@ -39,6 +40,7 @@ async function downloadAndStoreAudio(audioUrl, verseReference) {
 }
 
 async function pollAllPending() {
+  assertKieAiEnabled();
   if (isPolling) return;
   isPolling = true;
 

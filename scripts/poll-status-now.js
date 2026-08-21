@@ -3,12 +3,14 @@ require('dotenv').config();
 
 const VerseSong = require('../src/server/models/VerseSong');
 const axios = require('axios');
+const { assertKieAiEnabled } = require('../src/server/services/KieAiGate');
 
 const KIE_API_BASE = 'https://api.kie.ai/api/v1';
 const KIE_API_KEY = process.env.KIE_API_KEY;
 
 async function checkStatus(verseSongId) {
   try {
+    assertKieAiEnabled();
     const verseSong = await VerseSong.findById(verseSongId);
     if (!verseSong) {
       console.error(`Song not found: ${verseSongId}`);

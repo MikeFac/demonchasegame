@@ -39,6 +39,7 @@ const SONGS_PER_CATEGORY = 2;
 
 const PRIMARY_STYLE = 'Modern K-pop worship pop, bright Korean melodic hooks, polished synth-pop production, tight electronic drums, warm bass, shimmering pads, emotional build, catchy chorus, Korean Christian youth-group energy, female or mixed lead vocals, vocals start immediately on the first beat, sing clear intelligible Korean Hangul words throughout, sing the exact supplied lyrics only, no humming, no vocalizing, no instrumental intro, no long instrumental break, no spoken words, no ad-libs, no nonsense syllables, no extra words, short scripture song';
 const SECONDARY_STYLE = 'Contemporary Korean pop ballad worship, cinematic K-pop arrangement, clean piano and synth layers, restrained electronic beat, uplifting chorus lift, expressive Korean lead vocals, church-friendly and memorable, vocals start immediately on the first beat, sing clear intelligible Korean Hangul words throughout, sing the exact supplied lyrics only, no humming, no vocalizing, no instrumental intro, no long instrumental break, no spoken words, no ad-libs, no nonsense syllables, no extra words, short scripture song';
+const { assertKieAiEnabled } = require('../src/server/services/KieAiGate');
 
 const LANG = 'kr';
 
@@ -54,6 +55,7 @@ function getKieApiKey() {
 
 function callKieAI(method, urlPath, body) {
   return new Promise((resolve, reject) => {
+    try { assertKieAiEnabled(); } catch (error) { reject(error); return; }
     const apiKey = getKieApiKey();
     if (!apiKey) {
       reject(new Error('KIE_API_KEY environment variable required'));

@@ -4,6 +4,7 @@ const CategoryStyle = require('../models/CategoryStyle');
 const fs = require('fs').promises;
 const path = require('path');
 const { normalizeReference } = require('../utils/ReferenceNormalizer');
+const { assertKieAiEnabled } = require('./KieAiGate');
 
 const KIE_API_KEY = process.env.KIE_API_KEY;
 const KIE_API_BASE = 'https://api.kie.ai/api/v1';
@@ -69,6 +70,7 @@ async function generateVerseSong(verseSongId) {
     console.log(`📝 Calling Suno for ${verseSong.verseReference} (${style})...`);
 
     // Call Suno API via kie.ai
+    assertKieAiEnabled();
     const sunoResponse = await axios.post(
       `${KIE_API_BASE}/generate`,
       {
@@ -137,6 +139,7 @@ async function pollSunoStatus(verseSongId, pollCount = 0) {
     }
 
     // Check status with Suno
+    assertKieAiEnabled();
     const statusResponse = await axios.get(
       `${KIE_API_BASE}/generate/record-info?taskId=${verseSong.generationRequestId}`,
       {

@@ -42,6 +42,7 @@ const PRIMARY_STYLE = 'Upbeat Gospel Arbantone, energetic Kenyan Arbantone beat,
 const SECONDARY_STYLE = 'Afro-Gospel, uplifting Afrobeats fusion, energetic percussion, joyful Christian praise vibe, sing the exact lyrics only, no ad-libs, no nonsense syllables, no extra words, short scripture song';
 
 const LANG = 'zw';
+const { assertKieAiEnabled } = require('../src/server/services/KieAiGate');
 
 function sleep(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
@@ -55,6 +56,7 @@ function getKieApiKey() {
 
 function callKieAI(method, urlPath, body) {
   return new Promise((resolve, reject) => {
+    try { assertKieAiEnabled(); } catch (error) { reject(error); return; }
     const apiKey = getKieApiKey();
     if (!apiKey) {
       reject(new Error('KIE_API_KEY environment variable required'));
