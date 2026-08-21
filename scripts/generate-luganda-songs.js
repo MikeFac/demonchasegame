@@ -35,6 +35,7 @@ const STYLE = 'Luganda Uganda Afro-pop, East African worship, warm vocals, sing 
 
 const CATEGORIES = ['Prayer', 'Prophecy', 'Prosperity', 'Purity', 'Wisdom'];
 const LANG = 'lg';
+const { assertKieAiEnabled } = require('../src/server/services/KieAiGate');
 
 function sleep(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
@@ -42,6 +43,7 @@ function sleep(ms) {
 
 function callKieAI(method, urlPath, body) {
   return new Promise((resolve, reject) => {
+    try { assertKieAiEnabled(); } catch (error) { reject(error); return; }
     const apiKey = process.env.KIE_API_KEY;
     if (!apiKey) {
       reject(new Error('KIE_API_KEY environment variable required'));

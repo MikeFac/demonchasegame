@@ -42,6 +42,7 @@ const PRIMARY_STYLE = 'Indonesian pop worship, contemporary Rohani style, gentle
 const SECONDARY_STYLE = 'Dangdut-pop fusion, upbeat Indonesian folk-pop rhythm, acoustic guitar with subtle dangdut groove, joyful and accessible, warm male vocals, energetic but worshipful, catchy melodic chorus, Indonesian folk-pop energy, vocals start immediately on the first beat, sing clear intelligible Bahasa Indonesia words throughout, sing the exact supplied lyrics only, no humming, no vocalizing, no instrumental intro, no long instrumental break, no spoken words, no ad-libs, no nonsense syllables, no extra words, short scripture song';
 
 const LANG = 'id';
+const { assertKieAiEnabled } = require('../src/server/services/KieAiGate');
 
 function sleep(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
@@ -55,6 +56,7 @@ function getKieApiKey() {
 
 function callKieAI(method, urlPath, body) {
   return new Promise((resolve, reject) => {
+    try { assertKieAiEnabled(); } catch (error) { reject(error); return; }
     const apiKey = getKieApiKey();
     if (!apiKey) {
       reject(new Error('KIE_API_KEY environment variable required'));

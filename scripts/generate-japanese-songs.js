@@ -61,6 +61,7 @@ function withJapaneseLyricRules(style) {
 const PRIMARY_STYLE = withJapaneseLyricRules(
   'uplifting J-pop worship, bright melodic hook, polished modern production, warm synths, clean drums, hopeful chorus, church-friendly and memorable'
 );
+const { assertKieAiEnabled } = require('../src/server/services/KieAiGate');
 
 const CATEGORY_STYLE_PROMPTS = {
   Courage: withJapaneseLyricRules(
@@ -140,6 +141,7 @@ function getKieApiKey() {
 
 function callKieAI(method, urlPath, body) {
   return new Promise((resolve, reject) => {
+    try { assertKieAiEnabled(); } catch (error) { reject(error); return; }
     const apiKey = getKieApiKey();
     if (!apiKey) {
       reject(new Error('KIE_API_KEY environment variable required'));
