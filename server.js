@@ -23,9 +23,31 @@ const io = socketIO(server);
 
 // Middleware
 app.use(express.json());
+// ---- Security hardening -------------------------------------------------
+// express.static(__dirname) previously exposed the whole app root publicly:
+// .git/, src/, node_modules/, docs/, server.js and package.json were all
+// downloadable. Block those before any static file is served.
+var DENY_ROOT_DIRS = /^\/(?:\.git|\.svn|\.hg|\.github|\.agents|\.claude|\.codex|src\/server|node_modules|archived|backups|test|tests|scripts|venv|logs|plans|script-backups)(?:\/|$)/i;
+var DENY_ROOT_FILES = /^\/(?:server\.js|package\.json|package-lock\.json|restart-server\.sh|grief-verses\.json|songs-export[^\/]*\.json|[^\/]*-songs-export\.json|[^\/]*-files-list\.txt)$/i;
+var DENY_EXT = /\.(?:md|sh|bash|sql|sqlite|sqlite3|db|log|py|bak|old|orig|save|pem|key|crt|cer|p12|pfx|ini|conf|yml|yaml)$/i;
+var DENY_BACKUP = /(?:\.bak|\.old|\.orig|\.save|\.swp|\.tmp|~)[^\/]*$/i;
+app.use(function (req, res, next) {
+  var p;
+  try { p = decodeURIComponent(req.path); } catch (e) { return res.status(400).end(); }
+  if (/(?:^|\/)\.\.(?:\/|$)/.test(p)) return res.status(404).end();
+  var segs = p.split('/');
+  for (var i = 0; i < segs.length; i++) {
+    var seg = segs[i];
+    if (seg.length > 1 && seg.charAt(0) === '.' && seg !== '.well-known') return res.status(404).end();
+  }
+  if (DENY_ROOT_DIRS.test(p) || DENY_ROOT_FILES.test(p) || DENY_EXT.test(p) || DENY_BACKUP.test(p)) {
+    return res.status(404).type('txt').send('Not found');
+  }
+  next();
+});
 // Serve static files from both root (HTML, JS) and public (audio, images)
-app.use(express.static(path.join(__dirname)));
-app.use(express.static(path.join(__dirname, 'public')));
+app.use(express.static(path.join(__dirname), { dotfiles: 'deny' }));
+app.use(express.static(path.join(__dirname, 'public'), { dotfiles: 'deny' }));
 
 app.get('/', (req, res) => {
   res.set('Cache-Control', 'no-cache, no-store, must-revalidate');
