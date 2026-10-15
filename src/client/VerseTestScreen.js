@@ -91,7 +91,7 @@ const VerseTestScreen = (function() {
         try {
             const vdir = ReviewMode.convertRef(reference);
             if (vdir) {
-                const base = 'https://spiritualwar.games/otd/mv/www/audio/se/';
+                const base = 'https://ab.versebattles.com/english/';
                 failAudio = new Audio(base + vdir + '.ogg');
                 failAudio.type = 'audio/ogg';
                 failAudio.volume = 1;

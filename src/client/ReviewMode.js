@@ -1135,7 +1135,7 @@
     }
 
     async function playAudio(verseRef) {
-        var base = 'https://spiritualwar.games/otd/mv/www/audio/se/';
+        var base = 'https://ab.versebattles.com/english/';
         var audio = new Audio(base + verseRef);
         audio.type = 'audio/ogg';
         audio.volume = 1;

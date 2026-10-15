@@ -197,7 +197,7 @@
         if (isAudioPlaying) return;
 
         const audioPath = convertRefToAudioPath(currentVerse.Reference);
-        const audioUrl = 'https://spiritualwar.games/otd/mv/www/audio/se/' + audioPath;
+        const audioUrl = 'https://ab.versebattles.com/english/' + audioPath;
 
         isAudioPlaying = true;
         currentAudio = new Audio(audioUrl);
