@@ -65,9 +65,9 @@ class Renderer {
         // Draw UI Top Bar (no screen shake)
         this.drawTopBar(uiState);
 
-        // Apply screen shake to game world ONLY
+        // Apply screen shake to game world ONLY (disabled with reduced motion)
         this.ctx.save();
-        if (screenShake && screenShake.duration > 0) {
+        if (screenShake && screenShake.duration > 0 && (!window.VisualJuice || VisualJuice.isEnabled())) {
             this.ctx.translate(screenShake.x, screenShake.y);
         }
 
@@ -75,13 +75,13 @@ class Renderer {
         this.drawWalls(walls, camera, gameState.terrainTheme);
 
         // Draw Players
-        this.drawPlayers(gameState.players, player, playerCode, camera, inventoryState);
+        this.drawPlayers(gameState.players, player, playerCode, camera, inventoryState, uiState.visuals);
 
         // Draw talkable mission NPCs in the world (not phase-only portraits).
         this.drawMissionNpcs(uiState.npcInteractions, uiState.nearbyNpcInteractionId, camera);
 
         // Draw Monsters
-        this.drawMonsters(monsters, camera, uiState.explosionTimer);
+        this.drawMonsters(monsters, camera, uiState.explosionTimer, uiState.visuals);
 
         // Draw Healing Points
         this.drawHealingPoints(healingPoints, camera);
@@ -97,6 +97,9 @@ class Renderer {
 
         // Draw Death Particle Animations
         this.drawDeathParticles(deathParticles, camera);
+
+        // Draw procedural combat effects (sparks, rings, death burst, soul wisps)
+        this.drawEffects(uiState.visuals, camera);
 
         // Restore context before drawing UI (undo screen shake)
         this.ctx.restore();
@@ -135,6 +138,9 @@ class Renderer {
 
         // Draw flash messages (achievement notifications)
         this.drawFlashMessages(uiState.flashMessages);
+
+        // Low-health red edge vignette (screen-space, below menus/modals)
+        this.drawLowHealthVignette(player);
 
         // Draw menu panel LAST so it appears on top of everything
         if (uiState.menuState && uiState.menuState.menuOpen) {
@@ -1713,12 +1719,12 @@ class Renderer {
         this.ctx.textAlign = 'left';
     }
 
-    drawPlayers(players, currentPlayer, playerCode, camera, inventoryState) {
+    drawPlayers(players, currentPlayer, playerCode, camera, inventoryState, visuals) {
         // If we have a playerCode but it's not in players yet, draw our local player anyway
         if (playerCode && currentPlayer && currentPlayer.x !== undefined) {
             const isInServerState = Object.keys(players).includes(playerCode);
             if (!isInServerState) {
-                this.drawPlayer(currentPlayer, true, camera, inventoryState);
+                this.drawPlayer(currentPlayer, true, camera, inventoryState, visuals && visuals.players ? visuals.players.local : null);
             }
         }
 
@@ -1727,12 +1733,15 @@ class Renderer {
             const playerData = isMyPlayer ? currentPlayer : players[code];
 
             if (playerData) {
-                this.drawPlayer(playerData, isMyPlayer, camera, isMyPlayer ? inventoryState : null);
+                const visual = visuals && visuals.players
+                    ? (isMyPlayer ? visuals.players.local : visuals.players[code])
+                    : null;
+                this.drawPlayer(playerData, isMyPlayer, camera, isMyPlayer ? inventoryState : null, visual);
             }
         });
     }
 
-    drawPlayer(playerData, isCurrentPlayer, camera, inventoryState) {
+    drawPlayer(playerData, isCurrentPlayer, camera, inventoryState, visual) {
         const playerImage = isCurrentPlayer ? this.assets.playerImg : this.assets.otherPlayerImg;
 
         if (playerImage && (playerImage.complete || playerImage.tagName === 'CANVAS')) {
@@ -1807,6 +1816,7 @@ class Renderer {
             // Extract correct frame from sprite sheet
             const frameIndex = playerData.currentFrame || 0;  // 0 or 1
             const facingDirection = playerData.facingDirection || 'right';
+            const facing = facingDirection === 'left' ? -1 : 1;
 
             // Sprite sheet layout: 2x2 grid (96x96 total, 48x48 per frame)
             // Top row (y=0): right-facing frames
@@ -1814,12 +1824,70 @@ class Renderer {
             const sourceY = (facingDirection === 'right') ? 0 : 48;
             const sourceX = frameIndex * 48;  // 0 or 48
 
+            // Procedural idle/walk/attack/knockback transforms around the
+            // sprite centre. These are visual-only and never move playerData.
+            const juice = window.VisualJuice;
+            const juiceNow = Date.now();
+            let idleDy = 0;
+            let walkDy = 0;
+            let walkLean = 0;
+            let attackDx = 0;
+            let attackDy = 0;
+            let scaleX = 1;
+            let scaleY = 1;
+            let knockDx = 0;
+            let knockDy = 0;
+            if (juice) {
+                if (visual && visual.moving) {
+                    const walk = juice.walk(juiceNow, visual.speed || 2, visual.seed || 0);
+                    walkDy = walk.dy;
+                    walkLean = walk.lean * facing;
+                } else {
+                    const idle = juice.idle(juiceNow, visual ? (visual.seed || 0) : 0);
+                    idleDy = idle.dy;
+                    scaleX *= idle.sx;
+                    scaleY *= idle.sy;
+                }
+                if (visual && visual.attackAt) {
+                    const atk = juice.attack(juiceNow - visual.attackAt);
+                    attackDx = atk.dx * facing;
+                    attackDy = atk.dy;
+                    scaleX *= atk.sx;
+                    scaleY *= atk.sy;
+                }
+                if (visual) {
+                    const knock = juice.knockback(visual, juiceNow);
+                    knockDx = knock.dx;
+                    knockDy = knock.dy;
+                }
+            }
+
+            this.ctx.save();
+            this.ctx.translate(screenX + attackDx + knockDx, screenY + idleDy + walkDy + attackDy + knockDy);
+            if (walkLean) this.ctx.rotate(walkLean);
+            this.ctx.scale(scaleX, scaleY);
             this.ctx.drawImage(
                 playerImage,
                 sourceX, sourceY, 48, 48,
-                screenX - playerData.width / 2, screenY - playerData.height / 2,
+                -playerData.width / 2, -playerData.height / 2,
                 playerData.width, playerData.height
             );
+
+            // Precomputed white-tinted sprite for hit flash (no per-frame tinting).
+            const flash = juice ? juice.hitFlash(visual, juiceNow) : 0;
+            if (flash > 0) {
+                const flashSprite = this._getFlashSprite(playerImage);
+                if (flashSprite) {
+                    this.ctx.globalAlpha = flash;
+                    this.ctx.drawImage(
+                        flashSprite,
+                        sourceX, sourceY, 48, 48,
+                        -playerData.width / 2, -playerData.height / 2,
+                        playerData.width, playerData.height
+                    );
+                }
+            }
+            this.ctx.restore();
 
             // Ghost label + skip health bar
             if (isGhost) {
@@ -1891,13 +1959,16 @@ class Renderer {
         }
     }
 
-    drawMonsters(monsters, camera, explosionTimer) {
+    drawMonsters(monsters, camera, explosionTimer, visuals) {
         const playableTop = this.PLAYABLE_TOP;
         const playableBottom = Viewport.height - this.ANSWER_SECTION_HEIGHT;
 
         monsters.forEach(monster => {
             const demonType = monster.demonType;
             const demonImage = this.assets.demonImages[demonType];
+            const visual = visuals && visuals.monsters
+                ? visuals.monsters[String(monster.id)]
+                : null;
 
             const screenX = monster.x - camera.x;
             const screenY = monster.y - camera.y;
@@ -1920,7 +1991,69 @@ class Renderer {
             }
 
             if (demonImage && demonImage.complete) {
-                this.ctx.drawImage(demonImage, screenX - monster.width / 2, screenY - monster.height / 2, monster.width, monster.height);
+                const juice = window.VisualJuice;
+                const juiceNow = Date.now();
+                let idleDy = 0;
+                let walkDy = 0;
+                let walkLean = 0;
+                let attackDx = 0;
+                let attackDy = 0;
+                let scaleX = 1;
+                let scaleY = 1;
+                let knockDx = 0;
+                let knockDy = 0;
+                if (juice) {
+                    if (visual && visual.moving) {
+                        const walk = juice.walk(juiceNow, visual.speed || 2, visual.seed || 0);
+                        walkDy = walk.dy;
+                        walkLean = walk.lean;
+                    } else {
+                        const idle = juice.idle(juiceNow, visual ? (visual.seed || 0) : 0);
+                        idleDy = idle.dy;
+                        scaleX *= idle.sx;
+                        scaleY *= idle.sy;
+                    }
+                    if (visual && visual.attackAt) {
+                        const atk = juice.attack(juiceNow - visual.attackAt);
+                        attackDx = atk.dx * (visual.attackDirX || 1);
+                        attackDy = atk.dy;
+                        scaleX *= atk.sx;
+                        scaleY *= atk.sy;
+                    }
+                    if (visual) {
+                        const knock = juice.knockback(visual, juiceNow);
+                        knockDx = knock.dx;
+                        knockDy = knock.dy;
+                        const spawn = juice.spawnScale(visual, juiceNow, 260);
+                        scaleX *= spawn;
+                        scaleY *= spawn;
+                    }
+                }
+
+                this.ctx.save();
+                this.ctx.translate(screenX + attackDx + knockDx, screenY + idleDy + walkDy + attackDy + knockDy);
+                if (walkLean) this.ctx.rotate(walkLean);
+                this.ctx.scale(scaleX, scaleY);
+                this.ctx.drawImage(
+                    demonImage,
+                    -monster.width / 2, -monster.height / 2,
+                    monster.width, monster.height
+                );
+
+                // Precomputed white-tinted sprite: cheap, crisp hit flash.
+                const flash = juice ? juice.hitFlash(visual, juiceNow) : 0;
+                if (flash > 0) {
+                    const flashSprite = this._getFlashSprite(demonImage);
+                    if (flashSprite) {
+                        this.ctx.globalAlpha = flash;
+                        this.ctx.drawImage(
+                            flashSprite,
+                            -monster.width / 2, -monster.height / 2,
+                            monster.width, monster.height
+                        );
+                    }
+                }
+                this.ctx.restore();
             }
 
             // Pride armor indicator: golden shield overlay
@@ -1955,20 +2088,6 @@ class Renderer {
                     screenY - monster.height / 2 - 3,
                     monster.width + 6,
                     monster.height + 6
-                );
-                this.ctx.restore();
-            }
-
-            // White flash on hit
-            if (monster.isAttacked) {
-                this.ctx.save();
-                this.ctx.globalAlpha = 0.5;
-                this.ctx.fillStyle = '#ffffff';
-                this.ctx.fillRect(
-                    screenX - monster.width / 2,
-                    screenY - monster.height / 2,
-                    monster.width,
-                    monster.height
                 );
                 this.ctx.restore();
             }
@@ -3348,6 +3467,176 @@ class Renderer {
         const g = Math.max(0, ((num >> 8) & 0xff) - Math.floor(255 * percent / 100));
         const b = Math.max(0, (num & 0xff) - Math.floor(255 * percent / 100));
         return `rgb(${r}, ${g}, ${b})`;
+    }
+
+    /**
+     * Cache a white-tinted copy of a sprite. Built once per image, then
+     * reused for every hit flash (never tint per frame).
+     */
+    _getFlashSprite(image) {
+        if (!image) return null;
+        if (!this._flashSpriteCache) this._flashSpriteCache = new WeakMap();
+        const cached = this._flashSpriteCache.get(image);
+        if (cached) return cached;
+        try {
+            const width = image.naturalWidth || image.width;
+            const height = image.naturalHeight || image.height;
+            if (!width || !height) return null;
+            const canvas = document.createElement('canvas');
+            canvas.width = width;
+            canvas.height = height;
+            const tintCtx = canvas.getContext('2d');
+            tintCtx.drawImage(image, 0, 0);
+            tintCtx.globalCompositeOperation = 'source-in';
+            tintCtx.fillStyle = '#ffffff';
+            tintCtx.fillRect(0, 0, width, height);
+            this._flashSpriteCache.set(image, canvas);
+            return canvas;
+        } catch (error) {
+            return null;
+        }
+    }
+
+    /**
+     * Draw typed procedural effects: ring, spark, dust, death, soul, correct,
+     * muzzle. All coordinates are world coordinates and get camera-offset here.
+     */
+    drawEffects(visuals, camera) {
+        if (!visuals || !Array.isArray(visuals.effects) || visuals.effects.length === 0) return;
+        if (!window.VisualJuice || !VisualJuice.isEnabled()) return;
+        const ctx = this.ctx;
+        const now = Date.now();
+
+        visuals.effects.forEach((effect) => {
+            if (!effect || !effect.duration) return;
+            const p = Math.min(1, Math.max(0, (now - effect.start) / effect.duration));
+            const alpha = 1 - p;
+            const x = effect.x - camera.x;
+            const y = effect.y - camera.y;
+            const color = effect.color || '#ffd36b';
+
+            ctx.save();
+            if (effect.type === 'ring') {
+                const radius = 6 + (effect.radius || 30) * p;
+                ctx.globalAlpha = alpha * 0.9;
+                ctx.strokeStyle = color;
+                ctx.lineWidth = 3 * alpha + 1;
+                ctx.beginPath();
+                ctx.arc(x, y, radius, 0, Math.PI * 2);
+                ctx.stroke();
+                ctx.globalAlpha = alpha * 0.22;
+                ctx.fillStyle = color;
+                ctx.beginPath();
+                ctx.arc(x, y, radius * 0.72, 0, Math.PI * 2);
+                ctx.fill();
+            } else if (effect.type === 'spark') {
+                ctx.globalCompositeOperation = 'lighter';
+                const count = effect.count || 7;
+                for (let i = 0; i < count; i++) {
+                    const angle = (effect.seed || 0) * Math.PI * 2 + (i / count) * Math.PI * 2;
+                    const distance = 5 + p * 22;
+                    const size = (1 - p) * 2.2 + 0.5;
+                    ctx.globalAlpha = alpha;
+                    ctx.fillStyle = color;
+                    ctx.beginPath();
+                    ctx.arc(x + Math.cos(angle) * distance, y + Math.sin(angle) * distance, size, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+                ctx.globalAlpha = alpha * 0.55;
+                ctx.fillStyle = '#fff6d8';
+                ctx.beginPath();
+                ctx.arc(x, y, 6 * (1 - p) + 2, 0, Math.PI * 2);
+                ctx.fill();
+            } else if (effect.type === 'muzzle') {
+                ctx.globalCompositeOperation = 'lighter';
+                ctx.globalAlpha = alpha;
+                ctx.fillStyle = color;
+                ctx.beginPath();
+                ctx.arc(x, y, 3 + p * 9, 0, Math.PI * 2);
+                ctx.fill();
+            } else if (effect.type === 'dust') {
+                for (let i = 0; i < 5; i++) {
+                    const angle = (effect.seed || 0) * Math.PI * 2 + (i / 5) * Math.PI * 2;
+                    const distance = 4 + p * 16;
+                    ctx.globalAlpha = alpha * 0.55;
+                    ctx.fillStyle = color;
+                    ctx.beginPath();
+                    ctx.arc(x + Math.cos(angle) * distance, y + Math.sin(angle) * distance - p * 6, 2 + p * 3, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+            } else if (effect.type === 'death') {
+                const radius = 8 + p * 34;
+                const gradient = ctx.createRadialGradient(x, y, 0, x, y, radius);
+                gradient.addColorStop(0, `rgba(255, 220, 160, ${alpha * 0.85})`);
+                gradient.addColorStop(0.45, `rgba(255, 106, 94, ${alpha * 0.55})`);
+                gradient.addColorStop(1, 'rgba(80, 0, 0, 0)');
+                ctx.fillStyle = gradient;
+                ctx.beginPath();
+                ctx.arc(x, y, radius, 0, Math.PI * 2);
+                ctx.fill();
+                for (let i = 0; i < 8; i++) {
+                    const angle = (effect.seed || 0) * Math.PI * 2 + (i / 8) * Math.PI * 2;
+                    const distance = 6 + p * 24;
+                    ctx.globalAlpha = alpha * 0.8;
+                    ctx.fillStyle = i % 2 ? '#ffb36b' : '#ff6a5e';
+                    ctx.beginPath();
+                    ctx.arc(x + Math.cos(angle) * distance, y + Math.sin(angle) * distance - p * 10, 2.4 * (1 - p) + 0.6, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+            } else if (effect.type === 'soul') {
+                const rise = p * 44;
+                ctx.globalCompositeOperation = 'lighter';
+                ctx.globalAlpha = alpha * 0.9;
+                const gradient = ctx.createRadialGradient(x, y - rise, 0, x, y - rise, 16);
+                gradient.addColorStop(0, 'rgba(235, 250, 255, 0.95)');
+                gradient.addColorStop(0.5, `rgba(160, 220, 255, ${alpha * 0.55})`);
+                gradient.addColorStop(1, 'rgba(120, 190, 255, 0)');
+                ctx.fillStyle = gradient;
+                ctx.beginPath();
+                ctx.arc(x, y - rise, 16, 0, Math.PI * 2);
+                ctx.fill();
+            } else if (effect.type === 'correct') {
+                ctx.globalCompositeOperation = 'lighter';
+                const radius = 10 + p * 46;
+                ctx.globalAlpha = alpha * 0.75;
+                ctx.strokeStyle = color;
+                ctx.lineWidth = 3 * alpha + 1;
+                ctx.beginPath();
+                ctx.arc(x, y, radius, 0, Math.PI * 2);
+                ctx.stroke();
+                for (let i = 0; i < 12; i++) {
+                    const angle = (effect.seed || 0) * Math.PI * 2 + (i / 12) * Math.PI * 2;
+                    const distance = 8 + p * 34;
+                    ctx.globalAlpha = alpha;
+                    ctx.fillStyle = '#fff2b0';
+                    ctx.beginPath();
+                    ctx.arc(x + Math.cos(angle) * distance, y + Math.sin(angle) * distance, 2.2 * (1 - p) + 0.6, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+            }
+            ctx.restore();
+        });
+    }
+
+    drawLowHealthVignette(player) {
+        if (!player || !window.VisualJuice) return;
+        const maxHealth = Math.max(1, player.maxHealth || 100);
+        const fraction = Math.max(0, Math.min(1, (player.health || 0) / maxHealth));
+        const alpha = VisualJuice.lowHealthVignette(fraction, Date.now());
+        if (alpha <= 0) return;
+        const width = Viewport.width;
+        const height = Viewport.height;
+        const gradient = this.ctx.createRadialGradient(
+            width / 2, height / 2, Math.min(width, height) * 0.28,
+            width / 2, height / 2, Math.max(width, height) * 0.72
+        );
+        gradient.addColorStop(0, 'rgba(150, 0, 0, 0)');
+        gradient.addColorStop(0.72, `rgba(150, 0, 0, ${alpha * 0.35})`);
+        gradient.addColorStop(1, `rgba(190, 10, 10, ${alpha})`);
+        this.ctx.save();
+        this.ctx.fillStyle = gradient;
+        this.ctx.fillRect(0, 0, width, height);
+        this.ctx.restore();
     }
 
     drawDeathParticles(deathParticles, camera) {

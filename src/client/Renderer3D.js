@@ -51,7 +51,7 @@ class Renderer3D extends Renderer {
         this.drawTopBar(uiState);
 
         this.ctx.save();
-        if (screenShake && screenShake.duration > 0) {
+        if (screenShake && screenShake.duration > 0 && (!window.VisualJuice || VisualJuice.isEnabled())) {
             this.ctx.translate(screenShake.x, screenShake.y);
         }
 

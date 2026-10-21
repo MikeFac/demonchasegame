@@ -1907,9 +1907,11 @@ function tryHandle3DFire(monsters, now) {
     }
 
     attackSound.play();
+    markPlayerAttackVisual(now);
     if (!monster) return true;
 
     monster.isAttacked = true;
+    markMonsterHitVisual(monster, monster.x, monster.y, now);
     setTimeout(() => {
         monster.isAttacked = false;
     }, 200);
@@ -2369,6 +2371,100 @@ const EXPLOSION_INTERVAL = 100; // Adjust the interval as needed
 // Visual effects - screen shake and damage numbers
 let screenShake = { x: 0, y: 0, intensity: 0, duration: 0 };
 let damageNumbers = [];  // Array of {x, y, damage, startTime, duration: 1000}
+
+// ===== Procedural juice state (visual-only; never sent to the server) =====
+// Keyed by monster id / player code. These hold timestamps, not authoritative
+// positions, so reconciliation and server state are untouched.
+let monsterVisuals = Object.create(null);
+let playerVisuals = Object.create(null);
+let visualEffects = [];
+const MAX_VISUAL_EFFECTS = 90;
+
+function getPlayerVisual(key) {
+    const id = key || 'local';
+    if (!playerVisuals[id]) {
+        playerVisuals[id] = { seed: Math.random() };
+    }
+    return playerVisuals[id];
+}
+
+function getMonsterVisual(monster) {
+    if (!monster || monster.id === undefined || monster.id === null) return null;
+    const id = String(monster.id);
+    if (!monsterVisuals[id]) {
+        monsterVisuals[id] = { seed: Math.random(), spawnAt: Date.now() };
+    }
+    return monsterVisuals[id];
+}
+
+function pushVisualEffect(effect) {
+    if (!effect || !window.VisualJuice || !VisualJuice.isEnabled()) return;
+    visualEffects.push(effect);
+    if (visualEffects.length > MAX_VISUAL_EFFECTS) {
+        visualEffects.splice(0, visualEffects.length - MAX_VISUAL_EFFECTS);
+    }
+}
+
+function resetVisualState() {
+    monsterVisuals = Object.create(null);
+    playerVisuals = Object.create(null);
+    visualEffects = [];
+    if (window.VisualJuice) VisualJuice.clear();
+}
+
+function findMonsterNear(x, y, maxDistance) {
+    let best = null;
+    let bestDistance = maxDistance || 80;
+    for (let i = 0; i < monsters.length; i++) {
+        const monster = monsters[i];
+        if (!monster) continue;
+        const distance = Math.hypot(monster.x - x, monster.y - y);
+        if (distance <= bestDistance) {
+            bestDistance = distance;
+            best = monster;
+        }
+    }
+    return best;
+}
+
+function markMonsterHitVisual(monster, x, y, now) {
+    if (!monster) return;
+    const v = getMonsterVisual(monster);
+    if (!v) return;
+    v.lastHitAt = now;
+    v.knockAt = now;
+    let dirX = 0;
+    let dirY = -1;
+    if (player && Number.isFinite(player.x) && Number.isFinite(player.y)) {
+        dirX = monster.x - player.x;
+        dirY = monster.y - player.y;
+    }
+    const length = Math.hypot(dirX, dirY) || 1;
+    v.knockX = (dirX / length) * 7;
+    v.knockY = (dirY / length) * 7;
+    if (window.VisualJuice) {
+        pushVisualEffect(VisualJuice.hitSpark(x, y, now));
+        VisualJuice.hitStop(60);
+    }
+}
+
+function markPlayerAttackVisual(now) {
+    const v = getPlayerVisual('local');
+    v.attackAt = now;
+    if (player && window.VisualJuice) {
+        pushVisualEffect(VisualJuice.muzzleFlash(player.x, player.y - 8, now));
+    }
+}
+
+function markPlayerHitVisual(now) {
+    const v = getPlayerVisual('local');
+    v.lastHitAt = now;
+    if (player && window.VisualJuice) {
+        pushVisualEffect(VisualJuice.hitSpark(player.x, player.y, now, { color: '#ff5a5a', count: 9 }));
+        VisualJuice.hitStop(70);
+    }
+}
+
 let combatHint = null;
 let combatStruggleState = {
     monsterId: null,
@@ -3324,6 +3420,7 @@ function resetGameState() {
     damageNumbers = [];
     deathParticles = [];
     screenShake = { x: 0, y: 0, intensity: 0, duration: 0 };
+    resetVisualState();
     clearCombatHint();
     resetCombatStruggleState();
     resetOnboardingGuideState();
@@ -4323,6 +4420,20 @@ window.onQuizCorrectAnswer = function (quizMode, verseReference, combatCategory)
             }
         }
     }
+
+    // Correct-answer reward feedback: gold radial burst + a short shake.
+    if (player && window.VisualJuice) {
+        const feedbackNow = Date.now();
+        pushVisualEffect(VisualJuice.correctBurst(player.x, player.y, feedbackNow));
+        if (VisualJuice.isEnabled() && (!screenShake || screenShake.duration < 120)) {
+            screenShake = {
+                x: (Math.random() - 0.5) * 6,
+                y: (Math.random() - 0.5) * 6,
+                intensity: 6,
+                duration: 160
+            };
+        }
+    }
 };
 
 window.onQuizWrongAnswer = function (quizMode, verseReference) {
@@ -4459,6 +4570,16 @@ async function init() {
                     setTimeout(() => { screenShake = { x: 0, y: 0 }; }, 400);
                 }
 
+                // Procedural death burst + rising soul wisp (visual only).
+                const deathNow = Date.now();
+                if (window.VisualJuice) {
+                    pushVisualEffect(VisualJuice.deathBurst(x, y, deathNow));
+                    pushVisualEffect(VisualJuice.soulWisp(x, y - 8, deathNow));
+                }
+                if (monsterId !== undefined && monsterId !== null) {
+                    delete monsterVisuals[String(monsterId)];
+                }
+
                 // Spawn death particle animation
                 if (particleBurstImg && particleBurstImg.complete) {
                     deathParticles.push({
@@ -4524,6 +4645,16 @@ async function init() {
             },
             onBulletHit: ({ x, y, damage, multiplier, category, monsterType }) => {
                 playBulletSound();
+
+                // Procedural hit feedback: flash, knockback, spark, hit-stop.
+                const hitNow = Date.now();
+                const hitMonster = findMonsterNear(x, y, 90);
+                if (hitMonster) {
+                    markMonsterHitVisual(hitMonster, x, y, hitNow);
+                } else if (window.VisualJuice) {
+                    pushVisualEffect(VisualJuice.hitSpark(x, y, hitNow));
+                    VisualJuice.hitStop(50);
+                }
 
                 if (typeof damage === 'number') {
                     noteSuccessfulDamage();
@@ -5321,6 +5452,7 @@ async function init() {
                         );
                         if (distToMonster >= getCombatDistanceForMonster(m)) {
                             network.sendShoot({ x: worldX, y: worldY });
+                            markPlayerAttackVisual(Date.now());
                         }
                         return true; // Handled (prevent movement)
                     }
@@ -6431,7 +6563,12 @@ function gameLoop(generation) {
             speedPromptVisible,
             speedOnboardingVisible: !speedOnboardingDismissed,
             storyPause: storyPauseState,
-            integratedStory: integratedStoryState
+            integratedStory: integratedStoryState,
+            visuals: {
+                monsters: monsterVisuals,
+                players: playerVisuals,
+                effects: visualEffects
+            }
         };
 
         const assets = {
@@ -6499,6 +6636,22 @@ function gameLoop(generation) {
             return (Date.now() - dn.startTime) < dn.duration;
         });
 
+        // Update procedural juice state (visual-only).
+        const juiceNow = Date.now();
+        if (window.VisualJuice) {
+            visualEffects = VisualJuice.pruneEffects(visualEffects, juiceNow);
+        } else {
+            visualEffects = [];
+        }
+        const localVisual = getPlayerVisual('local');
+        localVisual.moving = !!player.isMoving;
+        localVisual.speed = localVisual.moving ? 3.2 : 0;
+        if (uiState && uiState.visuals) {
+            uiState.visuals.effects = visualEffects;
+            uiState.visuals.monsters = monsterVisuals;
+            uiState.visuals.players = playerVisuals;
+        }
+
         // Update flash messages (remove expired ones)
         flashMessages = flashMessages.filter(fm => {
             return (Date.now() - fm.startTime) < fm.duration;
@@ -6518,6 +6671,16 @@ function gameLoop(generation) {
                 m.x = lerp(m.x, m._targetX, INTERPOLATION_SPEED);
                 m.y = lerp(m.y, m._targetY, INTERPOLATION_SPEED);
             }
+            const visual = getMonsterVisual(m);
+            if (visual) {
+                const prevX = visual.lastX === undefined ? m.x : visual.lastX;
+                const prevY = visual.lastY === undefined ? m.y : visual.lastY;
+                const moved = Math.hypot(m.x - prevX, m.y - prevY);
+                visual.moving = moved > 0.05;
+                visual.speed = Math.min(8, moved * 10);
+                visual.lastX = m.x;
+                visual.lastY = m.y;
+            }
         }
 
         // Interpolate other players toward their target positions
@@ -6526,8 +6689,14 @@ function gameLoop(generation) {
                 if (code !== playerCode) {
                     const otherPlayer = gameState.players[code];
                     if (otherPlayer && otherPlayer._targetX !== undefined && otherPlayer._targetY !== undefined) {
+                        const prevX = otherPlayer.x;
+                        const prevY = otherPlayer.y;
                         otherPlayer.x = lerp(otherPlayer.x, otherPlayer._targetX, INTERPOLATION_SPEED);
                         otherPlayer.y = lerp(otherPlayer.y, otherPlayer._targetY, INTERPOLATION_SPEED);
+                        const visual = getPlayerVisual(code);
+                        const moved = Math.hypot(otherPlayer.x - prevX, otherPlayer.y - prevY);
+                        visual.moving = moved > 0.05;
+                        visual.speed = Math.min(8, moved * 10);
                     }
                 }
             });
@@ -6545,7 +6714,12 @@ function gameLoop(generation) {
             inventoryOpen: inventoryOpen
         };
 
-        window.renderer.drawGame(gameState, player, playerCode, monsters, healingPoints, camera, uiState, inventoryState, clientWalls, screenShake, damageNumbers, deathParticles, mouseX, mouseY);
+        // Visual-only hit-stop: hold the last rendered frame for 50-80 ms.
+        // The engine, input timestamps and server continue untouched.
+        const holdingFrame = window.VisualJuice && VisualJuice.isHitStopped(Date.now());
+        if (!holdingFrame) {
+            window.renderer.drawGame(gameState, player, playerCode, monsters, healingPoints, camera, uiState, inventoryState, clientWalls, screenShake, damageNumbers, deathParticles, mouseX, mouseY);
+        }
 
         // ===== ONBOARDING: Auto-dismiss modal after timeout =====
         if (modalPaused && modalPauseStartTime > 0) {
@@ -6894,7 +7068,9 @@ function gameLoop(generation) {
 
                     if (attackHits) {
                         playAttackSound();
+                        markPlayerAttackVisual(currentTime);
                         monster.isAttacked = true;
+                        markMonsterHitVisual(monster, monster.x, monster.y, currentTime);
                         setTimeout(() => {
                             monster.isAttacked = false;
                         }, 200);
@@ -6922,6 +7098,13 @@ function gameLoop(generation) {
 
                     // Store the last attacked monster
                     lastAttackedMonster = monster;
+                    {
+                        const monsterVisual = getMonsterVisual(monster);
+                        if (monsterVisual) {
+                            monsterVisual.attackAt = currentTime;
+                            monsterVisual.attackDirX = player.x < monster.x ? -1 : 1;
+                        }
+                    }
 
                     // Shield blocks monster damage (inventory shield OR verse test shield)
                     if (!activeBuffs.shield.active && !verseTestShieldActive) {
@@ -6934,6 +7117,9 @@ function gameLoop(generation) {
                         }
 
                         player.health -= damage;
+                        if (damage > 0) {
+                            markPlayerHitVisual(currentTime);
+                        }
                         network.sendPlayerHit(damage);
                         noteMonsterPressure(monster, damage);
 
@@ -7369,15 +7555,34 @@ function updateGameState(newGameState) {
                 };
             } else {
                 // New monster: appear at server position immediately
-                return {
+                const newMonster = {
                     ...monsterState,
                     _targetX: monsterState.x,
                     _targetY: monsterState.y,
                     healthBar: { x: 0, y: 0, width: 0, height: 7, color: 'green' }
                 };
+                const visual = getMonsterVisual(newMonster);
+                if (visual) {
+                    visual.spawnAt = currentTime;
+                    if (window.VisualJuice) {
+                        pushVisualEffect(VisualJuice.spawnRing(newMonster.x, newMonster.y, currentTime));
+                    }
+                }
+                return newMonster;
             }
         });
         gameState.monsters = monsters;
+
+        // Drop visual state for monsters that left the snapshot.
+        const liveMonsterIds = Object.create(null);
+        for (let i = 0; i < monsters.length; i++) {
+            if (monsters[i] && monsters[i].id !== undefined) {
+                liveMonsterIds[String(monsters[i].id)] = true;
+            }
+        }
+        Object.keys(monsterVisuals).forEach((id) => {
+            if (!liveMonsterIds[id]) delete monsterVisuals[id];
+        });
 
         if (!player) {
             // Player not created yet, wait for initialization
