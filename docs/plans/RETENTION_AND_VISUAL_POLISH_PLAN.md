@@ -1,8 +1,8 @@
 # Retention & Visual Polish Plan — Step 0: Easy Graphics Wins
 
 **Status:** proposed, ready to start  
-**Branch:** `feat/step0-visual-juice`  
-**Worktree:** `/home/michael/proj/dcgame-step0`  
+**Branch:** `feat/step0-visual-juice` (checked out in the existing repo)  
+**Working copy:** `/home/michael/proj/dcgame`  
 **Base:** `low-poly-3d` @ `c5190ff`  
 **Created:** 2026-10-22
 
@@ -376,13 +376,12 @@ Success at small scale: 20 users, **D1 ≥ 40%**, **D7 ≥ 20%**, **3+ sessions/
 
 ## 10. Handoff prompt
 
-Copy this into the new agent session started in `/home/michael/proj/dcgame-step0`:
+Copy this into a new agent session started in `/home/michael/proj/dcgame`:
 
 ```text
-You are working in /home/michael/proj/dcgame-step0, a git worktree of the
-VerseBattles/Demon Chase repo on branch feat/step0-visual-juice, based on
-low-poly-3d at c5190ff. The main checkout at /home/michael/proj/dcgame stays
-on low-poly-3d; do not switch it.
+You are working in /home/michael/proj/dcgame, the existing VerseBattles/Demon
+Chase checkout, on branch feat/step0-visual-juice, based on low-poly-3d at
+c5190ff. Do not create a second worktree or copy of the repo.
 
 READ FIRST:
 1. docs/plans/RETENTION_AND_VISUAL_POLISH_PLAN.md  (this plan)
@@ -416,7 +415,8 @@ HARD CONSTRAINTS:
   3.5, 3.6). Do not commit generated output screenshots unless the plan says to.
 
 START BY:
-1. Run git status, git branch --show-current, and confirm the worktree is clean.
+1. Run git status and git branch --show-current. The output/ screenshots are
+   pre-existing dirty files; leave them alone.
 2. Read the plan and the four files above.
 3. Implement 3.1 Viewport/DPR and verify with a screenshot at 400 px logical on a
    2x device (Chrome DevTools device emulation is fine).
@@ -437,11 +437,11 @@ bugs in this branch.
 
 ---
 
-## 11. Branch and worktree commands
+## 11. Branch and working-copy commands
 
 ```bash
 # Inspect
-cd /home/michael/proj/dcgame-step0
+cd /home/michael/proj/dcgame
 git status
 git branch --show-current        # feat/step0-visual-juice
 git log --oneline -5
