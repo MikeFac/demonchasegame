@@ -22,6 +22,7 @@
     "tryAgain": "Jaribu Teni",
     "returnToLobby": "Rudi kwenye Lobby",
     "learnVersesHere": "📖 JIFUNZE MASHUARI HAPA!",
+    "learnVersesShort": "📖 JIFUNZE",
     "selectCategory": "Chagua Kundi",
     "movementPaused": "⚡ INAPAKIA LABIRINTHI MPYA - HARAKATI IMEZIMI ⚡",
     "ghost": "ROHO",
@@ -382,6 +383,7 @@
   },
   "hud": {
     "demonsLeft": "Mashetani waliobaki: {0}/{1}",
+    "demonsLeftShort": "Mashetani {0}/{1}",
     "move": "SOGEA",
     "gameSpeed": "Kasi ya Mchezo",
     "tooFastOrSlow": "Haraka sana au polepole sana?",

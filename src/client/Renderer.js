@@ -8,6 +8,8 @@ class Renderer {
         // UI constants from centralized UILayout
         const UI = window.UILayout;
         this.QUALITY_LINE_HEIGHT = UI.QUALITY_LINE_HEIGHT;
+        this.HUD_ROW_HEIGHT = UI.HUD_ROW_HEIGHT;
+        this.PLAYABLE_TOP = UI.playableTop;
         this.BUTTON_HEIGHT = UI.BUTTON_HEIGHT;
         this.ANSWER_SECTION_HEIGHT = UI.ANSWER_SECTION_HEIGHT;
         this.BUTTON_WIDTH = UI.BUTTON_WIDTH;
@@ -18,10 +20,10 @@ class Renderer {
             bodyMaxLines: 3,
             boxPaddingX: 16,
             defaultHeight: 56,
-            hudBox: { x: 34, yOffset: 18, width: 240, height: 64 },
-            moveBox: { x: 36, yOffset: 18, width: 280, height: 64 },
-            answersBox: { x: 24, widthInset: 48, minTopOffset: 18, safeBottomOffset: 198, targetGap: 14 },
-            learnBox: { x: 24, yOffset: 14, widthInset: 48, height: 56 },
+            hudBox: { x: 34, yOffset: UI.HUD_ROW_HEIGHT + 30, width: 240, height: 64 },
+            moveBox: { x: 36, yOffset: UI.HUD_ROW_HEIGHT + 10, width: 280, height: 64 },
+            answersBox: { x: 24, widthInset: 48, minTopOffset: UI.HUD_ROW_HEIGHT + 18, safeBottomOffset: 198, targetGap: 14 },
+            learnBox: { x: 24, yOffset: UI.HUD_ROW_HEIGHT + 10, widthInset: 48, height: 56 },
             titleY: 22,
             bodyStartY: 42
         };
@@ -100,7 +102,7 @@ class Renderer {
         this.ctx.restore();
 
         // Draw HUD (Health, Level, etc.)
-        this.drawHUD(player, gameState);
+        this.drawHUD(player, gameState, uiState);
 
         // Draw current mission task after the core HUD so story missions have a clear next action.
         this.drawMissionTaskCard(uiState);
@@ -202,13 +204,33 @@ class Renderer {
         this.ctx.fillStyle = 'black';
         this.ctx.fillRect(0, 0, Viewport.width, this.QUALITY_LINE_HEIGHT);
 
-        // Category indicator (tappable)
+        // Category indicator (tappable). Long localized category names must not
+        // run under the Learn button, so shrink then truncate to the gap.
         const ci = UILayout.categoryIndicator;
-        this.ctx.fillStyle = '#ffffff';
-        this.ctx.font = 'bold 16px Arial';
+        const learnRect = UILayout.getLearnVersesButton(Viewport.width);
+        const maxCategoryWidth = Math.max(44, learnRect.x - ci.x - 6);
         const displayQuality = (typeof tCategory === 'function') ? tCategory(vQuality) : vQuality;
-        const labelText = `${displayQuality} \u25bc`;
-        this.ctx.fillText(labelText, ci.x, ci.y + 16);
+        const arrow = ' \u25bc';
+        let categoryLabel = `${displayQuality}${arrow}`;
+        let categoryFont = 16;
+        for (const size of [16, 14, 13, 12]) {
+            this.ctx.font = `bold ${size}px Arial`;
+            if (this.ctx.measureText(categoryLabel).width <= maxCategoryWidth) {
+                categoryFont = size;
+                break;
+            }
+            categoryFont = size;
+        }
+        this.ctx.font = `bold ${categoryFont}px Arial`;
+        if (this.ctx.measureText(categoryLabel).width > maxCategoryWidth) {
+            let base = displayQuality;
+            while (base.length > 1 && this.ctx.measureText(`${base}\u2026${arrow}`).width > maxCategoryWidth) {
+                base = base.slice(0, -1);
+            }
+            categoryLabel = `${base}\u2026${arrow}`;
+        }
+        this.ctx.fillStyle = '#ffffff';
+        this.ctx.fillText(categoryLabel, ci.x, ci.y + 16);
 
         // Learn Verses button (center of top bar)
         this.drawLearnVersesButton();
@@ -221,8 +243,8 @@ class Renderer {
     }
 
     drawLearnVersesButton() {
-        const lb = UILayout.learnVersesButton;
-        const btnX = (Viewport.width - lb.width) / 2;
+        const lb = UILayout.getLearnVersesButton(Viewport.width);
+        const btnX = lb.x;
         const btnY = lb.y;
         const btnW = lb.width;
         const btnH = lb.height;
@@ -249,11 +271,14 @@ class Renderer {
         this.ctx.fillStyle = gradient;
         this.ctx.fill();
 
-        // Text
+        // Text: compact localized label at 320 px, full label otherwise.
+        const label = lb.compact
+            ? t('ui.learnVersesShort', '📖 LEARN')
+            : t('ui.learnVersesHere');
         this.ctx.fillStyle = '#1a1a2e';
-        this.ctx.font = 'bold 11px Arial';
+        this.ctx.font = lb.compact ? 'bold 10px Arial' : 'bold 11px Arial';
         this.ctx.textAlign = 'center';
-        this.ctx.fillText(t('ui.learnVersesHere'), btnX + btnW / 2, btnY + 14);
+        this.ctx.fillText(label, btnX + btnW / 2, btnY + 14);
         this.ctx.textAlign = 'left';
     }
 
@@ -318,10 +343,6 @@ class Renderer {
         this.ctx.fillText('\u25b6', baseX + chevW + labelW + chevW / 2, baseY + h / 2 + 5);
 
         this.ctx.textAlign = 'left';
-
-        if (uiState.speedOnboardingVisible) {
-            this._drawSpeedOnboardingTooltip(baseX, baseY, chevW + labelW + chevW, h);
-        }
     }
 
     drawStoryPauseOverlay(storyPause) {
@@ -746,10 +767,14 @@ class Renderer {
 
     _drawSpeedOnboardingTooltip(ctrlX, ctrlY, ctrlW, ctrlH) {
         const pulse = 0.55 + 0.45 * Math.sin(Date.now() / 220);
-        const boxW = 160;
+        const boxW = Math.min(170, Viewport.width - 12);
         const boxH = 50;
-        const boxX = ctrlX - (boxW - ctrlW) / 2;
-        const boxY = ctrlY + ctrlH + 6;
+        const boxX = Math.max(6, Math.min(
+            ctrlX + ctrlW / 2 - boxW / 2,
+            Viewport.width - boxW - 6
+        ));
+        // Keep the callout below the two-row HUD so it never covers stats.
+        const boxY = this.PLAYABLE_TOP + 6;
 
         this.ctx.save();
         this.ctx.strokeStyle = `rgba(255, 214, 102, ${0.75 + pulse * 0.2})`;
@@ -758,7 +783,7 @@ class Renderer {
         this.ctx.fillStyle = `rgba(255, 214, 102, ${0.08 + pulse * 0.06})`;
         this.ctx.fillRect(ctrlX - 2, ctrlY - 2, ctrlW + 4, ctrlH + 4);
 
-        this.drawGuideArrow(ctrlX + ctrlW / 2, boxY, ctrlX + ctrlW / 2, ctrlY + 2, 3);
+        this.drawGuideArrow(boxX + boxW / 2, boxY, ctrlX + ctrlW / 2, ctrlY + ctrlH + 2, 3);
 
         this.ctx.fillStyle = 'rgba(9, 12, 20, 0.92)';
         this.ctx.strokeStyle = '#ffd666';
@@ -769,7 +794,7 @@ class Renderer {
         this.ctx.fillStyle = '#ffd666';
         this.ctx.font = 'bold 13px Arial';
         this.ctx.textAlign = 'center';
-        this.        ctx.fillText(t('hud.adjustSpeed', 'Adjust Speed'), boxX + boxW / 2, boxY + 18);
+        this.ctx.fillText(t('hud.adjustSpeed', 'Adjust Speed'), boxX + boxW / 2, boxY + 18);
         this.ctx.fillStyle = '#d6deff';
         this.ctx.font = '12px Arial';
         this.ctx.fillText('\u25c0 slower    faster \u25b6', boxX + boxW / 2, boxY + 36);
@@ -894,79 +919,183 @@ class Renderer {
         });
     }
 
-    drawHUD(player, gameState) {
-        this.ctx.fillStyle = 'white';
-        this.ctx.font = '14px Arial';
-        const statsText = t('ui.statsLine', player.health, player.xp, player.level, player.ammo || 0);
-        this.ctx.fillText(statsText, 7, this.QUALITY_LINE_HEIGHT - 7);
-        const statsWidth = this.ctx.measureText(statsText).width;
+    drawHUD(player, gameState, uiState) {
+        const ctx = this.ctx;
+        const width = Viewport.width;
+        const rowY = this.QUALITY_LINE_HEIGHT;
+        const rowH = this.HUD_ROW_HEIGHT;
+        const rowBottom = rowY + rowH;
+        const centerY = rowY + rowH / 2 + 1;
+        const padX = 6;
 
-        // VOTD damage bonus indicator (subtle fire icon after stats)
-        if (player.votdDamageBonus) {
-            this.ctx.fillStyle = '#ffd700';
-            this.ctx.font = '12px Arial';
-            this.ctx.fillText('\uD83D\uDD25', statsWidth + 12, this.QUALITY_LINE_HEIGHT - 7);
-        }
+        // Row 2 background: sits below the category/speed/menu row and above
+        // the playable area. Opaque enough to hide the 3D layer behind it.
+        ctx.fillStyle = 'rgba(8, 12, 20, 0.94)';
+        ctx.fillRect(0, rowY, width, rowH);
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.08)';
+        ctx.fillRect(0, rowBottom - 1, width, 1);
 
-        // Game Level
-        this.ctx.fillStyle = 'yellow';
-        this.ctx.font = 'bold 14px Arial';
-        const gameLevelText = `${gameState.gameLevel}`;
-        const gameLevelWidth = this.ctx.measureText(gameLevelText).width;
-        this.ctx.fillText(gameLevelText, Viewport.width - gameLevelWidth - 7, 40);
+        if (!player) return;
 
+        const maxHealth = Math.max(1, player.maxHealth || 100);
+        const health = Math.max(0, Math.min(player.health || 0, maxHealth));
+        const hpFraction = health / maxHealth;
+
+        // --- Health bar (left) ---
+        const barW = Math.max(40, Math.min(64, Math.round(width * 0.15)));
+        const barH = 9;
+        const barX = padX;
+        const barY = rowY + Math.round((rowH - barH) / 2);
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.14)';
+        ctx.fillRect(barX - 1, barY - 1, barW + 2, barH + 2);
+        ctx.fillStyle = hpFraction > 0.5 ? '#43d16b' : (hpFraction > 0.25 ? '#ffd23f' : '#ff4d4d');
+        ctx.fillRect(barX, barY, Math.round(barW * hpFraction), barH);
+        ctx.strokeStyle = 'rgba(0, 0, 0, 0.6)';
+        ctx.lineWidth = 1;
+        ctx.strokeRect(barX, barY, barW, barH);
+
+        ctx.textBaseline = 'middle';
+        ctx.textAlign = 'left';
+
+        // Numeric HP; drop the localized "HP:" prefix only if the row is tight.
+        ctx.font = 'bold 10px Arial';
+        const fullHpText = t('ui.hpDisplay', health, maxHealth);
+        const compactHpText = `${health}/${maxHealth}`;
+        const hpMaxWidth = Math.max(34, Math.min(64, width * 0.17));
+        const hpText = ctx.measureText(fullHpText).width <= hpMaxWidth ? fullHpText : compactHpText;
+        const hpTextX = barX + barW + 5;
+        const hpTextW = ctx.measureText(hpText).width;
+        ctx.fillStyle = hpFraction <= 0.25 ? '#ff8b8b' : '#f2f6ff';
+        ctx.fillText(hpText, hpTextX, centerY);
+
+        // --- Demons remaining (right, localized short form) ---
         const totalToKill = gameState.monstersToKill || 0;
         const killed = gameState.monstersKilled || 0;
         const remaining = Math.max(0, totalToKill - killed);
-        const progressText = t('hud.demonsLeft', 'Demons left: ${remaining}/${totalToKill}').replace('${remaining}', remaining).replace('${totalToKill}', totalToKill);
-        const progressRightEdge = Viewport.width - gameLevelWidth - 18;
-        this.ctx.fillStyle = '#ffdd66';
-        this.ctx.font = '14px Arial';
-        this.ctx.textAlign = 'right';
-        this.ctx.fillText(progressText, progressRightEdge, this.QUALITY_LINE_HEIGHT - 7);
-        this.ctx.textAlign = 'left';
+        let demonsText = t('hud.demonsLeftShort', remaining, totalToKill);
+        if (demonsText === 'hud.demonsLeftShort') {
+            demonsText = `Demons ${remaining}/${totalToKill}`;
+        }
+        ctx.font = 'bold 10px Arial';
+        if (ctx.measureText(demonsText).width > width * 0.32) {
+            // Language-neutral fallback for very small screens / long locales.
+            demonsText = `\uD83D\uDC79 ${remaining}/${totalToKill}`;
+        }
+        const demonsW = ctx.measureText(demonsText).width;
+        ctx.fillStyle = '#ffdd66';
+        ctx.textAlign = 'right';
+        ctx.fillText(demonsText, width - padX, centerY);
+        ctx.textAlign = 'left';
 
-        const story = gameState.integratedStory;
-        if (story && story.targetCount) {
-            this.ctx.fillStyle = '#F6D36B';
-            this.ctx.font = 'bold 15px Arial';
-            const label = story.label || 'Stones';
-            this.ctx.fillText(`${label}: ${story.collected || 0} / ${story.targetCount}`, 18, this.QUALITY_LINE_HEIGHT + 32);
+        // --- Level / XP / ammo (middle) ---
+        const middleStart = hpTextX + hpTextW + 9;
+        const middleEnd = width - padX - demonsW - 8;
+
+        const ammoText = width < 360 ? `\u2022 ${player.ammo || 0}` : `\uD83D\uDD2B ${player.ammo || 0}`;
+        const ammoW = ctx.measureText(ammoText).width;
+
+        let cursor = middleStart;
+        let levelText = t('ui.levelShort', player.level || 1);
+        let levelW = ctx.measureText(levelText).width;
+        const levelChipW = levelW + 8;
+        if (cursor + levelChipW + 6 + ammoW > middleEnd) {
+            // Tight locale: keep the number, drop the translated prefix.
+            levelText = String(player.level || 1);
+            levelW = ctx.measureText(levelText).width;
+        }
+        const finalChipW = Math.min(levelW + 8, Math.max(18, middleEnd - cursor));
+        if (finalChipW >= 16) {
+            ctx.fillStyle = 'rgba(255, 214, 102, 0.16)';
+            ctx.fillRect(cursor, centerY - 7, finalChipW, 14);
+            ctx.fillStyle = '#ffd666';
+            ctx.fillText(levelText, cursor + 4, centerY);
+            cursor += finalChipW + 6;
         }
 
-        // Floating score badge in the top-right of the playing window
+        if (player.votdDamageBonus && cursor + 12 < middleEnd - ammoW) {
+            ctx.fillStyle = '#ffa726';
+            ctx.fillText('\uD83D\uDD25', cursor, centerY);
+            cursor += 12;
+        }
+
+        if (width >= 360) {
+            ctx.font = '10px Arial';
+            const xpText = `${player.xp || 0} XP`;
+            const xpW = ctx.measureText(xpText).width;
+            if (cursor + xpW + 8 <= middleEnd - ammoW) {
+                ctx.fillStyle = 'rgba(196, 214, 255, 0.78)';
+                ctx.fillText(xpText, cursor, centerY);
+                cursor += xpW + 8;
+            }
+        }
+
+        // Ammo is right-aligned inside the middle band so it never collides
+        // with the localized demons counter.
+        if (cursor + ammoW <= middleEnd) {
+            ctx.font = 'bold 10px Arial';
+            ctx.fillStyle = '#9fd4ff';
+            ctx.textAlign = 'right';
+            ctx.fillText(ammoText, middleEnd, centerY);
+            ctx.textAlign = 'left';
+        }
+
+        // Story collectible counter sits just under the HUD row.
+        const story = gameState.integratedStory;
+        if (story && story.targetCount) {
+            ctx.fillStyle = '#F6D36B';
+            ctx.font = 'bold 15px Arial';
+            const label = story.label || 'Stones';
+            ctx.fillText(`${label}: ${story.collected || 0} / ${story.targetCount}`, 18, rowBottom + 18);
+        }
+
+        // Floating score badge in the top-right of the playing window.
         const badgeW = 90;
         const badgeH = 28;
-        const badgeX = Viewport.width - badgeW - 10;
-        const badgeY = this.QUALITY_LINE_HEIGHT + 8;
+        const badgeX = width - badgeW - 10;
+        const onboardingOpen = !!(uiState && (uiState.speedOnboardingVisible || uiState.speedPromptVisible));
+        const badgeY = rowBottom + 6 + (onboardingOpen ? 58 : 0);
         const radius = 6;
-        
+
         // Background: semi-transparent elegant dark blue/black
-        this.ctx.fillStyle = 'rgba(26, 26, 46, 0.65)';
-        this.ctx.beginPath();
-        this.ctx.moveTo(badgeX + radius, badgeY);
-        this.ctx.lineTo(badgeX + badgeW - radius, badgeY);
-        this.ctx.quadraticCurveTo(badgeX + badgeW, badgeY, badgeX + badgeW, badgeY + radius);
-        this.ctx.lineTo(badgeX + badgeW, badgeY + badgeH - radius);
-        this.ctx.quadraticCurveTo(badgeX + badgeW, badgeY + badgeH, badgeX + badgeW - radius, badgeY + badgeH);
-        this.ctx.lineTo(badgeX + radius, badgeY + badgeH);
-        this.ctx.quadraticCurveTo(badgeX, badgeY + badgeH, badgeX, badgeY + badgeH - radius);
-        this.ctx.lineTo(badgeX, badgeY + radius);
-        this.ctx.quadraticCurveTo(badgeX, badgeY, badgeX + radius, badgeY);
-        this.ctx.closePath();
-        this.ctx.fill();
-        
+        ctx.fillStyle = 'rgba(26, 26, 46, 0.65)';
+        ctx.beginPath();
+        ctx.moveTo(badgeX + radius, badgeY);
+        ctx.lineTo(badgeX + badgeW - radius, badgeY);
+        ctx.quadraticCurveTo(badgeX + badgeW, badgeY, badgeX + badgeW, badgeY + radius);
+        ctx.lineTo(badgeX + badgeW, badgeY + badgeH - radius);
+        ctx.quadraticCurveTo(badgeX + badgeW, badgeY + badgeH, badgeX + badgeW - radius, badgeY + badgeH);
+        ctx.lineTo(badgeX + radius, badgeY + badgeH);
+        ctx.quadraticCurveTo(badgeX, badgeY + badgeH, badgeX, badgeY + badgeH - radius);
+        ctx.lineTo(badgeX, badgeY + radius);
+        ctx.quadraticCurveTo(badgeX, badgeY, badgeX + radius, badgeY);
+        ctx.closePath();
+        ctx.fill();
+
         // Subtle gold/orange border
-        this.ctx.strokeStyle = 'rgba(255, 215, 0, 0.35)';
-        this.ctx.lineWidth = 1.5;
-        this.ctx.stroke();
-        
+        ctx.strokeStyle = 'rgba(255, 215, 0, 0.35)';
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
+
         // Draw star emoji and score value
-        this.ctx.font = 'bold 13px Arial';
-        this.ctx.textAlign = 'center';
-        this.ctx.fillStyle = '#FFD700'; // Gold color
-        this.ctx.fillText(`⭐ ${player.score || 0}`, badgeX + badgeW / 2, badgeY + 18);
-        this.ctx.textAlign = 'left';
+        ctx.font = 'bold 13px Arial';
+        ctx.textAlign = 'center';
+        ctx.fillStyle = '#FFD700'; // Gold color
+        ctx.fillText(`⭐ ${player.score || 0}`, badgeX + badgeW / 2, badgeY + 18);
+        ctx.textAlign = 'left';
+        ctx.textBaseline = 'alphabetic';
+
+        // Speed-control onboarding callout is UI, so draw it after the world
+        // (drawTopBar runs before the world and would be covered by tiles).
+        if (uiState && uiState.speedOnboardingVisible) {
+            const sc = UILayout.speedControl;
+            const speedX = UILayout.getSpeedControlX(width);
+            this._drawSpeedOnboardingTooltip(
+                speedX,
+                sc.y,
+                sc.chevronWidth * 2 + sc.labelWidth,
+                sc.height
+            );
+        }
     }
 
     drawOnboardingGuide(uiState, player, camera) {
@@ -1020,9 +1149,8 @@ class Renderer {
             arrowFrom = { x: box.x + box.width / 2, y: box.y + box.height };
             arrowTo = { x: targetRect.x + targetRect.width / 2, y: targetRect.y + 2 };
         } else if (guide.target === 'learn') {
-            const lb = UILayout.learnVersesButton;
-            const btnX = (Viewport.width - lb.width) / 2;
-            targetRect = { x: btnX - 4, y: lb.y - 3, width: lb.width + 8, height: lb.height + 6 };
+            const lb = UILayout.getLearnVersesButton(Viewport.width);
+            targetRect = { x: lb.x - 4, y: lb.y - 3, width: lb.width + 8, height: lb.height + 6 };
             box = {
                 x: layout.learnBox.x,
                 y: this.QUALITY_LINE_HEIGHT + layout.learnBox.yOffset,
@@ -1764,7 +1892,7 @@ class Renderer {
     }
 
     drawMonsters(monsters, camera, explosionTimer) {
-        const playableTop = this.QUALITY_LINE_HEIGHT + this.BUTTON_HEIGHT;
+        const playableTop = this.PLAYABLE_TOP;
         const playableBottom = Viewport.height - this.ANSWER_SECTION_HEIGHT;
 
         monsters.forEach(monster => {
@@ -1999,7 +2127,7 @@ class Renderer {
             this.assets.terrainTilesImg && this.assets.terrainTilesImg.complete;
 
         this.ctx.save();
-        const playableTop = this.QUALITY_LINE_HEIGHT + this.BUTTON_HEIGHT;
+        const playableTop = this.PLAYABLE_TOP;
         const playableBottom = Viewport.height - this.ANSWER_SECTION_HEIGHT - 120;
 
         this.ctx.beginPath();
@@ -2877,7 +3005,7 @@ class Renderer {
     drawMonsterTooltip(monsters, camera, mouseX, mouseY) {
         if (!mouseX || !mouseY) return;
 
-        const playableTop = this.QUALITY_LINE_HEIGHT + this.BUTTON_HEIGHT;
+        const playableTop = this.PLAYABLE_TOP;
         const playableBottom = Viewport.height - this.ANSWER_SECTION_HEIGHT;
 
         // Check if cursor is over any monster

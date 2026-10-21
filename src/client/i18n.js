@@ -14,6 +14,8 @@ const I18n = (function () {
     let _strings = {};
     let _loaded = false;
     let _lang = 'en';
+    const LOCALE_CACHE_VERSION = '3.0';
+
     const _defaultLanguageCapabilities = {
         scriptType: 'alphabetic',
         supportsRomanizedDisplay: false,
@@ -97,10 +99,18 @@ const I18n = (function () {
             restart: "Restart",
             menu: "Menu",
             learnVersesHere: "Learn Verses Here",
+            learnVersesShort: "📖 LEARN",
             playAgain: "Play Again",
             returnToMenu: "Return to Menu",
             ghost: "Ghost",
-            offline: "Offline"
+            offline: "Offline",
+            hpDisplay: "HP: {0}/{1}",
+            levelShort: "Lv {0}",
+            ammo: "Ammo"
+        },
+        hud: {
+            demonsLeft: "Demons left: {0}/{1}",
+            demonsLeftShort: "Demons {0}/{1}"
         },
         menu: {
             solo: "Solo Game",
@@ -212,7 +222,7 @@ const I18n = (function () {
         _lang = langCode || _detectLanguage();
         try {
             var xhr = new XMLHttpRequest();
-            xhr.open('GET', '/locales/' + _lang + '.json', false); // synchronous
+            xhr.open('GET', '/locales/' + _lang + '.json?v=' + LOCALE_CACHE_VERSION, false); // synchronous
             xhr.send();
             if (xhr.status === 200) {
                 _strings = JSON.parse(xhr.responseText);
@@ -221,7 +231,7 @@ const I18n = (function () {
                 return;
             } else if (_lang !== 'en') {
                 console.warn('i18n: locale "' + _lang + '" not found, falling back to "en"');
-                xhr.open('GET', '/locales/en.json', false);
+                xhr.open('GET', '/locales/en.json?v=' + LOCALE_CACHE_VERSION, false);
                 xhr.send();
                 if (xhr.status === 200) {
                     _strings = JSON.parse(xhr.responseText);
@@ -246,11 +256,11 @@ const I18n = (function () {
     async function load(langCode) {
         _lang = langCode || _detectLanguage();
         try {
-            const resp = await fetch(`/locales/${_lang}.json`);
+            const resp = await fetch(`/locales/${_lang}.json?v=${LOCALE_CACHE_VERSION}`);
             if (!resp.ok) {
                 console.warn(`i18n: locale "${_lang}" not found, falling back to "en"`);
                 if (_lang !== 'en') {
-                    const fallback = await fetch('/locales/en.json');
+                    const fallback = await fetch('/locales/en.json?v=' + LOCALE_CACHE_VERSION);
                     if (fallback.ok) {
                         _strings = await fallback.json();
                     } else {

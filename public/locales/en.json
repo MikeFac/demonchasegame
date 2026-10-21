@@ -22,6 +22,7 @@
     "tryAgain": "Try Again",
     "returnToLobby": "Return to Lobby",
     "learnVersesHere": "📖 LEARN VERSES HERE!",
+    "learnVersesShort": "📖 LEARN",
     "selectCategory": "Select Category",
     "movementPaused": "⚡ LOADING NEW MAZE - MOVEMENT PAUSED ⚡",
     "ghost": "GHOST",
@@ -376,6 +377,7 @@
   },
   "hud": {
     "demonsLeft": "Demons left: {0}/{1}",
+    "demonsLeftShort": "Demons {0}/{1}",
     "move": "MOVE",
     "gameSpeed": "Game Speed",
     "tooFastOrSlow": "Too fast or too slow?",

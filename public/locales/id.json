@@ -36,6 +36,7 @@
     "tryAgain": "Coba Lagi",
     "returnToLobby": "Kembali ke Lobi",
     "learnVersesHere": "📖 PELAJARI AYAT DI SINI!",
+    "learnVersesShort": "📖 BELAJAR",
     "selectCategory": "Pilih Kategori",
     "movementPaused": "⚡ MEMUAT LABIRIN BARU - PERGERAKAN DIJEDA ⚡",
     "ghost": "HANTU",
@@ -397,6 +398,7 @@
   },
   "hud": {
     "demonsLeft": "Iblis tersisa: {0}/{1}",
+    "demonsLeftShort": "Iblis {0}/{1}",
     "move": "GERAK",
     "gameSpeed": "Kecepatan Permainan",
     "tooFastOrSlow": "Terlalu cepat atau terlalu lambat?",

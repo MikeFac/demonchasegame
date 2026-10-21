@@ -65,7 +65,7 @@ class Renderer3D extends Renderer {
         this._drawWeaponFrame(player, bobOffset);
         this.ctx.restore();
 
-        this.drawHUD(player, gameState);
+        this.drawHUD(player, gameState, uiState);
         this.drawInventoryHUD(inventoryState || { inventory: {}, activeBuffs: {}, inventoryOpen: false });
         this.drawVerseTestButton();
         this.drawMessages(uiState);

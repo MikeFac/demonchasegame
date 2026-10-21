@@ -36,6 +36,7 @@
     "tryAgain": "पुनः प्रयास करें",
     "returnToLobby": "लॉबी में लौटें",
     "learnVersesHere": "📖 यहाँ वचन सीखें!",
+    "learnVersesShort": "📖 सीखें",
     "selectCategory": "श्रेणी चुनें",
     "movementPaused": "⚡ नया भूलभुलैया लोड हो रहा है - गति रुकी हुई है ⚡",
     "ghost": "भूत",
@@ -333,6 +334,7 @@
   },
   "hud": {
     "demonsLeft": "शेष दानव: {0}/{1}",
+    "demonsLeftShort": "दानव {0}/{1}",
     "move": "चलें",
     "gameSpeed": "खेल की गति",
     "tooFastOrSlow": "बहुत तेज़ या बहुत धीमा?",

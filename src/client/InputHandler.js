@@ -347,11 +347,10 @@ class InputHandler {
         }
 
         // Check Learn Verses button (center of top bar)
-        const lb = UILayout.learnVersesButton;
-        const learnBtnX = (Viewport.width - lb.width) / 2;
+        const lb = UILayout.getLearnVersesButton(Viewport.width);
         if (
-            clickedX >= learnBtnX &&
-            clickedX <= learnBtnX + lb.width &&
+            clickedX >= lb.x &&
+            clickedX <= lb.x + lb.width &&
             clickedY >= lb.y &&
             clickedY <= lb.y + lb.height
         ) {
@@ -641,7 +640,9 @@ class InputHandler {
     }
 
     _handlePlayableAreaClick(clickedX, clickedY, qualityLineHeight, buttonHeight, answerSectionHeight) {
-        const playableTop = qualityLineHeight + buttonHeight;
+        const playableTop = (typeof UILayout !== 'undefined' && UILayout.playableTop)
+            ? UILayout.playableTop
+            : qualityLineHeight + buttonHeight;
         const playableBottom = Viewport.height - answerSectionHeight - 14;
 
         if (clickedY > playableTop && clickedY < playableBottom) {

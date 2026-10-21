@@ -36,6 +36,7 @@
     "tryAgain": "다시 시도",
     "returnToLobby": "로비로 돌아가기",
     "learnVersesHere": "📖 여기서 성경 구절 배우기!",
+    "learnVersesShort": "📖 배우기",
     "selectCategory": "카테고리 선택",
     "movementPaused": "⚡ 새 미로 로딩 중 - 이동 일시 중지 ⚡",
     "ghost": "유령",
@@ -396,6 +397,7 @@
   },
   "hud": {
     "demonsLeft": "남은 악마: {0}/{1}",
+    "demonsLeftShort": "악마 {0}/{1}",
     "move": "이동",
     "gameSpeed": "게임 속도",
     "tooFastOrSlow": "너무 빠르거나 느린가요?",

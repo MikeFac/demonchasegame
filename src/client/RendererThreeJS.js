@@ -1531,7 +1531,7 @@ class RendererThreeJS extends Renderer3D {
 
     _drawInterface(gameState, player, monsters, camera, uiState, inventoryState, mouseX, mouseY) {
         this.drawTopBar(uiState);
-        this.drawHUD(player, gameState);
+        this.drawHUD(player, gameState, uiState);
         this.drawMissionTaskCard(uiState);
         const onboardingState = this.cameraProfile === 'first-person' && uiState.onboardingGuide?.target === 'move'
             ? {

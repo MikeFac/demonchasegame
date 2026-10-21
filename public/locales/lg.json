@@ -22,6 +22,7 @@
     "tryAgain": "Gezako Nabbi",
     "returnToLobby": "Komya ku Lobby",
     "learnVersesHere": "📖 YIGIRA EBYO MU BAIBULI WANNO!",
+    "learnVersesShort": "📖 YIGA",
     "selectCategory": "Londa Ekika",
     "movementPaused": "⚡ OTANDIKIRA ENUMBA EMPYA - OKUTAMBULA KUVUUDIDWA ⚡",
     "ghost": "KIGEENI",
@@ -366,6 +367,7 @@
   },
   "hud": {
     "demonsLeft": "Balabe abaasigadde: {0}/{1}",
+    "demonsLeftShort": "Balabe {0}/{1}",
     "move": "TAMBULA",
     "gameSpeed": "Emisinde gy'Omuzannyo",
     "tooFastOrSlow": "Obwangu obungi oba obutono?",

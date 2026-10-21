@@ -36,6 +36,7 @@
     "tryAgain": "punh prayaas karen",
     "returnToLobby": "lobii men lauten",
     "learnVersesHere": "📖 yahaan vachan siikhen!",
+    "learnVersesShort": "📖 seekhen",
     "selectCategory": "shrenii chunen",
     "movementPaused": "⚡ nayaa bhuulabhulaiyaa lod ho rahaa hai - gati rukii huii hai ⚡",
     "ghost": "bhuut",
@@ -333,6 +334,7 @@
   },
   "hud": {
     "demonsLeft": "baaki daanav: {0}/{1}",
+    "demonsLeftShort": "daanav {0}/{1}",
     "move": "chalen",
     "gameSpeed": "khel kii gati",
     "tooFastOrSlow": "bahut tez ya bahut dheema?",

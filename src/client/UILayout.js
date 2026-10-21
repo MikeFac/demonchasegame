@@ -9,6 +9,7 @@ const UILayout = (function () {
     const C = window.Constants || {};
     const BASE_CANVAS_WIDTH = 400;
     const QUALITY_LINE_HEIGHT = C.QUALITY_LINE_HEIGHT || 45;
+    const HUD_ROW_HEIGHT = 24;
     const BUTTON_WIDTH = C.BUTTON_WIDTH || 84;
     const BUTTON_HEIGHT = C.BUTTON_HEIGHT || 21;
     const BUTTON_PADDING = C.BUTTON_PADDING || 4;
@@ -21,6 +22,7 @@ const UILayout = (function () {
     return {
         // Base constants (from Constants.js, re-exported for convenience)
         QUALITY_LINE_HEIGHT,
+        HUD_ROW_HEIGHT,
         BUTTON_WIDTH,
         BUTTON_HEIGHT,
         BUTTON_PADDING,
@@ -30,8 +32,10 @@ const UILayout = (function () {
         // Scale factor for responsive layouts
         getScaleFactor,
 
-        // Playable area boundaries
-        playableTop: QUALITY_LINE_HEIGHT + BUTTON_HEIGHT,
+        // Playable area boundaries. Row 1 (category/speed/menu) is
+        // QUALITY_LINE_HEIGHT tall; row 2 (HP/level/ammo/demons) is
+        // HUD_ROW_HEIGHT tall. Everything below is playable.
+        playableTop: QUALITY_LINE_HEIGHT + HUD_ROW_HEIGHT,
 
         // Hamburger menu button - aligned with top bar
         hamburgerButton: {
@@ -46,6 +50,28 @@ const UILayout = (function () {
             width: 150,
             height: 20,
             y: 2
+        },
+
+        /**
+         * Responsive Learn Verses rect. At 320-360 px the fixed 150 px button
+         * would collide with the speed control, so it shrinks and shifts left.
+         */
+        getLearnVersesButton(canvasWidth) {
+            const lb = this.learnVersesButton;
+            const btnW = canvasWidth < 360 ? 112 : lb.width;
+            const speedStart = this.getSpeedControlX(canvasWidth);
+            const maxRight = speedStart - 6;
+            let x = (canvasWidth - btnW) / 2;
+            if (x + btnW > maxRight) x = maxRight - btnW;
+            const minLeft = this.categoryIndicator.x + 68;
+            if (x < minLeft) x = minLeft;
+            return {
+                x,
+                y: lb.y,
+                width: btnW,
+                height: lb.height,
+                compact: btnW < 140
+            };
         },
 
         // Menu panel (when hamburger is open) - starts under the hamburger button, extends left
@@ -87,7 +113,7 @@ const UILayout = (function () {
         // Inventory button (floating "i" icon) - moved to LEFT side under top bars
         inventoryButton: {
             leftOffset: 20,  // Moved more to the right for better mobile click detection
-            topOffset: QUALITY_LINE_HEIGHT + BUTTON_HEIGHT + 5,
+            topOffset: QUALITY_LINE_HEIGHT + HUD_ROW_HEIGHT + 5,
             size: 28
         },
 
@@ -101,7 +127,7 @@ const UILayout = (function () {
         // Inventory panel (expandedHeight set dynamically by Renderer)
         inventoryPanel: {
             leftOffset: 20,  // Updated to match new inventoryButton position
-            topOffset: QUALITY_LINE_HEIGHT + BUTTON_HEIGHT + 38,
+            topOffset: QUALITY_LINE_HEIGHT + HUD_ROW_HEIGHT + 38,
             width: 170,
             height: 200,
             expandedHeight: 200

@@ -22,6 +22,7 @@
     "tryAgain": "Intentar de nuevo",
     "returnToLobby": "Volver al Lobby",
     "learnVersesHere": "📖 ¡APRENDE VERSÍCULOS AQUÍ!",
+    "learnVersesShort": "📖 APRENDER",
     "selectCategory": "Seleccionar categoría",
     "movementPaused": "⚡ CARGANDO NUEVO LABERINTO - MOVIMIENTO PAUSADO ⚡",
     "ghost": "FANTASMA",
@@ -366,6 +367,7 @@
   },
   "hud": {
     "demonsLeft": "Demonios restantes: {0}/{1}",
+    "demonsLeftShort": "Demonios {0}/{1}",
     "move": "MOVER",
     "gameSpeed": "Velocidad del juego",
     "tooFastOrSlow": "\u00bfMuy r\u00e1pido o muy lento?",

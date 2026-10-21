@@ -36,6 +36,7 @@
     "tryAgain": "もう一度",
     "returnToLobby": "ロビーに戻る",
     "learnVersesHere": "📖 ここで聖句を学ぶ！",
+    "learnVersesShort": "📖 学ぶ",
     "selectCategory": "カテゴリを選択",
     "movementPaused": "⚡ 新しい迷路を読み込み中 - 移動停止中 ⚡",
     "ghost": "ゴースト",
@@ -396,6 +397,7 @@
   },
   "hud": {
     "demonsLeft": "残りの悪霊: {0}/{1}",
+    "demonsLeftShort": "悪霊 {0}/{1}",
     "move": "移動",
     "gameSpeed": "ゲーム速度",
     "tooFastOrSlow": "速すぎますか？遅すぎますか？",
