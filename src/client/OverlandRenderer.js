@@ -55,7 +55,7 @@
             this.featuredNodePositions = [];
 
             const listX = 12;
-            const listWidth = Math.max(260, this.canvas.width - 24);
+            const listWidth = Math.max(260, Viewport.width - 24);
             const headerHeight = 18;
             const headerGap = 8;
             const rowHeight = 34;
@@ -154,7 +154,7 @@
             
             // Clear canvas
             ctx.fillStyle = '#1a1a2e';
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.fillRect(0, 0, Viewport.width, Viewport.height);
             
             // Draw header
             this._drawHeader(ctx, canvas);
@@ -177,7 +177,7 @@
         _drawHeader(ctx, canvas) {
             // Header background
             ctx.fillStyle = '#16213e';
-            ctx.fillRect(0, 0, canvas.width, 50);
+            ctx.fillRect(0, 0, Viewport.width, 50);
             
             // Back to Menu button (left side)
             this._drawButton(ctx, 10, 10, 80, 30, '← Menu', '#4a4a6a');
@@ -186,7 +186,7 @@
             ctx.font = 'bold 20px Arial';
             ctx.fillStyle = '#ffffff';
             ctx.textAlign = 'center';
-            ctx.fillText(t('overland.title', 'Select Mission'), canvas.width / 2, 32);
+            ctx.fillText(t('overland.title', 'Select Mission'), Viewport.width / 2, 32);
             ctx.textAlign = 'left';
             
             // User info (right side) - show if logged in
@@ -195,7 +195,7 @@
                 ctx.font = '12px Arial';
                 ctx.fillStyle = '#4CAF50';
                 ctx.textAlign = 'right';
-                ctx.fillText(`👤 ${username}`, canvas.width - 10, 30);
+                ctx.fillText(`👤 ${username}`, Viewport.width - 10, 30);
                 ctx.textAlign = 'left';
             }
         }
@@ -241,7 +241,7 @@
                     ctx.font = '12px Arial';
                     ctx.fillStyle = COLORS.locked.text;
                     ctx.textAlign = 'right';
-                    ctx.fillText(t('overland.locked', '[LOCKED]'), canvas.width - 12, headerY);
+                    ctx.fillText(t('overland.locked', '[LOCKED]'), Viewport.width - 12, headerY);
                 }
 
                 for (const node of chapterData.nodes) {
@@ -390,11 +390,11 @@
          * Draw mission info panel at bottom.
          */
         _drawMissionInfo(ctx, canvas, progressManager) {
-            const panelY = canvas.height - 92;
+            const panelY = Viewport.height - 92;
             const panelHeight = 42;
 
             ctx.fillStyle = 'rgba(20, 24, 40, 0.96)';
-            ctx.fillRect(0, panelY, canvas.width, panelHeight);
+            ctx.fillRect(0, panelY, Viewport.width, panelHeight);
 
             const isCompleted = progressManager.isMissionCompleted(this.selectedMission.missionId);
             const statusText = isCompleted ? t('overland.completed', 'Completed') : t('overland.available', 'Available');
@@ -405,23 +405,23 @@
             ctx.font = '11px Arial';
             ctx.fillStyle = '#f2f5ff';
             ctx.textAlign = 'left';
-            ctx.fillText(this._truncateText(this.selectedMission.missionDescription || '', canvas.width - 24, '11px Arial'), 12, panelY + 16);
+            ctx.fillText(this._truncateText(this.selectedMission.missionDescription || '', Viewport.width - 24, '11px Arial'), 12, panelY + 16);
 
             ctx.fillStyle = '#9ec6ff';
-            ctx.fillText(this._truncateText(qualitiesText, canvas.width - 24, '11px Arial'), 12, panelY + 31);
+            ctx.fillText(this._truncateText(qualitiesText, Viewport.width - 24, '11px Arial'), 12, panelY + 31);
         }
         
         /**
          * Draw bottom buttons (Mission Learning, Start Mission).
          */
         _drawBottomButtons(ctx, canvas) {
-            const buttonY = canvas.height - 42;
+            const buttonY = Viewport.height - 42;
             const buttonWidth = 108;
             const buttonHeight = 30;
             const buttonSpacing = 16;
             
             const totalWidth = buttonWidth * 2 + buttonSpacing;
-            const startX = (canvas.width - totalWidth) / 2;
+            const startX = (Viewport.width - totalWidth) / 2;
             
             // Mission Learning button
             this._drawButton(ctx, startX, buttonY, buttonWidth, buttonHeight,
@@ -496,12 +496,12 @@
         isStartMissionClicked(screenX, screenY) {
             if (!this.selectedMission) return false;
             
-            const buttonY = this.canvas.height - 42;
+            const buttonY = Viewport.height - 42;
             const buttonWidth = 108;
             const buttonHeight = 30;
             const buttonSpacing = 16;
             const totalWidth = buttonWidth * 2 + buttonSpacing;
-            const startX = (this.canvas.width - totalWidth) / 2;
+            const startX = (Viewport.width - totalWidth) / 2;
             const missionStartX = startX + buttonWidth + buttonSpacing;
             
             return screenX >= missionStartX && screenX <= missionStartX + buttonWidth &&
@@ -525,12 +525,12 @@
          * Check if Mission Learning button was clicked.
          */
         isMissionLearningClicked(screenX, screenY) {
-            const buttonY = this.canvas.height - 42;
+            const buttonY = Viewport.height - 42;
             const buttonWidth = 108;
             const buttonHeight = 30;
             const buttonSpacing = 16;
             const totalWidth = buttonWidth * 2 + buttonSpacing;
-            const startX = (this.canvas.width - totalWidth) / 2;
+            const startX = (Viewport.width - totalWidth) / 2;
             
             return screenX >= startX && screenX <= startX + buttonWidth &&
                    screenY >= buttonY && screenY <= buttonY + buttonHeight;
@@ -580,8 +580,8 @@
             return {
                 x: 0,
                 y: 50,
-                width: this.canvas.width,
-                height: Math.max(120, this.canvas.height - 148)
+                width: Viewport.width,
+                height: Math.max(120, Viewport.height - 148)
             };
         }
 
@@ -595,7 +595,7 @@
             const maxOffset = Math.max(0, this.contentHeight - (viewport.y + viewport.height) + 8);
             if (maxOffset <= 0) return;
 
-            const trackX = this.canvas.width - 8;
+            const trackX = Viewport.width - 8;
             const trackY = viewport.y + 8;
             const trackHeight = viewport.height - 16;
             const thumbHeight = Math.max(24, Math.round((viewport.height / this.contentHeight) * trackHeight));

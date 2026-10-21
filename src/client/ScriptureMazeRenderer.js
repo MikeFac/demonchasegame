@@ -17,22 +17,33 @@ class ScriptureMazeRenderer {
     render(state) {
         if (!state) return;
         var canvas = this.canvas;
-        var displayWidth = canvas.clientWidth || canvas.width;
-        var displayHeight = canvas.clientHeight || canvas.height;
-        if (canvas.width !== displayWidth) canvas.width = displayWidth;
-        if (canvas.height !== displayHeight) canvas.height = displayHeight;
+        if (window.Viewport) {
+            // Keep the logical layout size but render the bitmap at DPR.
+            Viewport.apply(canvas);
+        } else {
+            var displayWidth = canvas.clientWidth || canvas.width;
+            var displayHeight = canvas.clientHeight || canvas.height;
+            if (canvas.width !== displayWidth) canvas.width = displayWidth;
+            if (canvas.height !== displayHeight) canvas.height = displayHeight;
+        }
         var ctx = this.ctx || canvas.getContext('2d');
         if (!ctx) return;
         this.ctx = ctx;
-        ctx.setTransform(1, 0, 0, 1, 0, 0);
+        if (window.Viewport) {
+            Viewport.reapply(ctx);
+        } else {
+            ctx.setTransform(1, 0, 0, 1, 0, 0);
+        }
         ctx.globalAlpha = 1;
         ctx.globalCompositeOperation = 'source-over';
         ctx.shadowBlur = 0;
         ctx.shadowColor = 'transparent';
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        var logicalWidth = window.Viewport ? Viewport.width : canvas.width;
+        var logicalHeight = window.Viewport ? Viewport.height : canvas.height;
+        ctx.clearRect(0, 0, logicalWidth, logicalHeight);
 
         ctx.fillStyle = '#071019';
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.fillRect(0, 0, logicalWidth, logicalHeight);
 
         var viewport = this._getViewport(state);
 
@@ -176,7 +187,7 @@ class ScriptureMazeRenderer {
     _drawHud(state) {
         var ctx = this.ctx;
         ctx.fillStyle = 'rgba(3, 12, 18, 0.88)';
-        ctx.fillRect(12, 12, this.canvas.width - 24, 82);
+        ctx.fillRect(12, 12, Viewport.width - 24, 82);
 
         ctx.fillStyle = '#ffffff';
         ctx.font = 'bold 22px Arial';
@@ -196,22 +207,22 @@ class ScriptureMazeRenderer {
         if (state.status !== 'playing' || state.prompt) return;
         var ctx = this.ctx;
         ctx.fillStyle = 'rgba(3, 12, 18, 0.82)';
-        ctx.fillRect(12, this.canvas.height - 42, this.canvas.width - 24, 30);
+        ctx.fillRect(12, Viewport.height - 42, Viewport.width - 24, 30);
         ctx.fillStyle = '#d8e7ef';
         ctx.font = '13px Arial';
-        ctx.fillText('Click any reachable floor tile to move there. Touch a 2L rune to unlock eat mode.', 24, this.canvas.height - 22);
+        ctx.fillText('Click any reachable floor tile to move there. Touch a 2L rune to unlock eat mode.', 24, Viewport.height - 22);
     }
 
     _drawPromptOverlay(prompt) {
         var ctx = this.ctx;
-        var width = Math.min(640, this.canvas.width - 40);
+        var width = Math.min(640, Viewport.width - 40);
         var height = 240;
-        var x = (this.canvas.width - width) / 2;
-        var y = (this.canvas.height - height) / 2;
+        var x = (Viewport.width - width) / 2;
+        var y = (Viewport.height - height) / 2;
         this.promptOptionRects = [];
 
         ctx.fillStyle = 'rgba(0, 0, 0, 0.76)';
-        ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+        ctx.fillRect(0, 0, Viewport.width, Viewport.height);
         ctx.fillStyle = '#12283a';
         ctx.fillRect(x, y, width, height);
         ctx.strokeStyle = '#f4c84c';
@@ -263,18 +274,18 @@ class ScriptureMazeRenderer {
     _drawEndOverlay(state) {
         var ctx = this.ctx;
         ctx.fillStyle = 'rgba(0,0,0,0.68)';
-        ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+        ctx.fillRect(0, 0, Viewport.width, Viewport.height);
         ctx.fillStyle = state.status === 'victory' ? '#6cf39a' : '#ff7a7a';
         ctx.font = 'bold 42px Arial';
         ctx.textAlign = 'center';
-        ctx.fillText(state.status === 'victory' ? 'Mission Complete' : 'Caught', this.canvas.width / 2, this.canvas.height / 2 - 20);
+        ctx.fillText(state.status === 'victory' ? 'Mission Complete' : 'Caught', Viewport.width / 2, Viewport.height / 2 - 20);
         ctx.font = '18px Arial';
         ctx.fillStyle = '#ffffff';
-        ctx.fillText('Press Enter or click to return to Missions', this.canvas.width / 2, this.canvas.height / 2 + 22);
+        ctx.fillText('Press Enter or click to return to Missions', Viewport.width / 2, Viewport.height / 2 + 22);
         ctx.textAlign = 'left';
         this.controlRects.finish = {
-            x: (this.canvas.width / 2) - 180,
-            y: (this.canvas.height / 2) + 36,
+            x: (Viewport.width / 2) - 180,
+            y: (Viewport.height / 2) + 36,
             w: 360,
             h: 46
         };
@@ -314,7 +325,7 @@ class ScriptureMazeRenderer {
         }
 
         if (!state || state.status !== 'playing') return null;
-        if (y <= 96 || y >= this.canvas.height - 48) return null;
+        if (y <= 96 || y >= Viewport.height - 48) return null;
 
         var worldPoint = this.canvasToWorld(state, x, y);
         if (!worldPoint) return null;
@@ -343,11 +354,11 @@ class ScriptureMazeRenderer {
     }
 
     _getViewport(state) {
-        var scale = Math.min(this.canvas.width / state.width, this.canvas.height / state.height);
+        var scale = Math.min(Viewport.width / state.width, Viewport.height / state.height);
         return {
             scale: scale,
-            offsetX: (this.canvas.width - state.width * scale) / 2,
-            offsetY: (this.canvas.height - state.height * scale) / 2
+            offsetX: (Viewport.width - state.width * scale) / 2,
+            offsetY: (Viewport.height - state.height * scale) / 2
         };
     }
 

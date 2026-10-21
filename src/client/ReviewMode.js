@@ -182,7 +182,7 @@
 
         // Boundary clamping
         if (tx < 5) tx = 5;
-        if (tx + tw > canvas.width - 5) tx = canvas.width - tw - 5;
+        if (tx + tw > Viewport.width - 5) tx = Viewport.width - tw - 5;
         if (ty < 5) ty = y + 40;
 
         c.fillStyle = 'rgba(0, 0, 0, 0.85)';
@@ -218,10 +218,9 @@
 
         // Force canvas resize BEFORE any rendering
         if (typeof canvas !== 'undefined' && typeof getOptimalCanvasWidth === 'function') {
-            canvas.width = getOptimalCanvasWidth();
-            canvas.height = Math.min(600, window.innerHeight - 80);
+            Viewport.setSize(getOptimalCanvasWidth(), Math.min(600, window.innerHeight - 80), canvas);
             ctx = canvas.getContext('2d');
-            // Canvas resize logged only when actually changed
+            Viewport.reapply(ctx);
         }
         
 
@@ -258,7 +257,7 @@
         if (window.ModeManager && typeof window.ModeManager.adopt === 'function') {
             window.ModeManager.adopt('review', options);
         }
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.clearRect(0, 0, Viewport.width, Viewport.height);
         displayReviewVerseScreen();
 
 
@@ -455,7 +454,7 @@
 
         const page = pages[currentDiscipleshipPageIndex];
         let y = 96;
-        const maxWidth = canvas.width - 40;
+        const maxWidth = Viewport.width - 40;
 
         ctx.fillStyle = '#f5c542';
         ctx.font = 'bold 16px Arial';
@@ -486,14 +485,8 @@
     function displayReviewVerseScreen() {
         if (window.gameMode === 'review') {
             // Force canvas resize before every render to ensure correct dimensions
-            if (typeof canvas !== 'undefined' && typeof getOptimalCanvasWidth === 'function') {
-                const targetWidth = getOptimalCanvasWidth();
-                const targetHeight = Math.min(600, window.innerHeight - 80);
-                if (canvas.width !== targetWidth || canvas.height !== targetHeight) {
-                    canvas.width = targetWidth;
-                    canvas.height = targetHeight;
-                    ctx = canvas.getContext('2d');
-                }
+            if (typeof canvas !== 'undefined' && typeof ensureCanvasSize === 'function') {
+                ensureCanvasSize();
             }
             
 
@@ -508,35 +501,35 @@
                 return;
             }
 
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.clearRect(0, 0, Viewport.width, Viewport.height);
 
             // Background: draw image + gradient overlay for readability
             if (currentBgImage && currentBgImage.complete && currentBgImage.naturalWidth > 0) {
                 // Draw image scaled to fill canvas
-                const scale = Math.max(canvas.width / currentBgImage.width, canvas.height / currentBgImage.height);
+                const scale = Math.max(Viewport.width / currentBgImage.width, Viewport.height / currentBgImage.height);
                 const w = currentBgImage.width * scale;
                 const h = currentBgImage.height * scale;
-                ctx.drawImage(currentBgImage, (canvas.width - w) / 2, (canvas.height - h) / 2, w, h);
+                ctx.drawImage(currentBgImage, (Viewport.width - w) / 2, (Viewport.height - h) / 2, w, h);
 
                 // Dark overlay — stronger at top (controls/text) and bottom (nav buttons)
                 // lighter in the middle so the image bleeds through
-                const grad = ctx.createLinearGradient(0, 0, 0, canvas.height);
+                const grad = ctx.createLinearGradient(0, 0, 0, Viewport.height);
                 grad.addColorStop(0,    'rgba(10, 10, 25, 0.82)'); // top bar area
                 grad.addColorStop(0.18, 'rgba(10, 10, 25, 0.55)'); // verse text area starts
                 grad.addColorStop(0.6,  'rgba(10, 10, 25, 0.45)'); // mid canvas
                 grad.addColorStop(0.82, 'rgba(10, 10, 25, 0.65)'); // approaching bottom controls
                 grad.addColorStop(1,    'rgba(10, 10, 25, 0.85)'); // bottom nav bar
                 ctx.fillStyle = grad;
-                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                ctx.fillRect(0, 0, Viewport.width, Viewport.height);
             } else {
                 // Fallback solid dark background
                 ctx.fillStyle = '#0f0f1b';
-                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                ctx.fillRect(0, 0, Viewport.width, Viewport.height);
             }
 
             // Top bar — subtle frosted glass strip
             ctx.fillStyle = 'rgba(0, 0, 0, 0.45)';
-            ctx.fillRect(0, 0, canvas.width, 60);
+            ctx.fillRect(0, 0, Viewport.width, 60);
 
             // Reset hitRects for this frame
             hitRects = [];
@@ -596,30 +589,30 @@
                 if (verseDetails.discipleshipContent) {
                     ctx.font = '16px Arial';
                     ctx.fillStyle = '#ffffff';
-                    ctx.fillText(t('review.reference', verseReference), 20, canvas.height - 94);
+                    ctx.fillText(t('review.reference', verseReference), 20, Viewport.height - 94);
 
                     ctx.font = '16px Arial';
                     ctx.fillStyle = '#ffffff';
-                    ctx.fillText(t('review.learn', tCategory(verseDetails.category)), 20, canvas.height - 68);
+                    ctx.fillText(t('review.learn', tCategory(verseDetails.category)), 20, Viewport.height - 68);
 
                     if (discipleshipPageState && discipleshipPageState.pageCount > 1) {
                         ctx.textAlign = 'right';
                         ctx.fillStyle = '#e8d44d';
                         ctx.fillText(
                             `${discipleshipPageState.pageLabel} ${discipleshipPageState.pageIndex + 1}/${discipleshipPageState.pageCount}`,
-                            canvas.width - 20,
-                            canvas.height - 68
+                            Viewport.width - 20,
+                            Viewport.height - 68
                         );
                         ctx.textAlign = 'left';
                     }
                 } else {
                     ctx.font = '20px Arial';
                     ctx.fillStyle = 'white';
-                    ctx.fillText(t('review.learn', tCategory(verseDetails.category)), 20, canvas.height - 90);
+                    ctx.fillText(t('review.learn', tCategory(verseDetails.category)), 20, Viewport.height - 90);
 
                     ctx.font = '20px Arial';
                     ctx.fillStyle = 'white';
-                    ctx.fillText(t('review.reference', verseReference), 20, canvas.height - 120);
+                    ctx.fillText(t('review.reference', verseReference), 20, Viewport.height - 120);
                 }
 
                 const songBrowsingMode = window.MusicManager &&
@@ -642,13 +635,13 @@
                     ctx.font = 'bold 16px Arial';
                     ctx.textAlign = 'center';
                     const msgW = ctx.measureText(reviewFlashMessage.text).width + 30;
-                    const msgX = canvas.width / 2 - msgW / 2;
+                    const msgX = Viewport.width / 2 - msgW / 2;
                     const msgY = 65;
                     ctx.beginPath();
                     ctx.roundRect(msgX, msgY, msgW, 32, 8);
                     ctx.fill();
                     ctx.fillStyle = '#fff';
-                    ctx.fillText(reviewFlashMessage.text, canvas.width / 2, msgY + 22);
+                    ctx.fillText(reviewFlashMessage.text, Viewport.width / 2, msgY + 22);
                     ctx.textAlign = 'left';
                     ctx.restore();
                 } else {
@@ -669,7 +662,7 @@
     function displayReviewVerse(text) {
         const fontSize = 28;
         const lineHeight = fontSize * 1.3;
-        const maxWidth = canvas.width - 40;
+        const maxWidth = Viewport.width - 40;
         
 
 
@@ -701,7 +694,7 @@
 
     function drawNavigationButtons() {
         const iconSize = 44;
-        const bottomY = canvas.height - iconSize - 15;
+        const bottomY = Viewport.height - iconSize - 15;
 
         // === Previous (back) icon - left ===
         const prevX = 15;
@@ -762,7 +755,7 @@
         }
 
         // === Next icon - right ===
-        const nextX = canvas.width - iconSize - 15;
+        const nextX = Viewport.width - iconSize - 15;
         if (hoveredButton === 'next') {
             ctx.fillStyle = 'rgba(255, 255, 255, 0.1)';
             ctx.beginPath();
@@ -794,12 +787,12 @@
         const colWidth = (panelW - padding * 2 - itemSpacing * (cols - 1)) / cols;
         const panelH = padding + rows * (itemH + itemSpacing) + padding + 30;
 
-        const panelX = (canvas.width - panelW) / 2;
-        const panelY = Math.max(30, (canvas.height - panelH) / 2);
+        const panelX = (Viewport.width - panelW) / 2;
+        const panelY = Math.max(30, (Viewport.height - panelH) / 2);
 
         // Overlay
         ctx.fillStyle = 'rgba(0, 0, 0, 0.6)';
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.fillRect(0, 0, Viewport.width, Viewport.height);
 
         // Panel background
         ctx.fillStyle = 'rgba(20, 20, 30, 0.95)';
@@ -905,8 +898,8 @@
             const colWidth = (panelW - padding * 2 - itemSpacing * (cols - 1)) / cols;
             const panelH = padding + rows * (itemH + itemSpacing) + padding + 30;
 
-            const panelX = (canvas.width - panelW) / 2;
-            const panelY = Math.max(30, (canvas.height - panelH) / 2);
+            const panelX = (Viewport.width - panelW) / 2;
+            const panelY = Math.max(30, (Viewport.height - panelH) / 2);
 
             // Check if click is inside a category item
             for (let idx = 0; idx < categories.length; idx++) {
@@ -1308,7 +1301,7 @@
         hitRects.push({ name: 'back', x: backX, y: iconY, w: iconSize, h: iconSize, tooltip: 'Back' });
 
         // === Share icon (top-right) ===
-        const shareX = canvas.width - iconSize - 10;
+        const shareX = Viewport.width - iconSize - 10;
         if (hoveredButton === 'share') {
             ctx.fillStyle = 'rgba(255, 255, 255, 0.1)';
             ctx.beginPath();
@@ -1360,7 +1353,7 @@
         // === Devotional button (center) ===
         const devW = 90;
         const devH = 30;
-        const devX = Math.floor((canvas.width - devW) / 2);
+        const devX = Math.floor((Viewport.width - devW) / 2);
         const devY = iconY + (iconSize - devH) / 2;
         if (hoveredButton === 'devotional') {
             ctx.fillStyle = 'rgba(232, 212, 77, 0.25)';
@@ -1385,8 +1378,8 @@
         // === Study plan button (lower-center, below the verse body) ===
         const studyW = 118;
         const studyH = 30;
-        const studyX = Math.floor((canvas.width - studyW) / 2);
-        const studyY = Math.max(120, canvas.height - 180);
+        const studyX = Math.floor((Viewport.width - studyW) / 2);
+        const studyY = Math.max(120, Viewport.height - 180);
         if (hoveredButton === 'studyPlan') {
             ctx.fillStyle = 'rgba(60, 123, 214, 0.28)';
         } else {

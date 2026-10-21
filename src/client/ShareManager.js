@@ -114,8 +114,8 @@
             flashMessages.push({
                 text: message,
                 color: '#4CAF50',
-                x: canvas.width / 2,
-                y: canvas.height / 2,
+                x: (window.Viewport ? Viewport.width : canvas.width) / 2,
+                y: (window.Viewport ? Viewport.height : canvas.height) / 2,
                 startTime: Date.now(),
                 duration: 2000,
                 fontSize: 18,

@@ -26,6 +26,11 @@
     }
 
     function updateDimensions() {
+        if (typeof Viewport !== 'undefined') {
+            CANVAS_WIDTH = Viewport.width;
+            CANVAS_HEIGHT = Viewport.height;
+            return;
+        }
         const c = getCanvas();
         CANVAS_WIDTH = c.width || 400;
         CANVAS_HEIGHT = c.height || 600;

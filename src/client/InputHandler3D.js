@@ -332,8 +332,8 @@ class InputHandler3D extends InputHandler {
 
     _isLookZone(point) {
         const top = this.constants.QUALITY_LINE_HEIGHT + this.constants.BUTTON_HEIGHT;
-        const bottom = this.canvas.height - this.constants.ANSWER_SECTION_HEIGHT;
-        return point.x >= this.canvas.width * 0.32 && point.y >= top && point.y <= bottom;
+        const bottom = Viewport.height - this.constants.ANSWER_SECTION_HEIGHT;
+        return point.x >= Viewport.width * 0.32 && point.y >= top && point.y <= bottom;
     }
 
     _isDirectionalInputBlocked() {

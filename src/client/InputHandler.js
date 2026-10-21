@@ -220,6 +220,9 @@ class InputHandler {
     }
 
     _getCanvasPoint(clientX, clientY) {
+        if (window.Viewport && typeof Viewport.toLogicalPoint === 'function') {
+            return Viewport.toLogicalPoint(clientX, clientY, this.canvas);
+        }
         const rect = this.canvas.getBoundingClientRect();
         const scaleX = this.canvas.width / rect.width;
         const scaleY = this.canvas.height / rect.height;
@@ -239,7 +242,7 @@ class InputHandler {
 
         // Check if VerseTestScreen is active (highest priority overlay)
         if (typeof VerseTestScreen !== 'undefined' && VerseTestScreen.isActive()) {
-            VerseTestScreen.handleClick(clickedX, clickedY, this.canvas.width, this.canvas.height);
+            VerseTestScreen.handleClick(clickedX, clickedY, Viewport.width, Viewport.height);
             return;
         }
 
@@ -310,7 +313,7 @@ class InputHandler {
         // Check speed control chevron buttons (in top bar)
         if (typeof UILayout !== 'undefined') {
             const sc = UILayout.speedControl;
-            const scX = UILayout.getSpeedControlX(this.canvas.width);
+            const scX = UILayout.getSpeedControlX(Viewport.width);
             const scY = sc.y;
             const chevW = sc.chevronWidth;
             const labelW = sc.labelWidth;
@@ -330,7 +333,7 @@ class InputHandler {
 
         // Check hamburger menu button (top-right)
         const hb = UILayout.hamburgerButton;
-        const hamburgerBtnX = UILayout.getHamburgerButtonX(this.canvas.width);
+        const hamburgerBtnX = UILayout.getHamburgerButtonX(Viewport.width);
         if (
             clickedX >= hamburgerBtnX &&
             clickedX <= hamburgerBtnX + hb.width &&
@@ -345,7 +348,7 @@ class InputHandler {
 
         // Check Learn Verses button (center of top bar)
         const lb = UILayout.learnVersesButton;
-        const learnBtnX = (this.canvas.width - lb.width) / 2;
+        const learnBtnX = (Viewport.width - lb.width) / 2;
         if (
             clickedX >= learnBtnX &&
             clickedX <= learnBtnX + lb.width &&
@@ -361,7 +364,7 @@ class InputHandler {
         // Check menu panel items (if menu is open)
         if (typeof menuOpen !== 'undefined' && menuOpen) {
             const mp = UILayout.menuPanel;
-            const panelX = UILayout.getMenuPanelX(this.canvas.width);
+            const panelX = UILayout.getMenuPanelX(Viewport.width);
             const panelY = mp.topOffset;
             const itemH = mp.itemHeight;
             const padding = mp.padding;
@@ -417,8 +420,8 @@ class InputHandler {
         // Check category picker (if open, it's a modal overlay — consume all clicks)
         if (typeof categoryPickerOpen !== 'undefined' && categoryPickerOpen) {
             const cp = UILayout.categoryPicker;
-            const panelX = UILayout.getCategoryPickerX(this.canvas.width);
-            const panelY = UILayout.getCategoryPickerY(this.canvas.height);
+            const panelX = UILayout.getCategoryPickerX(Viewport.width);
+            const panelY = UILayout.getCategoryPickerY(Viewport.height);
             const categories = (typeof QUALITIES !== 'undefined') ? QUALITIES : [];
             const cols = cp.columns;
             const rows = Math.ceil(categories.length / cols);
@@ -466,13 +469,13 @@ class InputHandler {
         if (typeof currentQuiz !== 'undefined' && currentQuiz && currentQuiz.mode === 'cloze' &&
             currentQuiz.letterOptions && !currentQuiz.isComplete && !currentQuiz.showFullAnswer) {
 
-            const canvasWidth = this.canvas.width;
+            const canvasWidth = Viewport.width;
 
             // Must match letter button layout in Renderer.displayClozeOptions
             const letterBtnHeight = 24;
             const letterBtnWidth = 44;
             const letterBtnSpacing = 5;
-            const letterY = this.canvas.height - letterBtnHeight - 6;
+            const letterY = Viewport.height - letterBtnHeight - 6;
 
             const letterButtons = currentQuiz.letterOptions || [];
             const totalButtonsWidth = letterButtons.length * letterBtnWidth + (letterButtons.length - 1) * letterBtnSpacing;
@@ -521,7 +524,7 @@ class InputHandler {
                 const optionStartX = qo.startX;
                 const buttonHeight = qo.height;
                 const buttonSpacing = qo.spacing;
-                const buttonY = UILayout.getQuizButtonY(this.canvas.height);
+                const buttonY = UILayout.getQuizButtonY(Viewport.height);
 
                 const optionCount = currentQuiz.options.length;
 
@@ -538,7 +541,7 @@ class InputHandler {
                 ctx.font = 'bold 16px Arial'; // Must match Renderer.displayQuizOptions font for label
                 const labelText = currentQuiz.questionLabel || '';
                 const labelTextWidth = ctx.measureText(labelText).width;
-                const maxLabelWidth = this.canvas.width - optionStartX - (qo.rightPadding || 7) - (optionCount * buttonWidth + (optionCount - 1) * buttonSpacing) - 14;
+                const maxLabelWidth = Viewport.width - optionStartX - (qo.rightPadding || 7) - (optionCount * buttonWidth + (optionCount - 1) * buttonSpacing) - 14;
 
 
                 // Calculate label width (accounting for possible 2-line wrapping)
@@ -617,10 +620,10 @@ class InputHandler {
         const rowGap = 8;
         const columnGap = 10;
         const buttonHeight = optionCount >= 4 ? 38 : 34;
-        const buttonWidth = Math.floor((this.canvas.width - leftMargin - rightMargin - columnGap) / columns);
+        const buttonWidth = Math.floor((Viewport.width - leftMargin - rightMargin - columnGap) / columns);
         const labelHeight = 0;
         const totalHeight = labelHeight + topGap + rows * buttonHeight + (rows - 1) * rowGap;
-        const topY = this.canvas.height - totalHeight - 10;
+        const topY = Viewport.height - totalHeight - 10;
         const buttons = [];
 
         for (let i = 0; i < optionCount; i++) {
@@ -639,7 +642,7 @@ class InputHandler {
 
     _handlePlayableAreaClick(clickedX, clickedY, qualityLineHeight, buttonHeight, answerSectionHeight) {
         const playableTop = qualityLineHeight + buttonHeight;
-        const playableBottom = this.canvas.height - answerSectionHeight - 14;
+        const playableBottom = Viewport.height - answerSectionHeight - 14;
 
         if (clickedY > playableTop && clickedY < playableBottom) {
             let handled = false;

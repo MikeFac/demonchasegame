@@ -3,17 +3,17 @@ function get3DControlLayout(canvas, qualityLineHeight, viewMode = 'third-person'
     // Chase controls are taps, so they can be more compact. First-person
     // controls are held while moving/turning and retain a larger touch target.
     const size = firstPerson
-        ? Math.min(76, Math.max(58, canvas.width * 0.12))
-        : Math.min(66, Math.max(48, canvas.width * 0.105));
+        ? Math.min(76, Math.max(58, Viewport.width * 0.12))
+        : Math.min(66, Math.max(48, Viewport.width * 0.105));
     const forwardExtra = firstPerson ? 14 : 10;
-    const bottom = canvas.height - size - 22;
+    const bottom = Viewport.height - size - 22;
     const leftX = 18;
     const rightX = leftX + size + 10;
-    const forwardX = canvas.width - size - 18;
+    const forwardX = Viewport.width - size - 18;
     const forwardY = bottom - 18;
     const stopX = forwardX;
     const stopY = forwardY - size - 12;
-    const fireX = canvas.width - size - 18;
+    const fireX = Viewport.width - size - 18;
     const fireY = qualityLineHeight + 58;
 
     return {
@@ -98,9 +98,9 @@ class Renderer3D extends Renderer {
 
     _drawWorld3D(player, walls, viewAngle, bobOffset) {
         const worldTop = this.QUALITY_LINE_HEIGHT;
-        const worldHeight = this.canvas.height - worldTop;
+        const worldHeight = Viewport.height - worldTop;
         const horizon = worldTop + Math.floor(worldHeight * 0.4 + bobOffset);
-        const sceneWidth = this.canvas.width;
+        const sceneWidth = Viewport.width;
         const projectionPlane = (sceneWidth / 2) / Math.tan(this.fov / 2);
 
         const skyGradient = this.ctx.createLinearGradient(0, worldTop, 0, horizon);
@@ -108,14 +108,14 @@ class Renderer3D extends Renderer {
         skyGradient.addColorStop(0.55, '#bfe6ff');
         skyGradient.addColorStop(1, '#eef8ff');
         this.ctx.fillStyle = skyGradient;
-        this.ctx.fillRect(0, worldTop, this.canvas.width, horizon - worldTop);
+        this.ctx.fillRect(0, worldTop, Viewport.width, horizon - worldTop);
 
-        const floorGradient = this.ctx.createLinearGradient(0, horizon, 0, this.canvas.height);
+        const floorGradient = this.ctx.createLinearGradient(0, horizon, 0, Viewport.height);
         floorGradient.addColorStop(0, '#bcae8a');
         floorGradient.addColorStop(0.55, '#927f5d');
         floorGradient.addColorStop(1, '#62523c');
         this.ctx.fillStyle = floorGradient;
-        this.ctx.fillRect(0, horizon, this.canvas.width, this.canvas.height - horizon);
+        this.ctx.fillRect(0, horizon, Viewport.width, Viewport.height - horizon);
 
         this._drawAtmosphere(horizon, worldTop, viewAngle);
         this._rebuildWallCache(walls || []);
@@ -167,7 +167,7 @@ class Renderer3D extends Renderer {
     _drawAtmosphere(horizon, worldTop, viewAngle) {
         this.ctx.fillStyle = 'rgba(255, 238, 170, 0.34)';
         this.ctx.beginPath();
-        this.ctx.arc(this.canvas.width * 0.72, worldTop + 74, 96, 0, Math.PI * 2);
+        this.ctx.arc(Viewport.width * 0.72, worldTop + 74, 96, 0, Math.PI * 2);
         this.ctx.fill();
 
         this.ctx.strokeStyle = 'rgba(255,255,255,0.11)';
@@ -176,7 +176,7 @@ class Renderer3D extends Renderer {
             const y = horizon + i * 28;
             this.ctx.beginPath();
             this.ctx.moveTo(0, y);
-            this.ctx.lineTo(this.canvas.width, y);
+            this.ctx.lineTo(Viewport.width, y);
             this.ctx.stroke();
         }
 
@@ -185,14 +185,14 @@ class Renderer3D extends Renderer {
     }
 
     _drawFloorDepthGuides(horizon) {
-        const vanishingX = this.canvas.width / 2;
+        const vanishingX = Viewport.width / 2;
         const floorTop = horizon + 12;
-        const floorBottom = this.canvas.height;
+        const floorBottom = Viewport.height;
 
         this.ctx.strokeStyle = 'rgba(255, 241, 205, 0.16)';
         this.ctx.lineWidth = 1;
         for (let i = -4; i <= 4; i++) {
-            const x = vanishingX + i * (this.canvas.width * 0.07);
+            const x = vanishingX + i * (Viewport.width * 0.07);
             this.ctx.beginPath();
             this.ctx.moveTo(vanishingX + i * 4, floorTop);
             this.ctx.lineTo(x * 1.55, floorBottom);
@@ -205,17 +205,17 @@ class Renderer3D extends Renderer {
             const y = floorTop + (floorBottom - floorTop) * t * t;
             this.ctx.beginPath();
             this.ctx.moveTo(0, y);
-            this.ctx.lineTo(this.canvas.width, y);
+            this.ctx.lineTo(Viewport.width, y);
             this.ctx.stroke();
         }
     }
 
     _drawCeilingRibs(worldTop, horizon, viewAngle) {
-        const vanishingX = this.canvas.width / 2 + Math.sin(viewAngle) * 28;
+        const vanishingX = Viewport.width / 2 + Math.sin(viewAngle) * 28;
         this.ctx.strokeStyle = 'rgba(255,255,255,0.08)';
         this.ctx.lineWidth = 2;
         for (let i = 0; i < 5; i++) {
-            const xOffset = (i - 2) * (this.canvas.width * 0.18);
+            const xOffset = (i - 2) * (Viewport.width * 0.18);
             this.ctx.beginPath();
             this.ctx.moveTo(vanishingX + xOffset * 0.3, worldTop + 18);
             this.ctx.lineTo(vanishingX + xOffset, horizon - 12);
@@ -224,8 +224,8 @@ class Renderer3D extends Renderer {
     }
 
     _drawCrosshair() {
-        const cx = this.canvas.width / 2;
-        const cy = this.QUALITY_LINE_HEIGHT + (this.canvas.height - this.QUALITY_LINE_HEIGHT) * 0.52;
+        const cx = Viewport.width / 2;
+        const cy = this.QUALITY_LINE_HEIGHT + (Viewport.height - this.QUALITY_LINE_HEIGHT) * 0.52;
         this.ctx.strokeStyle = 'rgba(255, 255, 255, 0.55)';
         this.ctx.lineWidth = 2;
         this.ctx.beginPath();
@@ -372,17 +372,17 @@ class Renderer3D extends Renderer {
 
     _drawVignette(worldTop, horizon) {
         const edgeShade = this.ctx.createRadialGradient(
-            this.canvas.width / 2,
+            Viewport.width / 2,
             horizon,
-            this.canvas.width * 0.18,
-            this.canvas.width / 2,
+            Viewport.width * 0.18,
+            Viewport.width / 2,
             horizon,
-            this.canvas.width * 0.78
+            Viewport.width * 0.78
         );
         edgeShade.addColorStop(0, 'rgba(0,0,0,0)');
         edgeShade.addColorStop(1, 'rgba(88,110,132,0.14)');
         this.ctx.fillStyle = edgeShade;
-        this.ctx.fillRect(0, worldTop, this.canvas.width, this.canvas.height - worldTop);
+        this.ctx.fillRect(0, worldTop, Viewport.width, Viewport.height - worldTop);
     }
 
     _drawControlsOverlay() {
@@ -506,16 +506,16 @@ class Renderer3D extends Renderer {
     }
 
     _drawWeaponFrame(player, bobOffset) {
-        const weaponY = this.canvas.height - 68 + bobOffset * 0.6;
-        const centerX = this.canvas.width / 2;
+        const weaponY = Viewport.height - 68 + bobOffset * 0.6;
+        const centerX = Viewport.width / 2;
         const spread = 48;
 
         this.ctx.fillStyle = 'rgba(22, 18, 12, 0.82)';
         this.ctx.beginPath();
         this.ctx.moveTo(centerX - spread, weaponY);
         this.ctx.lineTo(centerX + spread, weaponY);
-        this.ctx.lineTo(centerX + spread * 0.42, this.canvas.height);
-        this.ctx.lineTo(centerX - spread * 0.42, this.canvas.height);
+        this.ctx.lineTo(centerX + spread * 0.42, Viewport.height);
+        this.ctx.lineTo(centerX - spread * 0.42, Viewport.height);
         this.ctx.closePath();
         this.ctx.fill();
 
@@ -702,8 +702,8 @@ class Renderer3D extends Renderer {
         const relativeAngle = this._normalizeAngle(entityAngle - viewAngle);
         if (Math.abs(relativeAngle) > this.fov * 0.65) return null;
 
-        const sceneWidth = this.canvas.width;
-        const sceneHeight = this.canvas.height - this.QUALITY_LINE_HEIGHT;
+        const sceneWidth = Viewport.width;
+        const sceneHeight = Viewport.height - this.QUALITY_LINE_HEIGHT;
         const horizon = this.QUALITY_LINE_HEIGHT + sceneHeight * 0.4;
         const projectionPlane = (sceneWidth / 2) / Math.tan(this.fov / 2);
         const heightScale = options.heightScale || 1.0;

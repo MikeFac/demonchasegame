@@ -182,9 +182,9 @@ class RendererThreeJS extends Renderer3D {
         for (const tracer of this.shotTracers) {
             const projected = tracer.group.position.clone().project(this.camera3D);
             if (projected.z < -1 || projected.z > 1) continue;
-            const x = (projected.x * 0.5 + 0.5) * this.canvas.width;
-            const y = (-projected.y * 0.5 + 0.5) * this.canvas.height;
-            if (x < -20 || x > this.canvas.width + 20 || y < -20 || y > this.canvas.height + 20) continue;
+            const x = (projected.x * 0.5 + 0.5) * Viewport.width;
+            const y = (-projected.y * 0.5 + 0.5) * Viewport.height;
+            if (x < -20 || x > Viewport.width + 20 || y < -20 || y > Viewport.height + 20) continue;
             const pulse = 1 + Math.sin((tracer.progress || 0) * Math.PI * 6) * 0.12;
             const radius = 11 * pulse;
             const glow = this.ctx.createRadialGradient(x, y, 0, x, y, radius * 2.1);
@@ -473,10 +473,10 @@ class RendererThreeJS extends Renderer3D {
             `loss ${this.contextLossCount}  restore ${this.contextRestoreCount}  snapshots ${this.recoverySnapshotCount}`,
             recoveryActive ? `cached ${this.viewMode} layer visible` : this.gpuInfo.renderer.slice(0, 42)
         ];
-        const width = Math.min(292, this.canvas.width - 12);
+        const width = Math.min(292, Viewport.width - 12);
         const height = 47;
         const x = 6;
-        const y = Math.max(48, this.canvas.height - 150);
+        const y = Math.max(48, Viewport.height - 150);
         this.ctx.save();
         this.ctx.fillStyle = 'rgba(0, 0, 0, 0.82)';
         this.ctx.fillRect(x, y, width, height);
@@ -592,8 +592,8 @@ class RendererThreeJS extends Renderer3D {
 
     _syncCanvasLayers() {
         const rect = this.canvas.getBoundingClientRect();
-        const width = Math.max(1, this.canvas.width);
-        const height = Math.max(1, this.canvas.height);
+        const width = Math.max(1, Viewport.width);
+        const height = Math.max(1, Viewport.height);
 
         if (this.worldCanvas.width !== width || this.worldCanvas.height !== height) {
             this.webgl.setSize(width, height, false);
@@ -1570,8 +1570,8 @@ class RendererThreeJS extends Renderer3D {
         const active = performance.now() <= this.aimFeedback.until;
         const type = active ? this.aimFeedback.type : 'neutral';
         const color = type === 'hit' ? '#ffe46b' : (type === 'wall' ? '#ff9b6b' : (type === 'miss' ? '#d4e6f4' : '#ffffff'));
-        const centerX = this.canvas.width / 2;
-        const centerY = this.canvas.height / 2;
+        const centerX = Viewport.width / 2;
+        const centerY = Viewport.height / 2;
         const gap = type === 'hit' ? 4 : 6;
         const arm = type === 'hit' ? 9 : 7;
 
@@ -1606,14 +1606,14 @@ class RendererThreeJS extends Renderer3D {
             ? target.maxHealth
             : health;
         const label = health === null ? `DEMON: ${type}` : `DEMON: ${type}  ${health}/${maxHealth}`;
-        const centerX = this.canvas.width / 2;
-        const centerY = this.canvas.height / 2;
+        const centerX = Viewport.width / 2;
+        const centerY = Viewport.height / 2;
         this.ctx.save();
         this.ctx.font = 'bold 15px Arial, sans-serif';
         this.ctx.textAlign = 'center';
         this.ctx.textBaseline = 'middle';
         const textWidth = this.ctx.measureText(label).width;
-        const boxWidth = Math.min(this.canvas.width - 24, textWidth + 26);
+        const boxWidth = Math.min(Viewport.width - 24, textWidth + 26);
         const boxHeight = 30;
         const boxX = centerX - boxWidth / 2;
         const boxY = centerY + 26;

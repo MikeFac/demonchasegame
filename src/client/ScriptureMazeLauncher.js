@@ -177,6 +177,9 @@
     }
 
     function _getCanvasPoint(clientX, clientY) {
+        if (window.Viewport && typeof Viewport.toLogicalPoint === 'function') {
+            return Viewport.toLogicalPoint(clientX, clientY, canvas);
+        }
         var rect = canvas.getBoundingClientRect();
         var scaleX = rect.width ? (canvas.width / rect.width) : 1;
         var scaleY = rect.height ? (canvas.height / rect.height) : 1;

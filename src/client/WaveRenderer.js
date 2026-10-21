@@ -51,15 +51,15 @@ class WaveRenderer {
         var canvas = this.canvas;
 
         // Calculate scale to fit arena into canvas
-        this._scaleX = canvas.width / state.arenaWidth;
-        this._scaleY = canvas.height / state.arenaHeight;
+        this._scaleX = Viewport.width / state.arenaWidth;
+        this._scaleY = Viewport.height / state.arenaHeight;
         var scale = Math.min(this._scaleX, this._scaleY);
-        var offsetX = (canvas.width - state.arenaWidth * scale) / 2;
-        var offsetY = (canvas.height - state.arenaHeight * scale) / 2;
+        var offsetX = (Viewport.width - state.arenaWidth * scale) / 2;
+        var offsetY = (Viewport.height - state.arenaHeight * scale) / 2;
 
         // Clear
         ctx.fillStyle = '#0a0a1a';
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.fillRect(0, 0, Viewport.width, Viewport.height);
 
         ctx.save();
 
@@ -330,7 +330,7 @@ class WaveRenderer {
 
         // Top bar background
         ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
-        ctx.fillRect(0, 0, canvas.width, 40);
+        ctx.fillRect(0, 0, Viewport.width, 40);
 
         // Wave indicator
         ctx.fillStyle = '#ffffff';
@@ -342,20 +342,20 @@ class WaveRenderer {
         ctx.fillStyle = '#ffdd00';
         ctx.font = 'bold 16px Arial';
         ctx.textAlign = 'center';
-        ctx.fillText('SCORE: ' + (player.score || 0), canvas.width / 2, 26);
+        ctx.fillText('SCORE: ' + (player.score || 0), Viewport.width / 2, 26);
 
         // Kills
         ctx.fillStyle = '#ff8844';
         ctx.font = '14px Arial';
         ctx.textAlign = 'right';
-        ctx.fillText('Kills: ' + (state.stats.monstersKilled || 0), canvas.width - 12, 26);
+        ctx.fillText('Kills: ' + (state.stats.monstersKilled || 0), Viewport.width - 12, 26);
         ctx.textAlign = 'left';
 
         // Health bar at bottom
-        var barW = Math.min(300, canvas.width * 0.5);
+        var barW = Math.min(300, Viewport.width * 0.5);
         var barH = 14;
-        var barX = (canvas.width - barW) / 2;
-        var barY = canvas.height - 30;
+        var barX = (Viewport.width - barW) / 2;
+        var barY = Viewport.height - 30;
 
         ctx.fillStyle = 'rgba(0, 0, 0, 0.6)';
         ctx.fillRect(barX - 2, barY - 2, barW + 4, barH + 4);
@@ -370,7 +370,7 @@ class WaveRenderer {
         ctx.fillStyle = '#ffffff';
         ctx.font = 'bold 11px Arial';
         ctx.textAlign = 'center';
-        ctx.fillText('HP: ' + Math.max(0, player.health) + '/' + player.maxHealth, canvas.width / 2, barY + 11);
+        ctx.fillText('HP: ' + Math.max(0, player.health) + '/' + player.maxHealth, Viewport.width / 2, barY + 11);
         ctx.textAlign = 'left';
     }
 
@@ -391,16 +391,16 @@ class WaveRenderer {
         var canvas = this.canvas;
 
         ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.fillRect(0, 0, Viewport.width, Viewport.height);
 
         ctx.fillStyle = '#44ff44';
         ctx.font = 'bold 32px Arial';
         ctx.textAlign = 'center';
-        ctx.fillText('WAVE ' + state.wave + ' CLEARED!', canvas.width / 2, canvas.height / 2 - 20);
+        ctx.fillText('WAVE ' + state.wave + ' CLEARED!', Viewport.width / 2, Viewport.height / 2 - 20);
 
         ctx.fillStyle = '#ffffff';
         ctx.font = '18px Arial';
-        ctx.fillText('Next wave incoming...', canvas.width / 2, canvas.height / 2 + 20);
+        ctx.fillText('Next wave incoming...', Viewport.width / 2, Viewport.height / 2 + 20);
         ctx.textAlign = 'left';
     }
 
@@ -409,10 +409,10 @@ class WaveRenderer {
         var canvas = this.canvas;
 
         ctx.fillStyle = 'rgba(0, 0, 0, 0.85)';
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.fillRect(0, 0, Viewport.width, Viewport.height);
 
-        var cx = canvas.width / 2;
-        var cy = canvas.height / 2;
+        var cx = Viewport.width / 2;
+        var cy = Viewport.height / 2;
 
         ctx.fillStyle = '#ffdd00';
         ctx.font = 'bold 42px Arial';
@@ -451,10 +451,10 @@ class WaveRenderer {
         var canvas = this.canvas;
 
         ctx.fillStyle = 'rgba(0, 0, 0, 0.85)';
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.fillRect(0, 0, Viewport.width, Viewport.height);
 
-        var cx = canvas.width / 2;
-        var cy = canvas.height / 2;
+        var cx = Viewport.width / 2;
+        var cy = Viewport.height / 2;
 
         ctx.fillStyle = '#ff4444';
         ctx.font = 'bold 42px Arial';
@@ -495,9 +495,9 @@ class WaveRenderer {
 
         // Dimmed background
         ctx.fillStyle = 'rgba(0, 0, 20, 0.8)';
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.fillRect(0, 0, Viewport.width, Viewport.height);
 
-        var cx = canvas.width / 2;
+        var cx = Viewport.width / 2;
 
         ctx.fillStyle = '#6699ff';
         ctx.font = 'bold 28px Arial';
@@ -543,7 +543,7 @@ class WaveRenderer {
             ctx.fillStyle = msg.color;
             ctx.font = 'bold 18px Arial';
             ctx.textAlign = 'center';
-            ctx.fillText(msg.text, canvas.width / 2, canvas.height / 2 - 50 - yOffset);
+            ctx.fillText(msg.text, Viewport.width / 2, Viewport.height / 2 - 50 - yOffset);
             ctx.textAlign = 'left';
             ctx.restore();
         }
@@ -562,9 +562,9 @@ class WaveRenderer {
      * Convert canvas coordinates to arena coordinates for click detection.
      */
     canvasToArena(canvasX, canvasY, arenaWidth, arenaHeight) {
-        var scale = Math.min(this.canvas.width / arenaWidth, this.canvas.height / arenaHeight);
-        var offsetX = (this.canvas.width - arenaWidth * scale) / 2;
-        var offsetY = (this.canvas.height - arenaHeight * scale) / 2;
+        var scale = Math.min(Viewport.width / arenaWidth, Viewport.height / arenaHeight);
+        var offsetX = (Viewport.width - arenaWidth * scale) / 2;
+        var offsetY = (Viewport.height - arenaHeight * scale) / 2;
 
         return {
             x: (canvasX - offsetX) / scale,

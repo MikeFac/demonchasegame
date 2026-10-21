@@ -1663,24 +1663,33 @@ function getOptimalCanvasWidth() {
 
 // Global function to ensure canvas is properly sized for any mode
 function ensureCanvasSize() {
+    if (!canvas) return;
     const newWidth = getOptimalCanvasWidth();
     const newHeight = Math.min(600, window.innerHeight - 80);
-    if (canvas.width !== newWidth || canvas.height !== newHeight) {
-        canvas.width = newWidth;
-        canvas.height = newHeight;
-        ctx = canvas.getContext('2d');
-        console.log('Canvas resized to:', canvas.width, canvas.height);
+    const targetDpr = Math.min(window.devicePixelRatio || 1, Viewport.MAX_DPR);
+    const targetBitmapWidth = Math.max(1, Math.round(newWidth * targetDpr));
+    const targetBitmapHeight = Math.max(1, Math.round(newHeight * targetDpr));
+    const needsResize = Viewport.width !== newWidth ||
+        Viewport.height !== newHeight ||
+        canvas.width !== targetBitmapWidth ||
+        canvas.height !== targetBitmapHeight;
+    if (needsResize) {
+        Viewport.setSize(newWidth, newHeight, canvas);
+        console.log('Canvas resized to logical:', Viewport.width, Viewport.height, 'bitmap:', canvas.width, canvas.height, 'dpr:', Viewport.dpr);
     }
+    ctx = canvas.getContext('2d');
+    Viewport.reapply(ctx);
 }
 
 function handleResize() {
     if (!canvas) return;
     const newWidth = getOptimalCanvasWidth();
     const newHeight = Math.min(600, window.innerHeight - 80);
-    canvas.width = newWidth;
-    canvas.height = newHeight;
+    Viewport.setSize(newWidth, newHeight, canvas);
+    ctx = canvas.getContext('2d');
+    Viewport.reapply(ctx);
     if (window.ModeManager && typeof window.ModeManager.handleResize === 'function') {
-        window.ModeManager.handleResize({ width: newWidth, height: newHeight });
+        window.ModeManager.handleResize({ width: Viewport.width, height: Viewport.height });
     }
 }
 window.addEventListener('resize', handleResize);
@@ -1725,10 +1734,10 @@ function setSoloDifficulty(preset) {
 
 function drawLoadingScreen() {
     ctx.fillStyle = 'black';
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.fillRect(0, 0, Viewport.width, Viewport.height);
     ctx.fillStyle = 'white';
     ctx.font = '24px Arial';
-    ctx.fillText('Loading...', canvas.width / 2 - 50, canvas.height / 2);
+    ctx.fillText('Loading...', Viewport.width / 2 - 50, Viewport.height / 2);
 }
 
 function normalizeAngleDelta(angle) {
@@ -4208,8 +4217,8 @@ window.onQuizCorrectAnswer = function (quizMode, verseReference, combatCategory)
             flashMessages.push({
                 text: '⚡ POWERED UP! ⚡',
                 color: '#FFD700',
-                x: canvas.width / 2,
-                y: canvas.height / 2 - 50,
+                x: Viewport.width / 2,
+                y: Viewport.height / 2 - 50,
                 startTime: Date.now(),
                 duration: 2000,
                 fontSize: 32,
@@ -4340,11 +4349,11 @@ async function init() {
             onPlayerCode: (code) => {
                 if (playerCode === null) {
                     playerCode = code.toString();
-                    dbg('INIT', `onPlayerCode=${playerCode} canvas=(${canvas.width},${canvas.height})`);
+                    dbg('INIT', `onPlayerCode=${playerCode} canvas=(${Viewport.width},${Viewport.height})`);
                     // Initialize player - position will be set from spawn point when walls arrive
                     player = {
-                        x: canvas.width / 2,
-                        y: canvas.height / 2,
+                        x: Viewport.width / 2,
+                        y: Viewport.height / 2,
                         health: 60,
                         maxHealth: 100,
                         width: 48,
@@ -4403,8 +4412,8 @@ async function init() {
                         flashMessages.push({
                             text: '🔥 FIRST BLOOD! 🔥',
                             color: '#FF4444',
-                            x: canvas.width / 2,
-                            y: canvas.height / 2 - 50,
+                            x: Viewport.width / 2,
+                            y: Viewport.height / 2 - 50,
                             startTime: Date.now(),
                             duration: 2500,
                             fontSize: 36,
@@ -4439,8 +4448,8 @@ async function init() {
                     flashMessages.push({
                         text: `${bossLabel || 'Boss'} Defeated +${bonusXp || 0} XP`,
                         color: '#ffdc73',
-                        x: canvas.width / 2,
-                        y: canvas.height / 2 - 90,
+                        x: Viewport.width / 2,
+                        y: Viewport.height / 2 - 90,
                         startTime: Date.now(),
                         duration: 3000,
                         fontSize: 28,
@@ -4485,8 +4494,8 @@ async function init() {
 	                    flashMessages.push({
 	                        text: 'Mission Complete!',
 	                        color: '#a8ffb0',
-	                        x: canvas.width / 2,
-	                        y: canvas.height / 2 - 30,
+	                        x: Viewport.width / 2,
+	                        y: Viewport.height / 2 - 30,
                         startTime: Date.now(),
                         duration: 2600,
                         fontSize: 34,
@@ -4975,13 +4984,10 @@ async function init() {
 
         currentReviewMode = 'quality'; // Possible values: 'incorrect', 'quality'
         window.gameMode = 'game';
-        canvas.width = getOptimalCanvasWidth();
-        canvas.height = Math.min(600, window.innerHeight - 80);
-        ctx = canvas.getContext('2d');
-        console.log('Canvas width:', canvas.width);
-        console.log('Canvas height:', canvas.height);
-        mouseX = canvas.width / 2;
-        mouseY = canvas.height / 2;
+        ensureCanvasSize();
+        console.log('Canvas logical:', Viewport.width, Viewport.height, 'bitmap:', canvas.width, canvas.height);
+        mouseX = Viewport.width / 2;
+        mouseY = Viewport.height / 2;
 
         explosionTimer = 0;
 
@@ -5208,8 +5214,8 @@ async function init() {
 
                 // Check verse test button click (floating "T" icon in bottom-right area)
                 const vtb = UILayout.verseTestButton;
-                const vtBtnX = UILayout.getVerseTestButtonX(canvas.width);
-                const vtBtnY = UILayout.getVerseTestButtonY(canvas.height);
+                const vtBtnX = UILayout.getVerseTestButtonX(Viewport.width);
+                const vtBtnY = UILayout.getVerseTestButtonY(Viewport.height);
                 const vtBtnSize = vtb.size;
 
                 if (x >= vtBtnX && x <= vtBtnX + vtBtnSize &&
@@ -5523,9 +5529,7 @@ window.gameMode = 'overland';
     const quickStartOverlay = document.getElementById('quickStartOverlay');
     if (quickStartOverlay) quickStartOverlay.style.display = 'none';
     
-    canvas.width = getOptimalCanvasWidth();
-    canvas.height = Math.min(600, window.innerHeight - 80);
-    ctx = canvas.getContext('2d');
+    ensureCanvasSize();
     
     // Make sure canvas is visible
     canvas.style.display = 'block';
@@ -5823,7 +5827,7 @@ function hideGroupsPanel() {
 function handleOverlandClick(x, y) {
     if (!overlandRenderer || !window.progressManager) return;
     
-    console.log('handleOverlandClick:', x, y, 'canvas:', canvas.width, canvas.height);
+    console.log('handleOverlandClick:', x, y, 'canvas:', Viewport.width, Viewport.height);
     
     // Check for Back to Menu button first
     if (overlandRenderer.isMenuClicked(x, y)) {
@@ -5953,12 +5957,8 @@ function setupReviewClickHandler() {
     }
     // Add review click handler with proper canvas coordinate conversion
     reviewClickHandler = function(event) {
-        const rect = canvas.getBoundingClientRect();
-        const scaleX = canvas.width / rect.width;
-        const scaleY = canvas.height / rect.height;
-        const x = (event.clientX - rect.left) * scaleX;
-        const y = (event.clientY - rect.top) * scaleY;
-        ReviewMode.handleReviewClick(x, y);
+        const point = Viewport.toLogicalPoint(event.clientX, event.clientY, canvas);
+        ReviewMode.handleReviewClick(point.x, point.y);
     };
     canvas.addEventListener('click', reviewClickHandler);
 }
@@ -6308,7 +6308,7 @@ function gameLoop(generation) {
     // Handle Review mode (verse learning) - doesn't need playerCode
     if (window.gameMode === 'review') {
         ensureCanvasSize();
-        console.log('Review mode render, canvas:', canvas.width, canvas.height);
+        console.log('Review mode render, canvas:', Viewport.width, Viewport.height);
         if (window.ReviewMode && typeof ReviewMode.displayReviewVerseScreen === 'function') {
             ReviewMode.displayReviewVerseScreen();
         }
@@ -6557,7 +6557,7 @@ function gameLoop(generation) {
 
         // Draw VerseTestScreen overlay on top of everything
         if (VerseTestScreen.isActive()) {
-            VerseTestScreen.render(ctx, canvas.width, canvas.height);
+            VerseTestScreen.render(ctx, Viewport.width, Viewport.height);
         }
 
         if (isStoryPaused()) {
@@ -6584,11 +6584,11 @@ function gameLoop(generation) {
 
         /*
         // Clear the canvas
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.clearRect(0, 0, Viewport.width, Viewport.height);
 
         // Draw the quality line
         ctx.fillStyle = 'black';
-        ctx.fillRect(0, 0, canvas.width, QUALITY_LINE_HEIGHT);
+        ctx.fillRect(0, 0, Viewport.width, QUALITY_LINE_HEIGHT);
         ctx.fillStyle = 'white';
         ctx.font = '14px Arial'; // Set the font size
         this.ctx.fillText(`Learn: ${window.vQuality}`, 7, 22);
@@ -6596,7 +6596,7 @@ function gameLoop(generation) {
         drawReviewButton();
 
         // Draw quality buttons on same row, right-aligned (moved 8px right)
-        const buttonStartX = canvas.width - (qualityButtons.length * (BUTTON_WIDTH + 7)) - 7 + 8;
+        const buttonStartX = Viewport.width - (qualityButtons.length * (BUTTON_WIDTH + 7)) - 7 + 8;
         qualityButtons.forEach((button, index) => {
             const buttonX = buttonStartX + index * (BUTTON_WIDTH + 7);
             ctx.fillStyle = button.color;
@@ -6638,12 +6638,12 @@ function gameLoop(generation) {
         ctx.font = 'bold 14px Arial'; // Set the font size and bold style
         const gameLevelText = `${gameState.gameLevel}`;
         const gameLevelWidth = ctx.measureText(gameLevelText).width;
-        ctx.fillText(gameLevelText, canvas.width - gameLevelWidth - 7, 40);
+        ctx.fillText(gameLevelText, Viewport.width - gameLevelWidth - 7, 40);
 
         if (gameOverFlag) {
             ctx.fillStyle = 'green';
             ctx.font = '29px Arial'; // Set the font size
-            ctx.fillText('G A M E   O V E R', canvas.width / 2 - 140, canvas.height / 2);
+            ctx.fillText('G A M E   O V E R', Viewport.width / 2 - 140, Viewport.height / 2);
             return;
         }
 
@@ -6651,11 +6651,11 @@ function gameLoop(generation) {
         if (isAnswerCorrect === true) {
             ctx.fillStyle = 'green';
             ctx.font = '17px Arial'; // Set the font size
-            ctx.fillText('Correct!', canvas.width / 2 - 35, canvas.height / 2);
+            ctx.fillText('Correct!', Viewport.width / 2 - 35, Viewport.height / 2);
         } else if (isAnswerCorrect === false) {
             ctx.fillStyle = 'red';
             ctx.font = '17px Arial'; // Set the font size
-            ctx.fillText('Incorrect!', canvas.width / 2 - 35, canvas.height / 2);
+            ctx.fillText('Incorrect!', Viewport.width / 2 - 35, Viewport.height / 2);
         }
         */
 
@@ -6858,12 +6858,12 @@ function gameLoop(generation) {
         player._prevY = player.y;
 
         // Update camera to follow player
-        camera.x = player.x - canvas.width / 2;
-        camera.y = player.y - canvas.height / 2;
+        camera.x = player.x - Viewport.width / 2;
+        camera.y = player.y - Viewport.height / 2;
 
         // Clamp camera to world bounds
-        camera.x = Math.max(0, Math.min(camera.x, getActiveWorldWidth() - canvas.width));
-        camera.y = Math.max(0, Math.min(camera.y, getActiveWorldHeight() - canvas.height));
+        camera.x = Math.max(0, Math.min(camera.x, getActiveWorldWidth() - Viewport.width));
+        camera.y = Math.max(0, Math.min(camera.y, getActiveWorldHeight() - Viewport.height));
 
         // Update InputHandler with current camera for click-to-world coord conversion
         if (inputHandler) {
@@ -7059,8 +7059,8 @@ function gameLoop(generation) {
                 flashMessages.push({
                     text: t('game.levelComplete', '🏆 LEVEL {0} COMPLETE! 🏆').replace('{0}', gameState.gameLevel),
                     color: '#FFD700',
-                    x: canvas.width / 2,
-                    y: canvas.height / 2 - 80,
+                    x: Viewport.width / 2,
+                    y: Viewport.height / 2 - 80,
                     startTime: Date.now(),
                     duration: 3000,
                     fontSize: 28,
@@ -7069,8 +7069,8 @@ function gameLoop(generation) {
                 flashMessages.push({
                     text: t('game.demonsDefeated', '{0} Demons Defeated!').replace('{0}', killed),
                     color: '#FFFFFF',
-                    x: canvas.width / 2,
-                    y: canvas.height / 2 - 40,
+                    x: Viewport.width / 2,
+                    y: Viewport.height / 2 - 40,
                     startTime: Date.now(),
                     duration: 3000,
                     fontSize: 20,
@@ -7086,7 +7086,7 @@ function gameLoop(generation) {
                 /*
                 ctx.fillStyle = 'green';
                 ctx.font = '29px Arial';
-                ctx.fillText('Game completed!', canvas.width / 2 - 140, canvas.height / 2);
+                ctx.fillText('Game completed!', Viewport.width / 2 - 140, Viewport.height / 2);
                 */
                 gameOverFlag = true;
             }

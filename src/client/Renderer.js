@@ -35,15 +35,15 @@ class Renderer {
     }
 
     clear() {
-        this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+        Viewport.clear(this.ctx, this.canvas);
     }
 
     drawLoadingScreen() {
         this.ctx.fillStyle = 'black';
-        this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+        this.ctx.fillRect(0, 0, Viewport.width, Viewport.height);
         this.ctx.fillStyle = 'white';
         this.ctx.font = '24px Arial';
-        this.ctx.fillText(t('ui.loading'), this.canvas.width / 2 - 50, this.canvas.height / 2);
+        this.ctx.fillText(t('ui.loading'), Viewport.width / 2 - 50, Viewport.height / 2);
     }
 
     drawGame(gameState, player, playerCode, monsters, healingPoints, camera, uiState, inventoryState, walls, screenShake = { x: 0, y: 0 }, damageNumbers = [], deathParticles = [], mouseX = null, mouseY = null) {
@@ -165,7 +165,7 @@ class Renderer {
             if (!interaction || !interaction.position) return;
             const x = interaction.position.x - camera.x;
             const y = interaction.position.y - camera.y;
-            if (x < -45 || x > this.canvas.width + 45 || y < -65 || y > this.canvas.height + 45) return;
+            if (x < -45 || x > Viewport.width + 45 || y < -65 || y > Viewport.height + 45) return;
 
             const nearby = interaction.id === nearbyInteractionId;
             this.ctx.save();
@@ -200,7 +200,7 @@ class Renderer {
 
         // Quality Line background
         this.ctx.fillStyle = 'black';
-        this.ctx.fillRect(0, 0, this.canvas.width, this.QUALITY_LINE_HEIGHT);
+        this.ctx.fillRect(0, 0, Viewport.width, this.QUALITY_LINE_HEIGHT);
 
         // Category indicator (tappable)
         const ci = UILayout.categoryIndicator;
@@ -222,7 +222,7 @@ class Renderer {
 
     drawLearnVersesButton() {
         const lb = UILayout.learnVersesButton;
-        const btnX = (this.canvas.width - lb.width) / 2;
+        const btnX = (Viewport.width - lb.width) / 2;
         const btnY = lb.y;
         const btnW = lb.width;
         const btnH = lb.height;
@@ -259,7 +259,7 @@ class Renderer {
 
     drawHamburgerButton(menuState) {
         const hb = UILayout.hamburgerButton;
-        const btnX = UILayout.getHamburgerButtonX(this.canvas.width);
+        const btnX = UILayout.getHamburgerButtonX(Viewport.width);
         const btnY = hb.y;
         const btnW = hb.width;
         const btnH = hb.height;
@@ -290,7 +290,7 @@ class Renderer {
 
     drawSpeedControl(currentSpeed, uiState) {
         const sc = UILayout.speedControl;
-        const baseX = UILayout.getSpeedControlX(this.canvas.width);
+        const baseX = UILayout.getSpeedControlX(Viewport.width);
         const baseY = sc.y;
         const chevW = sc.chevronWidth;
         const labelW = sc.labelWidth;
@@ -331,13 +331,13 @@ class Renderer {
         const isPuzzle = storyPause.type === 'puzzle';
         const isMemorize = isPuzzle && storyPause.puzzleMode === 'verseMemorize';
         const boxH = isMemorize
-            ? Math.min(460, this.canvas.height - 20)
+            ? Math.min(460, Viewport.height - 20)
             : isPuzzle
-            ? Math.min(340, Math.max(270, Math.floor(this.canvas.height * 0.5)))
-            : Math.min(210, Math.max(166, Math.floor(this.canvas.height * 0.34)));
-        const boxY = this.canvas.height - boxH - margin;
+            ? Math.min(340, Math.max(270, Math.floor(Viewport.height * 0.5)))
+            : Math.min(210, Math.max(166, Math.floor(Viewport.height * 0.34)));
+        const boxY = Viewport.height - boxH - margin;
         const boxX = margin;
-        const boxW = this.canvas.width - margin * 2;
+        const boxW = Viewport.width - margin * 2;
         const line = (storyPause.lines && storyPause.lines[storyPause.lineIndex]) || storyPause.text || '';
         const title = storyPause.speaker || storyPause.title || 'Story';
         const phaseLabel = this._getStoryPausePhaseLabel(storyPause);
@@ -350,12 +350,12 @@ class Renderer {
 
         this.ctx.save();
         this.ctx.fillStyle = 'rgba(0, 0, 0, 0.34)';
-        this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+        this.ctx.fillRect(0, 0, Viewport.width, Viewport.height);
 
         // Story pause should visually own the whole lower interaction area,
         // otherwise quiz prompts/buttons behind it compete with dialogue.
         this.ctx.fillStyle = 'rgba(3, 6, 15, 0.78)';
-        this.ctx.fillRect(0, Math.max(0, boxY - 18), this.canvas.width, this.canvas.height - Math.max(0, boxY - 18));
+        this.ctx.fillRect(0, Math.max(0, boxY - 18), Viewport.width, Viewport.height - Math.max(0, boxY - 18));
 
         this.ctx.fillStyle = 'rgba(5, 8, 18, 0.97)';
         this.ctx.fillRect(boxX, boxY, boxW, boxH);
@@ -501,22 +501,22 @@ class Renderer {
 
         ctx.save();
         ctx.fillStyle = 'rgba(0, 0, 0, 0.88)';
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.fillRect(0, 0, Viewport.width, Viewport.height);
 
         // Title
         ctx.fillStyle = '#ffd666';
         ctx.font = 'bold 18px Arial';
         ctx.textAlign = 'center';
-        ctx.fillText('Choose Your Path', canvas.width / 2, 30);
+        ctx.fillText('Choose Your Path', Viewport.width / 2, 30);
 
         // Progress
         ctx.fillStyle = '#a5c8ff';
         ctx.font = '12px Arial';
-        ctx.fillText(hub.completedCount + ' / ' + hub.totalSteps + ' steps complete', canvas.width / 2, 48);
+        ctx.fillText(hub.completedCount + ' / ' + hub.totalSteps + ' steps complete', Viewport.width / 2, 48);
 
         const cardH = 48;
         const cardGap = 6;
-        const cardW = canvas.width - margin * 2;
+        const cardW = Viewport.width - margin * 2;
         const cardX = margin;
         var startY = 58;
 
@@ -600,7 +600,7 @@ class Renderer {
             ctx.fillStyle = '#ff6666';
             ctx.font = 'bold 16px Arial';
             ctx.textAlign = 'center';
-            ctx.fillText('Fight the Boss!', canvas.width / 2, bossY + 30);
+            ctx.fillText('Fight the Boss!', Viewport.width / 2, bossY + 30);
             hub.buttonRects.push({
                 id: 'questBoss',
                 x: cardX,
@@ -779,7 +779,7 @@ class Renderer {
 
     drawMenuPanel(menuState) {
         const mp = UILayout.menuPanel;
-        const panelX = UILayout.getMenuPanelX(this.canvas.width);
+        const panelX = UILayout.getMenuPanelX(Viewport.width);
         const panelY = mp.topOffset;
         const panelW = mp.width;
         const itemH = mp.itemHeight;
@@ -847,12 +847,12 @@ class Renderer {
         const colWidth = (cp.width - padding * 2 - itemSpacing * (cols - 1)) / cols;
         const panelH = padding + rows * (itemH + itemSpacing) + padding + 30; // +30 for title
 
-        const panelX = UILayout.getCategoryPickerX(this.canvas.width);
-        const panelY = UILayout.getCategoryPickerY(this.canvas.height);
+        const panelX = UILayout.getCategoryPickerX(Viewport.width);
+        const panelY = UILayout.getCategoryPickerY(Viewport.height);
 
         // Overlay
         this.ctx.fillStyle = 'rgba(0, 0, 0, 0.6)';
-        this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+        this.ctx.fillRect(0, 0, Viewport.width, Viewport.height);
 
         // Panel background
         this.ctx.fillStyle = 'rgba(20, 20, 30, 0.95)';
@@ -913,13 +913,13 @@ class Renderer {
         this.ctx.font = 'bold 14px Arial';
         const gameLevelText = `${gameState.gameLevel}`;
         const gameLevelWidth = this.ctx.measureText(gameLevelText).width;
-        this.ctx.fillText(gameLevelText, this.canvas.width - gameLevelWidth - 7, 40);
+        this.ctx.fillText(gameLevelText, Viewport.width - gameLevelWidth - 7, 40);
 
         const totalToKill = gameState.monstersToKill || 0;
         const killed = gameState.monstersKilled || 0;
         const remaining = Math.max(0, totalToKill - killed);
         const progressText = t('hud.demonsLeft', 'Demons left: ${remaining}/${totalToKill}').replace('${remaining}', remaining).replace('${totalToKill}', totalToKill);
-        const progressRightEdge = this.canvas.width - gameLevelWidth - 18;
+        const progressRightEdge = Viewport.width - gameLevelWidth - 18;
         this.ctx.fillStyle = '#ffdd66';
         this.ctx.font = '14px Arial';
         this.ctx.textAlign = 'right';
@@ -937,7 +937,7 @@ class Renderer {
         // Floating score badge in the top-right of the playing window
         const badgeW = 90;
         const badgeH = 28;
-        const badgeX = this.canvas.width - badgeW - 10;
+        const badgeX = Viewport.width - badgeW - 10;
         const badgeY = this.QUALITY_LINE_HEIGHT + 8;
         const radius = 6;
         
@@ -1009,24 +1009,24 @@ class Renderer {
                 arrowTo = { x: worldMarker.x, y: worldMarker.y - 10 };
             }
         } else if (guide.target === 'answers') {
-            targetRect = { x: 8, y: this.canvas.height - this.ANSWER_SECTION_HEIGHT - 8, width: this.canvas.width - 16, height: this.ANSWER_SECTION_HEIGHT + 2 };
-            const answerGuideY = Math.max(this.QUALITY_LINE_HEIGHT + layout.answersBox.minTopOffset, this.canvas.height - layout.answersBox.safeBottomOffset);
+            targetRect = { x: 8, y: Viewport.height - this.ANSWER_SECTION_HEIGHT - 8, width: Viewport.width - 16, height: this.ANSWER_SECTION_HEIGHT + 2 };
+            const answerGuideY = Math.max(this.QUALITY_LINE_HEIGHT + layout.answersBox.minTopOffset, Viewport.height - layout.answersBox.safeBottomOffset);
             box = {
                 x: layout.answersBox.x,
                 y: answerGuideY,
-                width: this.canvas.width - layout.answersBox.widthInset,
+                width: Viewport.width - layout.answersBox.widthInset,
                 height: layout.defaultHeight
             };
             arrowFrom = { x: box.x + box.width / 2, y: box.y + box.height };
             arrowTo = { x: targetRect.x + targetRect.width / 2, y: targetRect.y + 2 };
         } else if (guide.target === 'learn') {
             const lb = UILayout.learnVersesButton;
-            const btnX = (this.canvas.width - lb.width) / 2;
+            const btnX = (Viewport.width - lb.width) / 2;
             targetRect = { x: btnX - 4, y: lb.y - 3, width: lb.width + 8, height: lb.height + 6 };
             box = {
                 x: layout.learnBox.x,
                 y: this.QUALITY_LINE_HEIGHT + layout.learnBox.yOffset,
-                width: this.canvas.width - layout.learnBox.widthInset,
+                width: Viewport.width - layout.learnBox.widthInset,
                 height: layout.learnBox.height
             };
             arrowFrom = { x: box.x + box.width / 2, y: box.y };
@@ -1100,7 +1100,7 @@ class Renderer {
         const second = log.active[1];
         const x = 12;
         const y = this.QUALITY_LINE_HEIGHT + 44;
-        const w = Math.min(340, this.canvas.width - 24);
+        const w = Math.min(340, Viewport.width - 24);
         const h = second ? 98 : 76;
 
         ctx.save();
@@ -1189,7 +1189,7 @@ class Renderer {
 
     drawDailyChallenge(canvas, dailyChallengeProgress, dailyChallengeGoal, dailyChallengeCompleted) {
         const x = 10;
-        const y = canvas.height - 30;  // Bottom-left corner
+        const y = Viewport.height - 30;  // Bottom-left corner
 
         if (dailyChallengeCompleted) {
             this.ctx.fillStyle = '#00ff00';  // Green for completed
@@ -1244,15 +1244,15 @@ class Renderer {
 
         // Full-screen semi-transparent overlay
         ctx.fillStyle = 'rgba(0, 0, 0, 0.85)';
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.fillRect(0, 0, Viewport.width, Viewport.height);
 
         // Modal container (centered, taller for multiplayer stats)
         const modalWidth = 300;
         const hasLeaderboard = isMultiplayer && finalStats.playerStats;
         const leaderboardCount = hasLeaderboard ? Object.keys(finalStats.playerStats).length : 0;
         const modalHeight = hasLeaderboard ? 320 + leaderboardCount * 22 : 280;
-        const modalX = (canvas.width - modalWidth) / 2;
-        const modalY = (canvas.height - modalHeight) / 2;
+        const modalX = (Viewport.width - modalWidth) / 2;
+        const modalY = (Viewport.height - modalHeight) / 2;
 
         // Modal background
         ctx.fillStyle = 'rgba(40, 40, 40, 0.95)';
@@ -1268,13 +1268,13 @@ class Renderer {
         ctx.textAlign = 'center';
         if (isVictory) {
             ctx.fillStyle = '#00ff00';
-            ctx.fillText(t('ui.victory'), canvas.width / 2, modalY + 45);
+            ctx.fillText(t('ui.victory'), Viewport.width / 2, modalY + 45);
         } else if (isDefeat) {
             ctx.fillStyle = '#ff4444';
-            ctx.fillText(t('ui.allDefeated'), canvas.width / 2, modalY + 45);
+            ctx.fillText(t('ui.allDefeated'), Viewport.width / 2, modalY + 45);
         } else {
             ctx.fillStyle = '#ff0000';
-            ctx.fillText(t('ui.gameOverTitle'), canvas.width / 2, modalY + 45);
+            ctx.fillText(t('ui.gameOverTitle'), Viewport.width / 2, modalY + 45);
         }
 
         // Final Stats
@@ -1316,7 +1316,7 @@ class Renderer {
             ctx.fillStyle = '#aaaaaa';
             ctx.font = 'bold 14px Arial';
             ctx.textAlign = 'center';
-            ctx.fillText(t('ui.players'), canvas.width / 2, statsY);
+            ctx.fillText(t('ui.players'), Viewport.width / 2, statsY);
             statsY += 20;
 
             ctx.font = '13px Arial';
@@ -1332,7 +1332,7 @@ class Renderer {
         // Button
         const buttonWidth = 160;
         const buttonHeight = 40;
-        const buttonX = (canvas.width - buttonWidth) / 2;
+        const buttonX = (Viewport.width - buttonWidth) / 2;
         const buttonY = modalY + modalHeight - 55;
 
         // Store button rect for click detection
@@ -1362,7 +1362,7 @@ class Renderer {
         } else {
             buttonLabel = t('ui.tryAgain');
         }
-        ctx.fillText(buttonLabel, canvas.width / 2, buttonY + 26);
+        ctx.fillText(buttonLabel, Viewport.width / 2, buttonY + 26);
     }
 
     drawStartHereSummaryModal(summaryState) {
@@ -1373,12 +1373,12 @@ class Renderer {
         const layout = this.START_HERE_SUMMARY_LAYOUT;
 
         ctx.fillStyle = 'rgba(0, 0, 0, 0.88)';
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.fillRect(0, 0, Viewport.width, Viewport.height);
 
-        const modalWidth = Math.min(layout.maxWidth, canvas.width - layout.outerInsetX);
-        const modalHeight = Math.min(420, canvas.height - layout.outerInsetY);
-        const modalX = (canvas.width - modalWidth) / 2;
-        const modalY = (canvas.height - modalHeight) / 2;
+        const modalWidth = Math.min(layout.maxWidth, Viewport.width - layout.outerInsetX);
+        const modalHeight = Math.min(420, Viewport.height - layout.outerInsetY);
+        const modalX = (Viewport.width - modalWidth) / 2;
+        const modalY = (Viewport.height - modalHeight) / 2;
 
         ctx.fillStyle = 'rgba(12, 16, 26, 0.97)';
         ctx.fillRect(modalX, modalY, modalWidth, modalHeight);
@@ -1389,18 +1389,18 @@ class Renderer {
         ctx.textAlign = 'center';
         ctx.fillStyle = '#ffd666';
         ctx.font = 'bold 28px Arial';
-        ctx.fillText(summary.title || t('game.missionComplete', 'Mission Complete'), canvas.width / 2, modalY + 42);
+        ctx.fillText(summary.title || t('game.missionComplete', 'Mission Complete'), Viewport.width / 2, modalY + 42);
 
         ctx.fillStyle = '#d6deff';
         ctx.font = '16px Arial';
         const lines = Array.isArray(summary.lines) ? summary.lines : [];
         lines.forEach((line, index) => {
-            ctx.fillText(line, canvas.width / 2, modalY + 86 + index * 32);
+            ctx.fillText(line, Viewport.width / 2, modalY + 86 + index * 32);
         });
 
         ctx.fillStyle = '#ffffff';
         ctx.font = 'bold 17px Arial';
-        ctx.fillText(summary.ctaLabel || t('game.chooseWhatNext', 'Choose what to do next'), canvas.width / 2, modalY + 206);
+        ctx.fillText(summary.ctaLabel || t('game.chooseWhatNext', 'Choose what to do next'), Viewport.width / 2, modalY + 206);
 
         const buttonWidth = modalWidth - layout.buttonInsetX;
         const buttonHeight = 42;
@@ -1431,12 +1431,12 @@ class Renderer {
         const ctx = this.ctx;
 
         ctx.fillStyle = 'rgba(0, 0, 0, 0.88)';
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.fillRect(0, 0, Viewport.width, Viewport.height);
 
-        const modalWidth = Math.min(336, canvas.width - 24);
-        const modalHeight = Math.min(455, canvas.height - 28);
-        const modalX = (canvas.width - modalWidth) / 2;
-        const modalY = (canvas.height - modalHeight) / 2;
+        const modalWidth = Math.min(336, Viewport.width - 24);
+        const modalHeight = Math.min(455, Viewport.height - 28);
+        const modalX = (Viewport.width - modalWidth) / 2;
+        const modalY = (Viewport.height - modalHeight) / 2;
 
         ctx.fillStyle = 'rgba(12, 16, 26, 0.96)';
         ctx.fillRect(modalX, modalY, modalWidth, modalHeight);
@@ -1447,11 +1447,11 @@ class Renderer {
         ctx.textAlign = 'center';
         ctx.fillStyle = '#ffd666';
         ctx.font = 'bold 28px Arial';
-        ctx.fillText(t('game.verseBattles', 'VERSE BATTLES'), canvas.width / 2, modalY + 38);
+        ctx.fillText(t('game.verseBattles', 'VERSE BATTLES'), Viewport.width / 2, modalY + 38);
 
         ctx.fillStyle = '#ffffff';
         ctx.font = 'bold 15px Arial';
-        ctx.fillText(t('game.verseBattlesSubtitle', 'Build Scripture engagement that lasts.'), canvas.width / 2, modalY + 62);
+        ctx.fillText(t('game.verseBattlesSubtitle', 'Build Scripture engagement that lasts.'), Viewport.width / 2, modalY + 62);
 
         const bulletGroups = [
             [
@@ -1495,7 +1495,7 @@ class Renderer {
 
         const buttonWidth = 190;
         const buttonHeight = 42;
-        const buttonX = (canvas.width - buttonWidth) / 2;
+        const buttonX = (Viewport.width - buttonWidth) / 2;
         const buttonY = modalY + modalHeight - 58;
 
         restartButtonRect.x = buttonX;
@@ -1512,7 +1512,7 @@ class Renderer {
         ctx.fillStyle = '#ffffff';
         ctx.font = 'bold 16px Arial';
         ctx.textAlign = 'center';
-        ctx.fillText(t('game.pressToReturn', 'Press to Return'), canvas.width / 2, buttonY + 27);
+        ctx.fillText(t('game.pressToReturn', 'Press to Return'), Viewport.width / 2, buttonY + 27);
         ctx.textAlign = 'left';
     }
 
@@ -1522,42 +1522,42 @@ class Renderer {
         if (gameOverFlag) {
             this.ctx.fillStyle = 'green';
             this.ctx.font = '29px Arial';
-            this.ctx.fillText(t('ui.gameOver'), this.canvas.width / 2 - 140, this.canvas.height / 2);
+            this.ctx.fillText(t('ui.gameOver'), Viewport.width / 2 - 140, Viewport.height / 2);
             return;
         }
 
         if (isAnswerCorrect === true) {
             this.ctx.fillStyle = 'green';
             this.ctx.font = '17px Arial';
-            this.ctx.fillText(t('ui.correct'), this.canvas.width / 2 - 35, this.canvas.height / 2);
+            this.ctx.fillText(t('ui.correct'), Viewport.width / 2 - 35, Viewport.height / 2);
 
             // Display verse reference below "Correct!" message
             if (typeof lastAnsweredReference !== 'undefined' && lastAnsweredReference) {
                 this.ctx.fillStyle = '#90EE90'; // Light green
                 this.ctx.font = '14px Arial';
                 this.ctx.textAlign = 'center';
-                this.ctx.fillText(lastAnsweredReference, this.canvas.width / 2, this.canvas.height / 2 + 25);
+                this.ctx.fillText(lastAnsweredReference, Viewport.width / 2, Viewport.height / 2 + 25);
                 this.ctx.textAlign = 'left';
             }
         } else if (isAnswerCorrect === false) {
             this.ctx.fillStyle = 'red';
             this.ctx.font = '17px Arial';
-            this.ctx.fillText(t('ui.incorrect'), this.canvas.width / 2 - 35, this.canvas.height / 2);
+            this.ctx.fillText(t('ui.incorrect'), Viewport.width / 2 - 35, Viewport.height / 2);
         }
 
         if (levelCompleted && levelAdvanceCountdown > 0) {
             // Semi-transparent overlay
             this.ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
-            this.ctx.fillRect(0, this.canvas.height / 2 - 50, this.canvas.width, 80);
+            this.ctx.fillRect(0, Viewport.height / 2 - 50, Viewport.width, 80);
 
             this.ctx.fillStyle = '#00ff00';
             this.ctx.font = 'bold 26px Arial';
             this.ctx.textAlign = 'center';
-            this.ctx.fillText(t('ui.levelComplete'), this.canvas.width / 2, this.canvas.height / 2 - 15);
+            this.ctx.fillText(t('ui.levelComplete'), Viewport.width / 2, Viewport.height / 2 - 15);
 
             this.ctx.fillStyle = '#ffffff';
             this.ctx.font = '20px Arial';
-            this.ctx.fillText(t('ui.nextLevelIn', levelAdvanceCountdown), this.canvas.width / 2, this.canvas.height / 2 + 15);
+            this.ctx.fillText(t('ui.nextLevelIn', levelAdvanceCountdown), Viewport.width / 2, Viewport.height / 2 + 15);
             this.ctx.textAlign = 'left';
         }
     }
@@ -1566,22 +1566,22 @@ class Renderer {
         if (!movementFrozen) return;
 
         // Draw a subtle frozen indicator at the bottom of the screen
-        const indicatorY = this.canvas.height - 30;
+        const indicatorY = Viewport.height - 30;
 
         // Background bar
         this.ctx.fillStyle = 'rgba(0, 100, 255, 0.3)';
-        this.ctx.fillRect(50, indicatorY - 15, this.canvas.width - 100, 25);
+        this.ctx.fillRect(50, indicatorY - 15, Viewport.width - 100, 25);
 
         // Border
         this.ctx.strokeStyle = 'rgba(0, 150, 255, 0.6)';
         this.ctx.lineWidth = 2;
-        this.ctx.strokeRect(50, indicatorY - 15, this.canvas.width - 100, 25);
+        this.ctx.strokeRect(50, indicatorY - 15, Viewport.width - 100, 25);
 
         // Text
         this.ctx.fillStyle = '#88ccff';
         this.ctx.font = 'bold 14px Arial';
         this.ctx.textAlign = 'center';
-        this.ctx.fillText(t('ui.movementPaused'), this.canvas.width / 2, indicatorY);
+        this.ctx.fillText(t('ui.movementPaused'), Viewport.width / 2, indicatorY);
         this.ctx.textAlign = 'left';
     }
 
@@ -1765,7 +1765,7 @@ class Renderer {
 
     drawMonsters(monsters, camera, explosionTimer) {
         const playableTop = this.QUALITY_LINE_HEIGHT + this.BUTTON_HEIGHT;
-        const playableBottom = this.canvas.height - this.ANSWER_SECTION_HEIGHT;
+        const playableBottom = Viewport.height - this.ANSWER_SECTION_HEIGHT;
 
         monsters.forEach(monster => {
             const demonType = monster.demonType;
@@ -1776,7 +1776,7 @@ class Renderer {
 
             // Visibility check
             if (screenY - monster.height / 2 < playableTop || screenY + monster.height / 2 > playableBottom) return;
-            if (screenX + monster.width / 2 < 0 || screenX - monster.width / 2 > this.canvas.width) return;
+            if (screenX + monster.width / 2 < 0 || screenX - monster.width / 2 > Viewport.width) return;
 
             // Freezing Aura: draw blue circle around paralyzer demons
             if (monster.freezeAura) {
@@ -1914,8 +1914,8 @@ class Renderer {
 
     drawSpeedPrompt() {
         const ctx = this.ctx;
-        const cw = this.canvas.width;
-        const ch = this.canvas.height;
+        const cw = Viewport.width;
+        const ch = Viewport.height;
 
         ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
         ctx.fillRect(0, 0, cw, ch);
@@ -2000,10 +2000,10 @@ class Renderer {
 
         this.ctx.save();
         const playableTop = this.QUALITY_LINE_HEIGHT + this.BUTTON_HEIGHT;
-        const playableBottom = this.canvas.height - this.ANSWER_SECTION_HEIGHT - 120;
+        const playableBottom = Viewport.height - this.ANSWER_SECTION_HEIGHT - 120;
 
         this.ctx.beginPath();
-        this.ctx.rect(0, playableTop, this.canvas.width, playableBottom - playableTop);
+        this.ctx.rect(0, playableTop, Viewport.width, playableBottom - playableTop);
         this.ctx.clip();
 
         if (useTiles) {
@@ -2014,8 +2014,8 @@ class Renderer {
                 const screenX = wall.x - camera.x;
                 const screenY = wall.y - camera.y;
 
-                if (screenX + wall.width > 0 && screenX < this.canvas.width &&
-                    screenY + wall.height > 0 && screenY < this.canvas.height) {
+                if (screenX + wall.width > 0 && screenX < Viewport.width &&
+                    screenY + wall.height > 0 && screenY < Viewport.height) {
 
                     // Draw grass background (8x8 grid, 32x32 tiles)
                     this.drawTileFromSheet(
@@ -2108,8 +2108,8 @@ class Renderer {
                 const screenX = wall.x - camera.x;
                 const screenY = wall.y - camera.y;
 
-                if (screenX + wall.width > 0 && screenX < this.canvas.width &&
-                    screenY + wall.height > 0 && screenY < this.canvas.height) {
+                if (screenX + wall.width > 0 && screenX < Viewport.width &&
+                    screenY + wall.height > 0 && screenY < Viewport.height) {
 
                     // Deterministic random based on wall position
                     // Use better hash mixing for even distribution
@@ -2151,8 +2151,8 @@ class Renderer {
                 const screenX = wall.x - camera.x;
                 const screenY = wall.y - camera.y;
 
-                if (screenX + wall.width > 0 && screenX < this.canvas.width &&
-                    screenY + wall.height > 0 && screenY < this.canvas.height) {
+                if (screenX + wall.width > 0 && screenX < Viewport.width &&
+                    screenY + wall.height > 0 && screenY < Viewport.height) {
 
                     const baseColor = palette[wall.type || 0];
 
@@ -2222,8 +2222,8 @@ class Renderer {
             const screenY = item.y - camera.y;
 
             // Visibility check
-            if (screenX + item.width / 2 < 0 || screenX - item.width / 2 > this.canvas.width ||
-                screenY + item.height / 2 < 0 || screenY - item.height / 2 > this.canvas.height) return;
+            if (screenX + item.width / 2 < 0 || screenX - item.width / 2 > Viewport.width ||
+                screenY + item.height / 2 < 0 || screenY - item.height / 2 > Viewport.height) return;
 
             if (item.type === 'smoothStone' || item.storyObjectId === 'smoothStone') {
                 this.ctx.save();
@@ -2421,8 +2421,8 @@ class Renderer {
 
     drawVerseTestButton() {
         const vtb = UILayout.verseTestButton;
-        const btnX = UILayout.getVerseTestButtonX(this.canvas.width);
-        const btnY = UILayout.getVerseTestButtonY(this.canvas.height);
+        const btnX = UILayout.getVerseTestButtonX(Viewport.width);
+        const btnY = UILayout.getVerseTestButtonY(Viewport.height);
         const btnSize = vtb.size;
 
         // Button background (semi-transparent)
@@ -2448,8 +2448,8 @@ class Renderer {
             const screenY = bullet.y - camera.y;
 
             // Visibility check
-            if (screenX + 10 > 0 && screenX - 10 < this.canvas.width &&
-                screenY + 10 > 0 && screenY - 10 < this.canvas.height) {
+            if (screenX + 10 > 0 && screenX - 10 < Viewport.width &&
+                screenY + 10 > 0 && screenY - 10 < Viewport.height) {
 
                 // Bright glow halo
                 this.ctx.save();
@@ -2489,7 +2489,7 @@ class Renderer {
 
         const leftPadding = 14;
         const rightPadding = 7;
-        const maxWidth = this.canvas.width - leftPadding - rightPadding;
+        const maxWidth = Viewport.width - leftPadding - rightPadding;
         const maxLines = 5;
         const lineHeight = 22;
 
@@ -2518,14 +2518,14 @@ class Renderer {
         lines = lines.slice(0, maxLines);
 
         for (let i = 0; i < lines.length; i++) {
-            const y = this.canvas.height - 118 + i * lineHeight;
+            const y = Viewport.height - 118 + i * lineHeight;
             this.ctx.fillStyle = '#ffffff';
             this.ctx.fillText(lines[i], leftPadding, y);
         }
 
         this.ctx.fillStyle = '#cccccc';
         this.ctx.font = '14px Arial';
-        this.ctx.fillText(effectiveReference, leftPadding, this.canvas.height - 118 + lines.length * lineHeight);
+        this.ctx.fillText(effectiveReference, leftPadding, Viewport.height - 118 + lines.length * lineHeight);
 
         if (quiz) {
             this.displayQuizOptions(quiz);
@@ -2536,13 +2536,13 @@ class Renderer {
         const qo = UILayout.quizOptions;
         const leftPadding = qo.startX;
         const rightPadding = qo.rightPadding || 7;
-        const canvasWidth = this.canvas.width;
+        const canvasWidth = Viewport.width;
 
         // Layout from bottom up: buttons (24px) + gap (6px) + text area above
         const letterBtnHeight = 24;
         const letterBtnWidth = 44;
         const letterBtnSpacing = 5;
-        const letterY = this.canvas.height - letterBtnHeight - 6;
+        const letterY = Viewport.height - letterBtnHeight - 6;
         const lineHeight = 22;
         const maxLines = 4;
         // Text starts above the buttons with enough room
@@ -2693,13 +2693,13 @@ class Renderer {
         const rowGap = 8;
         const columnGap = 10;
         const buttonHeight = optionCount >= 4 ? 38 : 34;
-        const buttonWidth = Math.floor((this.canvas.width - leftMargin - rightMargin - columnGap) / columns);
+        const buttonWidth = Math.floor((Viewport.width - leftMargin - rightMargin - columnGap) / columns);
         const optionFont = '11px Arial';
         const labelLineHeight = 16;
         const labelLines = [];
         const labelHeight = labelLines.length * labelLineHeight;
         const totalHeight = labelHeight + topGap + rows * buttonHeight + (rows - 1) * rowGap;
-        const topY = this.canvas.height - totalHeight - 10;
+        const topY = Viewport.height - totalHeight - 10;
         const buttons = [];
 
         for (let i = 0; i < optionCount; i++) {
@@ -2763,7 +2763,7 @@ class Renderer {
         const buttonSpacing = qo.spacing;
         const optionStartX = qo.startX;
         const rightPadding = qo.rightPadding || 7;
-        const buttonY = UILayout.getQuizButtonY(this.canvas.height);
+        const buttonY = UILayout.getQuizButtonY(Viewport.height);
         const optionCount = quiz.options.length;
 
         let buttonWidth;
@@ -2776,7 +2776,7 @@ class Renderer {
         }
 
         const totalButtonWidth = optionCount * buttonWidth + (optionCount - 1) * buttonSpacing;
-        const maxLabelWidth = this.canvas.width - optionStartX - rightPadding - totalButtonWidth - 14;
+        const maxLabelWidth = Viewport.width - optionStartX - rightPadding - totalButtonWidth - 14;
 
         this.ctx.fillStyle = '#ffffff';
         this.ctx.font = 'bold 16px Arial';
@@ -2878,7 +2878,7 @@ class Renderer {
         if (!mouseX || !mouseY) return;
 
         const playableTop = this.QUALITY_LINE_HEIGHT + this.BUTTON_HEIGHT;
-        const playableBottom = this.canvas.height - this.ANSWER_SECTION_HEIGHT;
+        const playableBottom = Viewport.height - this.ANSWER_SECTION_HEIGHT;
 
         // Check if cursor is over any monster
         for (const monster of monsters) {
@@ -2887,7 +2887,7 @@ class Renderer {
 
             // Visibility check
             if (screenY - monster.height / 2 < playableTop || screenY + monster.height / 2 > playableBottom) continue;
-            if (screenX + monster.width / 2 < 0 || screenX - monster.width / 2 > this.canvas.width) continue;
+            if (screenX + monster.width / 2 < 0 || screenX - monster.width / 2 > Viewport.width) continue;
 
             // Check if cursor is within monster bounds (with some margin)
             const dx = mouseX - screenX;
@@ -2910,7 +2910,7 @@ class Renderer {
 
                 // Keep tooltip on screen
                 if (tooltipX < 5) tooltipX = 5;
-                if (tooltipX + textWidth > this.canvas.width - 5) tooltipX = this.canvas.width - textWidth - 5;
+                if (tooltipX + textWidth > Viewport.width - 5) tooltipX = Viewport.width - textWidth - 5;
                 if (tooltipY < playableTop + 5) tooltipY = mouseY + 10;
 
                 // Draw background
@@ -2944,13 +2944,13 @@ class Renderer {
 
         // Full-screen semi-transparent overlay
         ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.fillRect(0, 0, Viewport.width, Viewport.height);
 
         // Modal container (centered)
         const modalWidth = 280;
         const modalHeight = 200;
-        const modalX = (canvas.width - modalWidth) / 2;
-        const modalY = (canvas.height - modalHeight) / 2;
+        const modalX = (Viewport.width - modalWidth) / 2;
+        const modalY = (Viewport.height - modalHeight) / 2;
 
         // Modal background
         ctx.fillStyle = 'rgba(30, 30, 30, 0.95)';
@@ -2965,7 +2965,7 @@ class Renderer {
         ctx.fillStyle = '#ffcc00';
         ctx.font = 'bold 18px Arial';
         ctx.textAlign = 'center';
-        ctx.fillText(t('game.goals', 'Goals'), canvas.width / 2, modalY + 28);
+        ctx.fillText(t('game.goals', 'Goals'), Viewport.width / 2, modalY + 28);
 
         // --- Daily Challenge ---
         const dcY = modalY + 50;
@@ -3024,7 +3024,7 @@ class Renderer {
         ctx.fillStyle = '#888';
         ctx.font = '11px Arial';
         ctx.textAlign = 'center';
-        ctx.fillText(t('game.tapToClose', 'Tap anywhere to close'), canvas.width / 2, modalY + modalHeight - 12);
+        ctx.fillText(t('game.tapToClose', 'Tap anywhere to close'), Viewport.width / 2, modalY + modalHeight - 12);
 
         // Reset text align
         ctx.textAlign = 'left';
@@ -3033,16 +3033,16 @@ class Renderer {
     drawMissionLogPanel(log) {
         const ctx = this.ctx;
         const canvas = this.canvas;
-        const modalWidth = Math.min(440, canvas.width - 36);
-        const modalHeight = Math.min(440, canvas.height - 64);
-        const modalX = (canvas.width - modalWidth) / 2;
-        const modalY = (canvas.height - modalHeight) / 2;
+        const modalWidth = Math.min(440, Viewport.width - 36);
+        const modalHeight = Math.min(440, Viewport.height - 64);
+        const modalX = (Viewport.width - modalWidth) / 2;
+        const modalY = (Viewport.height - modalHeight) / 2;
         const left = modalX + 18;
         const rightW = modalWidth - 36;
 
         ctx.save();
         ctx.fillStyle = 'rgba(0, 0, 0, 0.72)';
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.fillRect(0, 0, Viewport.width, Viewport.height);
 
         ctx.fillStyle = 'rgba(12, 20, 34, 0.96)';
         ctx.fillRect(modalX, modalY, modalWidth, modalHeight);
@@ -3053,11 +3053,11 @@ class Renderer {
         ctx.fillStyle = '#f6d36b';
         ctx.font = 'bold 18px Arial';
         ctx.textAlign = 'center';
-        ctx.fillText('Mission Log', canvas.width / 2, modalY + 28);
+        ctx.fillText('Mission Log', Viewport.width / 2, modalY + 28);
 
         ctx.fillStyle = '#ffffff';
         ctx.font = 'bold 14px Arial';
-        ctx.fillText(log.title || 'Mission', canvas.width / 2, modalY + 49);
+        ctx.fillText(log.title || 'Mission', Viewport.width / 2, modalY + 49);
 
         ctx.textAlign = 'left';
         let y = modalY + 78;
@@ -3068,7 +3068,7 @@ class Renderer {
         ctx.fillStyle = '#8994a8';
         ctx.font = '11px Arial';
         ctx.textAlign = 'center';
-        ctx.fillText('Tap anywhere to close', canvas.width / 2, modalY + modalHeight - 12);
+        ctx.fillText('Tap anywhere to close', Viewport.width / 2, modalY + modalHeight - 12);
         ctx.restore();
     }
 
@@ -3132,12 +3132,12 @@ class Renderer {
                 alpha = 1 - (elapsed - fadeStart) / 300;
             }
 
-            const y = canvas.height / 2 - 60 + yOffset;
+            const y = Viewport.height / 2 - 60 + yOffset;
 
             // Shadow
             ctx.font = 'bold 16px Arial';
             ctx.fillStyle = `rgba(0, 0, 0, ${alpha * 0.6})`;
-            ctx.fillText(msg.text, canvas.width / 2 + 1, y + 1);
+            ctx.fillText(msg.text, Viewport.width / 2 + 1, y + 1);
 
             // Text
             ctx.fillStyle = msg.color.replace(')', `, ${alpha})`).replace('rgb(', 'rgba(');
@@ -3148,7 +3148,7 @@ class Renderer {
                 const b = parseInt(msg.color.slice(5, 7), 16);
                 ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${alpha})`;
             }
-            ctx.fillText(msg.text, canvas.width / 2, y);
+            ctx.fillText(msg.text, Viewport.width / 2, y);
 
             yOffset += 24;
         });
