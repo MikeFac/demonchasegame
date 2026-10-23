@@ -1907,6 +1907,9 @@ function tryHandle3DFire(monsters, now) {
     }
 
     attackSound.play();
+    if (window.SoundEffects && typeof SoundEffects.playWhoosh === 'function') {
+        SoundEffects.playWhoosh(0.7);
+    }
     markPlayerAttackVisual(now);
     if (!monster) return true;
 
@@ -2411,6 +2414,9 @@ function resetVisualState() {
     playerVisuals = Object.create(null);
     visualEffects = [];
     if (window.VisualJuice) VisualJuice.clear();
+    if (window.SoundEffects && typeof SoundEffects.setLowHealthHeartbeat === 'function') {
+        SoundEffects.setLowHealthHeartbeat(false);
+    }
 }
 
 function findMonsterNear(x, y, maxDistance) {
@@ -2615,6 +2621,9 @@ let attackSoundIndex = 0;
 let damageSoundIndex = 0;
 
 function playAttackSound() {
+    if (window.SoundEffects && typeof SoundEffects.playWhoosh === 'function') {
+        SoundEffects.playWhoosh(0.55);
+    }
     if (Math.random() < 0.4) {
         SoundEffects.playAttack();
     } else {
@@ -4276,6 +4285,9 @@ window.onQuizCorrectAnswer = function (quizMode, verseReference, combatCategory)
     if (window.SoundEffects) {
         SoundEffects.playDing();
     }
+    if (window.MusicManager && typeof MusicManager.duck === 'function') {
+        MusicManager.duck(320, 0.4);
+    }
 
     // ===== FUN MODE BONUSES (applied client-side + engine for persistence) =====
     if ((window.funModeBonusHealth || window.funModeBonusAmmo) && player) {
@@ -5464,6 +5476,9 @@ async function init() {
                         );
                         if (distToMonster >= getCombatDistanceForMonster(m)) {
                             network.sendShoot({ x: worldX, y: worldY });
+                            if (window.SoundEffects && typeof SoundEffects.playWhoosh === 'function') {
+                                SoundEffects.playWhoosh(0.45);
+                            }
                             markPlayerAttackVisual(Date.now());
                         }
                         return true; // Handled (prevent movement)
@@ -6662,6 +6677,10 @@ function gameLoop(generation) {
         const localVisual = getPlayerVisual('local');
         localVisual.moving = !!player.isMoving;
         localVisual.speed = localVisual.moving ? 3.2 : 0;
+        if (window.SoundEffects && typeof SoundEffects.setLowHealthHeartbeat === 'function' && player) {
+            const maxHealth = Math.max(1, player.maxHealth || 100);
+            SoundEffects.setLowHealthHeartbeat((player.health / maxHealth) < 0.3 && !gameOverFlag);
+        }
         if (uiState && uiState.visuals) {
             uiState.visuals.effects = visualEffects;
             uiState.visuals.monsters = monsterVisuals;

@@ -5,6 +5,7 @@
 const SoundEffects = (function() {
     let audioContext = null;
     let masterVolume = 0.5;
+    let heartbeatTimer = null;
 
     function getAudioContext() {
         if (!audioContext) {
@@ -15,6 +16,85 @@ const SoundEffects = (function() {
 
     function setMasterVolume(vol) {
         masterVolume = Math.max(0, Math.min(1, vol));
+    }
+
+    function rand(min, max) {
+        return min + Math.random() * (max - min);
+    }
+
+    function humanizeGain(base) {
+        return base * masterVolume * rand(0.88, 1.12);
+    }
+
+    /**
+     * Soft airy whoosh layered under attacks and ranged shots.
+     * No asset: filtered noise burst, slightly randomised each time.
+     */
+    function playWhoosh(intensity) {
+        const ctx = getAudioContext();
+        const amount = Math.max(0.15, Math.min(1, intensity || 1));
+        const duration = rand(0.11, 0.16);
+        const noise = ctx.createBufferSource();
+        const buffer = ctx.createBuffer(1, Math.floor(ctx.sampleRate * duration), ctx.sampleRate);
+        const data = buffer.getChannelData(0);
+        for (let i = 0; i < buffer.length; i++) {
+            data[i] = (Math.random() * 2 - 1) * Math.exp(-i / (buffer.length * rand(0.2, 0.35)));
+        }
+        noise.buffer = buffer;
+
+        const filter = ctx.createBiquadFilter();
+        filter.type = 'bandpass';
+        filter.frequency.setValueAtTime(rand(900, 1500), ctx.currentTime);
+        filter.frequency.exponentialRampToValueAtTime(rand(400, 700), ctx.currentTime + duration);
+        filter.Q.setValueAtTime(rand(1.2, 2.2), ctx.currentTime);
+
+        const gainNode = ctx.createGain();
+        gainNode.gain.setValueAtTime(0, ctx.currentTime);
+        gainNode.gain.linearRampToValueAtTime(0.11 * masterVolume * amount, ctx.currentTime + 0.02);
+        gainNode.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + duration);
+
+        noise.connect(filter);
+        filter.connect(gainNode);
+        gainNode.connect(ctx.destination);
+        noise.start(ctx.currentTime);
+    }
+
+    function playHeartbeatOnce() {
+        const ctx = getAudioContext();
+        if (ctx.state === 'suspended') return;
+        const start = ctx.currentTime;
+        [0, 0.16].forEach((delay, index) => {
+            const oscillator = ctx.createOscillator();
+            const gainNode = ctx.createGain();
+            oscillator.type = 'sine';
+            oscillator.frequency.setValueAtTime(index === 0 ? 58 : 48, start + delay);
+            oscillator.frequency.exponentialRampToValueAtTime(index === 0 ? 44 : 36, start + delay + 0.12);
+            gainNode.gain.setValueAtTime(0.001, start + delay);
+            gainNode.gain.linearRampToValueAtTime((index === 0 ? 0.12 : 0.075) * masterVolume, start + delay + 0.015);
+            gainNode.gain.exponentialRampToValueAtTime(0.001, start + delay + 0.16);
+            oscillator.connect(gainNode);
+            gainNode.connect(ctx.destination);
+            oscillator.start(start + delay);
+            oscillator.stop(start + delay + 0.17);
+        });
+    }
+
+    /** Start/stop the <30% HP heartbeat loop. Safe to call every frame. */
+    function setLowHealthHeartbeat(active) {
+        if (active) {
+            if (heartbeatTimer) return;
+            playHeartbeatOnce();
+            heartbeatTimer = setInterval(() => {
+                if (typeof window.gameMode !== 'undefined' && window.gameMode !== 'game') {
+                    setLowHealthHeartbeat(false);
+                    return;
+                }
+                playHeartbeatOnce();
+            }, 900);
+        } else if (heartbeatTimer) {
+            clearInterval(heartbeatTimer);
+            heartbeatTimer = null;
+        }
     }
 
     /**
@@ -29,10 +109,11 @@ const SoundEffects = (function() {
         gainNode.connect(ctx.destination);
 
         oscillator.type = 'sine';
-        oscillator.frequency.setValueAtTime(800, ctx.currentTime);
-        oscillator.frequency.exponentialRampToValueAtTime(1200, ctx.currentTime + 0.1);
+        const startFreq = rand(760, 850);
+        oscillator.frequency.setValueAtTime(startFreq, ctx.currentTime);
+        oscillator.frequency.exponentialRampToValueAtTime(startFreq * rand(1.42, 1.55), ctx.currentTime + 0.1);
 
-        gainNode.gain.setValueAtTime(0.3 * masterVolume, ctx.currentTime);
+        gainNode.gain.setValueAtTime(humanizeGain(0.3), ctx.currentTime);
         gainNode.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.2);
 
         oscillator.start(ctx.currentTime);
@@ -236,10 +317,10 @@ const SoundEffects = (function() {
         const gainNode = ctx.createGain();
         
         oscillator.type = 'triangle';
-        oscillator.frequency.setValueAtTime(100 + Math.random() * 30, ctx.currentTime);
-        oscillator.frequency.exponentialRampToValueAtTime(40, ctx.currentTime + 0.2);
+        oscillator.frequency.setValueAtTime(rand(92, 132), ctx.currentTime);
+        oscillator.frequency.exponentialRampToValueAtTime(rand(36, 46), ctx.currentTime + 0.2);
         
-        gainNode.gain.setValueAtTime(0.6 * masterVolume, ctx.currentTime);
+        gainNode.gain.setValueAtTime(humanizeGain(0.6), ctx.currentTime);
         gainNode.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.2);
         
         oscillator.connect(gainNode);
@@ -262,11 +343,11 @@ const SoundEffects = (function() {
         
         const filter = ctx.createBiquadFilter();
         filter.type = 'lowpass';
-        filter.frequency.setValueAtTime(800, ctx.currentTime);
-        filter.frequency.exponentialRampToValueAtTime(200, ctx.currentTime + 0.2);
+        filter.frequency.setValueAtTime(rand(720, 900), ctx.currentTime);
+        filter.frequency.exponentialRampToValueAtTime(rand(180, 230), ctx.currentTime + 0.2);
         
         const gainNode = ctx.createGain();
-        gainNode.gain.setValueAtTime(0.35 * masterVolume, ctx.currentTime);
+        gainNode.gain.setValueAtTime(humanizeGain(0.35), ctx.currentTime);
         gainNode.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.2);
         
         noise.connect(filter);
@@ -320,7 +401,7 @@ const SoundEffects = (function() {
         filter.frequency.exponentialRampToValueAtTime(100, ctx.currentTime + 0.4);
         
         const gainNode = ctx.createGain();
-        gainNode.gain.setValueAtTime(0.5 * masterVolume, ctx.currentTime);
+        gainNode.gain.setValueAtTime(humanizeGain(0.5), ctx.currentTime);
         gainNode.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.4);
         
         noise.connect(filter);
@@ -351,6 +432,8 @@ const SoundEffects = (function() {
         playDamage,
         playBullet,
         playMonsterDeath,
+        playWhoosh,
+        setLowHealthHeartbeat,
         setMasterVolume
     };
 })();

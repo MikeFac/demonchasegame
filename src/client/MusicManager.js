@@ -15,6 +15,7 @@
     let currentAudio = null;
     let tracks = [];
     let volume = 0.7;
+    let duckTimer = null;
     let currentVerseReference = null;  // Track current verse song
     let currentPlaybackType = null;    // 'track' | 'verse'
     let songBrowsingMode = false;      // Prevent game/quiz auto-play while browsing library
@@ -204,6 +205,24 @@
         if (currentAudio && !isMuted) {
             currentAudio.volume = volume;
         }
+    }
+
+    /**
+     * Briefly duck music under a feedback sound (correct answer, big hit).
+     * Never touches mute state; restores to the current user volume.
+     */
+    function duck(durationMs, factor) {
+        if (!currentAudio || isMuted) return;
+        const ms = Math.max(60, Math.min(1200, durationMs || 300));
+        const amount = Math.max(0.05, Math.min(1, factor || 0.35));
+        currentAudio.volume = volume * amount;
+        if (duckTimer) clearTimeout(duckTimer);
+        duckTimer = setTimeout(function () {
+            duckTimer = null;
+            if (currentAudio && !isMuted) {
+                currentAudio.volume = volume;
+            }
+        }, ms);
     }
 
     /**
@@ -426,6 +445,7 @@
         togglePlay,
         toggleMute,
         setVolume,
+        duck,
         getState,
         getTracks,
         getIsPlaying,
