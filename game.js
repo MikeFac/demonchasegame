@@ -2152,6 +2152,7 @@ function ensureSupportedViewMode(mode) {
     return '2d';
 }
 let playerImg, otherPlayerImg, healingPointImg, demonImages, explosionImg;
+let juiceSparkImg, juiceSmokeImg, juiceRingImg, juiceHolyImg;
 let buildingTilesImg, terrainTilesImg; // Tile sprite sheets (8x8 grids, 32x32 tiles)
 
 // Tint colors per player number (player 1 keeps original blue)
@@ -2486,15 +2487,15 @@ function getCombatDistanceForMonster(monster) {
 
 const DEMON_TYPES = {
     Goliath: resolveAssetUrl('images/monsters/goliath_giant.png'),
-    Fear: resolveAssetUrl('images/monsters/fear_demon.png'),
-    Condemnation: resolveAssetUrl('images/monsters/condemnation_demon.png'),
+    Fear: resolveAssetUrl('images/monsters/fear_demon.png?v=3.1'),
+    Condemnation: resolveAssetUrl('images/monsters/condemnation_demon.png?v=3.1'),
     Unbelief: resolveAssetUrl('images/monsters/unbelief_demon.png'),
     Ignorance: resolveAssetUrl('images/monsters/ignorance_spirit.png'),
     Depression: resolveAssetUrl('images/monsters/depression_spirit.png'),
     Strife: resolveAssetUrl('images/monsters/strife_spirit.png'),
     Confusion: resolveAssetUrl('images/monsters/confusion_spirit.png'),
     Infirmity: resolveAssetUrl('images/monsters/infirmity_spirit.png'),
-    Doubt: resolveAssetUrl('images/monsters/doubt_spirit.png'),
+    Doubt: resolveAssetUrl('images/monsters/doubt_spirit.png?v=3.1'),
     Deception: resolveAssetUrl('images/monsters/DECEPTION_SPIRIT1.png'),
     Despair: resolveAssetUrl('images/monsters/DISCOURAGEMENT.png'),
     Pride: resolveAssetUrl('images/monsters/PRIDE.png'),
@@ -4484,7 +4485,7 @@ async function init() {
                 console.log(`Received player number: ${playerNumber}`);
                 // Always load player1 sprite sheet, then tint for other players
                 const baseImg = new Image();
-                baseImg.src = `${scriptDirectory}/images/player1-sprite96.png`;
+                baseImg.src = `${scriptDirectory}/images/player1-sprite96.png?v=3.1`;
                 baseImg.onload = function () {
                     const spriteNumber = ((playerNumber - 1) % 4) + 1;
                     const tint = PLAYER_TINTS[spriteNumber];
@@ -4998,7 +4999,7 @@ async function init() {
         // Load other images
         try {
             // Load other player sprite (tinted grey from player1 base)
-            const otherBase = await loadImage(`${scriptDirectory}/images/player1-sprite96.png`);
+            const otherBase = await loadImage(`${scriptDirectory}/images/player1-sprite96.png?v=3.1`);
             otherPlayerImg = createTintedSprite(otherBase, OTHER_PLAYER_TINT);
             console.log('Other player sprite ready (grey tint)');
 
@@ -5165,6 +5166,17 @@ async function init() {
         explosionImg.onerror = function () {
             console.error('Error loading explosion image');
         };
+
+        // Optional procedural VFX textures (3.4 art pass). Effects fall back
+        // to pure-canvas drawing if any of these fail to load.
+        juiceSparkImg = new Image();
+        juiceSparkImg.src = `${scriptDirectory}/images/effects/step0-spark.png?v=3.1`;
+        juiceSmokeImg = new Image();
+        juiceSmokeImg.src = `${scriptDirectory}/images/effects/step0-smoke.png?v=3.1`;
+        juiceRingImg = new Image();
+        juiceRingImg.src = `${scriptDirectory}/images/effects/step0-ring.png?v=3.1`;
+        juiceHolyImg = new Image();
+        juiceHolyImg.src = `${scriptDirectory}/images/effects/step0-holy.png?v=3.1`;
 
         // Initialize InputHandler
         if (inputHandler && typeof inputHandler.destroy === 'function') {
@@ -6197,7 +6209,7 @@ async function startMission(worldId, missionId) {
                         canvas: document.getElementById('gameCanvas'),
                         ctx: document.getElementById('gameCanvas').getContext('2d'),
                         demonImages: demonImages,
-                        playerSpriteUrl: `${scriptDirectory}/images/player1-sprite96.png`,
+                        playerSpriteUrl: `${scriptDirectory}/images/player1-sprite96.png?v=3.1`,
                         mission: mission,
                         onEndGame: function () {
                             if (currentMission) {
@@ -6579,6 +6591,10 @@ function gameLoop(generation) {
             healingPointImg,
             shieldImg,
             particleBurstImg,
+            juiceSparkImg,
+            juiceSmokeImg,
+            juiceRingImg,
+            juiceHolyImg,
             buildingTilesImg,
             terrainTilesImg
         };

@@ -3497,6 +3497,12 @@ class Renderer {
         }
     }
 
+    _drawEffectTexture(image, x, y, size, alpha) {
+        if (!image || !image.complete || !image.naturalWidth) return;
+        this.ctx.globalAlpha = Math.max(0, Math.min(1, alpha));
+        this.ctx.drawImage(image, x - size / 2, y - size / 2, size, size);
+    }
+
     /**
      * Draw typed procedural effects: ring, spark, dust, death, soul, correct,
      * muzzle. All coordinates are world coordinates and get camera-offset here.
@@ -3529,6 +3535,7 @@ class Renderer {
                 ctx.beginPath();
                 ctx.arc(x, y, radius * 0.72, 0, Math.PI * 2);
                 ctx.fill();
+                this._drawEffectTexture(this.assets.juiceRingImg, x, y, 38 + p * 36, alpha * 0.9);
             } else if (effect.type === 'spark') {
                 ctx.globalCompositeOperation = 'lighter';
                 const count = effect.count || 7;
@@ -3547,6 +3554,7 @@ class Renderer {
                 ctx.beginPath();
                 ctx.arc(x, y, 6 * (1 - p) + 2, 0, Math.PI * 2);
                 ctx.fill();
+                this._drawEffectTexture(this.assets.juiceSparkImg, x, y, 18 + p * 22, alpha * 0.95);
             } else if (effect.type === 'muzzle') {
                 ctx.globalCompositeOperation = 'lighter';
                 ctx.globalAlpha = alpha;
@@ -3554,6 +3562,7 @@ class Renderer {
                 ctx.beginPath();
                 ctx.arc(x, y, 3 + p * 9, 0, Math.PI * 2);
                 ctx.fill();
+                this._drawEffectTexture(this.assets.juiceSparkImg, x, y, 14 + p * 12, alpha);
             } else if (effect.type === 'dust') {
                 for (let i = 0; i < 5; i++) {
                     const angle = (effect.seed || 0) * Math.PI * 2 + (i / 5) * Math.PI * 2;
@@ -3564,6 +3573,7 @@ class Renderer {
                     ctx.arc(x + Math.cos(angle) * distance, y + Math.sin(angle) * distance - p * 6, 2 + p * 3, 0, Math.PI * 2);
                     ctx.fill();
                 }
+                this._drawEffectTexture(this.assets.juiceSmokeImg, x, y, 18 + p * 16, alpha * 0.55);
             } else if (effect.type === 'death') {
                 const radius = 8 + p * 34;
                 const gradient = ctx.createRadialGradient(x, y, 0, x, y, radius);
@@ -3583,6 +3593,7 @@ class Renderer {
                     ctx.arc(x + Math.cos(angle) * distance, y + Math.sin(angle) * distance - p * 10, 2.4 * (1 - p) + 0.6, 0, Math.PI * 2);
                     ctx.fill();
                 }
+                this._drawEffectTexture(this.assets.juiceSmokeImg, x, y, 40 + p * 34, alpha * 0.8);
             } else if (effect.type === 'soul') {
                 const rise = p * 44;
                 ctx.globalCompositeOperation = 'lighter';
@@ -3595,6 +3606,7 @@ class Renderer {
                 ctx.beginPath();
                 ctx.arc(x, y - rise, 16, 0, Math.PI * 2);
                 ctx.fill();
+                this._drawEffectTexture(this.assets.juiceHolyImg, x, y - rise, 22, alpha * 0.7);
             } else if (effect.type === 'correct') {
                 ctx.globalCompositeOperation = 'lighter';
                 const radius = 10 + p * 46;
@@ -3613,6 +3625,7 @@ class Renderer {
                     ctx.arc(x + Math.cos(angle) * distance, y + Math.sin(angle) * distance, 2.2 * (1 - p) + 0.6, 0, Math.PI * 2);
                     ctx.fill();
                 }
+                this._drawEffectTexture(this.assets.juiceHolyImg, x, y, 52 + p * 38, alpha * 0.95);
             }
             ctx.restore();
         });
