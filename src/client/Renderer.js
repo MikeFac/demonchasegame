@@ -1119,7 +1119,13 @@ class Renderer {
         let worldMarker = null;
 
         if (guide.target === 'hud') {
-            targetRect = { x: 8, y: 6, width: 130, height: this.QUALITY_LINE_HEIGHT - 12 };
+            // Health bar lives in the second HUD row now, not the old stats line.
+            targetRect = {
+                x: 6,
+                y: this.QUALITY_LINE_HEIGHT + 4,
+                width: Math.min(150, Viewport.width * 0.42),
+                height: this.HUD_ROW_HEIGHT - 8
+            };
             box = {
                 x: layout.hudBox.x,
                 y: this.QUALITY_LINE_HEIGHT + layout.hudBox.yOffset,
@@ -1127,7 +1133,7 @@ class Renderer {
                 height: layout.hudBox.height
             };
             arrowFrom = { x: box.x + 104, y: box.y - 2 };
-            arrowTo = { x: targetRect.x + 18, y: targetRect.y + 28 };
+            arrowTo = { x: targetRect.x + targetRect.width, y: targetRect.y + targetRect.height / 2 };
         } else if (guide.target === 'move') {
             box = {
                 x: layout.moveBox.x,
