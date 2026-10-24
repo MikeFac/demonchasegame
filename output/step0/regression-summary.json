@@ -84,35 +84,60 @@
         "actual": "first_letter",
         "prompt": "So ----- ----- by hearing, and hearing by the word of God.",
         "optionCount": 4,
-        "hasAnswer": true
+        "hasAnswer": true,
+        "answered": true,
+        "isAnswerCorrect": true,
+        "ammoBefore": 0,
+        "ammoAfter": 2,
+        "completed": true
       },
       {
         "requested": "missing_word",
         "actual": "missing_word",
-        "prompt": "So _____ comes by hearing, and hearing by the word of God.",
+        "prompt": "Without faith it is _____ to be well pleasing to him, for he who comes to God must believe that he exists, and that he is a rewarder of those who seek him.",
         "optionCount": 4,
-        "hasAnswer": true
+        "hasAnswer": true,
+        "answered": true,
+        "isAnswerCorrect": true,
+        "ammoBefore": 2,
+        "ammoAfter": 4,
+        "completed": true
       },
       {
         "requested": "category_match",
         "actual": "category_match",
-        "prompt": "So faith comes by hearing, and hearing by the word of God.",
+        "prompt": "Be strong and courageous. Don’t be afraid or scared of them, for Yahweh your God himself is He who goes with you. He will not fail you nor forsake you.”",
         "optionCount": 3,
-        "hasAnswer": true
+        "hasAnswer": true,
+        "answered": true,
+        "isAnswerCorrect": true,
+        "ammoBefore": 4,
+        "ammoAfter": 6,
+        "completed": true
       },
       {
         "requested": "true_false",
         "actual": "true_false",
-        "prompt": "So faith comes by hearing, and hearing by the word of God.",
+        "prompt": "But if any of you lacks wisdom, let him ask of God, who gives to all liberally and without reproach, and it will be given to him.",
         "optionCount": 2,
-        "hasAnswer": true
+        "hasAnswer": true,
+        "answered": true,
+        "isAnswerCorrect": true,
+        "ammoBefore": 6,
+        "ammoAfter": 8,
+        "completed": true
       },
       {
         "requested": "cloze",
         "actual": "cloze",
-        "prompt": "So _____ comes by _____ and hearing by the word of God.",
+        "prompt": "But the wisdom that is from above is first pure, then peaceful, _____ reasonable, full of mercy and good fruits, _____ partiality, and without hypocrisy.",
         "optionCount": 0,
-        "hasAnswer": true
+        "hasAnswer": true,
+        "answered": true,
+        "isAnswerCorrect": true,
+        "ammoBefore": 8,
+        "ammoAfter": 10,
+        "completed": true
       }
     ]
   },
@@ -120,7 +145,7 @@
     "gameMode": "game",
     "missionId": "intro-01",
     "missionName": "First Victory",
-    "playerCode": "66380c",
+    "playerCode": "585c87",
     "playerHealth": 100,
     "monsters": 1
   },

@@ -141,7 +141,34 @@ async function captureQuizModes(browser, errors) {
       await page.locator('#gameCanvas').screenshot({
         path: path.join(OUTPUT_DIR, 'quiz', `${quizMode.mode}.png`)
       });
-      results.push(result);
+      const answer = await page.evaluate(async (entry) => {
+        const quiz = typeof currentQuiz !== 'undefined' ? currentQuiz : null;
+        if (!quiz || quiz.mode !== entry.mode) {
+          return { answered: false, reason: 'mode changed before answer' };
+        }
+        const ammoBefore = player.ammo || 0;
+        if (entry.mode === 'cloze') {
+          let guard = 0;
+          while (!quiz.isComplete && guard < 12) {
+            const word = quiz.answers[quiz.currentWordIndex];
+            window.QuizManager.handleClozeLetterSelect(word.charAt(0).toUpperCase());
+            guard += 1;
+          }
+        } else {
+          const correct = Array.isArray(quiz.options) ? quiz.options.find((option) => option.isCorrect) : null;
+          if (!correct) return { answered: false, reason: 'no correct option' };
+          window.QuizManager.handleQuizAnswer(correct);
+        }
+        await new Promise((resolve) => setTimeout(resolve, 120));
+        return {
+          answered: true,
+          isAnswerCorrect: typeof isAnswerCorrect !== 'undefined' ? isAnswerCorrect : null,
+          ammoBefore,
+          ammoAfter: player.ammo,
+          completed: entry.mode === 'cloze' ? !!quiz.isComplete : true
+        };
+      }, quizMode);
+      results.push(Object.assign({}, result, answer));
     }
     return { settings, results };
   } finally {
@@ -211,6 +238,12 @@ async function main() {
     }
     if (!result.hasAnswer) {
       failures.push(`quiz ${result.requested}: missing answer data`);
+    }
+    if (!result.answered || result.isAnswerCorrect !== true) {
+      failures.push(`quiz ${result.requested}: correct answer was not accepted (${JSON.stringify(result)})`);
+    }
+    if (!(result.ammoAfter > result.ammoBefore)) {
+      failures.push(`quiz ${result.requested}: ammo reward did not increase (${result.ammoBefore} -> ${result.ammoAfter})`);
     }
   }
   if (!summary.mission || summary.mission.missionId !== 'intro-01') {

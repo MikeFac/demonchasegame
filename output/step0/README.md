@@ -62,7 +62,8 @@ node test/game-integration-test.js
 Results recorded during this pass:
 
 - `node scripts/test-step0-regression.js` — passed. 4 widths at DPR 2,
-  5/5 quiz modes generated with answer data, solo mission reached `game` mode.
+  5/5 quiz modes generated and answered correctly (ammo reward increased),
+  solo mission reached `game` mode.
 - `npm run test:three-views` — passed; 2D, third-person and first-person modes
   load and switch.
 - `node scripts/test-multiplayer-regression.js` — passed. A 2-player room was
