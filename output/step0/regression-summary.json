@@ -1,0 +1,128 @@
+{
+  "baseUrl": "http://127.0.0.1:3500/",
+  "widths": [
+    {
+      "width": 320,
+      "state": {
+        "logicalWidth": 320,
+        "logicalHeight": 600,
+        "dpr": 2,
+        "bitmapWidth": 640,
+        "bitmapHeight": 1200,
+        "cssWidth": "320px",
+        "transformA": 2,
+        "playableTop": 69,
+        "hudRowHeight": 24,
+        "gameMode": "game",
+        "playerHealth": 100,
+        "monsterCount": 18
+      }
+    },
+    {
+      "width": 360,
+      "state": {
+        "logicalWidth": 360,
+        "logicalHeight": 600,
+        "dpr": 2,
+        "bitmapWidth": 720,
+        "bitmapHeight": 1200,
+        "cssWidth": "360px",
+        "transformA": 2,
+        "playableTop": 69,
+        "hudRowHeight": 24,
+        "gameMode": "game",
+        "playerHealth": 100,
+        "monsterCount": 18
+      }
+    },
+    {
+      "width": 400,
+      "state": {
+        "logicalWidth": 400,
+        "logicalHeight": 600,
+        "dpr": 2,
+        "bitmapWidth": 800,
+        "bitmapHeight": 1200,
+        "cssWidth": "400px",
+        "transformA": 2,
+        "playableTop": 69,
+        "hudRowHeight": 24,
+        "gameMode": "game",
+        "playerHealth": 100,
+        "monsterCount": 18
+      }
+    },
+    {
+      "width": 420,
+      "state": {
+        "logicalWidth": 420,
+        "logicalHeight": 600,
+        "dpr": 2,
+        "bitmapWidth": 840,
+        "bitmapHeight": 1200,
+        "cssWidth": "420px",
+        "transformA": 2,
+        "playableTop": 69,
+        "hudRowHeight": 24,
+        "gameMode": "game",
+        "playerHealth": 100,
+        "monsterCount": 18
+      }
+    }
+  ],
+  "quiz": {
+    "settings": [
+      "firstLetter",
+      "missingWord",
+      "categoryMatch",
+      "trueFalse",
+      "cloze"
+    ],
+    "results": [
+      {
+        "requested": "first_letter",
+        "actual": "first_letter",
+        "prompt": "So ----- ----- by hearing, and hearing by the word of God.",
+        "optionCount": 4,
+        "hasAnswer": true
+      },
+      {
+        "requested": "missing_word",
+        "actual": "missing_word",
+        "prompt": "So _____ comes by hearing, and hearing by the word of God.",
+        "optionCount": 4,
+        "hasAnswer": true
+      },
+      {
+        "requested": "category_match",
+        "actual": "category_match",
+        "prompt": "So faith comes by hearing, and hearing by the word of God.",
+        "optionCount": 3,
+        "hasAnswer": true
+      },
+      {
+        "requested": "true_false",
+        "actual": "true_false",
+        "prompt": "So faith comes by hearing, and hearing by the word of God.",
+        "optionCount": 2,
+        "hasAnswer": true
+      },
+      {
+        "requested": "cloze",
+        "actual": "cloze",
+        "prompt": "So _____ comes by _____ and hearing by the word of God.",
+        "optionCount": 0,
+        "hasAnswer": true
+      }
+    ]
+  },
+  "mission": {
+    "gameMode": "game",
+    "missionId": "intro-01",
+    "missionName": "First Victory",
+    "playerCode": "66380c",
+    "playerHealth": 100,
+    "monsters": 1
+  },
+  "errors": []
+}

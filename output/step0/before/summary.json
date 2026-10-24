@@ -1,0 +1,53 @@
+{
+  "baseCommit": "c5190ff",
+  "results": [
+    {
+      "width": 320,
+      "state": {
+        "logicalWidth": 320,
+        "logicalHeight": 600,
+        "cssWidth": "",
+        "cssHeight": "",
+        "dpr": 2,
+        "gameMode": "game"
+      },
+      "errors": []
+    },
+    {
+      "width": 360,
+      "state": {
+        "logicalWidth": 360,
+        "logicalHeight": 600,
+        "cssWidth": "",
+        "cssHeight": "",
+        "dpr": 2,
+        "gameMode": "game"
+      },
+      "errors": []
+    },
+    {
+      "width": 400,
+      "state": {
+        "logicalWidth": 400,
+        "logicalHeight": 600,
+        "cssWidth": "",
+        "cssHeight": "",
+        "dpr": 2,
+        "gameMode": "game"
+      },
+      "errors": []
+    },
+    {
+      "width": 420,
+      "state": {
+        "logicalWidth": 420,
+        "logicalHeight": 600,
+        "cssWidth": "",
+        "cssHeight": "",
+        "dpr": 2,
+        "gameMode": "game"
+      },
+      "errors": []
+    }
+  ]
+}
