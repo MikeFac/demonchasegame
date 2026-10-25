@@ -25,13 +25,21 @@ layout remains in logical pixels.
 
 ## Art
 
-- Reference sheet: `../../docs/art/step0-cast-reference.png`
-- Silhouette test (64 px / 32 px): `art/silhouettes-64.png`
+- Focus cast reference: `../../docs/art/step0-cast-reference.png`
+- Full 18-type demon reference: `../../docs/art/demon-cast-reference.png`
+- Full demon contact sheet: `art/demon-cast-contact.png`
+- Silhouette tests (64 px / 32 px): `art/silhouettes-64.png`,
+  `art/demon-silhouettes-64.png`
 - In-game cast: `art/ingame-cast.png`
 - Close-up: `art/ingame-fear-close.png`
+- Full cast lineup (in-game): `art/ingame-cast-lineup.png`
 - Trio attempt: `art/ingame-trio.png`
 
 Notes: `../../docs/art/step0-art-notes.md`.
+
+All 18 demon types now share the Step 0 palette/outline pass; Goliath uses a
+192 px source and the rest use 128 px sources, with destination/collision sizes
+unchanged.
 
 ## Quiz modes
 
@@ -64,6 +72,8 @@ Results recorded during this pass:
 - `node scripts/test-step0-regression.js` — passed. 4 widths at DPR 2,
   5/5 quiz modes generated and answered correctly (ammo reward increased),
   solo mission reached `game` mode.
+- All 18 demon sprites load at 128 px (Goliath 192 px) in-game; the full-cast
+  lineup screenshot is `art/ingame-cast-lineup.png`. No page errors.
 - `npm run test:three-views` — passed; 2D, third-person and first-person modes
   load and switch.
 - `node scripts/test-multiplayer-regression.js` — passed. A 2-player room was

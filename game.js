@@ -2492,24 +2492,24 @@ function getCombatDistanceForMonster(monster) {
 }
 
 const DEMON_TYPES = {
-    Goliath: resolveAssetUrl('images/monsters/goliath_giant.png'),
-    Fear: resolveAssetUrl('images/monsters/fear_demon.png?v=3.1'),
-    Condemnation: resolveAssetUrl('images/monsters/condemnation_demon.png?v=3.1'),
-    Unbelief: resolveAssetUrl('images/monsters/unbelief_demon.png'),
-    Ignorance: resolveAssetUrl('images/monsters/ignorance_spirit.png'),
-    Depression: resolveAssetUrl('images/monsters/depression_spirit.png'),
-    Strife: resolveAssetUrl('images/monsters/strife_spirit.png'),
-    Confusion: resolveAssetUrl('images/monsters/confusion_spirit.png'),
-    Infirmity: resolveAssetUrl('images/monsters/infirmity_spirit.png'),
-    Doubt: resolveAssetUrl('images/monsters/doubt_spirit.png?v=3.1'),
-    Deception: resolveAssetUrl('images/monsters/DECEPTION_SPIRIT1.png'),
-    Despair: resolveAssetUrl('images/monsters/DISCOURAGEMENT.png'),
-    Pride: resolveAssetUrl('images/monsters/PRIDE.png'),
-    Temptation: resolveAssetUrl('images/monsters/JEZEBEL.png'),
-    Poverty: resolveAssetUrl('images/monsters/DEMON-OF-POVERTY.png'),
-    Shame: resolveAssetUrl('images/monsters/SHAME-ACCUSATION.png'),
-    Blindness: resolveAssetUrl('images/monsters/SPIRITUALBLINDNESS.png'),
-    Swarm: resolveAssetUrl('images/monsters/DEMON-SWARM.png')
+    Goliath: resolveAssetUrl('images/monsters/goliath_giant.png?v=3.3'),
+    Fear: resolveAssetUrl('images/monsters/fear_demon.png?v=3.3'),
+    Condemnation: resolveAssetUrl('images/monsters/condemnation_demon.png?v=3.3'),
+    Unbelief: resolveAssetUrl('images/monsters/unbelief_demon.png?v=3.3'),
+    Ignorance: resolveAssetUrl('images/monsters/ignorance_spirit.png?v=3.3'),
+    Depression: resolveAssetUrl('images/monsters/depression_spirit.png?v=3.3'),
+    Strife: resolveAssetUrl('images/monsters/strife_spirit.png?v=3.3'),
+    Confusion: resolveAssetUrl('images/monsters/confusion_spirit.png?v=3.3'),
+    Infirmity: resolveAssetUrl('images/monsters/infirmity_spirit.png?v=3.3'),
+    Doubt: resolveAssetUrl('images/monsters/doubt_spirit.png?v=3.3'),
+    Deception: resolveAssetUrl('images/monsters/DECEPTION_SPIRIT1.png?v=3.3'),
+    Despair: resolveAssetUrl('images/monsters/DISCOURAGEMENT.png?v=3.3'),
+    Pride: resolveAssetUrl('images/monsters/PRIDE.png?v=3.3'),
+    Temptation: resolveAssetUrl('images/monsters/JEZEBEL.png?v=3.3'),
+    Poverty: resolveAssetUrl('images/monsters/DEMON-OF-POVERTY.png?v=3.3'),
+    Shame: resolveAssetUrl('images/monsters/SHAME-ACCUSATION.png?v=3.3'),
+    Blindness: resolveAssetUrl('images/monsters/SPIRITUALBLINDNESS.png?v=3.3'),
+    Swarm: resolveAssetUrl('images/monsters/DEMON-SWARM.png?v=3.3')
 };
 
 async function ensureDemonImagesLoaded() {
