@@ -40,3 +40,5 @@ docs/marketing/
 # Generated audio files (deployed separately)
 public/audio/
 strategic-marketing-strategy/
+# Local-only AI source candidates (backup lives in backups/step0-art-source/)
+output/imagegen/demon-reference-candidates-gpt-image-2/
