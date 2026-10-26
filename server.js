@@ -31,6 +31,9 @@ var DENY_ROOT_DIRS = /^\/(?:\.git|\.svn|\.hg|\.github|\.agents|\.claude|\.codex|
 var DENY_ROOT_FILES = /^\/(?:server\.js|package\.json|package-lock\.json|restart-server\.sh|grief-verses\.json|songs-export[^\/]*\.json|[^\/]*-songs-export\.json|[^\/]*-files-list\.txt)$/i;
 var DENY_EXT = /\.(?:md|sh|bash|sql|sqlite|sqlite3|db|log|py|bak|old|orig|save|pem|key|crt|cer|p12|pfx|ini|conf|yml|yaml)$/i;
 var DENY_BACKUP = /(?:\.bak|\.old|\.orig|\.save|\.swp|\.tmp|~)[^\/]*$/i;
+// The low-poly 3D runtime is loaded from node_modules/three via an import map.
+// Allow only the library build and addons, not the rest of node_modules.
+var ALLOW_THREE = /^\/node_modules\/three\/(?:build|examples\/jsm)\//i;
 app.use(function (req, res, next) {
   var p;
   try { p = decodeURIComponent(req.path); } catch (e) { return res.status(400).end(); }
@@ -40,6 +43,7 @@ app.use(function (req, res, next) {
     var seg = segs[i];
     if (seg.length > 1 && seg.charAt(0) === '.' && seg !== '.well-known') return res.status(404).end();
   }
+  if (ALLOW_THREE.test(p)) return next();
   if (DENY_ROOT_DIRS.test(p) || DENY_ROOT_FILES.test(p) || DENY_EXT.test(p) || DENY_BACKUP.test(p)) {
     return res.status(404).type('txt').send('Not found');
   }
