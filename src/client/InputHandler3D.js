@@ -388,10 +388,16 @@ class InputHandler3D extends InputHandler {
     }
 
     _getControlRects() {
+        let quizTop = Viewport.height - 118;
+        if (typeof currentQuiz !== 'undefined' && currentQuiz && this._isDiscipleshipGridQuiz(currentQuiz)) {
+            const buttons = this._getDiscipleshipQuizButtons(currentQuiz);
+            if (buttons.length) quizTop = buttons[0].y - 8;
+        }
         this.controls = get3DControlLayout(
             this.canvas,
             this.constants.QUALITY_LINE_HEIGHT,
-            this.viewMode
+            this.viewMode,
+            quizTop
         );
         return this.controls;
     }

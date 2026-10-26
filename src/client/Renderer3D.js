@@ -1,28 +1,32 @@
-function get3DControlLayout(canvas, qualityLineHeight, viewMode = 'third-person') {
+function get3DControlLayout(canvas, qualityLineHeight, viewMode = 'third-person', quizTop) {
     const firstPerson = viewMode === 'first-person';
-    // Chase controls are taps, so they can be more compact. First-person
-    // controls are held while moving/turning and retain a larger touch target.
-    const size = firstPerson
+    const gap = 6;
+    // Five controls in one row with accessible 48/58 px targets. The row is
+    // centered with 3 px minimum side margins at 320 px logical width.
+    const baseSize = firstPerson
         ? Math.min(76, Math.max(58, Viewport.width * 0.12))
         : Math.min(66, Math.max(48, Viewport.width * 0.105));
-    const forwardExtra = firstPerson ? 14 : 10;
-    const bottom = Viewport.height - size - 22;
-    const leftX = 18;
-    const rightX = leftX + size + 10;
-    const forwardX = Viewport.width - size - 18;
-    const forwardY = bottom - 18;
-    const stopX = forwardX;
-    const stopY = forwardY - size - 12;
-    const fireX = Viewport.width - size - 18;
-    const fireY = qualityLineHeight + 58;
+    const maxSize = Math.floor((Viewport.width - 6 - gap * 4) / 5);
+    const size = Math.max(36, Math.min(baseSize, maxSize));
+    const totalWidth = size * 5 + gap * 4;
+    const startX = Math.max(3, Math.round((Viewport.width - totalWidth) / 2));
+    // Keep the row above the active quiz block. Most quizzes start their verse
+    // at height - 118; the discipleship grid can start higher, so callers pass
+    // its top edge explicitly.
+    const minY = (typeof UILayout !== 'undefined' ? UILayout.playableTop : qualityLineHeight + 24) + 8;
+    const defaultY = Math.round(Viewport.height - size - 138);
+    const textTop = (typeof quizTop === 'number' && isFinite(quizTop)) ? quizTop : (Viewport.height - 118);
+    const y = Math.max(minY, Math.min(defaultY, Math.round(textTop - size - 20)));
+    const step = size + gap;
+    const rect = (index) => ({ x: startX + index * step, y, width: size, height: size });
 
     return {
         size,
-        left: { x: leftX, y: bottom, width: size, height: size },
-        right: { x: rightX, y: bottom, width: size, height: size },
-        forward: { x: forwardX, y: forwardY, width: size, height: size + forwardExtra },
-        stop: { x: stopX, y: stopY, width: size, height: size },
-        fire: { x: fireX, y: fireY, width: size, height: size }
+        left: rect(0),
+        right: rect(1),
+        stop: rect(2),
+        forward: rect(3),
+        fire: rect(4)
     };
 }
 
@@ -386,7 +390,14 @@ class Renderer3D extends Renderer {
     }
 
     _drawControlsOverlay() {
-        const controls = get3DControlLayout(this.canvas, this.QUALITY_LINE_HEIGHT, this.viewMode);
+        let quizTop = Viewport.height - 118;
+        if (typeof currentQuiz !== 'undefined' && currentQuiz && this._isDiscipleshipGridQuiz(currentQuiz)) {
+            const quizLayout = this._getDiscipleshipQuizLayout(currentQuiz);
+            if (quizLayout.buttons && quizLayout.buttons.length) {
+                quizTop = quizLayout.buttons[0].y - 8;
+            }
+        }
+        const controls = get3DControlLayout(this.canvas, this.QUALITY_LINE_HEIGHT, this.viewMode, quizTop);
         const firstPerson = this.viewMode === 'first-person';
         this._drawControlButton(controls.left.x, controls.left.y, controls.left.width, controls.left.height, { type: 'turn-left' });
         this._drawControlButton(controls.right.x, controls.right.y, controls.right.width, controls.right.height, { type: 'turn-right' });

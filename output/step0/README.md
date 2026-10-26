@@ -41,6 +41,18 @@ All 18 demon types now share the Step 0 palette/outline pass; Goliath uses a
 192 px source and the rest use 128 px sources, with destination/collision sizes
 unchanged.
 
+## 3D controls
+
+- `3d/first-person-controls.png`
+- `3d/third-person-controls.png`
+- `3d/first-person-320-controls.png`
+
+The 3D controls now sit in one compact row above the quiz/verse block. FIRE was
+moved off the score badge, and the row lifts automatically for the taller
+discipleship grid. Targets stay at the accessible 58 px (first-person) / 48 px
+(third-person) minimum. The shared layout function drives both drawing and hit
+areas.
+
 ## Quiz modes
 
 Five forced modes at 400 px logical:
