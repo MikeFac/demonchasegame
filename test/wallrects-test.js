@@ -170,5 +170,43 @@ console.log('\nTerrainThemes');
     check('every theme defines the full palette', missing.length === 0, missing.join(', '));
 }
 
+
+console.log('\nExposed-edge runs (wall shading is skipped on internal boundaries)');
+{
+    const all = (n) => WallRects.exposedRuns(0, n, () => true);
+    check('fully exposed span is one run', JSON.stringify(all(4)) === JSON.stringify([0, 4]));
+    check('nothing exposed yields no runs',
+        WallRects.exposedRuns(0, 5, () => false).length === 0);
+    check('empty span yields no runs',
+        WallRects.exposedRuns(3, 3, () => true).length === 0);
+
+    // Wall, gap, wall -> only the gap is exposed.
+    const occupied = { 1: true, 2: true, 4: true };
+    const runs = WallRects.exposedRuns(0, 6, (i) => !occupied[i]);
+    // 0 exposed, 1-2 wall, 3 exposed, 4 wall, 5 exposed
+    check('interior runs are bracketed correctly', JSON.stringify(runs) === JSON.stringify([0, 1, 3, 4, 5, 6]),
+        JSON.stringify(runs));
+
+    // Two adjacent rectangles sharing an internal boundary: that edge must not
+    // be reported as exposed, which is what caused the stray horizontal lines.
+    const shared = (i) => i !== 2;
+    const sharedRuns = WallRects.exposedRuns(0, 4, shared);
+    check('shared boundary is not exposed',
+        !sharedRuns.some((v, idx) => idx % 2 === 0 && v <= 2 && sharedRuns[idx + 1] > 2));
+
+    // Trailing exposed cell must close its run.
+    const trailing = WallRects.exposedRuns(0, 3, (i) => i === 2);
+    check('trailing run closes at the end', JSON.stringify(trailing) === JSON.stringify([2, 3]),
+        JSON.stringify(trailing));
+}
+
+console.log('\nPassthrough rects');
+{
+    const built = WallRects.build([{ x: 10, y: 10, width: 120, height: 60 }], CELL);
+    check('passthrough rect is flagged irregular', built.rects[0].irregular === true);
+    const grid = WallRects.build(gridRect(100, 100, 2, 2), CELL);
+    check('merged rects are not flagged irregular', !grid.rects[0].irregular);
+}
+
 console.log('\n' + pass + ' passed, ' + fail + ' failed');
 process.exit(fail === 0 ? 0 : 1);

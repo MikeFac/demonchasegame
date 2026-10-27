@@ -2375,6 +2375,9 @@ class Renderer {
         const cell = (typeof Constants !== 'undefined' && Constants.CELL_SIZE) || 25;
         const list = walls || [];
 
+        this._wallCell = cell;
+        this._wallCellSet = this._buildWallCellSet(list, cell);
+
         if (typeof WallRects === 'undefined') {
             // Defensive fallback: no merging, no culling.
             this._wallRects = list.map(w => ({ x: w.x, y: w.y, w: w.width, h: w.height }));
@@ -2389,6 +2392,37 @@ class Renderer {
         this._wallMaxHeight = built.maxHeight;
         this._wallCellCount = list.length;
         this._buildings = this._buildBuildings(list, cell);
+    }
+
+    /**
+     * Occupancy set used to decide which rectangle edges are exposed.
+     *
+     * Only grid-aligned cells are recorded — those are the ones WallRects can
+     * merge, so a lookup miss on an irregular map means "exposed", which is the
+     * safe result. Keyed numerically (gy * 100000 + gx) because string keys in
+     * the per-frame edge tests were measurably slower.
+     */
+    _buildWallCellSet(walls, cell) {
+        const set = new Set();
+        for (let i = 0; i < walls.length; i++) {
+            const w = walls[i];
+            if (!w || w.width !== cell || w.height !== cell) continue;
+            if (w.x % cell !== 0 || w.y % cell !== 0) continue;
+            set.add((w.y / cell) * 100000 + (w.x / cell));
+        }
+        return set;
+    }
+
+    /**
+     * Coalesce [from, to) into runs where `test(i)` is truthy.
+     * Returns a flat array of [start, end) index pairs.
+     */
+    _exposedRuns(from, to, test) {
+        if (typeof WallRects === 'undefined' || typeof WallRects.exposedRuns !== 'function') {
+            // No run coalescing available: treat the whole span as exposed.
+            return from < to ? [from, to] : [];
+        }
+        return WallRects.exposedRuns(from, to, test);
     }
 
     /**
@@ -2507,60 +2541,117 @@ class Renderer {
         ctx.clip();
         ctx.translate(ox, oy);
 
-        // Pass 1 — drop shadow under each wall footprint so blocks sit on the
-        // ground instead of floating on it. Two bands: a tight dark contact
-        // band and a softer spread.
+        // Pass 1 — bodies. Texture only: any per-rectangle toning would show up
+        // as a seam where two rectangles in the same wall mass meet.
+        ctx.fillStyle = (patterns && patterns.wall) ? patterns.wall : theme.wall;
+        for (let i = 0; i < count; i++) {
+            const r = visible[i];
+            ctx.fillRect(r.x - camera.x - ox, r.y - camera.y - oy, r.w, r.h);
+        }
+
+        // Pass 2 — edges.
+        //
+        // A merged rectangle is an approximation of a wall mass, so its border
+        // is not necessarily a visible edge: where two rectangles meet inside one
+        // solid mass there is nothing to shade. Drawing the faces and outline
+        // unconditionally (the previous behaviour) put a light top face, a dark
+        // bottom face and two outlines along every internal boundary — which
+        // read as unwanted horizontal lines, most visibly on the large solid
+        // regions the `classic` map generator produces.
+        //
+        // So each of the four sides is painted only on the spans where the
+        // neighbouring cell is walkable.
+        const cell = this._wallCell || 25;
+        const cellSet = this._wallCellSet;
+        const topH = Math.max(2, Math.round(cell * 0.14));
+        const faceH = Math.max(3, Math.round(cell * 0.18));
+        const viewLeft = view.x;
+        const viewRight = view.x + view.w;
+        const viewTop = view.y;
+        const viewBottom = view.y + view.h;
+
         for (let i = 0; i < count; i++) {
             const r = visible[i];
             const dx = r.x - camera.x - ox;
             const dy = r.y - camera.y - oy;
-            ctx.fillStyle = theme.groundShadow;
-            ctx.fillRect(dx + 2, dy + r.h, r.w, 6);
+
+            // Islands of walls that could not be merged to the grid: frame them
+            // whole, since there is no occupancy data to test against.
+            if (r.irregular || !cellSet) {
+                ctx.fillStyle = theme.wallTop;
+                ctx.fillRect(dx, dy, r.w, topH);
+                ctx.fillStyle = theme.wallFace;
+                ctx.fillRect(dx, dy + r.h - faceH, r.w, faceH);
+                ctx.strokeStyle = theme.wallLine;
+                ctx.lineWidth = 1;
+                ctx.strokeRect(dx + 0.5, dy + 0.5, r.w - 1, r.h - 1);
+                ctx.fillStyle = theme.groundShadow;
+                ctx.fillRect(dx + 2, dy + r.h, r.w, 6);
+                continue;
+            }
+
+            const gx0 = Math.round(r.x / cell);
+            const gy0 = Math.round(r.y / cell);
+            const cols = Math.round(r.w / cell);
+            const rows = Math.round(r.h / cell);
+
+            // Clamp the scans to the part of the rectangle that is on screen.
+            const cMin = Math.max(0, Math.floor((viewLeft - r.x) / cell));
+            const cMax = Math.min(cols, Math.ceil((viewRight - r.x) / cell));
+            const rMin = Math.max(0, Math.floor((viewTop - r.y) / cell));
+            const rMax = Math.min(rows, Math.ceil((viewBottom - r.y) / cell));
+
+            // Bottom — the visible side face, plus the drop shadow it casts.
+            const bottomRuns = this._exposedRuns(cMin, cMax, (c) => !cellSet.has((gy0 + rows) * 100000 + (gx0 + c)));
+            for (let k = 0; k < bottomRuns.length; k += 2) {
+                const x = dx + bottomRuns[k] * cell;
+                const w = (bottomRuns[k + 1] - bottomRuns[k]) * cell;
+
+                ctx.fillStyle = theme.groundShadow;
+                ctx.fillRect(x + 2, dy + r.h, w, 6);
+                ctx.fillStyle = 'rgba(0,0,0,0.13)';
+                ctx.fillRect(x + 1, dy + r.h + 3, w + 3, 7);
+
+                ctx.fillStyle = theme.wallFace;
+                ctx.fillRect(x, dy + r.h - faceH, w, faceH);
+                ctx.fillStyle = theme.wallLine;
+                ctx.fillRect(x, dy + r.h - 1, w, 1);
+            }
+
+            // Top — lit face and bright lip.
+            const topRuns = this._exposedRuns(cMin, cMax, (c) => !cellSet.has((gy0 - 1) * 100000 + (gx0 + c)));
+            for (let k = 0; k < topRuns.length; k += 2) {
+                const x = dx + topRuns[k] * cell;
+                const w = (topRuns[k + 1] - topRuns[k]) * cell;
+
+                ctx.fillStyle = theme.wallTop;
+                ctx.fillRect(x, dy, w, topH);
+                ctx.fillStyle = 'rgba(255,255,255,0.20)';
+                ctx.fillRect(x, dy, w, 1);
+            }
+
+            // Left and right — a thin dark edge, enough to separate the mass
+            // from the ground without drawing a heavy border.
+            const leftRuns = this._exposedRuns(rMin, rMax, (k) => !cellSet.has((gy0 + k) * 100000 + (gx0 - 1)));
+            for (let k = 0; k < leftRuns.length; k += 2) {
+                const y = dy + leftRuns[k] * cell;
+                const h = (leftRuns[k + 1] - leftRuns[k]) * cell;
+                ctx.fillStyle = theme.wallFace;
+                ctx.fillRect(dx, y, 2, h);
+                ctx.fillStyle = theme.wallLine;
+                ctx.fillRect(dx, y, 1, h);
+            }
+
+            const rightRuns = this._exposedRuns(rMin, rMax, (k) => !cellSet.has((gy0 + k) * 100000 + (gx0 + cols)));
+            for (let k = 0; k < rightRuns.length; k += 2) {
+                const y = dy + rightRuns[k] * cell;
+                const h = (rightRuns[k + 1] - rightRuns[k]) * cell;
+                ctx.fillStyle = theme.wallFace;
+                ctx.fillRect(dx + r.w - 2, y, 2, h);
+                ctx.fillStyle = theme.wallLine;
+                ctx.fillRect(dx + r.w - 1, y, 1, h);
+            }
         }
-        for (let i = 0; i < count; i++) {
-            const r = visible[i];
-            const dx = r.x - camera.x - ox;
-            const dy = r.y - camera.y - oy;
-            ctx.fillStyle = 'rgba(0,0,0,0.13)';
-            ctx.fillRect(dx + 1, dy + r.h + 3, r.w + 3, 7);
-        }
-
-        // Pass 2 — the blocks themselves.
-        for (let i = 0; i < count; i++) {
-            const r = visible[i];
-            const dx = r.x - camera.x - ox;
-            const dy = r.y - camera.y - oy;
-
-            ctx.fillStyle = (patterns && patterns.wall) ? patterns.wall : theme.wall;
-            ctx.fillRect(dx, dy, r.w, r.h);
-
-            // Stable pseudo-random lightening/darkening per rectangle. Derived
-            // from world position, so patches never flicker between frames.
-            const shade = ((r.x * 73856093) ^ (r.y * 19349663)) >>> 0;
-            const band = r.h > 6 ? r.h - 5 : r.h;
-            ctx.fillStyle = (shade & 1)
-                ? 'rgba(255,255,255,0.035)'
-                : 'rgba(0,0,0,0.045)';
-            ctx.fillRect(dx, dy + 2, r.w, Math.max(0, band));
-
-            // Lit top face + a 1px bright lip so the block reads as raised.
-            const topH = Math.min(4, Math.max(2, Math.round(r.h * 0.12)));
-            ctx.fillStyle = theme.wallTop;
-            ctx.fillRect(dx, dy, r.w, topH);
-            ctx.fillStyle = 'rgba(255,255,255,0.20)';
-            ctx.fillRect(dx, dy, r.w, 1);
-
-            // Shaded bottom face: the side of the block, giving it height.
-            const faceH = Math.min(5, Math.max(3, Math.round(r.h * 0.14)));
-            ctx.fillStyle = theme.wallFace;
-            ctx.fillRect(dx, dy + Math.max(0, r.h - faceH), r.w, faceH);
-
-            // Crisp outline.
-            ctx.strokeStyle = theme.wallLine;
-            ctx.lineWidth = 1;
-            ctx.strokeRect(dx + 0.5, dy + 0.5, r.w - 1, r.h - 1);
-        }
-
         // Pass 3 — buildings (cached placements, culled by camera).
         let buildingsDrawn = 0;
         if (this._buildings.length) {

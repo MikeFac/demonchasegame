@@ -39,7 +39,7 @@ const WallRects = (function () {
                 w.y >= 0;
 
             if (!aligned) {
-                passthrough.push({ x: w.x, y: w.y, w: w.width, h: w.height });
+                passthrough.push({ x: w.x, y: w.y, w: w.width, h: w.height, irregular: true });
                 continue;
             }
 
@@ -183,7 +183,33 @@ const WallRects = (function () {
         return count;
     }
 
-    return { build, query };
+    /**
+     * Coalesce [from, to) into runs where `test(i)` is truthy.
+     *
+     * Used by the renderer to paint a rectangle's shading only on the spans that
+     * actually border walkable space. Returns a flat array of [start, end) pairs.
+     *
+     * @param {number} from first index (inclusive)
+     * @param {number} to last index (exclusive)
+     * @param {(i:number)=>boolean} test
+     * @returns {number[]} flat [start, end, start, end, ...]
+     */
+    function exposedRuns(from, to, test) {
+        const runs = [];
+        let start = -1;
+        for (let i = from; i <= to; i++) {
+            const exposed = i < to && test(i);
+            if (exposed) {
+                if (start < 0) start = i;
+            } else if (start >= 0) {
+                runs.push(start, i);
+                start = -1;
+            }
+        }
+        return runs;
+    }
+
+    return { build, query, exposedRuns };
 })();
 
 if (typeof module !== 'undefined' && module.exports) {

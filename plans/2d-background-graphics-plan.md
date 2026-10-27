@@ -366,7 +366,8 @@ readability) from §6. Phase 2 onward is not started.
 | 1.4 | Wall cells merged into rectangles | `src/client/WallRects.js` |
 | 1.5 | Rectangles culled to the camera before drawing | `WallRects.query` + binary search over `y` |
 | 1.6 | Contact shadows under players, monsters, healing points, collectibles, NPCs; drop shadow under wall footprints | `Renderer.drawShadows`, `_stampShadow` |
-| 1.7 | Stable per-rectangle shading derived from world position (no per-frame flicker) | `drawWalls` pass 2 |
+| 1.7 | Stable per-cell shading — no per-rectangle toning, which would seam where rectangles meet | `drawWalls` pass 1 |
+| 1.7b | Edge-aware shading: faces/outline painted only where the neighbouring cell is walkable (fixes internal seams, see §13.7) | `drawWalls` pass 2, `WallRects.exposedRuns` |
 | — | Building placements cached once per level, overlap-free, camera-culled | `Renderer._buildBuildings` |
 | — | Theme palette module | `src/client/TerrainThemes.js` |
 | — | Unit tests for merging, culling, palettes | `test/wallrects-test.js` |
@@ -432,6 +433,48 @@ node scripts/capture-2d-themes.js after   # writes docs/graphics/2d-phase1/
 
 Then open `http://localhost:3500/?perf=1` for the overlay, or
 `http://localhost:3500/?theme=void` to preview a single palette.
+
+### 13.7 Post-review fix — internal seams on large wall masses
+
+**Reported:** level 2 showed unwanted horizontal lines between tiles.
+
+**Cause.** Walls are drawn from merged rectangles, but every rectangle was painted
+with a full-width lit top face, a shaded bottom face and a 1px outline on all four
+sides, regardless of what was on the other side of that edge. A merged rectangle is
+only an approximation of a wall mass: where two rectangles meet *inside* one solid
+mass, there is no visible edge to shade. Level 1 (`city`, small isolated blocks)
+never exposed this because every edge of every block is a real silhouette. Level 2
+(`classic`) merges ~11,700 cells into ~40 large rectangles, so their shared interior
+edges drew two faces and two outlines each — reading as horizontal shelf lines
+across the wall mass.
+
+**Fix.** Bodies are filled first with no toning at all (any per-rectangle tint shows
+up as a seam). Shading is then painted per rectangle but only on the spans where the
+neighbouring cell is walkable, using an occupancy set keyed on grid coordinates
+(`Renderer._buildWallCellSet`, `WallRects.exposedRuns`). Per-rectangle random
+lightening/darkening was dropped for the same reason: it produced faint tone steps
+at rectangle boundaries.
+
+**Evidence.** `docs/graphics/2d-phase1/level2-seams-before.png` and
+`level2-seams-after.png` show the same `classic` + `earth` camera before and after;
+the "before" image was produced by blanking the occupancy set, which restores the
+previous unconditional painting.
+
+**Testing.** `WallRects.exposedRuns` was extracted from the renderer so the run
+coalescing is unit-testable; `node test/wallrects-test.js` now covers full,
+partial, empty, trailing and shared-boundary runs (38 assertions).
+
+**Cost.** The edge pass is bounded by the perimeter of the visible rectangles, not
+their area: wall rendering measured 0.1 ms at 512×600 with 16 rectangles drawn.
+
+### 13.8 New QA tool
+
+`tools/terrain-preview.html?map=<style>&theme=<name>` renders only the world layer
+for any map generator and theme, with camera sliders and no gameplay. It exists
+because map/theme combinations like level 2's `classic` + `earth` are otherwise only
+reachable by playing through a level, and because the death timer makes in-game
+inspection unreliable. It loads the same `Renderer`, `TerrainThemes` and `WallRects`
+as the game, so what it shows is what ships.
 
 ### 13.6 Follow-ups this branch does not do
 
