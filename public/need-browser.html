@@ -281,9 +281,11 @@
       if (show) {
         if (isC && o.explanation) reason = '<div class="reason"><b>Why this one.</b> ' + esc(o.explanation) + '</div>';
         else if (!isC && o.whyNot) {
-          reason = '<div class="reason"><b>Ruled out.</b> '
-            + (o.ruleOut ? '<q>' + esc(o.ruleOut) + '</q> \u2014 ' : '')
-            + esc(o.whyNot) + '</div>';
+          // Exclusion-style items quote the fact that rules the verse out;
+          // obviousness-style items simply name the different subject.
+          reason = o.ruleOut
+            ? '<div class="reason"><b>Ruled out.</b> <q>' + esc(o.ruleOut) + '</q> \u2014 ' + esc(o.whyNot) + '</div>'
+            : '<div class="reason"><b>Different subject.</b> ' + esc(o.whyNot) + '</div>';
         }
       }
       return '<div class="' + cls + '">'

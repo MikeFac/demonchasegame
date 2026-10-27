@@ -439,22 +439,60 @@ function buildPool(corpus, profile, limit) {
     return picked;
 }
 
+
+// Verses from clearly UNRELATED categories, offered for distractors. Without this
+// every candidate comes from the need's own categories, so distractors are bound
+// to be on-theme and the player has to reason instead of just recognising.
+function buildContrastPool(corpus, profile, limit) {
+    const kw = profile.keywords.map(k => k.toLowerCase());
+    const picked = [];
+    for (const verse of corpus.values()) {
+        if (profile.categories.includes(verse.Category)) continue;
+        const text = verse.Text.toLowerCase();
+        if (kw.some(k => text.includes(k))) continue;
+        if (verse.Text.trim().split(/\s+/).length > 50) continue;
+        picked.push(verse);
+    }
+    const byCat = new Map();
+    for (const v of picked) {
+        if (!byCat.has(v.Category)) byCat.set(v.Category, []);
+        byCat.get(v.Category).push(v);
+    }
+    const out = [];
+    const lists = [...byCat.values()];
+    let i = 0;
+    while (out.length < limit && lists.some(q => q.length)) {
+        const q = lists[i % lists.length];
+        if (q.length) out.push(q.splice(0, 1)[0]);
+        i++;
+    }
+    return out;
+}
+
 // --- Prompt ------------------------------------------------------------------
 
 const SYSTEM_PROMPT = `You are a Bible teacher who writes diagnostic questions for a game.
 You must return only valid JSON. No markdown fences, no commentary.`;
 
-function buildBatchPrompt(profile, scenarios, pool, usedAnswers) {
-    const poolJson = pool.map(v => ({
+function buildBatchPrompt(profile, scenarios, relevantPool, contrastPool, usedAnswers) {
+    const toEntry = (v) => ({
         reference: v.Reference,
         category: v.Category,
         text: v.Text.length > 160 ? v.Text.slice(0, 160) + '...' : v.Text,
-    }));
+    });
+    const relJson = relevantPool.map(toEntry);
+    const conJson = contrastPool.map(toEntry);
 
     return `Write ${scenarios.length} comparison questions on the theme of ${profile.need}.
 
-CANDIDATE VERSES (you MUST choose references only from this list, copied exactly):
-${JSON.stringify(poolJson, null, 2)}
+The answer must be OBVIOUS AT A GLANCE. A player should spot the right verse in a
+second or two, without weighing options.
+
+VERSES YOU MAY USE AS THE CORRECT ANSWER (choose from this list only):
+${JSON.stringify(relJson, null, 2)}
+
+VERSES YOU MAY USE AS DISTRACTORS (choose from this list only):
+${JSON.stringify(conJson, null, 2)}
 
 SCENARIOS (one question each, in this order):
 ${JSON.stringify(scenarios, null, 2)}
@@ -463,46 +501,32 @@ ${(usedAnswers && usedAnswers.length)
     : ''}
 For each scenario produce:
 {
-  "scenario": "<the situation in natural prose. It MUST contain, word for word, all three exclusions below>",
-  "exclusions": [
-    "<a fact that is NOT the case, 4-10 words, copied verbatim from the scenario>",
-    "<a second such fact>",
-    "<a third such fact>"
-  ],
-  "clarity": <integer 1-5: how obvious the best answer is to a thoughtful reader>,
+  "scenario": "<the situation, 1-2 plain sentences, second person>",
+  "clarity": <integer 1-5: how obvious the best answer is>,
   "correct": {
-    "reference": "<exact reference from the candidate list>",
-    "cue": "<the exact words from the scenario that this verse answers, copied character-for-character>",
-    "topic": "<2-4 words: what this verse actually addresses>",
-    "explanation": "<one or two sentences tying the cue to what the verse does>"
+    "reference": "<from the CORRECT ANSWER list>",
+    "cue": "<the few words in the scenario this verse answers, copied exactly>",
+    "topic": "<2-4 words: what this verse addresses>",
+    "explanation": "<one short sentence saying why it fits>"
   },
   "distractors": [
-    { "reference": "<exact reference>", "topic": "<2-4 words>", "ruleOut": "<one of your three exclusions, copied exactly>", "whyNot": "<one sentence: why that exclusion makes this verse inapplicable>" },
-    { "reference": "<exact reference>", "topic": "<2-4 words>", "ruleOut": "<one of your three exclusions>", "whyNot": "<one sentence as above>" },
-    { "reference": "<exact reference>", "topic": "<2-4 words>", "ruleOut": "<one of your three exclusions>", "whyNot": "<one sentence as above>" }
+    { "reference": "<from the DISTRACTOR list>", "topic": "<2-4 words: its different subject>", "whyNot": "<one short sentence naming its different subject>" },
+    { "reference": "<from the DISTRACTOR list>", "topic": "<2-4 words>", "whyNot": "<one short sentence>" },
+    { "reference": "<from the DISTRACTOR list>", "topic": "<2-4 words>", "whyNot": "<one short sentence>" }
   ]
 }
 
-HOW THIS WORKS — the player eliminates options because the scenario says certain things are not so:
-1. Write the scenario so it states THREE things that are NOT the case, each as a short plain
-   clause inside the prose. Example: "It is 2am and your mind is looping on the same thought.
-   Nothing has gone wrong today, no bill is due and nobody is angry with you."
-2. List those three clauses in "exclusions", copied word for word from the scenario.
-3. Each distractor's "ruleOut" must be one of those exclusions, copied exactly. The exclusion
-   must genuinely make that verse inapplicable — not merely describe the situation.
-4. If you cannot tie a distractor to one of the exclusions, replace the distractor. Do not
-   invent a rule-out, and never quote the whole scenario.
-5. No judgment calls. If a distractor would still be a defensible answer, it is a bad
-   distractor. "Less helpful" is not a reason; "does not apply" is.
-6. The strongest rule-out is a contradiction: the verse tells you to do what the scenario says
-   you have already done, or assumes something the scenario says you lack.
-7. Keep the seed scenario's situation. You may rewrite its wording to add the exclusions.
-8. The "cue" must be copied character-for-character from the scenario: the detail the correct
-   verse answers.
-9. "topic" must be 2-4 words and different for all four options. A distractor's topic must not
-   be cued by the scenario text.
-10. The word "${profile.need}" may appear in the verse text of AT MOST ONE option.
-11. Plain modern English, second person. No preaching, no filler.
+RULES — obviousness is the whole point:
+1. The correct verse must be plainly ON-TOPIC. A reader should recognise it immediately.
+2. Each distractor must be about a CLEARLY DIFFERENT subject, dismissable at a glance.
+   Not "less fitting" — plainly not about this situation.
+   Good: an anxiety situation with distractors about money, healing or evangelism.
+   Bad: an anxiety situation with a second anxiety verse.
+3. The three distractors must each be a different subject from one another.
+4. Keep the scenario plain and short. One or two sentences. Do NOT list what is not the case.
+5. "topic" must be 2-4 words and different for all four options.
+6. Plain modern English, second person. No preaching.
+7. Never use an answer-list reference as a distractor, or a distractor-list reference as the answer.
 
 Return ONLY a JSON array of ${scenarios.length} objects.`;
 }
@@ -692,12 +716,12 @@ function validateItem(raw, profile, pool, corpus, answerRefs) {
 
     // 1. Every wrong option must be ruled out by a fact the scenario states.
     //    This is what separates "does not apply" from "I like this one less".
-    // The exclusions are the mechanism: three short facts the scenario says are
-    // NOT the case. Distractors must be ruled out by quoting one of them, which
-    // is what stops "quote the whole scenario back" from passing.
+    // Exclusions are now OPTIONAL. They were the mechanism for provable
+    // elimination, which forced reasoning; the obviousness style replaces them
+    // with plainly unrelated distractors. Validated only when supplied.
     const exclusions = Array.isArray(raw.exclusions) ? raw.exclusions.map(e => norm(e)) : [];
-    if (exclusions.length !== 3) {
-        errors.push(`expected 3 exclusions, got ${exclusions.length}`);
+    if (exclusions.length && exclusions.length !== 3) {
+        errors.push(`expected 3 exclusions or none, got ${exclusions.length}`);
     }
     for (const e of exclusions) {
         if (!e) { errors.push('an exclusion is empty'); continue; }
@@ -713,14 +737,31 @@ function validateItem(raw, profile, pool, corpus, answerRefs) {
     for (const d of raw.distractors) {
         const ro = norm(d.ruleOut);
         ruleOuts.push(ro);
+        if (!exclusions.length) continue;          // obviousness style: no ruleOut needed
         if (!ro) {
             errors.push(`distractor ${d.reference} has no ruleOut`);
         } else if (!exclusions.some(e => e && e.includes(ro))) {
             errors.push(`ruleOut on ${d.reference} must quote one of the exclusions`);
         }
     }
-    if (ruleOuts.length === 3 && ruleOuts.every(r => r && r === ruleOuts[0])) {
+    if (exclusions.length && ruleOuts.length === 3 && ruleOuts.every(r => r && r === ruleOuts[0])) {
         errors.push('all three distractors share one ruleOut, so nothing is distinguished');
+    }
+
+    // Obviousness: the answer must be on-topic and every distractor must be from a
+    // clearly unrelated category, so options can be dismissed at a glance.
+    const correctVerse = corpus.get(raw.correct.reference);
+    if (correctVerse && profile.categories.length) {
+        if (!profile.categories.includes(correctVerse.Category)) {
+            warnings.push(`answer category ${correctVerse.Category} is outside ${profile.need}`);
+        }
+    }
+    for (const d of raw.distractors) {
+        const dv = corpus.get(d.reference);
+        if (!dv || !profile.categories.length) continue;
+        if (profile.categories.includes(dv.Category)) {
+            errors.push(`distractor ${d.reference} is from ${dv.Category}, which is on-topic for ${profile.need}`);
+        }
     }
 
     // 2. The cue must actually appear in the scenario, or the answer is not
@@ -754,7 +795,7 @@ function validateItem(raw, profile, pool, corpus, answerRefs) {
     for (const e of exclusions) {
         if (e) residual = residual.split(e).join(' ');
     }
-    for (const d of raw.distractors) {
+    for (const d of (exclusions.length ? raw.distractors : [])) {
         const t = topicOf(d);
         if (!t) continue;
         const significant = t.split(' ').filter(w => w.length > 3);
@@ -835,14 +876,16 @@ function materialise(raw, profile, corpus, id) {
     });
     for (const d of raw.distractors) {
         const dv = corpus.get(d.reference);
-        options.push({
+        const opt = {
             reference: dv.Reference,
             text: dv.Text,
             preview: previewOf(dv.Text),
             topic: String(d.topic).trim(),
-            ruleOut: String(d.ruleOut).trim(),
             whyNot: d.whyNot.trim(),
-        });
+        };
+        // String(undefined) would store the literal "undefined"; only set it when real.
+        if (d.ruleOut && String(d.ruleOut).trim()) opt.ruleOut = String(d.ruleOut).trim();
+        options.push(opt);
     }
     return {
         id,
@@ -1025,23 +1068,17 @@ function verify(table, corpus) {
                     console.warn(`WARN ${tag}: "${o.reference}" is the answer for another ${it.need} item — check the ruleOut makes the difference explicit`);
                     warnings++;
                 }
-                const ro = norm(o.ruleOut);
-                const sc = norm(it.scenario);
-                if (!ro) {
-                    console.error(`ERR  ${tag}: distractor ${o.reference} has no ruleOut`);
-                    errors++;
-                } else if (excl.length) {
-                    // Newer items declare exclusions; ruleOuts must quote one.
-                    if (!excl.some(e => e.includes(ro))) {
+                // ruleOut belongs to the exclusion style only. Obviousness-style
+                // items carry no exclusions, so the field is ignored entirely.
+                if (excl.length) {
+                    const ro = norm(o.ruleOut);
+                    if (!ro) {
+                        console.error(`ERR  ${tag}: distractor ${o.reference} has no ruleOut`);
+                        errors++;
+                    } else if (!excl.some(e => e.includes(ro))) {
                         console.error(`ERR  ${tag}: ruleOut on ${o.reference} must quote one of the exclusions`);
                         errors++;
                     }
-                } else if (!sc.includes(ro)) {
-                    console.error(`ERR  ${tag}: ruleOut on ${o.reference} is not copied from the scenario`);
-                    errors++;
-                } else if (ro === sc) {
-                    console.error(`ERR  ${tag}: ruleOut on ${o.reference} restates the whole scenario`);
-                    errors++;
                 }
             }
             if (!o.topic) { console.error(`ERR  ${tag}: ${o.reference} has no topic`); errors++; }
@@ -1050,7 +1087,7 @@ function verify(table, corpus) {
         // Discernibility invariants.
         let residual = norm(it.scenario);
         for (const e of excl) residual = residual.split(e).join(' ');
-        for (const o of opts) {
+        for (const o of (excl.length ? opts : [])) {
             if (o.correct || !o.topic) continue;
             const cued = norm(o.topic).split(' ').filter(w => w.length > 3 && residual.includes(w));
             if (cued.length) {
@@ -1058,7 +1095,7 @@ function verify(table, corpus) {
                 errors++;
             }
         }
-        const ros = opts.filter(o => !o.correct).map(o => norm(o.ruleOut)).filter(Boolean);
+        const ros = excl.length ? opts.filter(o => !o.correct).map(o => norm(o.ruleOut)).filter(Boolean) : [];
         if (ros.length === 3 && new Set(ros).size === 1) {
             console.error(`ERR  ${tag}: all three distractors share one ruleOut`);
             errors++;
@@ -1399,10 +1436,15 @@ async function main() {
             console.warn(`Skipping ${profile.need}: only ${pool.length} candidate verses`);
             continue;
         }
-        pools.set(profile.need, pool);
+        const contrast = buildContrastPool(corpus, profile, POOL_SIZE);
+        if (contrast.length < 8) {
+            console.warn(`Skipping ${profile.need}: only ${contrast.length} contrast verses`);
+            continue;
+        }
+        pools.set(profile.need, { pool, contrast });
         for (const scenario of profile.scenarios) {
             if (done.has(scenarioKey(profile.need, scenario))) continue;
-            work.push({ profile, pool, scenario });
+            work.push({ profile, pool, contrast, scenario });
         }
     }
     work = interleaveByNeed(work);
@@ -1412,11 +1454,11 @@ async function main() {
         console.log(`Curated bank has ${work.length} usable scenarios; expanding by ~${needed - work.length}...`);
         const expanded = await expandScenarios(profiles, done, needed - work.length);
         for (const profile of profiles) {
-            const pool = pools.get(profile.need);
-            if (!pool) continue;
+            const entry = pools.get(profile.need);
+            if (!entry) continue;
             for (const scenario of (expanded.get(profile.need) || [])) {
                 if (done.has(scenarioKey(profile.need, scenario))) continue;
-                work.push({ profile, pool, scenario });
+                work.push({ profile, pool: entry.pool, contrast: entry.contrast, scenario });
             }
         }
         work = interleaveByNeed(work);
@@ -1441,7 +1483,7 @@ async function main() {
         for (const v of pool.slice(0, 12)) console.log(`  [${v.Category}] ${v.Reference} - ${previewOf(v.Text, 70)}`);
         if (pool.length > 12) console.log(`  ... and ${pool.length - 12} more`);
         console.log('\n=== PROMPT (first batch) ===\n');
-        console.log(buildBatchPrompt(profile, first.map(f => f.scenario), pool, [...(answersByNeed(table).get(profile.need) || [])]));
+        console.log(buildBatchPrompt(profile, first.map(f => f.scenario), pool, first[0].contrast || [], [...(answersByNeed(table).get(profile.need) || [])]));
         console.log('\n=== dry run: no API calls made ===');
         return;
     }
@@ -1468,6 +1510,7 @@ async function main() {
         const batch = batches[b];
         const profile = batch[0].profile;
         const pool = batch[0].pool;
+        const contrast = batch[0].contrast || [];
         const scenarios = batch.map(x => x.scenario);
 
         console.log(`\n[${b + 1}/${batches.length}] ${profile.need}: ${scenarios.length} scenario(s)`);
@@ -1475,7 +1518,7 @@ async function main() {
         let raw;
         try {
             const usedAnswers = [...(answersByNeed(table).get(profile.need) || [])];
-            const text = await callModel(buildBatchPrompt(profile, scenarios, pool, usedAnswers));
+            const text = await callModel(buildBatchPrompt(profile, scenarios, pool, contrast, usedAnswers));
             raw = parseJsonArray(text);
         } catch (err) {
             console.error(`  FAILED: ${err.message}`);
