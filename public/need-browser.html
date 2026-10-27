@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Need Comparison — Item Browser</title>
+<style>
+  :root {
+    --bg: #0e1116;
+    --panel: #161b23;
+    --panel-2: #1c232d;
+    --line: #2a333f;
+    --text: #dfe6ef;
+    --muted: #8b98a8;
+    --dim: #64707f;
+    --good: #3ddc97;
+    --good-bg: rgba(61, 220, 151, 0.09);
+    --bad: #f0a35e;
+    --accent: #6ea8fe;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font: 15px/1.55 ui-sans-serif, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  header {
+    position: sticky; top: 0; z-index: 20;
+    background: rgba(14, 17, 22, 0.94);
+    backdrop-filter: blur(8px);
+    border-bottom: 1px solid var(--line);
+    padding: 14px 20px 12px;
+  }
+  .hrow { display: flex; align-items: baseline; gap: 14px; flex-wrap: wrap; }
+  h1 { font-size: 16px; margin: 0; font-weight: 650; letter-spacing: .2px; }
+  h1 span { color: var(--dim); font-weight: 400; }
+  .stats { display: flex; gap: 16px; flex-wrap: wrap; font-size: 12px; color: var(--muted); }
+  .stats b { color: var(--text); font-weight: 600; }
+  .stats .warn { color: var(--bad); }
+  .toolbar {
+    display: flex; gap: 10px; align-items: center; flex-wrap: wrap;
+    margin-top: 12px;
+  }
+  input[type=search] {
+    flex: 1 1 240px; min-width: 180px;
+    background: var(--panel-2); border: 1px solid var(--line); color: var(--text);
+    padding: 8px 11px; border-radius: 7px; font-size: 13px; outline: none;
+  }
+  input[type=search]:focus { border-color: var(--accent); }
+  .toggle {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: var(--panel-2); border: 1px solid var(--line);
+    padding: 7px 11px; border-radius: 7px; font-size: 12.5px;
+    color: var(--muted); cursor: pointer; user-select: none;
+  }
+  .toggle.on { color: var(--text); border-color: #3a4655; }
+  .toggle input { accent-color: var(--accent); margin: 0; }
+  .chips { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 10px; }
+  .chip {
+    background: var(--panel-2); border: 1px solid var(--line); color: var(--muted);
+    padding: 5px 10px; border-radius: 999px; font-size: 12px; cursor: pointer;
+    transition: all .12s;
+  }
+  .chip:hover { border-color: #3a4655; color: var(--text); }
+  .chip.on { background: rgba(110,168,254,.15); border-color: var(--accent); color: #cfe0ff; }
+  .chip .n { color: var(--dim); margin-left: 4px; }
+  .chip.on .n { color: #9dbdf0; }
+
+  main { max-width: 920px; margin: 0 auto; padding: 20px; transition: max-width .18s; }
+  main.phone { max-width: 400px; }
+
+  .item {
+    background: var(--panel); border: 1px solid var(--line);
+    border-radius: 11px; margin-bottom: 16px; overflow: hidden;
+  }
+  .item-head { padding: 14px 16px 12px; border-bottom: 1px solid var(--line); }
+  .meta { display: flex; gap: 8px; align-items: center; font-size: 11px; margin-bottom: 8px; }
+  .id { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; color: var(--dim); }
+  .need {
+    background: rgba(110,168,254,.13); color: #a8c7f5;
+    padding: 2px 8px; border-radius: 5px; font-weight: 600; letter-spacing: .3px;
+    text-transform: uppercase; font-size: 10px;
+  }
+  .tier { color: var(--dim); }
+  .scenario { font-size: 15.5px; line-height: 1.5; color: #eef3f9; }
+  .scenario mark {
+    background: rgba(240, 163, 94, 0.22); color: #ffd7ab;
+    padding: 1px 3px; border-radius: 3px; box-decoration-break: clone;
+  }
+  .q { margin-top: 7px; font-size: 12.5px; color: var(--muted); font-style: italic; }
+  .clarity {
+    font-size: 10px; letter-spacing: .3px; text-transform: uppercase;
+    padding: 2px 7px; border-radius: 5px; font-weight: 600;
+    background: rgba(61,220,151,.13); color: #8fe6c0;
+  }
+  .clarity.low { background: rgba(240,163,94,.15); color: var(--bad); }
+  .rel {
+    font-size: 9.5px; letter-spacing: .4px; text-transform: uppercase;
+    padding: 1px 6px; border-radius: 4px; font-weight: 600; margin-left: 6px;
+    vertical-align: middle;
+  }
+  .reason q { color: #ffd7ab; font-style: normal; }
+  .topic {
+    display: inline-block; font-size: 11px; color: var(--dim);
+    border: 1px dashed var(--line); border-radius: 4px;
+    padding: 0 6px; margin-top: 5px;
+  }
+  .player .topic, .player .clarity { display: none; }
+
+  .opts { padding: 8px 10px 12px; }
+  .opt {
+    display: grid; grid-template-columns: 22px 1fr; gap: 10px;
+    padding: 11px 12px; border-radius: 8px; margin: 6px 0;
+    border: 1px solid transparent; background: var(--panel-2);
+  }
+  .opt .mark { font-size: 13px; line-height: 1.5; color: var(--dim); text-align: center; }
+  .opt .ref { font-weight: 650; font-size: 13px; color: #c9d4e2; }
+  .opt .ref a { color: inherit; text-decoration: none; }
+  .opt .txt { font-size: 13.5px; color: #b6c2d0; margin-top: 3px; }
+  .opt.correct { background: var(--good-bg); border-color: rgba(61,220,151,.35); }
+  .opt.correct .mark { color: var(--good); }
+  .opt.correct .ref { color: var(--good); }
+  .opt.correct .txt { color: #d8e8e1; }
+  .reason {
+    margin-top: 8px; padding-top: 8px; border-top: 1px dashed rgba(255,255,255,.09);
+    font-size: 12.5px; color: var(--muted);
+  }
+  .reason b { color: var(--good); font-weight: 600; }
+  .opt:not(.correct) .reason b { color: var(--bad); }
+  .player .opt .txt { display: none; }
+  .player .opt { cursor: default; }
+  .player .opt .preview { font-size: 13.5px; color: #b6c2d0; margin-top: 3px; }
+  .opt .preview { display: none; }
+  .player .opt .preview { display: block; }
+  .player .reason { display: none; }
+
+  .empty { text-align: center; color: var(--muted); padding: 60px 20px; }
+  .empty code { background: var(--panel-2); padding: 2px 6px; border-radius: 4px; color: var(--text); }
+  footer { max-width: 920px; margin: 0 auto; padding: 8px 20px 40px; color: var(--dim); font-size: 12px; }
+  .posbar { display: flex; gap: 4px; align-items: center; font-size: 11px; color: var(--muted); }
+  .posbar i {
+    font-style: normal; display: inline-block; width: 26px; text-align: center;
+    background: var(--panel-2); border: 1px solid var(--line); border-radius: 4px; padding: 1px 0;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="hrow">
+    <h1>Need Comparison <span>— item browser</span></h1>
+    <div class="stats" id="stats"></div>
+  </div>
+  <div class="toolbar">
+    <input type="search" id="search" placeholder="Search scenarios, references, verse text…">
+    <label class="toggle on" id="t-answers"><input type="checkbox" id="showAnswers" checked> Show answers</label>
+    <label class="toggle" id="t-player"><input type="checkbox" id="playerView"> Player view</label>
+    <label class="toggle" id="t-phone"><input type="checkbox" id="phoneView"> 400px</label>
+    <label class="toggle" id="t-sort"><input type="checkbox" id="sortClarity"> Weakest first</label>
+  </div>
+  <div class="chips" id="chips"></div>
+</header>
+
+<main id="main">
+  <div class="empty" id="empty" hidden></div>
+  <div id="list"></div>
+</main>
+
+<footer id="footer"></footer>
+
+<script>
+(function () {
+  'use strict';
+
+  var state = { data: null, need: null, q: '', showAnswers: true, player: false, phone: false, sortClarity: false };
+
+  var $ = function (id) { return document.getElementById(id); };
+  var esc = function (s) {
+    return String(s == null ? '' : s)
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
+  };
+
+  function load() {
+    var url = '/data/need-comparison-items.json?v=' + Date.now();
+    return fetch(url, { cache: 'no-store' }).then(function (r) {
+      if (!r.ok) throw new Error('HTTP ' + r.status + ' for ' + url);
+      return r.json();
+    });
+  }
+
+  function answerPositions(items) {
+    var dist = [0, 0, 0, 0];
+    items.forEach(function (it) {
+      var i = it.options.findIndex(function (o) { return o.correct; });
+      if (i >= 0 && i < 4) dist[i]++;
+    });
+    return dist;
+  }
+
+  function renderStats() {
+    var items = state.data.items || [];
+    var needs = {};
+    var verses = {};
+    items.forEach(function (it) {
+      needs[it.need] = (needs[it.need] || 0) + 1;
+      (it.options || []).forEach(function (o) { verses[o.reference] = 1; });
+    });
+    var pos = answerPositions(items);
+    var total = items.length || 1;
+    var skew = Math.max.apply(null, pos) / total;
+
+    var cl = items.map(function (i) { return Number(i.clarity); }).filter(function (n) { return n >= 1; });
+    var avg = cl.length ? (cl.reduce(function (a, b) { return a + b; }, 0) / cl.length) : 0;
+    var low = cl.filter(function (n) { return n <= 3; }).length;
+
+    var html = ''
+      + '<span><b>' + items.length + '</b> items</span>'
+      + '<span><b>' + Object.keys(needs).length + '</b> needs</span>'
+      + '<span><b>' + Object.keys(verses).length + '</b> verses</span>'
+      + (cl.length ? '<span>clarity avg <b>' + avg.toFixed(1) + '</b></span>' : '')
+      + (low ? '<span class="warn">' + low + ' at or below 3</span>' : '')
+      + '<span class="posbar">answer position'
+      + pos.map(function (n, i) { return '<i>' + (i + 1) + ':' + n + '</i>'; }).join('')
+      + '</span>';
+    if (items.length >= 8 && skew > 0.5) {
+      html += '<span class="warn">answer sits in one position ' + Math.round(skew * 100) + '% of the time</span>';
+    }
+    $('stats').innerHTML = html;
+  }
+
+  function renderChips() {
+    var items = state.data.items || [];
+    var counts = {};
+    items.forEach(function (it) { counts[it.need] = (counts[it.need] || 0) + 1; });
+    var needs = Object.keys(counts).sort();
+    var html = '<button class="chip' + (state.need === null ? ' on' : '') + '" data-need="">All<span class="n">' + items.length + '</span></button>';
+    needs.forEach(function (n) {
+      html += '<button class="chip' + (state.need === n ? ' on' : '') + '" data-need="' + esc(n) + '">'
+        + esc(n) + '<span class="n">' + counts[n] + '</span></button>';
+    });
+    $('chips').innerHTML = html;
+  }
+
+  function matches(it) {
+    if (state.need && it.need !== state.need) return false;
+    if (!state.q) return true;
+    var q = state.q.toLowerCase();
+    if ((it.scenario || '').toLowerCase().indexOf(q) !== -1) return true;
+    if ((it.id || '').toLowerCase().indexOf(q) !== -1) return true;
+    if ((it.need || '').toLowerCase().indexOf(q) !== -1) return true;
+    return (it.options || []).some(function (o) {
+      return (o.reference || '').toLowerCase().indexOf(q) !== -1
+        || (o.text || '').toLowerCase().indexOf(q) !== -1
+        || (o.topic || '').toLowerCase().indexOf(q) !== -1;
+    });
+  }
+
+  // Wrap the deciding cue inside the scenario so you can see what the answer
+  // is actually answering.
+  function highlightCue(text, cue) {
+    if (!cue) return esc(text);
+    var i = String(text).indexOf(cue);
+    if (i === -1) i = String(text).toLowerCase().indexOf(String(cue).toLowerCase());
+    if (i === -1) return esc(text);
+    return esc(text.slice(0, i)) + '<mark>' + esc(text.slice(i, i + cue.length)) + '</mark>' + esc(text.slice(i + cue.length));
+  }
+
+  function renderItem(it) {
+    var show = state.showAnswers && !state.player;
+    var answer = (it.options || []).filter(function (o) { return o.correct; })[0];
+    var opts = (it.options || []).map(function (o) {
+      var isC = !!o.correct;
+      var cls = 'opt' + (isC && show ? ' correct' : '');
+      var mark = isC && show ? '✓' : '·';
+      var rel = '';
+      var topic = (show && o.topic) ? '<div><span class="topic">' + esc(o.topic) + '</span></div>' : '';
+      var reason = '';
+      if (show) {
+        if (isC && o.explanation) reason = '<div class="reason"><b>Why this one.</b> ' + esc(o.explanation) + '</div>';
+        else if (!isC && o.whyNot) {
+          reason = '<div class="reason"><b>Ruled out.</b> '
+            + (o.ruleOut ? '<q>' + esc(o.ruleOut) + '</q> \u2014 ' : '')
+            + esc(o.whyNot) + '</div>';
+        }
+      }
+      return '<div class="' + cls + '">'
+        + '<div class="mark">' + mark + '</div>'
+        + '<div>'
+        +   '<div class="ref">' + esc(o.reference) + rel + '</div>'
+        +   '<div class="txt">' + esc(o.text) + '</div>'
+        +   '<div class="preview">' + esc(o.preview || o.text) + '</div>'
+        +   topic
+        +   reason
+        + '</div>'
+        + '</div>';
+    }).join('');
+
+    var scenario = (show && answer && answer.cue)
+      ? highlightCue(it.scenario, answer.cue)
+      : esc(it.scenario);
+
+    var cl = Number(it.clarity);
+    var clPill = (show && cl >= 1)
+      ? '<span class="clarity' + (cl <= 3 ? ' low' : '') + '">clarity ' + cl + '/5</span>'
+      : '';
+
+    return '<article class="item">'
+      + '<div class="item-head">'
+      +   '<div class="meta"><span class="id">' + esc(it.id) + '</span>'
+      +     '<span class="need">' + esc(it.need) + '</span>'
+      +     '<span class="tier">tier ' + esc(it.tier == null ? 1 : it.tier) + '</span>'
+      +     clPill + '</div>'
+      +   '<div class="scenario">' + scenario + '</div>'
+      +   '<div class="q">' + esc(it.question || 'Which verse speaks most directly to this?') + '</div>'
+      + '</div>'
+      + '<div class="opts">' + opts + '</div>'
+      + '</article>';
+  }
+
+  function render() {
+    var items = (state.data.items || []).filter(matches);
+    if (state.sortClarity) {
+      items = items.slice().sort(function (a, b) {
+        return (Number(a.clarity) || 9) - (Number(b.clarity) || 9);
+      });
+    }
+    var list = $('list');
+    var empty = $('empty');
+
+    if (!items.length) {
+      list.innerHTML = '';
+      empty.hidden = false;
+      empty.innerHTML = (state.data.items || []).length
+        ? 'No items match that filter.'
+        : 'The table is empty.<br><br>Generate one with:<br><br>'
+          + '<code>node scripts/generate_need_comparison.js --size 60</code>';
+      return;
+    }
+    empty.hidden = true;
+    list.innerHTML = items.map(renderItem).join('');
+  }
+
+  function renderChrome() {
+    var main = $('main');
+    main.classList.toggle('phone', state.phone);
+    main.classList.toggle('player', state.player);
+    $('t-answers').classList.toggle('on', state.showAnswers);
+    $('t-player').classList.toggle('on', state.player);
+    $('t-phone').classList.toggle('on', state.phone);
+    $('t-sort').classList.toggle('on', state.sortClarity);
+    $('footer').textContent = 'Served from /data/need-comparison-items.json — reload to pick up generator changes.';
+  }
+
+  function fullRender() {
+    renderChrome();
+    renderStats();
+    renderChips();
+    render();
+  }
+
+  // --- events ---
+  $('search').addEventListener('input', function (e) { state.q = e.target.value.trim(); render(); });
+  $('showAnswers').addEventListener('change', function (e) { state.showAnswers = e.target.checked; fullRender(); });
+  $('playerView').addEventListener('change', function (e) { state.player = e.target.checked; fullRender(); });
+  $('phoneView').addEventListener('change', function (e) { state.phone = e.target.checked; fullRender(); });
+  $('sortClarity').addEventListener('change', function (e) { state.sortClarity = e.target.checked; renderChrome(); render(); });
+  $('chips').addEventListener('click', function (e) {
+    var b = e.target.closest('.chip');
+    if (!b) return;
+    state.need = b.getAttribute('data-need') || null;
+    fullRender();
+  });
+  document.addEventListener('keydown', function (e) {
+    if (e.key === '/' && document.activeElement !== $('search')) { e.preventDefault(); $('search').focus(); }
+    if (e.key === 'Escape' && document.activeElement === $('search')) { $('search').value = ''; state.q = ''; $('search').blur(); render(); }
+  });
+
+  // --- boot ---
+  load().then(function (data) {
+    state.data = data && Array.isArray(data.items) ? data : { items: [] };
+    fullRender();
+  }).catch(function (err) {
+    $('empty').hidden = false;
+    $('empty').innerHTML = 'Could not load the table.<br><br><code>' + esc(err.message) + '</code>'
+      + '<br><br>Check that the server is running and that data/need-comparison-items.json exists.';
+    $('stats').textContent = 'load failed';
+  });
+})();
+</script>
+</body>
+</html>

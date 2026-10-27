@@ -461,6 +461,12 @@
                             class="quiz-slider">
                         <span class="pct">15%</span>
                     </div>
+                    <div class="slider-item">
+                        <label><span>Which Verse Fits</span> <span style="opacity:0.6">(Recognise)</span></label>
+                        <input type="range" min="0" max="100" value="0" step="5" data-mode="needComparison"
+                            class="quiz-slider">
+                        <span class="pct">0%</span>
+                    </div>
                 </div>
                 <div class="quiz-preset-btns">
                     <button class="btn-quiz-preset" data-qpreset="easy" onclick="applyQuizPreset('easy')" data-i18n="config.quizPresetEasy">Easy Quizzes</button>
@@ -1004,16 +1010,17 @@
 
         function applyQuizPreset(type) {
             const presets = {
-                easy: { firstLetter: 5, missingWord: 15, categoryMatch: 30, trueFalse: 40, cloze: 10 },
-                balanced: { firstLetter: 25, missingWord: 25, categoryMatch: 20, trueFalse: 15, cloze: 15 },
-                hard: { firstLetter: 50, missingWord: 25, categoryMatch: 10, trueFalse: 5, cloze: 10 }
+                easy: { firstLetter: 5, missingWord: 15, categoryMatch: 30, trueFalse: 40, cloze: 10, needComparison: 0 },
+                balanced: { firstLetter: 25, missingWord: 25, categoryMatch: 20, trueFalse: 15, cloze: 15, needComparison: 0 },
+                hard: { firstLetter: 50, missingWord: 25, categoryMatch: 10, trueFalse: 5, cloze: 10, needComparison: 0 }
             };
 
             const preset = presets[type];
             if (!preset) return;
 
             document.querySelectorAll('.quiz-slider').forEach(slider => {
-                slider.value = preset[slider.dataset.mode];
+                const v = preset[slider.dataset.mode];
+                if (v !== undefined) slider.value = v;
             });
             updateQuizSliderLabels();
 

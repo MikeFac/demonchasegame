@@ -5142,6 +5142,9 @@ async function init() {
         // Set up the timer to display a new verse every 10 seconds
         if (verseTimer) clearInterval(verseTimer);
         verseTimer = setInterval(function () {
+            // Reading a verse in need-comparison must not be interrupted, so hold
+            // the rotation while its popup is open.
+            if (currentQuiz && currentQuiz.mode === 'need_comparison' && currentQuiz.popupIndex != null) return;
             QuizManager.pickQualityVerse();
         }, VERSECHANGETIME);
 

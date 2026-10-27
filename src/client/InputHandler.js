@@ -502,7 +502,18 @@ class InputHandler {
         // Check quiz option buttons before movement so bottom-row UI taps are not
         // interpreted as movement targets.
         if (typeof currentQuiz !== 'undefined' && currentQuiz && currentQuiz.options && typeof ctx !== 'undefined') {
-            if (this._isDiscipleshipGridQuiz(currentQuiz)) {
+            if (currentQuiz.mode === 'need_comparison') {
+                if (typeof window !== 'undefined' && window.NeedQuizMode) {
+                    const res = window.NeedQuizMode.handleClick(clickedX, clickedY, currentQuiz);
+                    if (res) {
+                        if (res.action === 'answer' && this.callbacks.onQuizOptionClick) {
+                            this.callbacks.onQuizOptionClick(currentQuiz.options[res.index], res.index);
+                        }
+                        return;
+                    }
+                }
+                // Not a quiz hit: fall through so the click still moves the player.
+            } else if (this._isDiscipleshipGridQuiz(currentQuiz)) {
                 const buttons = this._getDiscipleshipQuizButtons(currentQuiz);
                 for (let i = 0; i < buttons.length; i++) {
                     const button = buttons[i];

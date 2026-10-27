@@ -2979,6 +2979,13 @@ class Renderer {
     }
 
     displayQuizOptions(quiz) {
+        // Need-comparison uses its own vertical reference-list layout, which the
+        // horizontal button row below cannot express.
+        if (quiz && quiz.mode === 'need_comparison' && typeof window !== 'undefined' && window.NeedQuizMode) {
+            window.NeedQuizMode.render(this.ctx, quiz);
+            return;
+        }
+
         if (this._isDiscipleshipGridQuiz(quiz)) {
             const layout = this._getDiscipleshipQuizLayout(quiz);
             this.ctx.fillStyle = '#ffffff';

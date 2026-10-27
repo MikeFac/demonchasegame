@@ -156,13 +156,15 @@
 
     function checkCombatQuizConfiguration(m, result) {
         if (m.quizSettings !== undefined) {
-            var quizKeys = ['firstLetter', 'missingWord', 'categoryMatch', 'trueFalse', 'cloze'];
+            var quizKeys = ['firstLetter', 'missingWord', 'categoryMatch', 'trueFalse', 'cloze', 'needComparison'];
             var quizTotal = 0;
             if (!m.quizSettings || typeof m.quizSettings !== 'object') {
                 result.addError('SCHEMA_QUIZ_SETTINGS', 'quizSettings must be an object');
             } else {
                 quizKeys.forEach(function (key) {
                     var value = m.quizSettings[key];
+                    // needComparison is optional so existing 5-key missions stay valid.
+                    if (value === undefined && key === 'needComparison') return;
                     if (!Number.isInteger(value) || value < 0) {
                         result.addError('SCHEMA_QUIZ_SETTINGS', 'quizSettings.' + key + ' must be a non-negative integer');
                     } else {
@@ -192,7 +194,7 @@
             result.addError('SCHEMA_FOCUS_VERSE_REF', 'combatQuiz.focusVerseReference must be a non-empty string');
         }
         if (combatQuiz.allowedModes !== undefined) {
-            var allowedModes = { first_letter: 1, cloze: 1, missing_word: 1, category_match: 1, true_false: 1 };
+            var allowedModes = { first_letter: 1, cloze: 1, missing_word: 1, category_match: 1, true_false: 1, need_comparison: 1 };
             if (!Array.isArray(combatQuiz.allowedModes) || combatQuiz.allowedModes.length === 0) {
                 result.addError('SCHEMA_COMBAT_QUIZ_MODES', 'combatQuiz.allowedModes must be a non-empty array');
             } else {

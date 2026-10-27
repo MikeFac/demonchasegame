@@ -103,7 +103,12 @@ function validateQuizSettings(qs) {
   for (const k of keys) {
     if (typeof qs[k] !== 'number' || qs[k] < 0 || !Number.isInteger(qs[k])) return false;
   }
-  const total = keys.reduce((sum, k) => sum + qs[k], 0);
+  let total = keys.reduce((sum, k) => sum + qs[k], 0);
+  // needComparison is optional so existing 5-key configurations stay valid.
+  if (qs.needComparison !== undefined) {
+    if (typeof qs.needComparison !== 'number' || qs.needComparison < 0 || !Number.isInteger(qs.needComparison)) return false;
+    total += qs.needComparison;
+  }
   return total === 100;
 }
 

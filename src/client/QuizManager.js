@@ -34,7 +34,8 @@
         { mode: 'missing_word', settingKey: 'missingWord' },
         { mode: 'category_match', settingKey: 'categoryMatch' },
         { mode: 'true_false', settingKey: 'trueFalse' },
-        { mode: 'cloze', settingKey: 'cloze' }
+        { mode: 'cloze', settingKey: 'cloze' },
+        { mode: 'need_comparison', settingKey: 'needComparison' }
     ];
 
     function getMissionCombatQuizConfig() {
@@ -176,6 +177,11 @@
     }
 
     function isModeSupportedForVerse(mode, verse, capabilities) {
+        // Language-independent: the item bank ships its own verse text, so this
+        // does not depend on the translation capability table.
+        if (mode === 'need_comparison') {
+            return typeof window !== 'undefined' && !!window.NeedQuizMode && window.NeedQuizMode.isReady();
+        }
         const caps = capabilities || getCurrentLanguageCapabilities();
         if (!caps.supportedQuizModes || caps.supportedQuizModes[mode] !== true) {
             return false;
@@ -195,6 +201,8 @@
                 return hasTrueFalseQuizData(verse) || autoGenerateTrueFalse(verse) !== null;
             case 'cloze':
                 return hasClozeQuizData(verse) || caps.supportsAutoCloze === true;
+            case 'need_comparison':
+                return typeof window !== 'undefined' && window.NeedQuizMode && window.NeedQuizMode.isReady();
             default:
                 return false;
         }
@@ -204,9 +212,11 @@
     // Uses quizSettings (global from index.html) to pick a mode via cumulative probability
     function selectMode(verse) {
         const settings = (typeof quizSettings !== 'undefined') ? quizSettings
-            : { firstLetter: 25, missingWord: 25, categoryMatch: 20, trueFalse: 15, cloze: 15 };
+            : { firstLetter: 25, missingWord: 25, categoryMatch: 20, trueFalse: 15, cloze: 15, needComparison: 0 };
         const capabilities = getCurrentLanguageCapabilities();
         const allowedModes = getAllowedQuizModes();
+
+
         const weightedModes = QUIZ_MODE_DEFINITIONS
             .map(function(def) {
                 return {
@@ -1016,8 +1026,18 @@
         return window.discipleshipMissionManager.buildQuizFromQuestion(verse);
     }
 
+    // Recognition tier: a situation, four candidate references, one answer.
+    // The reference rows are tappable to read the verse; choosing happens in
+    // that popup, so reading and answering are separate actions.
+    function generateNeedComparisonQuiz(need) {
+        if (typeof window === 'undefined' || !window.NeedQuizMode) return null;
+        const targetNeed = need || (typeof vQuality !== 'undefined' ? vQuality : null);
+        return window.NeedQuizMode.buildQuiz(targetNeed);
+    }
+
     function buildQuizForMode(mode, verse) {
         switch (mode) {
+            case 'need_comparison': return generateNeedComparisonQuiz();
             case 'missing_word': return generateMissingWordQuiz(verse);
             case 'category_match': return generateCategoryMatchQuiz(verse);
             case 'true_false': return generateTrueFalseQuiz(verse);
@@ -1210,7 +1230,7 @@
         }
 
         // Belt of Truth: auto-remove one wrong answer if belt available (not for cloze)
-        if (quiz && quiz.mode !== 'cloze' && typeof inventory !== 'undefined' && inventory.belt > 0 && quiz.options && quiz.options.length >= 3) {
+        if (quiz && quiz.mode !== 'cloze' && quiz.mode !== 'need_comparison' && typeof inventory !== 'undefined' && inventory.belt > 0 && quiz.options && quiz.options.length >= 3) {
             const wrongOptions = quiz.options.filter(opt => !opt.isCorrect);
             if (wrongOptions.length > 0) {
                 const removeIdx = quiz.options.indexOf(wrongOptions[Math.floor(Math.random() * wrongOptions.length)]);
@@ -1233,6 +1253,30 @@
         
         // Cloze quizzes have their own handler
         if (currentQuiz.mode === 'cloze') return;
+
+        // Need-comparison items are not tied to a verse in organizedVerses, so
+        // they score without the quality-index bookkeeping below.
+        if (currentQuiz.mode === 'need_comparison') {
+            const correct = !!selectedOption.isCorrect;
+            isAnswerCorrect = correct;
+            answerFullVerse = selectedOption.text || '';
+            if (correct) {
+                player.ammo = (player.ammo || 0) + Constants.AMMO_REWARD;
+                if (typeof network !== 'undefined' && network.sendQuizCorrect) {
+                    network.sendQuizCorrect(undefined, 'need_comparison');
+                }
+                if (typeof window.onQuizCorrectAnswer === 'function') {
+                    window.onQuizCorrectAnswer('need_comparison', currentQuiz.verseReference);
+                }
+                setAnswerResultTimeout(4500);
+            } else {
+                if (typeof window.onQuizWrongAnswer === 'function') {
+                    window.onQuizWrongAnswer('need_comparison', currentQuiz.verseReference);
+                }
+                setAnswerResultTimeout(6000);
+            }
+            return;
+        }
 
         const isCorrect = selectedOption.isCorrect;
         const activeQuality = (currentQuiz.contentCategory && organizedVerses && organizedVerses[currentQuiz.contentCategory])
