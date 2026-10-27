@@ -5,6 +5,28 @@ class Renderer {
         this.assets = assets;
         this.viewMode = '2d';
 
+        // World background state (plans/2d-background-graphics-plan.md Phase 1)
+        this._themePatterns = {};
+        this._shadowSprite = null;
+        this._wallRectsSource = null;
+        this._wallRects = [];
+        this._wallMaxHeight = 0;
+        this._wallCellCount = 0;
+        this._visibleWalls = [];
+        this._buildings = [];
+
+        // Phase 0 dev switches — opt-in via URL so production is unaffected.
+        const search = (typeof window !== 'undefined' && window.location && window.location.search) || '';
+        let params = null;
+        try {
+            params = search ? new URLSearchParams(search) : null;
+        } catch (e) {
+            params = null;
+        }
+        this.perfEnabled = !!params && params.get('perf') === '1';
+        this.themeOverride = params ? params.get('theme') : null;
+        this._perf = { frameStart: 0, fpsWindowStart: 0, frames: 0, fps: 0, ms: {}, counts: {} };
+
         // UI constants from centralized UILayout
         const UI = window.UILayout;
         this.QUALITY_LINE_HEIGHT = UI.QUALITY_LINE_HEIGHT;
@@ -72,7 +94,30 @@ class Renderer {
         }
 
         // Draw Walls
-        this.drawWalls(walls, camera, gameState.terrainTheme);
+        // World background: ground first, then merged/culled wall blocks.
+        const perf = this.perfEnabled;
+        this._perf.frameStart = perf ? performance.now() : 0;
+        const themeName = this.themeOverride || gameState.terrainTheme;
+
+        let layerStart = perf ? performance.now() : 0;
+        this.drawGround(themeName, camera);
+        if (perf) this._perf.ms.ground = performance.now() - layerStart;
+
+        layerStart = perf ? performance.now() : 0;
+        this.drawWalls(walls, camera, themeName);
+        if (perf) this._perf.ms.walls = performance.now() - layerStart;
+
+        // All entity shadows in one pass, before any entity is drawn.
+        this.drawShadows(
+            gameState.players,
+            monsters,
+            healingPoints,
+            gameState.collectibles,
+            uiState.npcInteractions,
+            camera
+        );
+
+        layerStart = perf ? performance.now() : 0;
 
         // Draw Players
         this.drawPlayers(gameState.players, player, playerCode, camera, inventoryState, uiState.visuals);
@@ -100,6 +145,8 @@ class Renderer {
 
         // Draw procedural combat effects (sparks, rings, death burst, soul wisps)
         this.drawEffects(uiState.visuals, camera);
+
+        if (perf) this._perf.ms.entities = performance.now() - layerStart;
 
         // Restore context before drawing UI (undo screen shake)
         this.ctx.restore();
@@ -165,6 +212,9 @@ class Renderer {
         } else {
             this.drawStoryPauseOverlay(uiState.storyPause);
         }
+
+        // Opt-in performance overlay (?perf=1). No-op when disabled.
+        this.drawPerfOverlay();
     }
 
     drawMissionNpcs(interactions, nearbyInteractionId, camera) {
@@ -2230,214 +2280,464 @@ class Renderer {
         return true;
     }
 
-    drawWalls(walls, camera, terrainTheme) {
-        if (!walls || walls.length === 0) return;
+    // ---------------------------------------------------------------------
+    // World background — Phase 1 of plans/2d-background-graphics-plan.md
+    //
+    // Rendering is now layered: a procedural ground pattern for walkable space,
+    // then solid wall blocks on top of it. Walls are merged into rectangles and
+    // culled to the camera instead of iterating all ~11,700 cells per frame.
+    // ---------------------------------------------------------------------
 
-        // Building tiles from 4x4 grid (15 usable, excluding index 6 - doesn't fit)
-        // Grid layout: Row 0: 0,1,2,3  Row 1: 4,5,6,7  Row 2: 8,9,10,11  Row 3: 12,13,14,15
-        const buildingTiles = [0, 1, 2, 3, 4, 5, 7, 8, 9, 10, 11, 12, 13, 14, 15];
+    _playfieldBottom() {
+        return Viewport.height - this.ANSWER_SECTION_HEIGHT - 120;
+    }
 
-        // ONE consistent grass tile (from 8x8 terrain sheet)
-        const grassTile = 0;
+    _resolveTheme(themeName) {
+        if (typeof TerrainThemes === 'undefined') return null;
+        return TerrainThemes.get(this.themeOverride || themeName);
+    }
 
-        // Fallback color themes (used if sprite sheet not loaded)
-        const themes = {
-            stone: ['#4a4a4a', '#3d3d3d', '#555555', '#424242'],
-            earth: ['#5c4033', '#4a3328', '#6b4c3b', '#503a2d'],
-            crystal: ['#5b3a6b', '#4d2d5e', '#6b4a7b', '#553465']
-        };
-        const palette = themes[terrainTheme] || themes.stone;
+    /**
+     * Lazily build and cache the ground/wall patterns for a theme. Patterns are
+     * tied to a specific 2D context, so they are rebuilt if the context changes.
+     */
+    _ensureThemePatterns(theme) {
+        if (!theme) return null;
+        const cached = this._themePatterns[theme.name];
+        if (cached && cached.ctx === this.ctx) return cached;
 
-        const useTiles = this.assets.buildingTilesImg && this.assets.buildingTilesImg.complete &&
-            this.assets.terrainTilesImg && this.assets.terrainTilesImg.complete;
+        const entry = { ctx: this.ctx, ground: null, wall: null };
+        try {
+            if (typeof TerrainThemes.buildGroundTile === 'function') {
+                const groundTile = TerrainThemes.buildGroundTile(theme.name);
+                if (groundTile) entry.ground = this.ctx.createPattern(groundTile, 'repeat');
+            }
+            if (typeof TerrainThemes.buildWallTile === 'function') {
+                const wallTile = TerrainThemes.buildWallTile(theme.name);
+                if (wallTile) entry.wall = this.ctx.createPattern(wallTile, 'repeat');
+            }
+        } catch (err) {
+            console.warn('Renderer: failed to build terrain patterns', err);
+        }
 
-        this.ctx.save();
-        const playableTop = this.PLAYABLE_TOP;
-        const playableBottom = Viewport.height - this.ANSWER_SECTION_HEIGHT - 120;
+        this._themePatterns[theme.name] = entry;
+        return entry;
+    }
 
-        this.ctx.beginPath();
-        this.ctx.rect(0, playableTop, Viewport.width, playableBottom - playableTop);
-        this.ctx.clip();
+    /**
+     * Draw the walkable ground across the playfield.
+     *
+     * This is what finally replaces the transparent canvas (and the page's CSS
+     * gradient showing through it) with a real floor.
+     */
+    drawGround(themeName, camera) {
+        const theme = this._resolveTheme(themeName);
+        if (!theme) return;
 
-        if (useTiles) {
-            // TWO-PASS RENDERING to prevent grass from covering buildings
+        const top = this.PLAYABLE_TOP;
+        const bottom = this._playfieldBottom();
+        const height = bottom - top;
+        if (height <= 0) return;
 
-            // PASS 1: Draw ALL grass tiles first
-            walls.forEach(wall => {
-                const screenX = wall.x - camera.x;
-                const screenY = wall.y - camera.y;
+        const patterns = this._ensureThemePatterns(theme);
+        const ctx = this.ctx;
+        const T = (typeof TerrainThemes !== 'undefined' && TerrainThemes.GROUND_TILE_SIZE) || 64;
 
-                if (screenX + wall.width > 0 && screenX < Viewport.width &&
-                    screenY + wall.height > 0 && screenY < Viewport.height) {
+        // Align the pattern to world coordinates so the ground scrolls with the
+        // camera instead of swimming under it.
+        const ox = -(((camera.x % T) + T) % T);
+        const oy = -(((camera.y % T) + T) % T);
 
-                    // Draw grass background (8x8 grid, 32x32 tiles)
-                    this.drawTileFromSheet(
-                        this.assets.terrainTilesImg,
-                        grassTile,
-                        screenX,
-                        screenY,
-                        wall.width,
-                        wall.height,
-                        8,  // gridSize: 8x8 grid
-                        32  // tileSize: 32x32 tiles
-                    );
+        ctx.save();
+        ctx.beginPath();
+        ctx.rect(0, top, Viewport.width, height);
+        ctx.clip();
+        ctx.translate(ox, oy);
 
-                    // Add subtle hue variation to grass for visual interest
-                    // Use deterministic random based on position
-                    let hash = wall.x * 73856093 + wall.y * 19349663;
-                    hash = ((hash >> 16) ^ hash) * 0x45d9f3b;
-                    hash = ((hash >> 16) ^ hash) * 0x45d9f3b;
-                    hash = (hash >> 16) ^ hash;
-                    const random = Math.abs(hash % 100) / 100;
-
-                    // Apply visible tint using overlay mode (better for grass)
-                    this.ctx.save();
-                    this.ctx.globalCompositeOperation = 'overlay';
-                    this.ctx.globalAlpha = 0.15 + random * 0.1; // 15-25% opacity for testing
-
-                    // Vary between darker and lighter greens
-                    const hueValue = random;
-                    if (hueValue < 0.33) {
-                        // Darker green
-                        this.ctx.fillStyle = '#2d5016';
-                    } else if (hueValue < 0.66) {
-                        // Lighter/yellower green
-                        this.ctx.fillStyle = '#d4ff88';
-                    } else {
-                        // Medium green
-                        this.ctx.fillStyle = '#7fb347';
-                    }
-
-                    this.ctx.fillRect(screenX, screenY, wall.width, wall.height);
-                    this.ctx.restore();
-                }
-            });
-
-            // Helper: Check if a 100x100 building centered at (x,y) would stay fully on walls
-            const isSafeForBuilding = (x, y, wallsList) => {
-                // Building is 100x100, centered on this cell
-                // Check if all 4 cardinal directions have walls within building bounds
-                const buildingHalfSize = 50; // Building extends 50px in each direction
-
-                // Create a set of wall positions for fast lookup
-                const wallSet = new Set();
-                wallsList.forEach(w => {
-                    wallSet.add(`${w.x},${w.y}`);
-                });
-
-                // Check in all 4 cardinal directions at 2-cell intervals
-                // Ensure walls exist in all directions within building footprint
-                const directions = [
-                    { dx: -50, dy: 0 },   // Left
-                    { dx: 50, dy: 0 },    // Right
-                    { dx: 0, dy: -50 },   // Up
-                    { dx: 0, dy: 50 }     // Down
-                ];
-
-                for (const dir of directions) {
-                    const checkX = x + dir.dx;
-                    const checkY = y + dir.dy;
-
-                    // Look for wall within ±25px of check point
-                    let foundWall = false;
-                    for (let offsetX = -25; offsetX <= 25; offsetX += 25) {
-                        for (let offsetY = -25; offsetY <= 25; offsetY += 25) {
-                            if (wallSet.has(`${checkX + offsetX},${checkY + offsetY}`)) {
-                                foundWall = true;
-                                break;
-                            }
-                        }
-                        if (foundWall) break;
-                    }
-
-                    if (!foundWall) return false; // Missing wall in this direction
-                }
-
-                return true; // All directions have walls
-            };
-
-            // PASS 2: Draw buildings on top (so grass doesn't overwrite them)
-            walls.forEach(wall => {
-                const screenX = wall.x - camera.x;
-                const screenY = wall.y - camera.y;
-
-                if (screenX + wall.width > 0 && screenX < Viewport.width &&
-                    screenY + wall.height > 0 && screenY < Viewport.height) {
-
-                    // Deterministic random based on wall position
-                    // Use better hash mixing for even distribution
-                    let hash = wall.x * 73856093 + wall.y * 19349663;
-                    hash = ((hash >> 16) ^ hash) * 0x45d9f3b;
-                    hash = ((hash >> 16) ^ hash) * 0x45d9f3b;
-                    hash = (hash >> 16) ^ hash;
-                    const random = Math.abs(hash % 10000) / 10000;
-
-                    // 2% chance for building (sweet spot density)
-                    // Only place on walls where entire 100x100 building stays on grass
-                    if (random < 0.02 && isSafeForBuilding(wall.x, wall.y, walls)) {
-                        // Use all 16 building types with better distribution
-                        const buildingIndex = Math.abs(hash) % buildingTiles.length;
-                        const tileIndex = buildingTiles[buildingIndex];
-
-                        // Draw building at 100x100 size centered on the cell
-                        const buildingSize = 100;
-                        const offsetX = screenX - (buildingSize - wall.width) / 2;
-                        const offsetY = screenY - (buildingSize - wall.height) / 2;
-
-                        // Building sheet: 4x4 grid, 100x100 tiles
-                        this.drawTileFromSheet(
-                            this.assets.buildingTilesImg,
-                            tileIndex,
-                            offsetX,
-                            offsetY,
-                            buildingSize,
-                            buildingSize,
-                            4,    // gridSize: 4x4 grid
-                            100   // tileSize: 100x100 tiles
-                        );
-                    }
-                }
-            });
+        if (patterns && patterns.ground) {
+            ctx.fillStyle = patterns.ground;
         } else {
-            // Fallback: gradient rendering (single pass)
-            walls.forEach(wall => {
-                const screenX = wall.x - camera.x;
-                const screenY = wall.y - camera.y;
+            ctx.fillStyle = theme.ground;
+        }
+        ctx.fillRect(-ox, top - oy, Viewport.width, height);
 
-                if (screenX + wall.width > 0 && screenX < Viewport.width &&
-                    screenY + wall.height > 0 && screenY < Viewport.height) {
+        ctx.restore();
+    }
 
-                    const baseColor = palette[wall.type || 0];
+    /**
+     * Rebuild merged wall rectangles + building placements when the wall set
+     * changes (i.e. once per level, not once per frame).
+     */
+    _ensureWallGeometry(walls) {
+        if (this._wallRectsSource === walls) return;
+        this._wallRectsSource = walls;
 
-                    // Create vertical gradient (lighter at top, darker at bottom) for 3D effect
-                    const gradient = this.ctx.createLinearGradient(
-                        screenX, screenY,
-                        screenX, screenY + wall.height
-                    );
-                    gradient.addColorStop(0, this.lightenColor(baseColor, 20));
-                    gradient.addColorStop(1, this.darkenColor(baseColor, 20));
+        const cell = (typeof Constants !== 'undefined' && Constants.CELL_SIZE) || 25;
+        const list = walls || [];
 
-                    // Fill with gradient
-                    this.ctx.fillStyle = gradient;
-                    this.ctx.fillRect(screenX, screenY, wall.width, wall.height);
+        if (typeof WallRects === 'undefined') {
+            // Defensive fallback: no merging, no culling.
+            this._wallRects = list.map(w => ({ x: w.x, y: w.y, w: w.width, h: w.height }));
+            this._wallMaxHeight = cell;
+            this._wallCellCount = list.length;
+            this._buildings = [];
+            return;
+        }
 
-                    // Add dark border for depth
-                    this.ctx.strokeStyle = this.darkenColor(baseColor, 40);
-                    this.ctx.lineWidth = 2;
-                    this.ctx.strokeRect(screenX, screenY, wall.width, wall.height);
+        const built = WallRects.build(list, cell);
+        this._wallRects = built.rects;
+        this._wallMaxHeight = built.maxHeight;
+        this._wallCellCount = list.length;
+        this._buildings = this._buildBuildings(list, cell);
+    }
 
-                    // Add highlight on top edge for extra depth
-                    this.ctx.strokeStyle = this.lightenColor(baseColor, 30);
-                    this.ctx.lineWidth = 1;
-                    this.ctx.beginPath();
-                    this.ctx.moveTo(screenX, screenY);
-                    this.ctx.lineTo(screenX + wall.width, screenY);
-                    this.ctx.stroke();
+    /**
+     * Deterministic building placements, computed once per level.
+     *
+     * The previous per-frame version rebuilt a Set of every wall for each
+     * candidate cell (effectively O(n^2)) and allowed overlapping houses.
+     */
+    _buildBuildings(walls, cell) {
+        const sheet = this.assets && this.assets.buildingTilesImg;
+        if (!sheet || !sheet.complete || !walls.length) return [];
+
+        const buildingTiles = [0, 1, 2, 3, 4, 5, 7, 8, 9, 10, 11, 12, 13, 14, 15];
+        const wallSet = new Set();
+        for (let i = 0; i < walls.length; i++) {
+            wallSet.add(walls[i].x + ',' + walls[i].y);
+        }
+
+        // A 100px building covers 4x4 cells; track occupancy so houses never
+        // draw on top of each other.
+        const half = 2;
+        const occupied = new Set();
+        const out = [];
+
+        for (let i = 0; i < walls.length; i++) {
+            const wall = walls[i];
+
+            let hash = wall.x * 73856093 + wall.y * 19349663;
+            hash = ((hash >> 16) ^ hash) * 0x45d9f3b;
+            hash = ((hash >> 16) ^ hash) * 0x45d9f3b;
+            hash = (hash >> 16) ^ hash;
+            const random = Math.abs(hash % 10000) / 10000;
+
+            if (random >= 0.02) continue;
+            if (!this._isSafeForBuilding(wall, cell, wallSet)) continue;
+
+            const gx = Math.round(wall.x / cell);
+            const gy = Math.round(wall.y / cell);
+
+            let overlaps = false;
+            for (let ox = -half; ox < half && !overlaps; ox++) {
+                for (let oy = -half; oy < half; oy++) {
+                    if (occupied.has((gx + ox) + ',' + (gy + oy))) {
+                        overlaps = true;
+                        break;
+                    }
                 }
+            }
+            if (overlaps) continue;
+
+            for (let ox = -half; ox < half; ox++) {
+                for (let oy = -half; oy < half; oy++) {
+                    occupied.add((gx + ox) + ',' + (gy + oy));
+                }
+            }
+
+            const size = cell * 4;
+            out.push({
+                x: wall.x + cell / 2 - size / 2,
+                y: wall.y + cell / 2 - size / 2,
+                w: size,
+                h: size,
+                tileIndex: buildingTiles[Math.abs(hash) % buildingTiles.length]
             });
         }
 
+        return out;
+    }
+
+    /** True when a building of `size` px centred here would stay on solid ground. */
+    _isSafeForBuilding(wall, cell, wallSet) {
+        const dirs = [[-1, 0], [1, 0], [0, -1], [0, 1]];
+        for (let d = 0; d < dirs.length; d++) {
+            const dx = dirs[d][0];
+            const dy = dirs[d][1];
+            let found = false;
+            for (let step = 1; step <= 3 && !found; step++) {
+                if (wallSet.has((wall.x + dx * cell * step) + ',' + (wall.y + dy * cell * step))) {
+                    found = true;
+                }
+            }
+            if (!found) return false;
+        }
+        return true;
+    }
+
+    drawWalls(walls, camera, terrainTheme) {
+        if (!walls || walls.length === 0) return;
+
+        const theme = this._resolveTheme(terrainTheme);
+        if (!theme) return;
+
+        this._ensureWallGeometry(walls);
+
+        const top = this.PLAYABLE_TOP;
+        const bottom = this._playfieldBottom();
+        const height = bottom - top;
+        if (height <= 0) return;
+
+        const patterns = this._ensureThemePatterns(theme);
+        const ctx = this.ctx;
+        const T = (typeof TerrainThemes !== 'undefined' && TerrainThemes.GROUND_TILE_SIZE) || 64;
+        const ox = -(((camera.x % T) + T) % T);
+        const oy = -(((camera.y % T) + T) % T);
+
+        // World-space rect covering the playfield, used for culling.
+        const view = { x: camera.x, y: camera.y + top, w: Viewport.width, h: height };
+        const visible = this._visibleWalls;
+        const count = (typeof WallRects !== 'undefined')
+            ? WallRects.query(this._wallRects, this._wallMaxHeight, view, visible)
+            : 0;
+
+        ctx.save();
+        ctx.beginPath();
+        ctx.rect(0, top, Viewport.width, height);
+        ctx.clip();
+        ctx.translate(ox, oy);
+
+        // Pass 1 — drop shadow under each wall footprint so blocks sit on the
+        // ground instead of floating on it. Two bands: a tight dark contact
+        // band and a softer spread.
+        for (let i = 0; i < count; i++) {
+            const r = visible[i];
+            const dx = r.x - camera.x - ox;
+            const dy = r.y - camera.y - oy;
+            ctx.fillStyle = theme.groundShadow;
+            ctx.fillRect(dx + 2, dy + r.h, r.w, 6);
+        }
+        for (let i = 0; i < count; i++) {
+            const r = visible[i];
+            const dx = r.x - camera.x - ox;
+            const dy = r.y - camera.y - oy;
+            ctx.fillStyle = 'rgba(0,0,0,0.13)';
+            ctx.fillRect(dx + 1, dy + r.h + 3, r.w + 3, 7);
+        }
+
+        // Pass 2 — the blocks themselves.
+        for (let i = 0; i < count; i++) {
+            const r = visible[i];
+            const dx = r.x - camera.x - ox;
+            const dy = r.y - camera.y - oy;
+
+            ctx.fillStyle = (patterns && patterns.wall) ? patterns.wall : theme.wall;
+            ctx.fillRect(dx, dy, r.w, r.h);
+
+            // Stable pseudo-random lightening/darkening per rectangle. Derived
+            // from world position, so patches never flicker between frames.
+            const shade = ((r.x * 73856093) ^ (r.y * 19349663)) >>> 0;
+            const band = r.h > 6 ? r.h - 5 : r.h;
+            ctx.fillStyle = (shade & 1)
+                ? 'rgba(255,255,255,0.035)'
+                : 'rgba(0,0,0,0.045)';
+            ctx.fillRect(dx, dy + 2, r.w, Math.max(0, band));
+
+            // Lit top face + a 1px bright lip so the block reads as raised.
+            const topH = Math.min(4, Math.max(2, Math.round(r.h * 0.12)));
+            ctx.fillStyle = theme.wallTop;
+            ctx.fillRect(dx, dy, r.w, topH);
+            ctx.fillStyle = 'rgba(255,255,255,0.20)';
+            ctx.fillRect(dx, dy, r.w, 1);
+
+            // Shaded bottom face: the side of the block, giving it height.
+            const faceH = Math.min(5, Math.max(3, Math.round(r.h * 0.14)));
+            ctx.fillStyle = theme.wallFace;
+            ctx.fillRect(dx, dy + Math.max(0, r.h - faceH), r.w, faceH);
+
+            // Crisp outline.
+            ctx.strokeStyle = theme.wallLine;
+            ctx.lineWidth = 1;
+            ctx.strokeRect(dx + 0.5, dy + 0.5, r.w - 1, r.h - 1);
+        }
+
+        // Pass 3 — buildings (cached placements, culled by camera).
+        let buildingsDrawn = 0;
+        if (this._buildings.length) {
+            for (let i = 0; i < this._buildings.length; i++) {
+                const b = this._buildings[i];
+                const sx = b.x - camera.x;
+                const sy = b.y - camera.y;
+                if (sx + b.w < 0 || sx > Viewport.width || sy + b.h < top || sy > bottom) continue;
+                this.drawTileFromSheet(
+                    this.assets.buildingTilesImg,
+                    b.tileIndex,
+                    sx - ox,
+                    sy - oy,
+                    b.w,
+                    b.h,
+                    4,
+                    100
+                );
+                buildingsDrawn++;
+            }
+        }
+
+        ctx.restore();
+
+        if (this.perfEnabled) {
+            this._perf.counts.wallRectsDrawn = count;
+            this._perf.counts.wallRectsTotal = this._wallRects.length;
+            this._perf.counts.wallCells = this._wallCellCount;
+            this._perf.counts.buildingsDrawn = buildingsDrawn;
+            this._perf.counts.buildingsTotal = this._buildings.length;
+        }
+    }
+
+    // ---------------------------------------------------------------------
+    // Contact shadows
+    // ---------------------------------------------------------------------
+
+    _ensureShadowSprite() {
+        if (this._shadowSprite) return this._shadowSprite;
+        const size = 64;
+        const canvas = document.createElement('canvas');
+        canvas.width = size;
+        canvas.height = size;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) return null;
+        const grad = ctx.createRadialGradient(size / 2, size / 2, 0, size / 2, size / 2, size / 2);
+        grad.addColorStop(0, 'rgba(0,0,0,0.70)');
+        grad.addColorStop(0.55, 'rgba(0,0,0,0.34)');
+        grad.addColorStop(1, 'rgba(0,0,0,0)');
+        ctx.fillStyle = grad;
+        ctx.fillRect(0, 0, size, size);
+        this._shadowSprite = canvas;
+        return canvas;
+    }
+
+    /** Stamp one soft shadow at a world position. */
+    _stampShadow(camera, worldX, worldY, radiusX, radiusY, alpha) {
+        const sprite = this._shadowSprite;
+        if (!sprite) return;
+        const sx = worldX - camera.x;
+        const sy = worldY - camera.y;
+        const top = this.PLAYABLE_TOP;
+        const bottom = this._playfieldBottom();
+        if (sx + radiusX < 0 || sx - radiusX > Viewport.width) return;
+        if (sy + radiusY < top || sy - radiusY > bottom) return;
+
+        this.ctx.globalAlpha = alpha;
+        this.ctx.drawImage(sprite, sx - radiusX, sy - radiusY, radiusX * 2, radiusY * 2);
+        this.ctx.globalAlpha = 1;
+    }
+
+    /**
+     * All entity shadows are drawn in one pass before any entity, so a monster
+     * drawn later cannot cast its shadow over a player drawn earlier.
+     */
+    drawShadows(players, monsters, healingPoints, collectibles, npcInteractions, camera) {
+        if (!this._ensureShadowSprite()) return;
+
+        const top = this.PLAYABLE_TOP;
+        const bottom = this._playfieldBottom();
+        this.ctx.save();
+        this.ctx.beginPath();
+        this.ctx.rect(0, top, Viewport.width, bottom - top);
+        this.ctx.clip();
+
+        if (players) {
+            for (const code in players) {
+                const p = players[code];
+                if (!p || !p.width) continue;
+                this._stampShadow(camera, p.x, p.y + (p.height || 48) * 0.42, p.width * 0.44, p.width * 0.17, 0.62);
+            }
+        }
+
+        if (monsters) {
+            for (let i = 0; i < monsters.length; i++) {
+                const m = monsters[i];
+                if (!m || !m.width) continue;
+                this._stampShadow(camera, m.x, m.y + (m.height || 48) * 0.42, m.width * 0.42, m.width * 0.16, 0.45);
+            }
+        }
+
+        if (healingPoints) {
+            for (let i = 0; i < healingPoints.length; i++) {
+                const hp = healingPoints[i];
+                this._stampShadow(camera, hp.x + 8, hp.y + 16, 10, 4, 0.35);
+            }
+        }
+
+        if (collectibles) {
+            for (let i = 0; i < collectibles.length; i++) {
+                const c = collectibles[i];
+                const w = c.width || 20;
+                this._stampShadow(camera, c.x + w / 2, c.y + (c.height || 20), w * 0.5, w * 0.2, 0.35);
+            }
+        }
+
+        if (npcInteractions) {
+            for (let i = 0; i < npcInteractions.length; i++) {
+                const npc = npcInteractions[i];
+                if (!npc || !npc.position) continue;
+                this._stampShadow(camera, npc.position.x, npc.position.y + 30, 18, 7, 0.4);
+            }
+        }
+
         this.ctx.restore();
+    }
+
+    // ---------------------------------------------------------------------
+    // Phase 0 — opt-in performance overlay (?perf=1)
+    // ---------------------------------------------------------------------
+
+    drawPerfOverlay() {
+        if (!this.perfEnabled) return;
+        const perf = this._perf;
+        const now = (typeof performance !== 'undefined') ? performance.now() : Date.now();
+
+        perf.frames++;
+        if (!perf.fpsWindowStart) perf.fpsWindowStart = now;
+        if (now - perf.fpsWindowStart >= 500) {
+            perf.fps = Math.round((perf.frames * 1000) / (now - perf.fpsWindowStart));
+            perf.frames = 0;
+            perf.fpsWindowStart = now;
+        }
+        if (perf.frameStart) {
+            perf.ms.total = now - perf.frameStart;
+        }
+
+        const c = perf.counts;
+        const m = perf.ms;
+        const lines = [
+            'fps ' + perf.fps + '   frame ' + (m.total || 0).toFixed(1) + 'ms',
+            'ground ' + (m.ground || 0).toFixed(1) + '  walls ' + (m.walls || 0).toFixed(1) + '  ent ' + (m.entities || 0).toFixed(1),
+            'wall rects ' + (c.wallRectsDrawn | 0) + '/' + (c.wallRectsTotal | 0) + '  cells ' + (c.wallCells | 0),
+            'buildings ' + (c.buildingsDrawn | 0) + '/' + (c.buildingsTotal | 0),
+            'dpr ' + Viewport.dpr + '  ' + Viewport.width + 'x' + Viewport.height
+        ];
+
+        const ctx = this.ctx;
+        const boxW = 196;
+        const boxH = lines.length * 13 + 10;
+        const boxX = 6;
+        const boxY = this.PLAYABLE_TOP + 4;
+
+        ctx.save();
+        ctx.fillStyle = 'rgba(0,0,0,0.72)';
+        ctx.fillRect(boxX, boxY, boxW, boxH);
+        ctx.strokeStyle = 'rgba(140,255,160,0.35)';
+        ctx.lineWidth = 1;
+        ctx.strokeRect(boxX + 0.5, boxY + 0.5, boxW - 1, boxH - 1);
+        ctx.font = '11px monospace';
+        ctx.textAlign = 'left';
+        ctx.textBaseline = 'top';
+        ctx.fillStyle = '#9fe8a8';
+        for (let i = 0; i < lines.length; i++) {
+            ctx.fillText(lines[i], boxX + 6, boxY + 6 + i * 13);
+        }
+        ctx.restore();
     }
 
     drawHealingPoints(healingPoints, camera) {
