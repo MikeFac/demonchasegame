@@ -476,6 +476,70 @@ reachable by playing through a level, and because the death timer makes in-game
 inspection unreliable. It loads the same `Renderer`, `TerrainThemes` and `WallRects`
 as the game, so what it shows is what ships.
 
+### 13.9 First-level density
+
+**Reported:** level 1 feels flat next to level 2, and the order might be swapped so
+the better-looking world opens the game.
+
+**Measured cause.** It was not the theme. Prop placement assumed a 100px building on
+a 100px solid footprint, but the city map's houses were 2x2 cells (50px), so
+`_isSafeForBuilding` rejected almost every candidate:
+
+| map style | wall cells | buildings placed (before) |
+|---|---|---|
+| city (level 1) | 2,124 | **8** |
+| classic (level 2) | 11,722 | 156 |
+
+Eight props in a 3000x3000 world meant level 1 was a regular grid of bare stone
+blocks with nothing in it.
+
+**Decision:** keep the level order and fix the density. Swapping would only move the
+flat world to second place; the city map would still be the weakest world in the
+game.
+
+**Changes.**
+
+1. **Plot-based placement.** Props are placed per solid square plot found from the
+   wall grid, and scaled to that plot, instead of a fixed 100px sprite centred on a
+   random cell. The sprite therefore always fits its footprint and never overhangs
+   walkable ground (the old placement could).
+2. **Density from exposure.** A plot with open ground on two or more sides is a
+   standalone building and is placed at 92%; a plot embedded in a large wall mass
+   stays at 35% so level 2's masses keep their organic spacing.
+3. **City footprints enlarged to 4x4 cells (100px)**, with a one-cell courtyard
+   between houses and the existing 4-cell streets. At 2x2 the 100px house art was
+   drawn at 50% and read as tiles rather than buildings. This is a layout change for
+   every map that uses `GridCity` (level 1 and the chapter 3 city mission).
+4. **Covered plots render the prop, not the block.** Where a building exactly covers
+   a wall rectangle, the block's body and edge shading are skipped so the prop is not
+   framed by a stone plinth. The match includes width and height on purpose: on maps
+   where large masses merge into one rectangle, a small plot can share that
+   rectangle's origin, and matching on position alone blanked entire masses.
+5. **Soft contact shadows** under buildings, from the same sprite used for entities.
+   A hard shadow band read as a bar under each house.
+
+**Result.**
+
+| | before | after |
+|---|---|---|
+| buildings, city map | 8 | 212 |
+| buildings, classic | 156 | 205 |
+| city house footprint | 50px | 100px |
+
+**Cache-busting fix.** `src/shared/map-generators/*.js` were loaded with no `?v=`
+parameter, so the service worker kept serving the old `GridCity.js` after the change
+— the game rendered the new placement against the old 2x2 map. All six generator
+script tags now carry `?v=1.1`.
+
+**Tests.** `node test/city-map-test.js` (8 assertions): 4x4 plots exist in quantity,
+no 2x2 plots remain, a 48px player fits at the spawn, spawn does not collide, and the
+world border is solid.
+
+**Not changed.** Level order, difficulty, monsters and bosses are untouched. The
+`open` map used by the chapter 0 starter mission is still sparse (7 props) — it is
+mostly open ground with a few hollow structures, so plot-based placement has little
+to attach to; that map needs its own composition pass.
+
 ### 13.6 Follow-ups this branch does not do
 
 - Wall blocks are plain shaded rectangles; Phase 2 autotiling and Phase 3 lighting

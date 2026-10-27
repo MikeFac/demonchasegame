@@ -2392,6 +2392,18 @@ class Renderer {
         this._wallMaxHeight = built.maxHeight;
         this._wallCellCount = list.length;
         this._buildings = this._buildBuildings(list, cell);
+
+        // Plots *exactly* covered by a building render the prop instead of a
+        // block, so the prop is not framed by the block's edge shading.
+        //
+        // The match has to include the size: on maps where big wall masses merge
+        // into one rectangle, a small building plot can share that rectangle's
+        // origin, and keying on position alone blanked the entire mass.
+        this._buildingKeys = new Set();
+        for (let i = 0; i < this._buildings.length; i++) {
+            const b = this._buildings[i];
+            this._buildingKeys.add(b.x + ',' + b.y + ',' + b.w + ',' + b.h);
+        }
     }
 
     /**
@@ -2434,55 +2446,65 @@ class Renderer {
     _buildBuildings(walls, cell) {
         const sheet = this.assets && this.assets.buildingTilesImg;
         if (!sheet || !sheet.complete || !walls.length) return [];
+        const set = this._wallCellSet;
+        if (!set || set.size === 0) return [];
 
         const buildingTiles = [0, 1, 2, 3, 4, 5, 7, 8, 9, 10, 11, 12, 13, 14, 15];
-        const wallSet = new Set();
-        for (let i = 0; i < walls.length; i++) {
-            wallSet.add(walls[i].x + ',' + walls[i].y);
-        }
 
-        // A 100px building covers 4x4 cells; track occupancy so houses never
-        // draw on top of each other.
-        const half = 2;
-        const occupied = new Set();
+        // Props are placed per solid "plot" rather than per random cell, and are
+        // scaled to the plot. A fixed 100px sprite could not fit the city map's
+        // 50px house footprints, so almost every roll was rejected and level 1
+        // ended up with 8 props across the whole world.
+        const MIN_PLOT = 2;
+        const MAX_PLOT = 5;
+        const claimed = new Set();
         const out = [];
 
         for (let i = 0; i < walls.length; i++) {
-            const wall = walls[i];
+            const w = walls[i];
+            if (!w || w.width !== cell || w.height !== cell) continue;
+            if (w.x % cell !== 0 || w.y % cell !== 0) continue;
 
-            let hash = wall.x * 73856093 + wall.y * 19349663;
+            const gx = w.x / cell;
+            const gy = w.y / cell;
+            if (claimed.has(gy * 100000 + gx)) continue;
+
+            // Largest solid square with this cell as its top-left corner.
+            let n = 0;
+            for (let s = MAX_PLOT; s >= MIN_PLOT; s--) {
+                if (this._isSolidPlot(set, gx, gy, s)) {
+                    n = s;
+                    break;
+                }
+            }
+            if (!n) continue;
+
+            // Claim the whole plot even when no prop is placed, so a smaller
+            // prop is never nested inside a larger plot.
+            for (let ox = 0; ox < n; ox++) {
+                for (let oy = 0; oy < n; oy++) {
+                    claimed.add((gy + oy) * 100000 + (gx + ox));
+                }
+            }
+
+            let hash = (gx * 73856093) ^ (gy * 19349663);
             hash = ((hash >> 16) ^ hash) * 0x45d9f3b;
             hash = ((hash >> 16) ^ hash) * 0x45d9f3b;
             hash = (hash >> 16) ^ hash;
-            const random = Math.abs(hash % 10000) / 10000;
+            const roll = Math.abs(hash % 1000) / 1000;
 
-            if (random >= 0.02) continue;
-            if (!this._isSafeForBuilding(wall, cell, wallSet)) continue;
+            // Standalone buildings (a plot with open ground around it, as on the
+            // city map) are placed densely — an empty plot there reads as a bare
+            // stone plinth. Plots embedded in a large mass stay sparse so those
+            // masses keep their organic spacing.
+            const openSides = this._openSides(set, gx, gy, n);
+            const chance = openSides >= 2 ? 0.92 : 0.35;
+            if (roll > chance) continue;
 
-            const gx = Math.round(wall.x / cell);
-            const gy = Math.round(wall.y / cell);
-
-            let overlaps = false;
-            for (let ox = -half; ox < half && !overlaps; ox++) {
-                for (let oy = -half; oy < half; oy++) {
-                    if (occupied.has((gx + ox) + ',' + (gy + oy))) {
-                        overlaps = true;
-                        break;
-                    }
-                }
-            }
-            if (overlaps) continue;
-
-            for (let ox = -half; ox < half; ox++) {
-                for (let oy = -half; oy < half; oy++) {
-                    occupied.add((gx + ox) + ',' + (gy + oy));
-                }
-            }
-
-            const size = cell * 4;
+            const size = n * cell;
             out.push({
-                x: wall.x + cell / 2 - size / 2,
-                y: wall.y + cell / 2 - size / 2,
+                x: gx * cell,
+                y: gy * cell,
                 w: size,
                 h: size,
                 tileIndex: buildingTiles[Math.abs(hash) % buildingTiles.length]
@@ -2492,19 +2514,23 @@ class Renderer {
         return out;
     }
 
-    /** True when a building of `size` px centred here would stay on solid ground. */
-    _isSafeForBuilding(wall, cell, wallSet) {
-        const dirs = [[-1, 0], [1, 0], [0, -1], [0, 1]];
-        for (let d = 0; d < dirs.length; d++) {
-            const dx = dirs[d][0];
-            const dy = dirs[d][1];
-            let found = false;
-            for (let step = 1; step <= 3 && !found; step++) {
-                if (wallSet.has((wall.x + dx * cell * step) + ',' + (wall.y + dy * cell * step))) {
-                    found = true;
-                }
+    /** How many of a plot's four sides border walkable ground (0-4). */
+    _openSides(set, gx, gy, n) {
+        const mid = n >> 1;
+        let open = 0;
+        if (!set.has((gy - 1) * 100000 + (gx + mid))) open++;
+        if (!set.has((gy + n) * 100000 + (gx + mid))) open++;
+        if (!set.has((gy + mid) * 100000 + (gx - 1))) open++;
+        if (!set.has((gy + mid) * 100000 + (gx + n))) open++;
+        return open;
+    }
+
+    /** True when the n x n plot with its top-left at (gx, gy) is entirely wall. */
+    _isSolidPlot(set, gx, gy, n) {
+        for (let oy = 0; oy < n; oy++) {
+            for (let ox = 0; ox < n; ox++) {
+                if (!set.has((gy + oy) * 100000 + (gx + ox))) return false;
             }
-            if (!found) return false;
         }
         return true;
     }
@@ -2544,8 +2570,10 @@ class Renderer {
         // Pass 1 — bodies. Texture only: any per-rectangle toning would show up
         // as a seam where two rectangles in the same wall mass meet.
         ctx.fillStyle = (patterns && patterns.wall) ? patterns.wall : theme.wall;
+        const buildingKeys = this._buildingKeys;
         for (let i = 0; i < count; i++) {
             const r = visible[i];
+            if (buildingKeys && buildingKeys.has(r.x + ',' + r.y + ',' + r.w + ',' + r.h)) continue;
             ctx.fillRect(r.x - camera.x - ox, r.y - camera.y - oy, r.w, r.h);
         }
 
@@ -2574,6 +2602,20 @@ class Renderer {
             const r = visible[i];
             const dx = r.x - camera.x - ox;
             const dy = r.y - camera.y - oy;
+
+            // A building covers this plot: the prop is the visual, so only keep
+            // a soft contact shadow that grounds it. A hard shadow band read as
+            // a bar under each house.
+            if (buildingKeys && buildingKeys.has(r.x + ',' + r.y + ',' + r.w + ',' + r.h)) {
+                const shadow = this._ensureShadowSprite();
+                if (shadow) {
+                    ctx.save();
+                    ctx.globalAlpha = 0.5;
+                    ctx.drawImage(shadow, dx + r.w * 0.08, dy + r.h - 16, r.w * 0.84, r.h * 0.2);
+                    ctx.restore();
+                }
+                continue;
+            }
 
             // Islands of walls that could not be merged to the grid: frame them
             // whole, since there is no occupancy data to test against.

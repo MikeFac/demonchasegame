@@ -31,7 +31,12 @@ function generateMaze(width, height, cellSize) {
     }
 
     // Config
-    const BLOCK_SIZE = 6; // 6x6 cells (150px)
+    // Houses are 4x4 cells (100px) so the 100px building sprites render at
+    // native size. At 2x2 they were too small to read as buildings and every
+    // house looked like a tile sitting on a stone plinth.
+    const HOUSE_SIZE = 4;   // 4x4 cells (100px)
+    const HOUSE_GAP = 1;    // 1 cell (25px) courtyard between houses
+    const BLOCK_SIZE = HOUSE_SIZE * 2 + HOUSE_GAP; // 9 cells (225px)
     const STREET_WIDTH = 4; // 4 cells (100px)
     const STRIDE = BLOCK_SIZE + STREET_WIDTH;
 
@@ -50,8 +55,8 @@ function generateMaze(width, height, cellSize) {
             // Subdivide each city block into four house footprints. The
             // one-cell gaps become driveways/courtyards while the outer
             // street grid remains continuous and collision-safe.
-            const houseSize = 2;
-            const houseOffsets = [0, 3];
+            const houseSize = HOUSE_SIZE;
+            const houseOffsets = [0, HOUSE_SIZE + HOUSE_GAP];
             for (const houseRow of houseOffsets) {
                 for (const houseCol of houseOffsets) {
                     for (let r = 0; r < houseSize; r++) {
