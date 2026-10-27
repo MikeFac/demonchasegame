@@ -133,7 +133,9 @@
                 ...mission,
                 worldId: worldId,
                 worldName: world.name,
-                worldTheme: world.theme,
+                // Mission-level override wins, so a chapter can hold missions of
+                // different terrains (the starter village sits in the first chapter).
+                worldTheme: mission.worldTheme || world.theme,
                 nodeShape: world.nodeShape
             };
         }

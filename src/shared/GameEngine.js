@@ -299,6 +299,7 @@
                 };
                 this.spawnX = (this.gameConfig.playerSpawn && this.gameConfig.playerSpawn.x) || mapData.spawnX || 100;
                 this.spawnY = (this.gameConfig.playerSpawn && this.gameConfig.playerSpawn.y) || mapData.spawnY || 100;
+                this.paths = mapData.paths || null;
                 return;
             }
 
@@ -312,11 +313,15 @@
             };
             this.spawnX = mazeResult.spawnX;
             this.spawnY = mazeResult.spawnY;
+            // Optional decorative ground paths (hand-composed maps only).
+            // Purely visual: collision still comes from the wall grid.
+            this.paths = mazeResult.paths || null;
         }
 
         _getWallData() {
             return {
                 walls: this.walls,
+                paths: this.paths || null,
                 gridFlat: this._flattenGrid(),
                 rows: this.mazeGridData.rows,
                 cols: this.mazeGridData.cols,

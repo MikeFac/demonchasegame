@@ -140,6 +140,7 @@
         };
         engine.spawnX = mazeResult.spawnX;
         engine.spawnY = mazeResult.spawnY;
+        engine.paths = mazeResult.paths || null;
 
         // Find safe spawn point
         var spawnCollides = engine.wallGrid.collides(engine.spawnX, engine.spawnY, engine.constants.PLAYER_WIDTH, engine.constants.PLAYER_HEIGHT);

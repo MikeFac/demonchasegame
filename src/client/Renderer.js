@@ -14,6 +14,7 @@ class Renderer {
         this._wallCellCount = 0;
         this._visibleWalls = [];
         this._buildings = [];
+        this._paths = null;
 
         // Phase 0 dev switches — opt-in via URL so production is unaffected.
         const search = (typeof window !== 'undefined' && window.location && window.location.search) || '';
@@ -101,6 +102,7 @@ class Renderer {
 
         let layerStart = perf ? performance.now() : 0;
         this.drawGround(themeName, camera);
+        this.drawPaths(camera, themeName);
         if (perf) this._perf.ms.ground = performance.now() - layerStart;
 
         layerStart = perf ? performance.now() : 0;
@@ -2325,6 +2327,49 @@ class Renderer {
     }
 
     /**
+     * Decorative ground paths (streets, plazas) supplied by hand-composed map
+     * generators. Purely visual — collision is still the wall grid.
+     */
+    setPaths(paths) {
+        this._paths = Array.isArray(paths) && paths.length ? paths : null;
+    }
+
+    drawPaths(camera, themeName) {
+        if (!this._paths) return;
+        const theme = this._resolveTheme(themeName);
+        if (!theme) return;
+
+        const top = this.PLAYABLE_TOP;
+        const bottom = this._playfieldBottom();
+        const height = bottom - top;
+        if (height <= 0) return;
+
+        const ctx = this.ctx;
+        ctx.save();
+        ctx.beginPath();
+        ctx.rect(0, top, Viewport.width, height);
+        ctx.clip();
+
+        for (let i = 0; i < this._paths.length; i++) {
+            const p = this._paths[i];
+            const sx = p.x - camera.x;
+            const sy = p.y - camera.y;
+            if (sx + p.w < 0 || sx > Viewport.width || sy + p.h < top || sy > bottom) continue;
+
+            ctx.fillStyle = theme.path;
+            ctx.fillRect(sx, sy, p.w, p.h);
+
+            // A slightly darker lip keeps the road edge readable where it meets
+            // the ground, which is otherwise the same value.
+            ctx.fillStyle = 'rgba(0,0,0,0.10)';
+            ctx.fillRect(sx, sy, p.w, 2);
+            ctx.fillRect(sx, sy + p.h - 2, p.w, 2);
+        }
+
+        ctx.restore();
+    }
+
+    /**
      * Draw the walkable ground across the playfield.
      *
      * This is what finally replaces the transparent canvas (and the page's CSS
@@ -2497,8 +2542,14 @@ class Renderer {
             // city map) are placed densely — an empty plot there reads as a bare
             // stone plinth. Plots embedded in a large mass stay sparse so those
             // masses keep their organic spacing.
+            //
+            // Small plots need three open sides to qualify: a 2x2 square inside a
+            // two-cell-thick wall has two open sides (one either side of the wall)
+            // and would otherwise line every wall with 50px huts.
             const openSides = this._openSides(set, gx, gy, n);
-            const chance = openSides >= 2 ? 0.92 : 0.35;
+            let chance;
+            if (n >= 4) chance = openSides >= 2 ? 0.92 : 0.35;
+            else chance = openSides >= 3 ? 0.85 : 0;
             if (roll > chance) continue;
 
             const size = n * cell;

@@ -25,7 +25,8 @@ const TerrainThemes = (function () {
             wallTop: '#6e7365',
             wallFace: '#2b2e26',
             wallLine: '#1b1d18',
-            groundShadow: 'rgba(12,14,10,0.42)'
+            groundShadow: 'rgba(12,14,10,0.42)',
+            path: '#7e8177',
         },
         earth: {
             name: 'earth',
@@ -36,7 +37,8 @@ const TerrainThemes = (function () {
             wallTop: '#8d6c42',
             wallFace: '#372616',
             wallLine: '#22170c',
-            groundShadow: 'rgba(18,22,10,0.44)'
+            groundShadow: 'rgba(18,22,10,0.44)',
+            path: '#8a7448',
         },
         crystal: {
             name: 'crystal',
@@ -47,7 +49,8 @@ const TerrainThemes = (function () {
             wallTop: '#4f4576',
             wallFace: '#181229',
             wallLine: '#0b0818',
-            groundShadow: 'rgba(10,6,26,0.5)'
+            groundShadow: 'rgba(10,6,26,0.5)',
+            path: '#6b6394',
         },
         shadow: {
             name: 'shadow',
@@ -58,7 +61,8 @@ const TerrainThemes = (function () {
             wallTop: '#2f3547',
             wallFace: '#080b13',
             wallLine: '#000000',
-            groundShadow: 'rgba(0,0,0,0.52)'
+            groundShadow: 'rgba(0,0,0,0.52)',
+            path: '#4a5068',
         },
         void: {
             name: 'void',
@@ -69,7 +73,8 @@ const TerrainThemes = (function () {
             wallTop: '#2c2447',
             wallFace: '#030206',
             wallLine: '#000000',
-            groundShadow: 'rgba(0,0,0,0.6)'
+            groundShadow: 'rgba(0,0,0,0.6)',
+            path: '#332b4d',
         },
         stone: {
             name: 'stone',
@@ -80,7 +85,8 @@ const TerrainThemes = (function () {
             wallTop: '#5d636e',
             wallFace: '#232730',
             wallLine: '#141820',
-            groundShadow: 'rgba(8,10,16,0.42)'
+            groundShadow: 'rgba(8,10,16,0.42)',
+            path: '#767b8a',
         }
     };
 

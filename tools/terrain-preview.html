@@ -29,14 +29,15 @@
 <script src="../src/shared/Constants.js?v=2.2"></script>
 <script src="../src/client/Viewport.js?v=1.0"></script>
 <script src="../src/client/UILayout.js?v=2.12"></script>
-<script src="../src/client/TerrainThemes.js?v=1.2"></script>
+<script src="../src/client/TerrainThemes.js?v=1.3"></script>
 <script src="../src/client/WallRects.js?v=1.3"></script>
-<script src="../src/client/Renderer.js?v=2.52"></script>
+<script src="../src/client/Renderer.js?v=2.54"></script>
 <script src="../src/shared/map-generators/ClassicMaze.js?v=1.0"></script>
 <script src="../src/shared/map-generators/NarrowPaths.js?v=1.0"></script>
 <script src="../src/shared/map-generators/ComplexLabyrinth.js?v=1.0"></script>
 <script src="../src/shared/map-generators/OpenPlains.js?v=1.0"></script>
-<script src="../src/shared/map-generators/GridCity.js?v=1.0"></script>
+<script src="../src/shared/map-generators/GridCity.js?v=1.1"></script>
+<script src="../src/shared/map-generators/Village.js?v=1.0"></script>
 <script src="../src/shared/map-generators/index.js?v=1.0"></script>
 <script>
 /**
@@ -106,7 +107,9 @@
 
         renderer._wallRectsSource = null;
         renderer._themePatterns = {};
+        renderer.setPaths(map.paths);
         renderer.drawGround(theme, camera);
+        renderer.drawPaths(camera, theme);
         renderer.drawWalls(map.walls, camera, theme);
 
         const drawn = renderer._wallRects.length;

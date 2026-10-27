@@ -121,7 +121,11 @@
                         spawnRate: mission.spawnRate,
                         maxMonsters: mission.maxMonsters,
                         monstersToKill: mission.monstersToKill,
-                        terrainTheme: mission.worldTheme || 'stone'
+                        terrainTheme: mission.worldTheme || 'stone',
+                        // The engine prefers levelData[n].mapStyle, which for a
+                        // single-level mission is the mission's own style. Without
+                        // this the global level 1 style shadowed every mission map.
+                        mapStyle: mission.mapStyle || 'classic'
                     }
                 },
                 

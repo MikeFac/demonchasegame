@@ -536,9 +536,54 @@ no 2x2 plots remain, a 48px player fits at the spawn, spawn does not collide, an
 world border is solid.
 
 **Not changed.** Level order, difficulty, monsters and bosses are untouched. The
-`open` map used by the chapter 0 starter mission is still sparse (7 props) — it is
-mostly open ground with a few hollow structures, so plot-based placement has little
-to attach to; that map needs its own composition pass.
+`open` map itself is still sparse (7 props) — it is mostly open ground with a few
+hollow structures, so plot-based placement has little to attach to. The starter
+mission no longer uses it (see §13.10), but other missions still do.
+
+### 13.10 Starter mission map
+
+**Why.** The chapter 0 mission is the first world a new player ever sees, so its
+composition matters more than any other map's.
+
+**What shipped.** A new `village` generator (`src/shared/map-generators/Village.js`):
+a hand-composed, deterministic, walled village around a central square, with a
+north-south and an east-west street crossing at the square, three-by-three blocks of
+houses fronting each street, and the two scripted encounters standing at the ends of
+the two streets. Chapter 0 now uses `mapStyle: "village"` and `worldTheme: "earth"`.
+
+**New: decorative paths.** Generators may now return `paths` — rectangles of ground
+painted as streets or plazas. They travel through `_getWallData()` → `clientPaths` →
+`Renderer.setPaths` / `drawPaths` and are purely visual; collision still comes from
+the wall grid alone. Without them the village was indistinguishable from a field,
+because road and grass are both just ground.
+
+**Three bugs found on the way, all pre-existing:**
+
+1. **Every mission rendered the level-1 city map.** The engine prefers
+   `levelData[n].mapStyle`, and mission level overrides carried only qualities,
+   monsters and spawn settings — so level 1's own `mapStyle: "city"` shadowed every
+   mission's map. `applyLevelOverrides` now accepts `mapStyle` and `terrainTheme`,
+   and the mission → config conversion passes them through.
+2. **Mission themes were overwritten by the chapter theme.** `FileContentProvider`
+   set `worldTheme` from the world; a mission-level `worldTheme` now wins, so one
+   chapter can hold missions of different terrains.
+3. **Paths arrived before the renderer existed.** Mission starts begin the engine
+   during init, so `renderer.setPaths()` ran against `undefined`; paths are now
+   re-applied wherever the renderer is constructed.
+
+**Encounter placement.** Both fixed encounters sat outside the 512x394 spawn
+viewport (one 385px east, one 305px north), so the opening screen showed an empty
+village and an off-screen marker. They now stand in the two streets within view, and
+`test/village-map-test.js` fails if a future map edit pushes them off-screen or into
+a wall.
+
+**Tests.** `node test/village-map-test.js` (16 assertions): generator determinism,
+spawn and both encounters standable, both encounters reachable on foot by flood fill,
+both visible from spawn, and the village sealed so the player cannot walk into the
+empty remainder of the 3000x3000 world.
+
+**Reference.** `docs/graphics/2d-phase1/starter-mission.png` — the real opening
+screen, including the tutorial prompt.
 
 ### 13.6 Follow-ups this branch does not do
 

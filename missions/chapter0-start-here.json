@@ -6,7 +6,8 @@
       "id": "intro-01",
       "name": "First Victory",
       "description": "Beat one demon, then one more. This is the shortest path to understanding VerseBattles.",
-      "mapStyle": "open",
+      "mapStyle": "village",
+      "worldTheme": "earth",
       "qualities": ["Faith", "Courage"],
       "monsters": ["Fear", "Doubt"],
       "monsterDamageFactor": 0.65,
@@ -28,7 +29,7 @@
       "randomSpawnBudget": 0,
       "fixedMonsters": [
         {
-          "x": 1885,
+          "x": 1700,
           "y": 1460,
           "demonType": "Fear",
           "behavior": {
@@ -48,7 +49,7 @@
         },
         {
           "x": 1500,
-          "y": 1195,
+          "y": 1330,
           "demonType": "Fear",
           "behavior": {
             "type": "guard",

@@ -1,5 +1,5 @@
 (function () {
-var ClassicMaze, NarrowPaths, ComplexLabyrinth, OpenPlains, GridCity;
+var ClassicMaze, NarrowPaths, ComplexLabyrinth, OpenPlains, GridCity, Village;
 
 if (typeof module !== 'undefined' && module.exports) {
     ClassicMaze = require('./ClassicMaze');
@@ -7,12 +7,14 @@ if (typeof module !== 'undefined' && module.exports) {
     ComplexLabyrinth = require('./ComplexLabyrinth');
     OpenPlains = require('./OpenPlains');
     GridCity = require('./GridCity');
+    Village = require('./Village');
 } else {
     ClassicMaze = window.ClassicMaze;
     NarrowPaths = window.NarrowPaths;
     ComplexLabyrinth = window.ComplexLabyrinth;
     OpenPlains = window.OpenPlains;
     GridCity = window.GridCity;
+    Village = window.Village;
 }
 
 var GENERATORS = {
@@ -20,7 +22,8 @@ var GENERATORS = {
     'narrow': NarrowPaths,
     'labyrinth': ComplexLabyrinth,
     'open': OpenPlains,
-    'city': GridCity
+    'city': GridCity,
+    'village': Village
 };
 
 /**

@@ -204,6 +204,14 @@ function applyLevelOverrides(levelData, levels) {
         // Config stores seconds, game uses milliseconds
         levelData[levelNum].spawnRate = lvl.spawnRate * 1000;
       }
+      // A mission's single level owns its look. Without this the inherited
+      // LevelConfig level-1 style shadowed every mission map.
+      if (lvl.mapStyle) {
+        levelData[levelNum].mapStyle = lvl.mapStyle;
+      }
+      if (lvl.terrainTheme) {
+        levelData[levelNum].terrainTheme = lvl.terrainTheme;
+      }
     }
   });
 

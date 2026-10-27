@@ -118,6 +118,8 @@ let gameState = {
 // Walls received once via 'walls' event (not in periodic gameState broadcast)
 let clientWalls = [];
 let clientWallGrid = null;
+// Decorative ground paths for hand-composed maps (village). Visual only.
+let clientPaths = null;
 
 // Movement freeze during level transitions (prevents spawning into walls)
 let movementFrozen = false;
@@ -3483,6 +3485,7 @@ function resetGameState() {
     // Walls
     clientWalls = [];
     clientWallGrid = null;
+    clientPaths = null;
 }
 
 function detachActiveGameplayForLearnMode() {
@@ -4797,6 +4800,10 @@ async function init() {
             },
             onWalls: (data) => {
                 clientWalls = data.walls;
+                clientPaths = data.paths || null;
+                if (window.renderer && typeof window.renderer.setPaths === 'function') {
+                    window.renderer.setPaths(clientPaths);
+                }
                 // Build client-side WallGrid from flat array
                 const grid = [];
                 for (let r = 0; r < data.rows; r++) {
@@ -6345,7 +6352,10 @@ async function startMission(worldId, missionId) {
                 monsters: mission.monsters,
                 monstersToKill: mission.monstersToKill,
                 maxMonsters: mission.maxMonsters,
-                spawnRate: mission.spawnRate || 18
+                spawnRate: mission.spawnRate || 18,
+                // The mission owns the look of its single level.
+                mapStyle: mission.mapStyle || undefined,
+                terrainTheme: mission.worldTheme || undefined
             }],
             quizSettings: mission.quizSettings || null,
             world: mission.world || null,
@@ -6628,6 +6638,11 @@ function gameLoop(generation) {
             });
         }
         window.renderer.assets = assets; // Update assets in case they loaded late
+        // Paths can arrive before the renderer is constructed (missions start the
+        // engine during init), so re-apply them here as well as on 'walls'.
+        if (typeof window.renderer.setPaths === 'function') {
+            window.renderer.setPaths(clientPaths);
+        }
 
         // Update player animation frame
         if (player.isMoving) {
