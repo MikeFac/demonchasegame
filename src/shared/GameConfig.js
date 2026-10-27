@@ -10,11 +10,12 @@ if (typeof module !== 'undefined' && module.exports) {
 
 // Default quiz balance (used as starting point in UI, independent of monster difficulty)
 const DEFAULT_QUIZ_SETTINGS = {
-  firstLetter: 25,
-  missingWord: 25,
-  categoryMatch: 20,
-  trueFalse: 15,
-  cloze: 15
+  firstLetter: 20,
+  missingWord: 20,
+  categoryMatch: 15,
+  trueFalse: 10,
+  cloze: 15,
+  needComparison: 20
 };
 
 // Quick-select quiz balance presets (separate from monster difficulty presets)
@@ -25,7 +26,7 @@ const QUIZ_BALANCE_PRESETS = {
   },
   balanced: {
     name: 'Balanced',
-    settings: { firstLetter: 25, missingWord: 25, categoryMatch: 20, trueFalse: 15, cloze: 15 }
+    settings: { firstLetter: 20, missingWord: 20, categoryMatch: 15, trueFalse: 10, cloze: 15, needComparison: 20 }
   },
   hard: {
     name: 'Hard Quizzes',

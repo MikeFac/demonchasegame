@@ -212,7 +212,7 @@
     // Uses quizSettings (global from index.html) to pick a mode via cumulative probability
     function selectMode(verse) {
         const settings = (typeof quizSettings !== 'undefined') ? quizSettings
-            : { firstLetter: 25, missingWord: 25, categoryMatch: 20, trueFalse: 15, cloze: 15, needComparison: 0 };
+            : { firstLetter: 20, missingWord: 20, categoryMatch: 15, trueFalse: 10, cloze: 15, needComparison: 20 };
         const capabilities = getCurrentLanguageCapabilities();
         const allowedModes = getAllowedQuizModes();
 

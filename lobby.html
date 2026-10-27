@@ -433,25 +433,25 @@
                 <div class="quiz-slider-group">
                     <div class="slider-item">
                         <label><span data-i18n="config.firstLetter">First Letter</span> <span style="opacity:0.6" data-i18n="config.difficultyHard">(Hard)</span></label>
-                        <input type="range" min="0" max="100" value="25" step="5" data-mode="firstLetter"
+                        <input type="range" min="0" max="100" value="20" step="5" data-mode="firstLetter"
                             class="quiz-slider">
                         <span class="pct">25%</span>
                     </div>
                     <div class="slider-item">
                         <label><span data-i18n="config.missingWord">Missing Word</span> <span style="opacity:0.6" data-i18n="config.difficultyMedium">(Medium)</span></label>
-                        <input type="range" min="0" max="100" value="25" step="5" data-mode="missingWord"
+                        <input type="range" min="0" max="100" value="20" step="5" data-mode="missingWord"
                             class="quiz-slider">
                         <span class="pct">25%</span>
                     </div>
                     <div class="slider-item">
                         <label><span data-i18n="config.categoryMatch">Category Match</span> <span style="opacity:0.6" data-i18n="config.difficultyEasy">(Easy)</span></label>
-                        <input type="range" min="0" max="100" value="20" step="5" data-mode="categoryMatch"
+                        <input type="range" min="0" max="100" value="15" step="5" data-mode="categoryMatch"
                             class="quiz-slider">
                         <span class="pct">20%</span>
                     </div>
                     <div class="slider-item">
                         <label><span data-i18n="config.trueFalse">True / False</span> <span style="opacity:0.6" data-i18n="config.easiest">(Easiest)</span></label>
-                        <input type="range" min="0" max="100" value="15" step="5" data-mode="trueFalse"
+                        <input type="range" min="0" max="100" value="10" step="5" data-mode="trueFalse"
                             class="quiz-slider">
                         <span class="pct">15%</span>
                     </div>
@@ -463,7 +463,7 @@
                     </div>
                     <div class="slider-item">
                         <label><span>Which Verse Fits</span> <span style="opacity:0.6">(Recognise)</span></label>
-                        <input type="range" min="0" max="100" value="0" step="5" data-mode="needComparison"
+                        <input type="range" min="0" max="100" value="20" step="5" data-mode="needComparison"
                             class="quiz-slider">
                         <span class="pct">0%</span>
                     </div>
@@ -1011,7 +1011,7 @@
         function applyQuizPreset(type) {
             const presets = {
                 easy: { firstLetter: 5, missingWord: 15, categoryMatch: 30, trueFalse: 40, cloze: 10, needComparison: 0 },
-                balanced: { firstLetter: 25, missingWord: 25, categoryMatch: 20, trueFalse: 15, cloze: 15, needComparison: 0 },
+                balanced: { firstLetter: 20, missingWord: 20, categoryMatch: 15, trueFalse: 10, cloze: 15, needComparison: 20 },
                 hard: { firstLetter: 50, missingWord: 25, categoryMatch: 10, trueFalse: 5, cloze: 10, needComparison: 0 }
             };
 

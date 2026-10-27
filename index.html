@@ -1436,22 +1436,22 @@
       <div id="quizSliders" style="display: block;"> <!-- Always visible inside Options -->
         <div class="slider-row">
           <label><span data-i18n="config.firstLetter">First Letter</span> <span style="opacity:0.6" data-i18n="config.difficultyHard">(Hard)</span></label>
-          <input type="range" id="lobby_qFirstLetter" min="0" max="100" value="30" step="5" data-mode="firstLetter">
+          <input type="range" id="lobby_qFirstLetter" min="0" max="100" value="20" step="5" data-mode="firstLetter">
           <span class="pct">30%</span>
         </div>
         <div class="slider-row">
           <label><span data-i18n="config.missingWord">Missing Word</span> <span style="opacity:0.6" data-i18n="config.difficultyMedium">(Medium)</span></label>
-          <input type="range" id="lobby_qMissingWord" min="0" max="100" value="30" step="5" data-mode="missingWord">
+          <input type="range" id="lobby_qMissingWord" min="0" max="100" value="20" step="5" data-mode="missingWord">
           <span class="pct">30%</span>
         </div>
         <div class="slider-row">
           <label><span data-i18n="config.categoryMatch">Category Match</span> <span style="opacity:0.6" data-i18n="config.difficultyEasy">(Easy)</span></label>
-          <input type="range" id="lobby_qCategoryMatch" min="0" max="100" value="25" step="5" data-mode="categoryMatch">
+          <input type="range" id="lobby_qCategoryMatch" min="0" max="100" value="15" step="5" data-mode="categoryMatch">
           <span class="pct">25%</span>
         </div>
         <div class="slider-row">
           <label><span data-i18n="config.trueFalse">True / False</span> <span style="opacity:0.6" data-i18n="config.easiest">(Easiest)</span></label>
-          <input type="range" id="lobby_qTrueFalse" min="0" max="100" value="15" step="5" data-mode="trueFalse">
+          <input type="range" id="lobby_qTrueFalse" min="0" max="100" value="10" step="5" data-mode="trueFalse">
           <span class="pct">15%</span>
         </div>
         <div class="slider-row">
@@ -1461,7 +1461,7 @@
         </div>
         <div class="slider-row">
           <label><span>Which Verse Fits</span> <span style="opacity:0.6">(Recognise)</span></label>
-          <input type="range" id="lobby_qNeedComparison" min="0" max="100" step="5" value="0" data-mode="needComparison">
+          <input type="range" id="lobby_qNeedComparison" min="0" max="100" step="5" value="20" data-mode="needComparison">
           <span class="pct">0%</span>
         </div>
       </div>
@@ -1840,7 +1840,7 @@
     var gameCategory = urlParams.get('category') || '';
 
     // Quiz mode settings (read by QuizManager)
-    var quizSettings = { firstLetter: 25, missingWord: 25, categoryMatch: 20, trueFalse: 15, cloze: 15, needComparison: 0 };
+    var quizSettings = { firstLetter: 20, missingWord: 20, categoryMatch: 15, trueFalse: 10, cloze: 15, needComparison: 20 };
 
     // Difficulty slider handler
     (function () {
